@@ -401,102 +401,32 @@ public abstract class RTExpression extends RTCode {
 			actualParameters_ = message.argumentList();
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			lineNumber_ = messageExpr.lineNumber();
-			argPush_ = this.pushArguments();
-			setResultIsConsumed(messageExpr.resultIsConsumed());
+			argPush_ = this.buildArgumentPushList();
+			final Type returnType = messageExpr.returnType();
+			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
+					(returnType.name().equals("void") == false);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
+			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
+			super.setNextCode(postReturnProcessing_);
+			setResultIsConsumed(!resultNeedsToBePopped);
 		}
-		public RTMessage(String name, ActualArgumentList actualParameters) {
+		public RTMessage(String name, ActualArgumentList actualParameters, Type returnType) {
 			super();
 			methodSelectorName_ = name;	
 			// for built-in methods like System.out.print
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
-			argPush_ = this.pushArguments();
+			argPush_ = this.buildArgumentPushList();
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
+			final boolean resultNeedsToBePopped = (returnType.name().equals("void") == false);
+			setResultIsConsumed(!resultNeedsToBePopped);
+			postReturnProcessing_.setResultIsConsumed(this.resultIsConsumed());
+			super.setNextCode(postReturnProcessing_);
 		}
-
-		@Override public RTCode run() {
-			RTCode start = argPush_;
-			RTObject self = null;
-			
-			// Push the return address onto the stack
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(staticNextCode_);
-			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
-			
-			// We're about to push the arguments onto the stack. If the
-			// target method is a Role method it will have current$context
-			// as one of its formal parameters.
-			
-			// This loop just processes the pushing of the arguments
-			// The value of "start" will eventually return null Ñ there
-			// is no link to subsequent code
-			
-			// The index of "this" should be 0 in ordinary case,
-			// 1 if there is current$context pushed on the stack
-			// (two stack protocols...)
-			int indexForThisExtraction = 0, expressionCounterForThisExtraction = 0;
-			if (null != start && start instanceof RTIdentifier) {
-				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
-				if (startAsRTIdent.name().equals("current$context")) {
-					indexForThisExtraction = 1;	// now unused
-					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
-				}
-			}
-			assert indexForThisExtraction < actualParameters_.count();
-			
-			
-			final ActualArgumentList argList = actualParameters_;
-			final Expression thisDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
-			Type typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
+		
+		private RTMethod getMethodDecl(Type typeOfThisParameterToMethod, int indexForThisExtraction, RTObject self) {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
-				// If we're a non-Role method *and* we're calling a Role method
-				// (we got to this line in this code), we need
-				// to push an extra argument Ñ current$context. If we're calling
-				// a Role method it can be only from within a Context.
-				
-				if (null == currentScope.getObject("current$context")) {
-					// No declaration of current$context in the current scope.
-					// We're not a Role method. We are just a Context method.
-
-					// If we're not a Role method the right value to pass is
-					// the current value of "this" in the calling activation
-					// record. Set up for an extra push before everything else
-					// is pushed
-					final RTObject tempContextPointer = currentScope.getObject("this");
-					assert null != tempContextPointer;
-					assert tempContextPointer instanceof RTContextObject;
-					
-					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
-					RunTimeEnvironment.runTimeEnvironment_.pushStack(contextPointer);
-				}
-			}
-			
-			RTCode pc = start;
-			for (int loopCounter = 0; null != pc; loopCounter++) {
-				// This evaluation leaves a result on the stack Ñ
-				// a result which will be a parameter to the method
-				
-				@SuppressWarnings("unused")
-				RTCode nextInstruction = pc.run();
-				if (loopCounter == expressionCounterForThisExtraction) {
-					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
-					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
-				}
-				final RTCode oldPc = pc;
-				
-				pc = pc.nextCode();
-				if (null != pc) {
-					pc.incrementReferenceCount();
-				}
-				oldPc.decrementReferenceCount();
-			}
-
-			if (null == self) {
-				assert null != self;
-			}
-			
-
-			// Get the method declaration by looking it up in the receiver's scope
 			RTMethod methodDecl = null;
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// Then self is an object playing the Role (with rTType an instance of RTClass)
@@ -572,19 +502,66 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			
-			// Now that the actual parameters are on the stack, let's
-			// open up an activation record, pop off the arguments
-			// and move them into the activation record as formal
-			// parameters
-			
 			assert null != methodDecl;
-			
-			// Push the activation record onto the activation record stack
-			// (I think this is the only place in the code where activation
-			// records are pushed)
-			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
-			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
-	
+			return methodDecl;
+		}
+		
+		private RTObject pushArgumentLoop(RTCode start, int expressionCounterForThisExtraction) {
+			RTCode pc = start;
+			RTObject self = null;
+			for (int loopCounter = 0; null != pc; loopCounter++) {
+				// This evaluation leaves a result on the stack Ñ
+				// a result which will be a parameter to the method
+				
+				@SuppressWarnings("unused")
+				RTCode nextInstruction = pc.run();
+				
+				if (loopCounter == expressionCounterForThisExtraction) {
+					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
+					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
+				}
+				final RTCode oldPc = pc;
+				
+				pc = pc.nextCode();
+				if (null != pc) {
+					pc.incrementReferenceCount();
+				}
+				oldPc.decrementReferenceCount();
+			}
+
+			if (null == self) {
+				assert null != self;
+			}
+			return self;
+		}
+		
+		private void pushContextPointerIfNecessary(Type typeOfThisParameterToMethod, int indexForThisExtraction) {
+			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
+				// If we're a non-Role method *and* we're calling a Role method
+				// (we got to this line in this code), we need
+				// to push an extra argument Ñ current$context. If we're calling
+				// a Role method it can be only from within a Context.
+				
+				if (null == currentScope.getObject("current$context")) {
+					// No declaration of current$context in the current scope.
+					// We're not a Role method. We are just a Context method.
+
+					// If we're not a Role method the right value to pass is
+					// the current value of "this" in the calling activation
+					// record. Set up for an extra push before everything else
+					// is pushed
+					final RTObject tempContextPointer = currentScope.getObject("this");
+					assert null != tempContextPointer;
+					assert tempContextPointer instanceof RTContextObject;
+					
+					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
+					RunTimeEnvironment.runTimeEnvironment_.pushStack(contextPointer);
+				}
+			}
+		}
+		
+		private void populateActivationRecord(RTMethod methodDecl, RTDynamicScope activationRecord) {
 			final FormalParameterList formalParameters = methodDecl.formalParameters();
 			for (int i = formalParameters.count() - 1; 0 <= i; --i) {
 				final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
@@ -592,27 +569,88 @@ public abstract class RTExpression extends RTCode {
 				final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(ithParameter.type());
 				activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
 				final RTObject anArgument = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				assert null != anArgument;
 				activationRecord.setObject(ithParameterName, anArgument);
 				anArgument.decrementReferenceCount();	// not on the stack any more
 			}
+		}
+
+		@Override public RTCode run() {
+			RTCode start = argPush_;
+			RTObject self = null;
 			
-			// *Dynamically* update nextCode_, for sake of housekeeping
-			// consistency. This is actually important if the virtual machine
-			// uses nextCode_ instead of our return value. They should at
-			// least be consistent. Maybe for clarity we should eliminate
-			// the return value from this method and force clients to
-			// to use the nextCode() method.
-			//
-			// UPDATE: The old way introduced a bug... The nextCode_ field is
-			// used to store the return address from the method (i.e., the code
-			// that follows the message invocation...
-			//
-			// See my own class version of setNextCode...
-			super.setNextCode(methodDecl);
+			// Push the return address onto the stack
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(postReturnProcessing_);
+			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+			
+			// We're about to push the arguments onto the stack. If the
+			// target method is a Role method it will have current$context
+			// as one of its formal parameters.
+			
+			// The positional index of "this" should be 0 in ordinary case,
+			// 1 if there is current$context pushed on the stack
+			// (two stack protocols...). The indexForThisExtraction
+			// is a positional (slot) index; the expressionCounterForThisExtraction
+			// is how many expressions we need to wade through to get
+			// to the object pointer. See below.
+			int indexForThisExtraction = 0, expressionCounterForThisExtraction = 0;
+			if (null != start && start instanceof RTIdentifier) {
+				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
+				if (startAsRTIdent.name().equals("current$context")) {
+					indexForThisExtraction = 1;	// now unused
+					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
+				}
+			}
+			assert indexForThisExtraction < actualParameters_.count();
+			
+			
+			final ActualArgumentList argList = actualParameters_;
+			final Expression thisDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
+			Type typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
+			
+			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod,indexForThisExtraction);
+			
+			// This loop just processes the pushing of the arguments
+			// The value of "pc" will eventually return null Ñ there
+			// is no link to subsequent code
+			self = this.pushArgumentLoop(start, expressionCounterForThisExtraction);
+			
+			// Get the method declaration by looking it up in the receiver's scope
+			// Null return on error (e.g., attempting to invoke a method on a null object)
+			final RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToMethod, indexForThisExtraction, self);
+			
+			if (null != methodDecl) {
+				// Now that the actual parameters are on the stack, let's
+				// open up an activation record, pop off the arguments
+				// and move them into the activation record as formal
+				// parameters
+				
+				// Push the activation record onto the activation record stack
+				// (I think this is the only place in the code where activation
+				// records are pushed)
+				final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+				RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+				this.populateActivationRecord(methodDecl, activationRecord);
+				
+				// *Dynamically* update nextCode_, for sake of housekeeping
+				// consistency. This is actually important if the virtual machine
+				// uses nextCode_ instead of our return value. They should at
+				// least be consistent. Maybe for clarity we should eliminate
+				// the return value from this method and force clients to
+				// to use the nextCode() method.
+				//
+				// UPDATE: The old way introduced a bug... The nextCode_ field is
+				// used to store the return address from the method (i.e., the code
+				// that follows the message invocation...
+				//
+				// See my own class version of setNextCode...
+				super.setNextCode(methodDecl);
+			}
 		
 			// Turn it over to the executive to call the method.
 			return methodDecl;
 		}
+		
 		@Override public void setNextCode(RTCode nextCode) {
 			// This becomes the public version of setNextCode. The value
 			// it sets reflects the static sequence, e.g. from the method
@@ -620,8 +658,9 @@ public abstract class RTExpression extends RTCode {
 			// dynamic branch to the RTMethod Ñ which is what nextCode()
 			// (in the base class) must return.
 			super.setNextCode(nextCode);
-			staticNextCode_ = nextCode;
+			postReturnProcessing_.setNextCode(nextCode);
 		}
+		
 		private int expressionsInExpression(RTCode rtCodePointer) {
 			RTCode pc = rtCodePointer;
 			int retval = 0;
@@ -631,8 +670,10 @@ public abstract class RTExpression extends RTCode {
 			} while (null != pc);
 			return retval;
 		}
-		private RTCode pushArguments() {
-			// Arrange to push the arguments onto the stack
+		
+		private RTCode buildArgumentPushList() {
+			// Arrange an arguments data structure in preparation
+			// for pushing them onto the stack.
 			// This returns a code block (just a linked list)
 			// with no ties to any method body.
 			final RTCode myNextCode = nextCode();
@@ -678,14 +719,39 @@ public abstract class RTExpression extends RTCode {
 		public int lineNumber() {
 			return lineNumber_;
 		}
+		
+		private static class RTPostReturnProcessing extends RTExpression {
+			public RTPostReturnProcessing(RTCode nextCode, String name) {
+				super();
+				super.setNextCode(nextCode);
+				name_ = name;
+			}
+			@Override public RTCode run() {
+				if (false == resultIsConsumed()) {
+					RunTimeEnvironment.runTimeEnvironment_.popStack();
+				}
+				return super.nextCode();
+			}
+			
+			@SuppressWarnings("unused")
+			private final String name_;		// for debugging only
+		}
+		
+		@Override public void setResultIsConsumed(boolean tf) {
+			super.setResultIsConsumed(tf);
+			postReturnProcessing_.setResultIsConsumed(tf);
+			if (null != messageExpr_) {
+				messageExpr_.setResultIsConsumed(tf);
+			}
+		}
 
 		private String methodSelectorName_;
 		private MessageExpression messageExpr_;
 		protected RTCode argPush_;
 		private ActualArgumentList actualParameters_;
-		private RTCode staticNextCode_;
 		private final int lineNumber_;
 		private final int [] expressionsCountInArguments_;
+		private final RTPostReturnProcessing postReturnProcessing_;
 	}
 	
 	public static class RTDupMessage extends RTExpression {
@@ -1417,6 +1483,7 @@ public abstract class RTExpression extends RTCode {
 		private RTExpression rhs_;
 		private final RTAssignmentPart2 part2_;
 	}
+	
 	public static class RTNew extends RTExpression {
 		public RTNew(NewExpression expr) {
 			super();
@@ -2888,9 +2955,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		public RTReturn(String methodName, Expression returnExpression) {
 			super();
+
 			// If returnExpr isn't null, it's a dummy
 			if (null != returnExpression) {
-				assert ((ReturnExpression)returnExpression).returnExpression() instanceof TopOfStackExpression;
 				rTRe_ = new ArrayList<RTCode>();
 				rTRe_.add(new RTNullExpression());
 			} else {
@@ -2907,25 +2974,30 @@ public abstract class RTExpression extends RTCode {
 				final List<RTCode> returnExpressionList = rTRe_;
 				if (returnExpressionList.size() == 1) {
 					final RTCode returnExpression = returnExpressionList.get(0);
-					if (returnExpression instanceof RTNullExpression == false) {
+					if (returnExpression instanceof RTNullExpression == true) {
 						thereIsAReturnExpression = true;
 					}
 				} else {
-					thereIsAReturnExpression = true;
+					thereIsAReturnExpression = false;
 				}
 			}
 			if (thereIsAReturnExpression) {
 				// It's already evaluated and on top of the stack.
-				// Step one: Get it.
-				final RTStackable returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// Step one: Get it Ñ if it's used
+				RTStackable returnValue = null;
+				if (resultIsConsumed()) {
+					returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				}
 				
 				// Step 2. Clean up the stack.
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
 				returnAddress = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				
 				// Step 3. Put the return value on the stack.
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
-				returnValue.decrementReferenceCount();	// (from the stack pop)
+				if (resultIsConsumed()) {
+					RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
+					returnValue.decrementReferenceCount();	// (from the stack pop)
+				}
 			} else {
 				// There is no R-value on the stack: just get the return address
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();

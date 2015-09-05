@@ -55,6 +55,9 @@ public class RTObjectCommon implements RTObject, RTContextInstance {
 	}
 	@Override public Map<String, RTObject> objectMembers() { return objectMembers_; }
 	@Override public void setObject(String name, RTObject object) {
+		if (null == object) {
+			assert null != object;
+		}
 		if (objectMembers_.containsKey(name)) {
 			final RTObject oldObject = objectMembers_.get(name);
 			objectMembers_.put(name, object);

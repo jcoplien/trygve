@@ -34,6 +34,7 @@ import declarations.ActualOrFormalParameterList;
 import declarations.FormalParameterList;
 import declarations.Type;
 import declarations.TypeDeclaration;
+import run_time.RTObjectCommon.RTNullObject;
 
 public abstract class RTClassAndContextCommon implements RTType {
 	public RTClassAndContextCommon(TypeDeclaration typeDeclaration) {
@@ -66,11 +67,13 @@ public abstract class RTClassAndContextCommon implements RTType {
 		assert null != typeDeclaration_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
 		Map<String, ObjectDeclaration> staticDeclarations = enclosedScope.staticObjectDeclarations();
+		
+		final RTObject nullObject = new RTNullObject();
 
 		for (final Map.Entry<String,ObjectDeclaration> iter : staticDeclarations.entrySet()) {
 			final ObjectDeclaration objectDecl = iter.getValue();
 			final String name = objectDecl.name();
-			nameToStaticObjectMap_.put(name, null);
+			nameToStaticObjectMap_.put(name, nullObject);
 			nameToStaticObjectTypeMap_.put(name, objectDecl.type());
 		}
 	}

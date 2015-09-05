@@ -80,8 +80,11 @@ public class SystemClass {
 			// method print(String)
 			addTypedPrintStreamPrintDeclaration("print", stringType);
 			
-			// method print(Integer)
+			// method print(int)
 			addTypedPrintStreamPrintDeclaration("print", integerType);
+
+			// method print(Integer)
+			addTypedPrintStreamPrintDeclaration("print", bigIntegerType);
 			
 			// method print(boolean)
 			addTypedPrintStreamPrintDeclaration("print", booleanType);
@@ -133,7 +136,7 @@ public class SystemClass {
 	
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(String className, String methodName, String parameterName, String parameterTypeName, StaticScope enclosingMethodScope) {
-			super("println", RTPrintCommon.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope));
+			super("println", RTPrintCommon.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), printStreamType_);
 			parameterName_ = parameterName;
 		}
 		private static ActualArgumentList buildArguments(String className, String methodName, String parameterTypeName, StaticScope enclosedMethodScope) {
@@ -158,7 +161,20 @@ public class SystemClass {
 			// activation record
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			this.runDetails(myEnclosedScope);
-						
+			
+			// We DO push a return value, which is just "this"
+			// It is always returned. It is up to the RTMessage
+			// logic to deal with consumption.
+			
+			final RTObject self = myEnclosedScope.getObject("this");
+			assert null != self;
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(self);
+			
+			// All dogs go to heaven, and all return statements that
+			// have something to return do it. We deal with consumption
+			// in the message. This function's return statement will be
+			// set for a consumed result in higher-level logic.
+			
 			return super.nextCode();
 		}
 		public void runDetails(RTObject scope) {

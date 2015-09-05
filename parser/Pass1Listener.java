@@ -2685,6 +2685,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 		assert type != null;
 		
+		object.setResultIsConsumed(true);
 		return new MessageExpression(object, message, type, ctxGetStart.getLine());
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {

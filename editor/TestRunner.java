@@ -51,7 +51,8 @@ public class TestRunner {
 			"file:///Users/cope/Programs/Trygve/roleplaytest2.k",
 			"file:///Users/cope/Programs/Trygve/roleplaytest3.k",
 			"file:///Users/cope/Programs/Trygve/assignchain.k",
-			"file:///Users/cope/Programs/Trygve/forloop2.k"
+			"file:///Users/cope/Programs/Trygve/forloop2.k",
+			"file:///Users/cope/Programs/Trygve/fact.k"
 		};
 	}
 	public void runTests() {

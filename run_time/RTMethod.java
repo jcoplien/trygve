@@ -35,6 +35,7 @@ import declarations.FormalParameterList;
 import declarations.Type;
 import expressions.Expression;
 import expressions.Expression.ReturnExpression;
+import expressions.Expression.NullExpression;
 import expressions.Expression.TopOfStackExpression;
 import run_time.RTExpression.RTReturn;
 import run_time.RTObjectCommon.RTNullObject;
@@ -54,18 +55,26 @@ public class RTMethod extends RTCode {
 			final Expression dummyReturnExpression = new TopOfStackExpression();
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber());
+			returnExpression.setResultIsConsumed(true);
 		} else {
 			// Put one in anyhow, even though there is no return value...
-			final Expression dummyReturnExpression = new TopOfStackExpression();
+			final Expression dummyReturnExpression = null;	// Gnu!
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber());
+			returnExpression.setResultIsConsumed(false);
 		}
 
 		methodDeclaration_ = methodDeclaration;
 
 		returnInstruction_ = new RTReturn(methodDeclaration_.name(), returnExpression);
 		this.addCode(returnInstruction_);
-
+		
+		// All dogs go to heaven and all procedures that have something to return
+		// will return it Ñ we deal with consumption in the message. (However,
+		// some are typed void and we should not signal that those will be
+		// consumed.)
+		((RTExpression)returnInstruction_).setResultIsConsumed(returnExpression.resultIsConsumed());
+		
 		// WARNING: Fake-out. We continue to insert at the beginning
 		// even though the return statement is at the end. It's a bit
 		// unnerving but we can keep it all within this class.

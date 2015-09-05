@@ -35,6 +35,7 @@ import declarations.Type.ClassType;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import run_time.RTClass.*;
+import run_time.RTExpression.RTNullExpression;
 import semantic_analysis.StaticScope;
 
 
@@ -118,6 +119,9 @@ public class RunTimeEnvironment {
 		// argument to the constructor
 		handleMetaInits();
 		
+		final RTExpression exitNode = new RTNullExpression();
+		mainExpr.setNextCode(exitNode);
+		
 		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
@@ -131,7 +135,7 @@ public class RunTimeEnvironment {
 				pc.incrementReferenceCount();
 			}
 			oldPc.decrementReferenceCount();
-		} while (pc != null);
+		} while (pc != null && pc != exitNode);
 	}
 	public void setFramePointer() {
 		final int stackSize = stack.size();
@@ -192,6 +196,7 @@ public class RunTimeEnvironment {
 	
 	public void pushStack(RTStackable stackable) {
 		if (null != stackable) {
+			// Can be null (e.g., the nextCode for end-of-evaluation at the end of the program)
 			stackable.incrementReferenceCount();
 		}
 		stack.push(stackable);

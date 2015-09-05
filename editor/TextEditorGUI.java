@@ -266,7 +266,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("//Users/cope/Programs/Trygve/forloop2.k");
+        fileSystemTextField.setText("//Users/cope/Programs/Trygve/fact.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);

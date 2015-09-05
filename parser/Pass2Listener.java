@@ -268,6 +268,12 @@ public class Pass2Listener extends Pass1Listener {
 		// This is definitely Pass 2 stuff.
 		final ActualArgumentList argumentList = parsingData_.popArgumentList();
 		
+		// All arguments are evaluated and are pushed onto the stack
+		for (int i = 0; i < argumentList.count(); i++) {
+			final Expression argument = argumentList.argumentAtPosition(i);
+			argument.setResultIsConsumed(true);
+		}
+		
 		final Message newMessage = new Message(selectorName, argumentList, lineNumber);
 		parsingData_.pushMessage(newMessage);
 	}
@@ -474,6 +480,8 @@ public class Pass2Listener extends Pass1Listener {
 		assert null != returnType;
 		assert null != object;
 		assert null != message;
+		
+		message.setReturnType(returnType);
 		
 		if (null != methodSignature) {
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);

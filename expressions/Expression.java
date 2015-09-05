@@ -199,6 +199,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		public Type returnType() {
+			return message_.returnType();
+		}
 		
 		private final Expression object_;
 		private final Message message_;
@@ -1172,7 +1175,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ReturnExpression extends Expression
 	{
 		public ReturnExpression(Expression returnExpression, int lineNumber) {
-			super(returnExpression.getText(), returnExpression.type());
+			super(null != returnExpression? returnExpression.getText(): "return",
+					null != returnExpression? returnExpression.type():
+						StaticScope.globalScope().lookupTypeDeclaration("void"));
 			returnExpression_ = returnExpression;
 			lineNumber_ = lineNumber;
 		}

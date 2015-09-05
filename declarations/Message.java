@@ -23,6 +23,7 @@ package declarations;
  * 
  */
 
+import semantic_analysis.StaticScope;
 import declarations.ActualArgumentList;
 import expressions.Expression;
 
@@ -31,6 +32,9 @@ public class Message {
 		selectorName_ = selectorName;
 		argumentList_ = argumentList;
 		lineNumber_ = lineNumber;
+		
+		// Just a default until it gets filled in Ñ avoid null ptr problems
+		returnType_ = StaticScope.globalScope().lookupTypeDeclaration("void");
 	}
 	public String selectorName() {
 		return selectorName_;
@@ -64,7 +68,15 @@ public class Message {
 		argumentList_ = argumentList;
 	}
 	
+	public void setReturnType(Type returnType) {
+		returnType_ = returnType;
+	}
+	public Type returnType() {
+		return returnType_;
+	}
+	
 	private String selectorName_;
 	private ActualArgumentList argumentList_;
 	private long lineNumber_;
+	private Type returnType_;
 }
