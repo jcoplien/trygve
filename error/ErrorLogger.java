@@ -70,5 +70,6 @@ public class ErrorLogger {
 	}
 	public static int numberOfFatalErrors() { return numberOfFatalErrors_ + numberOfInternalErrors_; }
 	public enum ErrorType { Warning, Fatal, Noncompliant, Internal };
+	@SuppressWarnings("unused")
 	private static int numberOfFatalErrors_, numberOfWarnings_, numberOfNonCompliances_, numberOfInternalErrors_;
 }

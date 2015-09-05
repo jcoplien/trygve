@@ -24,7 +24,7 @@ package lntextpane;
  */
 
 import javax.swing.text.*;
-;
+
 class NumberedEditorKit extends StyledEditorKit {
     public ViewFactory getViewFactory() {
         return new NumberedViewFactory();

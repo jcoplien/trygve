@@ -191,7 +191,7 @@ public abstract class RTExpression extends RTCode {
 		} else if (expr instanceof PowerExpression) {
 			retval = new RTPower((PowerExpression)expr);
 		} else if (expr instanceof ReturnExpression) {
-			retval = new RTReturn("???", (ReturnExpression)expr);
+			retval = new RTReturn("return", (ReturnExpression)expr);
 		} else if (expr instanceof BlockExpression) {
 			retval = new RTBlock((BlockExpression)expr);
 		} else if (expr instanceof NewExpression) {
@@ -399,6 +399,7 @@ public abstract class RTExpression extends RTCode {
 			messageExpr_ = messageExpr;
 			final Message message = messageExpr_.message();
 			actualParameters_ = message.argumentList();
+			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			lineNumber_ = messageExpr.lineNumber();
 			argPush_ = this.pushArguments();
 			setResultIsConsumed(messageExpr.resultIsConsumed());
@@ -409,12 +410,11 @@ public abstract class RTExpression extends RTCode {
 			// for built-in methods like System.out.print
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
+			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			argPush_ = this.pushArguments();
 		}
+
 		@Override public RTCode run() {
-			/*
-			 * indentCount = indentCount + 1;
-			 */
 			RTCode start = argPush_;
 			RTObject self = null;
 			
@@ -433,11 +433,12 @@ public abstract class RTExpression extends RTCode {
 			// The index of "this" should be 0 in ordinary case,
 			// 1 if there is current$context pushed on the stack
 			// (two stack protocols...)
-			int indexForThisExtraction = 0;
+			int indexForThisExtraction = 0, expressionCounterForThisExtraction = 0;
 			if (null != start && start instanceof RTIdentifier) {
 				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
 				if (startAsRTIdent.name().equals("current$context")) {
-					indexForThisExtraction = 1;
+					indexForThisExtraction = 1;	// now unused
+					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
 				}
 			}
 			assert indexForThisExtraction < actualParameters_.count();
@@ -470,23 +471,24 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			
-			
-			for (int loopCounter = 0; null != start; loopCounter++) {
+			RTCode pc = start;
+			for (int loopCounter = 0; null != pc; loopCounter++) {
 				// This evaluation leaves a result on the stack Ñ
 				// a result which will be a parameter to the method
+				
 				@SuppressWarnings("unused")
-				RTCode haltInstruction = start.run();
-				if (loopCounter == indexForThisExtraction) {
+				RTCode nextInstruction = pc.run();
+				if (loopCounter == expressionCounterForThisExtraction) {
 					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
 					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
 				}
-				final RTCode oldStart = start;
+				final RTCode oldPc = pc;
 				
-				start = start.nextCode();
-				if (null != start) {
-					start.incrementReferenceCount();
+				pc = pc.nextCode();
+				if (null != pc) {
+					pc.incrementReferenceCount();
 				}
-				oldStart.decrementReferenceCount();
+				oldPc.decrementReferenceCount();
 			}
 
 			if (null == self) {
@@ -620,6 +622,15 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(nextCode);
 			staticNextCode_ = nextCode;
 		}
+		private int expressionsInExpression(RTCode rtCodePointer) {
+			RTCode pc = rtCodePointer;
+			int retval = 0;
+			do {
+				pc = pc.nextCode();
+				retval++;
+			} while (null != pc);
+			return retval;
+		}
 		private RTCode pushArguments() {
 			// Arrange to push the arguments onto the stack
 			// This returns a code block (just a linked list)
@@ -629,6 +640,7 @@ public abstract class RTExpression extends RTCode {
 			for (int i = 0; i < actualParameters_.count(); i++) {
 				final Expression anArgument = actualParameters_.argumentAtPosition(i);
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument);
+				expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
 				if (null != rtCodePointer) { 	// can happen with programmer errors
 					rtCodePointer.setNextCode(null);		// just neatness
 					if (0 == i) {
@@ -673,6 +685,7 @@ public abstract class RTExpression extends RTCode {
 		private ActualArgumentList actualParameters_;
 		private RTCode staticNextCode_;
 		private final int lineNumber_;
+		private final int [] expressionsCountInArguments_;
 	}
 	
 	public static class RTDupMessage extends RTExpression {
@@ -2892,30 +2905,27 @@ public abstract class RTExpression extends RTCode {
 			boolean thereIsAReturnExpression = false;
 			if (null != rTRe_) {
 				final List<RTCode> returnExpressionList = rTRe_;
-				if (returnExpressionList.size() > 0) {
+				if (returnExpressionList.size() == 1) {
 					final RTCode returnExpression = returnExpressionList.get(0);
 					if (returnExpression instanceof RTNullExpression == false) {
 						thereIsAReturnExpression = true;
 					}
+				} else {
+					thereIsAReturnExpression = true;
 				}
 			}
 			if (thereIsAReturnExpression) {
-				// Evaluate the return expression
-				final RTCode kickoff = rTRe_.get(0);
-				kickoff.run();
+				// It's already evaluated and on top of the stack.
+				// Step one: Get it.
+				final RTStackable returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				
-				// If we're returning something, leave the return value on
-				// top of the stack. Reach in and get the return address
-				// and pull it out of the stack. NOTE: Constructors do not
-				// return a value; the value had already been provided
-				// to the caller through processing of `new«
-				
-				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointerMinus1();
-				final RTStackable returnValue = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// Step 2. Clean up the stack.
+				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
 				returnAddress = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				
+				// Step 3. Put the return value on the stack.
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
-				setLastExpressionResult((RTObject)returnValue);
-				returnValue.decrementReferenceCount();
+				returnValue.decrementReferenceCount();	// (from the stack pop)
 			} else {
 				// There is no R-value on the stack: just get the return address
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();

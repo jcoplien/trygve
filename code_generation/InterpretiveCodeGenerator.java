@@ -504,6 +504,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		List<RTCode> rTExpr = null;
 		if (null != expr) {
 			rTExpr = this.compileExpressionForMethodOfType(expr, methodDeclaration, rtTypeDeclaration);
+			assert null != rTExpr;
 		}
 		retval.add(new RTReturn(methodDeclaration.name(), rTExpr));
 		return retval;

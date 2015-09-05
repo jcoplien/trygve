@@ -87,7 +87,6 @@ import expressions.Expression;
 import expressions.Expression.ArrayExpression;
 import expressions.Expression.ArrayIndexExpression;
 import expressions.Expression.ArrayIndexExpressionUnaryOp;
-import expressions.Expression.BooleanExpression;
 import expressions.Expression.DoWhileExpression;
 import expressions.Expression.IfExpression;
 import expressions.Expression.UnaryopExpressionWithSideEffect;
@@ -697,6 +696,10 @@ public class Pass1Listener extends KantBaseListener {
 		
 		final MethodDeclaration currentMethod = (MethodDeclaration)currentScope_.associatedDeclaration();
 		assert currentMethod instanceof MethodDeclaration;
+		
+		final MethodSignature sig = parsingData_.currentMethodSignature();
+		final Type returnType = sig.returnType();
+		currentMethod.setReturnType(returnType);	// Gnu!!
 		
 		final StaticScope parentScope = currentScope_.parentScope();
 		currentScope_ = parentScope;
