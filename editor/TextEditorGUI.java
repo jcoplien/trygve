@@ -84,6 +84,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	public String errorPanelContents() {
 		return errorPanel.getText();
 	}
+	public String editPanelContents() {
+		return editPane.getText();
+	}
 	
     private void initComponents() {
         copyButton = new javax.swing.JButton();
@@ -105,9 +108,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             frame.setVisible(true);
             */
 
-            MessageConsole console = new MessageConsole(errorPanel);
-            console.redirectOut();
-            console.redirectErr(java.awt.Color.RED, null);
+            console_ = new MessageConsole(errorPanel);
+            console_.redirectOut();
+            console_.redirectErr(java.awt.Color.RED, null);
         }
         editPane = super.editPane(); // new javax.swing.JEditorPane();
         if (OLD) {
@@ -526,7 +529,7 @@ public void runButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
 
 public void parseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed
     String program = editPane.getText();
-    parseRun_  = new ParseRun(program);
+    parseRun_  = new ParseRun(program, this);
     assert parseRun_ != null;
 	virtualMachine_ = parseRun_.virtualMachine();
 	compiledWithoutError_ = ErrorLogger.numberOfFatalErrors() == 0;
@@ -591,6 +594,7 @@ private void saveFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GE
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
 private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerformed
+	this.errorPanel.setText("");
 	TestRunner testRunner = new TestRunner(this);
 	testRunner.runTests();
 }//GEN-LAST:event_saveFileButtonActionPerformed
@@ -638,6 +642,9 @@ public void setFileNameField(String fileName) {
 }
 public void setWWWFileNameField(String fileName) {
 	urlTextField.setText(fileName);
+}
+public MessageConsole console() {
+	return console_;
 }
 
 private void urlTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_urlTextFieldActionPerformed
@@ -727,6 +734,8 @@ private void updateButtons() {
     private ParseRun parseRun_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
+    
+    MessageConsole console_;
 
     static final long serialVersionUID = 991540;
 }

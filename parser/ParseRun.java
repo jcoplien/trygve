@@ -37,13 +37,14 @@ import run_time.RunTimeEnvironment;
 import semantic_analysis.Program;
 import code_generation.CodeGenerator;
 import code_generation.InterpretiveCodeGenerator;
+import editor.TextEditorGUI;
 import error.ErrorLogger;
 
 
 public class ParseRun {
 	final String grammarName = "Kant";
 	final String startRuleName = "program";
-	public ParseRun(final String input)
+	public ParseRun(final String input, TextEditorGUI gui)
 	{
         final ParsingData parsingData = new ParsingData();
         Class<? extends Parser> parserClass = null;
@@ -76,7 +77,9 @@ public class ParseRun {
         	}
         }
 	    finally {
+	    	gui.console().redirectErr(java.awt.Color.BLUE, null);
 	    	System.err.println("___________________________________________________________");
+	    	gui.console().redirectErr(java.awt.Color.RED, null);
 	    }
 	}
 	

@@ -104,7 +104,6 @@ class_body_element
 
 method_decl
         : method_decl_hook '{' expr_and_decl_list '}'
-        | method_decl_hook expr_and_decl_list
         ;
         
 method_decl_hook
