@@ -753,7 +753,7 @@ public class Pass1Listener extends KantBaseListener {
 		// | access_qualifier method_name '(' param_list ')' CONST*
 		
 		if (printProductionsDebug) {
-			if (null != ctx.CONST()) {
+			if ((null != ctx.CONST()) && (ctx.CONST().size() > 0)) {
 				if (ctx.return_type() != null && ctx.param_list() != null) {
 					System.err.println("method_signature : access_qualifier return_type method_name '(' param_list ')' CONST");
 				} else if (ctx.return_type() != null && ctx.param_list() == null) {
@@ -1840,10 +1840,15 @@ public class Pass1Listener extends KantBaseListener {
 		currentScope_ = currentScope_.parentScope();
 		
 		if (printProductionsDebug) {
-			if (ctx.expr().size() == 3 && ctx.expr(0) != null) {
+			if ((null == ctx.JAVA_ID()) && (null == ctx.object_decl()) && (null == ctx.trivial_object_decl())
+					&& (ctx.expr().size() == 4)) {
+				System.err.println("for_expr : 'for' '(' expr ';' expr ';' expr ')' expr");
+			} else if ((null == ctx.JAVA_ID()) && (null != ctx.object_decl()) && (ctx.expr().size() == 3)) {
 				System.err.println("for_expr : 'for' '(' object_decl expr ';' expr ')' expr");
-			} else {
+			} else if ((null != ctx.JAVA_ID()) && (null == ctx.trivial_object_decl()) && (ctx.expr().size() == 2)) {
 				System.err.println("for_expr : 'for' '(' JAVA_ID ':' expr ')' expr");
+			} else if ((null != ctx.trivial_object_decl()) && (ctx.expr().size() == 2)) {
+				System.err.println("for_expr : 'for' '(' trivial_object_decl ':' expr ')' expr");
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();

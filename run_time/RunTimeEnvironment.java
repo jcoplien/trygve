@@ -205,6 +205,12 @@ public class RunTimeEnvironment {
 		final RTStackable retval = stack.pop();
 		return retval;
 	}
+	public int stackIndex() {
+		return stack.size();
+	}
+	public RTStackable stackValueAtIndex(int index) {
+		return stack.get(index);
+	}
 	public RTStackable peekStack() { return stack.peek(); }
 	public int stackSize() { return stack.size(); }
 	

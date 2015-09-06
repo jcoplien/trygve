@@ -407,7 +407,7 @@ public abstract class RTExpression extends RTCode {
 					(returnType.name().equals("void") == false);
 			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
 			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
-			super.setNextCode(postReturnProcessing_);
+			super.setNextCode(postReturnProcessing_);	// necessary?
 			setResultIsConsumed(!resultNeedsToBePopped);
 		}
 		public RTMessage(String name, ActualArgumentList actualParameters, Type returnType) {
@@ -506,28 +506,39 @@ public abstract class RTExpression extends RTCode {
 			return methodDecl;
 		}
 		
-		private RTObject pushArgumentLoop(RTCode start, int expressionCounterForThisExtraction) {
+		private RTObject pushArgumentLoop(RTCode start, int expressionCounterForThisExtraction, int indexForThisExtraction) {
 			RTCode pc = start;
+			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 			RTObject self = null;
 			for (int loopCounter = 0; null != pc; loopCounter++) {
 				// This evaluation leaves a result on the stack Ñ
 				// a result which will be a parameter to the method
 				
+				// Woops Ñ this gets short-circuited if it's a method invocation?
+				// It goes off to evaluate the method (as a "this" argument) and
+				// then, just below, expects to pull "this" (e.g. PrintStream)
+				// off the stack Ñ but what's sitting on the stack is the return
+				// address for the method (RTPostReturnProcessing) and "nextInstruction"
+				// points to a method
 				@SuppressWarnings("unused")
 				RTCode nextInstruction = pc.run();
 				
+				/*
 				if (loopCounter == expressionCounterForThisExtraction) {
 					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
 					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
 				}
-				final RTCode oldPc = pc;
+				*/
 				
+				final RTCode oldPc = pc;
 				pc = pc.nextCode();
 				if (null != pc) {
 					pc.incrementReferenceCount();
 				}
 				oldPc.decrementReferenceCount();
 			}
+			
+			self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
 
 			if (null == self) {
 				assert null != self;
@@ -613,7 +624,7 @@ public abstract class RTExpression extends RTCode {
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null Ñ there
 			// is no link to subsequent code
-			self = this.pushArgumentLoop(start, expressionCounterForThisExtraction);
+			self = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
 			
 			// Get the method declaration by looking it up in the receiver's scope
 			// Null return on error (e.g., attempting to invoke a method on a null object)
@@ -702,7 +713,7 @@ public abstract class RTExpression extends RTCode {
 				// standard instruction-fetch loop in RunTimeEnvironment.
 				// So it's terminated in a "halt". On reaching it, RTMessage
 				// yields control to RunTimeEnvironment Ñ with its own
-				// nextCode value
+				// nextCode value.
 				previous.setNextCode(null);
 			} else {
 				;	// is O.K.? no initializations, I guess

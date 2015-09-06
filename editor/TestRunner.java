@@ -52,24 +52,29 @@ public class TestRunner {
 			"file:///Users/cope/Programs/Trygve/roleplaytest3.k",
 			"file:///Users/cope/Programs/Trygve/assignchain.k",
 			"file:///Users/cope/Programs/Trygve/forloop2.k",
-			"file:///Users/cope/Programs/Trygve/fact.k"
+			"file:///Users/cope/Programs/Trygve/fact.k",
+			"file:///Users/cope/Programs/Trygve/simpleprintchain.k"
 		};
 	}
 	public void runTests() {
+		String testResults = gui_.errorPanelContents();
 		for (String filename : fileNames_) {
 			runATest(filename);
 			if (gui_.compiledWithoutError() == false) {
 				// break;
 			}
+			final String lastTestResults = testResults;
+			testResults = gui_.errorPanelContents();
+			final int lastTestResultsLength = lastTestResults.length();
+			testResults = testResults.substring(lastTestResultsLength);
 		}
 	}
 	private void runATest(String pathname) {
 		System.err.println("___________________________________________________________");
 		System.err.print(" +  +  +  "); System.err.print(pathname); System.err.println(" +  +  +  ");
 		gui_.resetCompiledWithoutError();
-		// gui_.setFileNameField(pathname);
+		gui_.setFileNameField(pathname);	// just in case user edits / saves - goes to the right place
 		gui_.setWWWFileNameField(pathname);
-		// gui_.openFileButtonActionPerformed(null);
 		gui_.wwwButtonActionPerformed(null);
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {

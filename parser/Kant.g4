@@ -104,6 +104,7 @@ class_body_element
 
 method_decl
         : method_decl_hook '{' expr_and_decl_list '}'
+        | method_decl_hook expr_and_decl_list
         ;
         
 method_decl_hook
@@ -215,7 +216,7 @@ abelian_expr
         | ABELIAN_INCREMENT_OP expr '[' expr ']'
         | ABELIAN_INCREMENT_OP expr '.' JAVA_ID
         | abelian_expr '.' JAVA_ID ABELIAN_INCREMENT_OP
-        | abelian_expr '.' message
+        | <assoc=left> abelian_expr '.' message
         | abelian_expr '.' CLONE
         | abelian_expr '.' CLONE '(' ')'
         | abelian_expr '.' JAVA_ID

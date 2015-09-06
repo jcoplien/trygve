@@ -81,6 +81,10 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     private javax.swing.JScrollPane errorScrollPane = null;
 	private javax.swing.text.JTextComponent errorPanel = null;
 	
+	public String errorPanelContents() {
+		return errorPanel.getText();
+	}
+	
     private void initComponents() {
         copyButton = new javax.swing.JButton();
         jScrollPane1 = super.scrollPane(); // new javax.swing.JScrollPane(); 
@@ -266,7 +270,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("//Users/cope/Programs/Trygve/fact.k");
+        fileSystemTextField.setText("//Users/cope/Programs/Trygve/simpleprintchain.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
