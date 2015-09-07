@@ -25,8 +25,10 @@ package run_time;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import run_time.RTContext.RTContextInfo;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
@@ -39,7 +41,7 @@ public class RTObjectCommon implements RTObject, RTContextInstance {
 		classOrContext_ = classs;
 		objectMembers_ = new HashMap<String, RTObject>();
 		rTTypeMap_ = new HashMap<String, RTType>();
-		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 		referenceCount_ = 1;
 	}
 	protected RTObjectCommon(RTObject object) {
