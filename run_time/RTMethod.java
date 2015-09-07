@@ -58,7 +58,7 @@ public class RTMethod extends RTCode {
 			returnExpression.setResultIsConsumed(true);
 		} else {
 			// Put one in anyhow, even though there is no return value...
-			final Expression dummyReturnExpression = null;	// Gnu!
+			final Expression dummyReturnExpression = null;
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber());
 			returnExpression.setResultIsConsumed(false);
@@ -218,11 +218,6 @@ public class RTMethod extends RTCode {
 		} else {
 			retval = returnInstruction_;
 		}
-
-		// Because the virtual machine tends to use this.nextCode() instead
-		// of the return value from run(), we need to set nextCode() here,
-		// too. This can't be set at compile-time Ñ it's dynamic
-		super.setNextCode(retval);
 
 		return retval;
 	}

@@ -266,14 +266,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
 
-        urlTextField.setText("file:///Users/cope/Programs/Trygve/inhertest.k");
+        urlTextField.setText("file:///Users/cope/Programs/Trygve/switchtest.k");
         urlTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 urlTextFieldActionPerformed(evt);
             }
         });
         
-        fileSystemTextField.setText("//Users/cope/Programs/Trygve/simpleprintchain.k");
+        fileSystemTextField.setText("//Users/cope/Programs/Trygve/switchtest.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);

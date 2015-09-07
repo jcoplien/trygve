@@ -142,7 +142,7 @@ public class TestRunner {
 		return testResults;
 	}
 	private String thisRunGoldContents() {
-		String goldDelimiter = "/* GOLD:\n", endDelimiter = "\n*/\n";
+		final String goldDelimiter = "/* GOLD:\n", endDelimiter = "\n*/\n";
 		String program = gui_.editPanelContents();
 		final int goldIndex = program.indexOf(goldDelimiter);
 		if (0 < goldIndex) {

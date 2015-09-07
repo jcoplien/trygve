@@ -241,9 +241,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
-			final RTCode pc = qualifier_.run();
-			super.setNextCode(pc);
-			return nextCode_;
+			return qualifier_.run();
 		}
 		public RTDynamicScope dynamicScope() {
 			assert null != part2_.dynamicScope_;
@@ -293,7 +291,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
-			qualifier_.run();
+			RTCode haltInstruction = qualifier_.run();
+			assert null == haltInstruction;
 			
 			// Pop the qualifier expression off the stack
 			final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -528,10 +527,17 @@ public abstract class RTExpression extends RTCode {
 					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
 					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
 				}
-				*/
 				
 				final RTCode oldPc = pc;
 				pc = pc.nextCode();
+				if (null != pc) {
+					pc.incrementReferenceCount();
+				}
+				oldPc.decrementReferenceCount();
+				*/
+				
+				final RTCode oldPc = pc;
+				pc = nextInstruction;
 				if (null != pc) {
 					pc.incrementReferenceCount();
 				}
@@ -642,20 +648,6 @@ public abstract class RTExpression extends RTCode {
 				final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
 				RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 				this.populateActivationRecord(methodDecl, activationRecord);
-				
-				// *Dynamically* update nextCode_, for sake of housekeeping
-				// consistency. This is actually important if the virtual machine
-				// uses nextCode_ instead of our return value. They should at
-				// least be consistent. Maybe for clarity we should eliminate
-				// the return value from this method and force clients to
-				// to use the nextCode() method.
-				//
-				// UPDATE: The old way introduced a bug... The nextCode_ field is
-				// used to store the return address from the method (i.e., the code
-				// that follows the message invocation...
-				//
-				// See my own class version of setNextCode...
-				super.setNextCode(methodDecl);
 			}
 		
 			// Turn it over to the executive to call the method.
@@ -943,8 +935,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public RTCode run() {
 			// after all, it's just an identifier
-			super.run();
-			return nextCode_;
+			return super.run();
 		}
 		
 		private final Type baseType_;
@@ -1119,9 +1110,7 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			final RTCode pc = lhs_;
-			super.setNextCode(pc);
-			return pc;
+			return lhs_;
 		}
 		
 		@Override public void setNextCode(RTCode code) {
@@ -1178,9 +1167,7 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			final RTCode retval = lhs_.run();
-			super.setNextCode(retval);
-			return retval;
+			return lhs_.run();
 		}
 		
 		@Override public void setNextCode(RTCode next) {
@@ -1254,9 +1241,7 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			final RTCode retval = rhs_.run();
-			super.setNextCode(retval);
-			return retval;
+			return rhs_.run();
 		}
 		
 		@Override public void setNextCode(RTCode next) {
@@ -1312,9 +1297,7 @@ public abstract class RTExpression extends RTCode {
 			// and does null initialization Ñ it does not call the constructor.
 			//
 			// So I broke out the real assignment processing into RTAssignmentPart2.
-			final RTCode pc = rhs_.run();
-			super.setNextCode(pc);
-			return pc;
+			return rhs_.run();
 		}
 		public void setNextCode(RTCode pc) {
 			part2_.setNextCode(pc);
@@ -1364,7 +1347,6 @@ public abstract class RTExpression extends RTCode {
 					// We need to actually run LHS in order to compute
 					// the qualifier...
 					final RTCode restOfLhs = lhs_.run();
-					super.setNextCode(restOfLhs);
 					part2b_.setRhs(rhs);
 					return restOfLhs;
 				} else if (lhs_ instanceof RTArrayIndexExpression) {
@@ -1706,7 +1688,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			@SuppressWarnings("unused")
-			RTCode haltInstruction = arrayBase_.run();
+			final RTCode haltInstruction = arrayBase_.run();
+			assert null == haltInstruction;
 			return nextCode_;
 		}
 		
@@ -1729,6 +1712,8 @@ public abstract class RTExpression extends RTCode {
 			
 			@SuppressWarnings("unused")
 			final RTCode haltInstruction2 = rTIndexExpression_.run();
+			assert null == haltInstruction2;
+			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			final RTStackable rawArrayBase = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
@@ -1776,9 +1761,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			final RTCode pc = rTArrayExpression_.run();
-			super.setNextCode(pc);
-			return pc;
+			return rTArrayExpression_.run();
 		}
 		
 		@Override public void setNextCode(RTCode code) {
@@ -1826,9 +1809,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// Put the condition on the stack
-			final RTCode retval = conditionalExpression_.run();
-			super.setNextCode(retval);
-			return retval;
+			return conditionalExpression_.run();
 		}
 		@Override public void setNextCode(RTCode code) {
 			part2_.setNextCode(code);
@@ -1854,7 +1835,6 @@ public abstract class RTExpression extends RTCode {
 				
 				conditionalExpression.decrementReferenceCount();
 				
-				super.setNextCode(retval);
 				return retval;
 			}
 			@Override public void setNextCode(RTCode code) {
@@ -1899,9 +1879,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			final RTCode retval = test_.run();
-			super.setNextCode(retval);
-			return retval;
+			return test_.run();
 		}
 		
 		@Override public void setNextCode(RTCode next) {
@@ -1932,7 +1910,6 @@ public abstract class RTExpression extends RTCode {
 				
 				conditionalExpression.decrementReferenceCount();
 				
-				super.setNextCode(retval);
 				return retval;
 			}
 			private final RTExpression body_;
@@ -1964,7 +1941,8 @@ public abstract class RTExpression extends RTCode {
 			final List<BodyPart> rawInitializations = expr.initExprs();
 			initializations_ = new ArrayList<RTExpression>();
 			for (final BodyPart aBodyPart : rawInitializations) {
-				Expression bodyPartAsExpression = (Expression)aBodyPart;
+				// "for (int i = 0 ..." ==> Expression$AssignmentExpression i = 0
+				final Expression bodyPartAsExpression = (Expression)aBodyPart;
 				assert bodyPartAsExpression instanceof Expression;
 				anInitialization = RTExpression.makeExpressionFrom(bodyPartAsExpression);
 				initializations_.add(anInitialization);
@@ -1979,6 +1957,7 @@ public abstract class RTExpression extends RTCode {
 						
 			// Declare local variables
 			for (Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
+				// "for (int i = 0 ..." ==> i
 				final String objectName = iter.getKey();
 				final RTType type = iter.getValue();
 				dynamicScope_.addObjectDeclaration(objectName, type);
@@ -1998,7 +1977,6 @@ public abstract class RTExpression extends RTCode {
 			
 			// And run the loop, starting with the rest of the initializations
 			// if necessary
-			super.setNextCode(retval);	// OK?
 			return retval;
 		}
 		protected void setupIterator() {
@@ -2109,7 +2087,6 @@ public abstract class RTExpression extends RTCode {
 			} else {
 				retval = popScope_;
 			}
-			super.setNextCode(retval);
 			return retval;
 		}
 		
@@ -2214,9 +2191,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			final RTCode retval = test_.run();
-			super.setNextCode(retval);
-			return retval;
+			return test_.run();
 		}
 		
 		@Override public void setNextCode(RTCode next) {
@@ -2244,7 +2219,6 @@ public abstract class RTExpression extends RTCode {
 				setLastExpressionResult(conditionalExpression);
 				conditionalExpression.decrementReferenceCount();
 				
-				super.setNextCode(retval);
 				return retval;
 			}
 			
@@ -2317,10 +2291,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			final RTCode retval = test_.run();
-			
-			super.setNextCode(retval);
-			return retval;
+			return test_.run();
 		}
 		
 		@Override public void setNextCode(RTCode code) {
@@ -2348,7 +2319,6 @@ public abstract class RTExpression extends RTCode {
 				setLastExpressionResult(conditionalExpression);
 				conditionalExpression.decrementReferenceCount();
 				
-				super.setNextCode(retval);
 				return retval;
 			}
 			
@@ -2452,7 +2422,6 @@ public abstract class RTExpression extends RTCode {
 			} else {
 				retval = this.nextCode();
 			}
-			super.setNextCode(retval);
 			return retval;
 		}
 		@Override public RTCode nextCode() {
@@ -2553,7 +2522,6 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			RTCode retval = switchExpression_.run();
 			assert null != retval;
-			super.setNextCode(retval);
 			return retval;
 		}
 		@Override public RTCode nextCode() {
@@ -2605,7 +2573,6 @@ public abstract class RTExpression extends RTCode {
 				expression.decrementReferenceCount();
 				
 				assert null != retval;
-				super.setNextCode(retval);
 				return retval;
 			}
 			@Override public RTCode nextCode() {
@@ -2670,7 +2637,9 @@ public abstract class RTExpression extends RTCode {
 			return rTExpr_.toThePowerOf(other);
 		}
 		@Override public RTCode run() {
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(rTExpr_);
+			// WARNING: We dup this here, otherwise it could be bound to
+			// an identifier and potentially have its value changed!!!
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(rTExpr_.dup());
 			setLastExpressionResult(rTExpr_);
 			return nextCode_;
 		}
@@ -2726,7 +2695,6 @@ public abstract class RTExpression extends RTCode {
 				associatedBreakable_ = allBreakablesMap.get(label_);
 				assert null != associatedBreakable_;
 				breakExit_ = associatedBreakable_.breakExit();
-				super.setNextCode(breakExit_);
 				firstIter_ = false;
 			}
 			
@@ -2802,7 +2770,6 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			super.setNextCode(lhs_);
 			return lhs_;
 		}
 		
@@ -2855,7 +2822,6 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			super.setNextCode(lhs_);
 			return lhs_;
 		}
 		
@@ -2911,7 +2877,6 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			super.setNextCode(lhs_);
 			return lhs_;
 		}
 		
@@ -3028,9 +2993,6 @@ public abstract class RTExpression extends RTCode {
 			
 			lastPoppedScope.closeScope();
 			
-			// Just in case some clown is looking at nextCode() on this item...
-			super.setNextCode(returnAddress);
-			
 			if (null != returnAddress) {
 				returnAddress.decrementReferenceCount();
 			}
@@ -3103,9 +3065,6 @@ public abstract class RTExpression extends RTCode {
 				final RTType type = iter.getValue();
 				dynamicScope.addObjectDeclaration(objectName, type);
 			}
-			
-			// NOTE: This leaves staticNextCode_ untouched
-			super.setNextCode(nextCode);
 			
 			// And run the block
 			return nextCode;

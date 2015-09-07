@@ -699,7 +699,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 		final MethodSignature sig = parsingData_.currentMethodSignature();
 		final Type returnType = sig.returnType();
-		currentMethod.setReturnType(returnType);	// Gnu!!
+		currentMethod.setReturnType(returnType);
 		
 		final StaticScope parentScope = currentScope_.parentScope();
 		currentScope_ = parentScope;
