@@ -26,44 +26,33 @@ package declarations;
 import mylibrary.SimpleList;
 import expressions.Expression;
 
-public class ActualArgumentList implements ActualOrFormalParameterList{
+public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList{
 	public ActualArgumentList() {
-		arguments_ = new SimpleList();
+		super(new SimpleList());
 	}
 	public void addActualArgument(Expression argument) {
-		// arguments_.insertAtStart(argument);
-		arguments_.add(argument);
+		addArgument(argument);
 	}
-	public Expression argumentAtPosition(int i) {
-		return (Expression)arguments_.objectAtIndex(i);
-	}
-	
-	// NOTE: This method is here just for genericity in
-	// implementing the ActualOrFormalParameterList interface
-	public Type typeOfParameterAtPosition(int i) {
-		return this.argumentAtPosition(i).type();
-	}
-	
-	public String nameOfParameterAtPosition(int i) {
-		return this.argumentAtPosition(i).name();
-	}
-	
-	public int count() {
-		return arguments_.count();
+	public Expression parameterAtPosition(int i) {
+		return (Expression)this.parameterAtIndex(i);
 	}
 	public String getText() {
 		String retval = "";
-		final int l = arguments_.count();
+		final int l = count();
 		for (int i = 0; i < l; i++) {
-			Expression e = (Expression)arguments_.objectAtIndex(i);
+			Expression e = (Expression)parameterAtIndex(i);
 			retval += e.getText();
 			if (i < l-1) retval += ", ";
 		}
 		return retval;
 	}
 	public void addFirstActualParameter(Expression e) {
-		arguments_.insertAtStart(e);
+		insertAtStart(e);
 	}
-	
-	private SimpleList arguments_;
+	@Override public Type typeOfParameterAtPosition(int i) {
+		return parameterAtPosition(i).type();
+	}
+	@Override public String nameOfParameterAtPosition(int i) {
+		return parameterAtPosition(i).name();
+	}
 }

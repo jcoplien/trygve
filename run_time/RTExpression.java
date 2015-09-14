@@ -232,6 +232,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTQualifiedIdentifier extends RTExpression {
 		public RTQualifiedIdentifier(String name, Expression expr) {
 			super();
+			expr_ = expr;
 			part2_ = new RTQualifiedIdentifierPart2(name);
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
 			qualifier_ = RTExpression.makeExpressionFrom(qie.qualifier());
@@ -271,12 +272,13 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
-			private RTDynamicScope dynamicScope_;
+			private RTDynamicScope dynamicScope_;	// this should not be in a program element. FIXME.
 			private final String idName_;
 		}
 
 		private final RTExpression qualifier_;
 		private final RTQualifiedIdentifierPart2 part2_;
+		private final Expression expr_;
 	}
 	public static class RTQualifiedIdentifierUnaryOp extends RTExpression {
 		public RTQualifiedIdentifierUnaryOp(String name, Expression expr) {
@@ -622,7 +624,8 @@ public abstract class RTExpression extends RTCode {
 			
 			
 			final ActualArgumentList argList = actualParameters_;
-			final Expression thisDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
+			final Expression thisDeclaration = (Expression)argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
+			assert null != thisDeclaration && thisDeclaration instanceof Expression;
 			Type typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
 			
 			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod,indexForThisExtraction);
@@ -682,7 +685,8 @@ public abstract class RTExpression extends RTCode {
 			final RTCode myNextCode = nextCode();
 			RTCode retval = myNextCode, previous = null;
 			for (int i = 0; i < actualParameters_.count(); i++) {
-				final Expression anArgument = actualParameters_.argumentAtPosition(i);
+				final Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
+				assert null != anArgument && anArgument instanceof Expression;
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument);
 				expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
 				if (null != rtCodePointer) { 	// can happen with programmer errors
@@ -1848,28 +1852,6 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression conditionalExpression_;
 	}
 	
-	protected List<RTExpression> expressionListFromObjectDeclarations(List<ObjectDeclaration> initDecls) {
-		List<RTExpression> retval = new ArrayList<RTExpression>();
-		
-		// We're looking mainly for initializations on object declarations
-		RTExpression previous = null;
-		for (ObjectDeclaration aDecl : initDecls) {
-			final Expression initialization = aDecl.initializationExpression();
-			if (null != initialization) {
-				// FIXME. I'm not sure this will work for all identifiers... Consider roles...
-				final Expression lhs = new IdentifierExpression(aDecl.name(), aDecl.type(), aDecl.enclosingScope());
-				
-				final AssignmentExpression assignment = new AssignmentExpression(lhs, "=", initialization);
-				final RTAssignment assignmentStatement = new RTAssignment(assignment);
-				retval.add(assignmentStatement);
-				if (null != previous) {
-					previous.setNextCode(assignmentStatement);
-				}
-				previous = assignmentStatement;
-			}
-		}
-		return retval;
-	}
 	private static class RTForTestRunner extends RTExpression {
 		public RTForTestRunner(Expression testExpr, RTExpression body, RTPopDynamicScope popScope) {
 			super();
@@ -3019,15 +3001,6 @@ public abstract class RTExpression extends RTCode {
 				final RTType objectType = null;	 // sigh...
 				objectDeclarations_.put(objectDecl.name(), objectType);
 			}
-
-			initializations_ = this.expressionListFromObjectDeclarations(expr.initDecl());
-			
-			final int listSize = initializations_.size();
-			if (0 < listSize) {
-				final RTExpression lastInitialization = initializations_.get(listSize - 1);
-				assert null != rTBlockBody_;
-				lastInitialization.setNextCode(rTBlockBody_);
-			}
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			rTBlockBody_.setResultIsConsumed(expr.resultIsConsumed());
@@ -3076,8 +3049,6 @@ public abstract class RTExpression extends RTCode {
 		
 		private RTExpressionList rTBlockBody_;
 		private Map<String, RTType> objectDeclarations_;
-		private List<RTExpression> initializations_;
-		
 		private RTPopDynamicScope popScope_;
 		private RTNullExpression last_;
 		

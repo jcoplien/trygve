@@ -37,6 +37,7 @@ import declarations.Declaration.TypeDeclarationList;
 import declarations.FormalParameterList;
 import declarations.Message;
 import declarations.Declaration.ClassDeclaration;
+import declarations.Declaration.TemplateDeclaration;
 import expressions.BreakableExpression;
 import expressions.Constant.IntegerConstant;
 import expressions.Constant.StringConstant;
@@ -63,6 +64,7 @@ public class ParsingData {
 		classDeclarations_ = new Stack<ClassDeclaration>();
 		forExpressionStack_ = new Stack<ForExpression>();
 		loopExpressionStack_ = new Stack<Expression>();
+		templateDeclarations_ = new Stack<TemplateDeclaration>();
 		breakableExpressions_ = new HashMap<String, BreakableExpression>();
 		whileExpressionStack_ = new Stack<WhileExpression>();
 		methodSignatureStack_ = new Stack<MethodSignature>();
@@ -121,6 +123,7 @@ public class ParsingData {
 	private Stack<Message>              messages_;
 	private Stack<MethodSignature>      methodSignatureStack_;
 	private Stack<SwitchExpression>     switchExpressionStack_;
+	private Stack<TemplateDeclaration>  templateDeclarations_;
 	private Stack<TypeDeclarationList>  typeDeclarationListStack_;
 	private Stack<WhileExpression>      whileExpressionStack_;
 
@@ -130,6 +133,7 @@ public class ParsingData {
 	private Expression               popBreakableExpression() { return loopExpressionStack_.pop(); }
 	private void                    pushBreakableExpression(Expression e) { loopExpressionStack_.push(e); }
 	public Expression            currentBreakableExpression() { return loopExpressionStack_.peek(); }
+	public ClassDeclaration 	     popClassDeclaration() { return classDeclarations_.pop(); }
 	public ClassDeclaration 	 currentClassDeclaration() { return classDeclarations_.peek(); }
 	public void 					pushClassDeclaration(ClassDeclaration cd) { classDeclarations_.push(cd); };
 	public DoWhileExpression  	     popDoWhileExpression() { popBreakableExpression(); return doWhileExpressionStack_.pop(); }
@@ -150,6 +154,10 @@ public class ParsingData {
 	public void                     pushSwitchExpr(SwitchExpression sw) { switchExpressionStack_.push(sw); pushBreakableExpression(sw); }
 	public SwitchExpression		     popSwitchExpr() { popBreakableExpression(); return switchExpressionStack_.pop(); }
 	public SwitchExpression      currentSwitchExpr() { return switchExpressionStack_.peek(); }
+	public TemplateDeclaration 	     popTemplateDeclaration() { return templateDeclarations_.pop(); }	
+	public TemplateDeclaration 	 currentTemplateDeclaration() { return templateDeclarations_.peek(); }
+	public void 					pushTemplateDeclaration(TemplateDeclaration td) { templateDeclarations_.push(td); };
+
 	public void					    pushTypeDeclarationList(TypeDeclarationList decl) { typeDeclarationListStack_.push(decl); }
 	public TypeDeclarationList		 popTypeDeclarationList() { return typeDeclarationListStack_.pop(); }
 	public TypeDeclarationList   currentTypeDeclarationList() { return typeDeclarationListStack_.peek(); }

@@ -439,11 +439,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class NewExpression extends Expression
 	{
-		public NewExpression(Type classType, Message message, MessageContext ctx) {
+		public NewExpression(Type classType, Message message, int lineNumber) {
 			super("new", classType);
 			message_ = message;
 			classOrContextType_ = classType;
-			lineNumber_ = ctx.getStart().getLine();
+			lineNumber_ = lineNumber;
 		}
 		public Type classType() {
 			return classOrContextType_;

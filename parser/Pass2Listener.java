@@ -49,6 +49,8 @@ import declarations.Declaration.RoleDeclaration;
 import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Declaration.StagePropDeclaration;
+import declarations.Declaration.TemplateDeclaration;
+import declarations.Type.ArrayType;
 import declarations.Type.ClassType;
 import declarations.Type.RoleType;
 import declarations.ActualOrFormalParameterList;
@@ -88,8 +90,12 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected ClassDeclaration lookupOrCreateNewClassDeclaration(String name, StaticScope newScope, ClassDeclaration rawBaseClass, int lineNumber) {
 		return currentScope_.lookupClassDeclarationRecursive(name);
 	}
+	
 	@Override protected void createNewClassTypeSuitableToPass(ClassDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
 	}
+	@Override protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
+	}
+
 	@Override protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber) {
 		// Return value is through currentRole_
 		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(roleName);
@@ -193,7 +199,22 @@ public class Pass2Listener extends Pass1Listener {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 					; // then O.K. Ñ constructor
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for ", currentMethod.name(), "", "");
+					final TemplateDeclaration templateDeclaration = ((ClassDeclaration)otherAssociatedDeclaration).generatingTemplate();
+					if (null != templateDeclaration) {
+						if (currentMethod.name().equals(templateDeclaration.name())) {
+							// o.k. - constructors on templates don't include parameter names
+						} else {
+							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method ", currentMethod.name(), "", "");
+						}
+					} else {
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method ", currentMethod.name(), "", "");
+					}
+				}
+			} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
+				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
+					; // then O.K. Ñ constructor
+				} else {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method ", currentMethod.name(), "", "");
 				}
 			} else {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of ", currentMethod.name(), "", "");
@@ -270,12 +291,28 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// All arguments are evaluated and are pushed onto the stack
 		for (int i = 0; i < argumentList.count(); i++) {
-			final Expression argument = argumentList.argumentAtPosition(i);
+			final Expression argument = (Expression)argumentList.argumentAtPosition(i);
+			assert null != argument & argument instanceof Expression;
 			argument.setResultIsConsumed(true);
 		}
 		
 		final Message newMessage = new Message(selectorName, argumentList, lineNumber);
 		parsingData_.pushMessage(newMessage);
+	}
+	
+	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr) {
+		Expression expression = null;
+		
+		// On pass one, types may not yet be set up so we may
+		// stumble here (particularly if there is a forward reference
+		// to a type). Here on pass 2 we're a bit more anal
+		final ArrayType arrayType = (ArrayType)rawArrayBase.type();
+		assert arrayType instanceof ArrayType;
+		final Type baseType = arrayType.baseType();
+		final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
+		arrayBase.setResultIsConsumed(true);
+		expression = new ArrayIndexExpression(arrayBase, indexExpr);
+		return expression;
 	}
 	
 	@Override protected void checkExprDeclarationLevel(RuleContext ctxParent, Token ctxGetStart) {
@@ -372,7 +409,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		return expression;
     }
-	@Override public void ctorCheck(Type type, Message message, Token ctxGetStart) {
+	@Override public void ctorCheck(Type type, Message message, int lineNumber) {
 		// Is there a constructor?
 		// We're not ready for this until Pass 2
 		final String className = message.selectorName();
@@ -385,7 +422,7 @@ public class Pass2Listener extends Pass1Listener {
 				// So the "new" message actually had arguments, which means
 				// it's expecting a constructor
 				if (null == constructor) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "No matching constructor on class ", className, " for `new« invocation", "");
+					errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
 				}
 			} else if (null != actualArgumentList && 1 == actualArgumentList.count()) {
 				// Could be that just the t$his argument is in the
@@ -514,8 +551,8 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 		} else {
 			for (int j = 0; j < numberOfActualParameters; j++) {
-				final Expression actualParameter = actuals.argumentAtPosition(j);
-				assert actualParameter != null;
+				final Expression actualParameter = (Expression)actuals.argumentAtPosition(j);
+				assert actualParameter != null && actualParameter instanceof Expression;
 				final Type actualParameterType = actualParameter.type();
 
 				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
@@ -617,6 +654,10 @@ public class Pass2Listener extends Pass1Listener {
 		assert classType instanceof ClassType;
 		classType.updateBaseType(baseType);
 		return newClass;
+	}
+	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(String name, TypeDeclaration rawBaseType, Type baseType, int lineNumber) {
+		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
+		return newTemplate;
 	}
 	@Override protected void declareTypeSuitableToPass(StaticScope scope, Type decl) {
 		/* Nothing */

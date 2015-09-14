@@ -38,7 +38,9 @@ import declarations.Declaration.ContextDeclaration;
 import declarations.Declaration.ClassDeclaration;
 import declarations.Declaration.RoleDeclaration;
 import declarations.Declaration.StagePropDeclaration;
+import declarations.Declaration.TemplateDeclaration;
 import declarations.FormalParameterList;
+import declarations.TemplateInstantiationInfo;
 import declarations.Type.BuiltInType;
 import declarations.AccessQualifier;
 import declarations.Type;
@@ -50,7 +52,62 @@ import error.ErrorLogger.ErrorType;
 import add_ons.SystemClass;
 
 public class StaticScope {
-	private static StaticScope globalScope_ = new StaticScope(null);
+	public StaticScope(StaticScope parentScope) {
+		// Usual constructor
+		parentScope_ = parentScope;
+		subScopes_ = new SimpleList();
+		if (parentScope_ != null) {
+			parentScope_.addSubScope(this);
+		}
+		objectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
+		staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
+		typeDeclarationDictionary_ = new HashMap<String, Type>();
+		methodDeclarationDictionary_ = new HashMap<String, ArrayList<MethodDeclaration>>();
+		contextDeclarationDictionary_ = new HashMap<String, ContextDeclaration>();
+		roleDeclarationDictionary_ = new HashMap<String, RoleDeclaration>();
+		classDeclarationDictionary_ = new HashMap<String, ClassDeclaration>();
+		templateDeclarationDictionary_ = new HashMap<String, TemplateDeclaration>();
+		hasDeclarationsThatAreLostBetweenPasses_ = false;
+		templateInstantiationInfo_ = new TemplateInstantiationInfo();
+	}
+	
+	public StaticScope(StaticScope parentScope, boolean losesMemory) {
+		this(parentScope);
+		hasDeclarationsThatAreLostBetweenPasses_ = losesMemory;
+	}
+	
+	public StaticScope(StaticScope scope, String copy, StaticScope newEnclosingScope, Declaration newAssociatedDeclaration, TemplateInstantiationInfo newTypes) {
+		// Special copy constructor, mainly for instantiating templates
+		parentScope_ = newEnclosingScope;
+		subScopes_ = scope.subScopes_;
+		
+		// This will point to the template declaration?
+		associatedDeclaration_ = newAssociatedDeclaration;
+		
+		objectDeclarationDictionary_ = scope.objectDeclarationDictionary_;
+		staticObjectDeclarationDictionary_ = scope.staticObjectDeclarationDictionary_;
+		typeDeclarationDictionary_ = scope.typeDeclarationDictionary_;
+		
+		// methodDeclarationDictionary_ = scope.methodDeclarationDictionary_;
+		methodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
+		for (Map.Entry<String,ArrayList<MethodDeclaration>> iter : scope.methodDeclarationDictionary_.entrySet()) {
+			final String methodSelector = iter.getKey();
+			final ArrayList<MethodDeclaration> decls = new ArrayList<MethodDeclaration>();
+			final ArrayList<MethodDeclaration> oldDecls = iter.getValue();
+			for (MethodDeclaration methodDecl : oldDecls) {
+				final MethodDeclaration newMethodDecl = methodDecl.copyWithNewEnclosingScopeAndTemplateParameters(this, newTypes);
+				decls.add(newMethodDecl);
+			}
+			methodDeclarationDictionary_.put(methodSelector, decls);
+		}
+		contextDeclarationDictionary_ = scope.contextDeclarationDictionary_;
+		classDeclarationDictionary_ = scope.classDeclarationDictionary_;
+		templateDeclarationDictionary_ = scope.templateDeclarationDictionary_;
+		roleDeclarationDictionary_ = scope.roleDeclarationDictionary_;
+		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
+		templateInstantiationInfo_ = newTypes;
+	}
+	
 	public static void resetGlobalScope() {
 		globalScope_ = new StaticScope(null);
 		StaticScope.reinitializeBuiltIns();
@@ -165,27 +222,6 @@ public class StaticScope {
 	
 	public static StaticScope globalScope() { return globalScope_; }
 	
-	public StaticScope(StaticScope parentScope) {
-		parentScope_ = parentScope;
-		subScopes_ = new SimpleList();
-		if (parentScope_ != null) {
-			parentScope_.addSubScope(this);
-		}
-		objectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
-		staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
-		typeDeclarationDictionary_ = new HashMap<String, Type>();
-		methodDeclarationDictionary_ = new HashMap<String, ArrayList<MethodDeclaration>>();
-		contextDeclarationDictionary_ = new HashMap<String, ContextDeclaration>();
-		roleDeclarationDictionary_ = new HashMap<String, RoleDeclaration>();
-		classDeclarationDictionary_ = new HashMap<String, ClassDeclaration>();
-		hasDeclarationsThatAreLostBetweenPasses_ = false;
-	}
-	
-	public StaticScope(StaticScope parentScope, boolean losesMemory) {
-		this(parentScope);
-		hasDeclarationsThatAreLostBetweenPasses_ = losesMemory;
-	}
-	
 	public void declare(Declaration decl) {
 		assert false;
 	}
@@ -296,8 +332,7 @@ public class StaticScope {
 	
 	public void declareClass(ClassDeclaration decl) {
 		final String className = decl.name();
-		if (classDeclarationDictionary_.containsKey(className))
-		{
+		if (classDeclarationDictionary_.containsKey(className)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of class ", className, " in ", name());
 		} else {
 			classDeclarationDictionary_.put(className, decl);
@@ -305,7 +340,33 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
-	public ClassDeclaration lookupClassDeclarationRecursive(String className) {
+	public void declareTemplate(TemplateDeclaration decl) {
+		final String templateName = decl.name();
+		if (templateDeclarationDictionary_.containsKey(templateName)) {
+			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of template ", templateName, " in ", name());
+		} else {
+			templateDeclarationDictionary_.put(templateName, decl);
+		}
+		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
+	}
+	public TemplateDeclaration lookupTemplateDeclarationRecursive(final String templateName) {
+		TemplateDeclaration retval = this.lookupTemplateDeclaration(templateName);
+		if (null == retval) {
+			if (null != parentScope_) {
+				retval = parentScope_.lookupTemplateDeclarationRecursive(templateName);
+			}
+		}
+		return retval;
+	}
+	public TemplateDeclaration lookupTemplateDeclaration(final String templateName) {
+		TemplateDeclaration retval = null;
+		if (templateDeclarationDictionary_.containsKey(templateName)) {
+			retval = templateDeclarationDictionary_.get(templateName);
+		}
+		return retval;
+	}
+	
+	public ClassDeclaration lookupClassDeclarationRecursive(final String className) {
 		ClassDeclaration retval = this.lookupClassDeclaration(className);
 		if (null == retval) {
 			if (null != parentScope_) {
@@ -314,7 +375,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public ClassDeclaration lookupClassDeclaration(String className) {
+	public ClassDeclaration lookupClassDeclaration(final String className) {
 		ClassDeclaration retval = null;
 		if (classDeclarationDictionary_.containsKey(className)) {
 			retval = classDeclarationDictionary_.get(className);
@@ -544,11 +605,15 @@ public class StaticScope {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
 			for (MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
+				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
 				if (ignoreSignature) {
 					retval = aDecl; break;
-				} else if (null == loggedSignature && null == parameterList) {
+				} else if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != loggedSignature && loggedSignature.alignsWith(parameterList)) {
+				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWith(mappedParameterList)) {
 					retval = aDecl; break;
 				}
 			}
@@ -562,9 +627,13 @@ public class StaticScope {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
 			for (MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
-				if (null == loggedSignature && null == parameterList) {
+				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
+				if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(loggedSignature, parameterList, paramToIgnore)) {
+				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, mappedParameterList, paramToIgnore)) {
 					retval = aDecl; break;
 				}
 			}
@@ -617,6 +686,9 @@ public class StaticScope {
 	}
 	public StaticScope parentScope() {
 		return parentScope_;
+	}
+	public void setParentScope(StaticScope scope) {
+		parentScope_ = scope;
 	}
 	
 	public List<ObjectDeclaration> objectDeclarations() {
@@ -782,7 +854,7 @@ public class StaticScope {
 		private Map<String,ArrayList<MethodDeclaration>> requiredMethodDeclarationDictionary_;
 	}
 	
-	private final StaticScope parentScope_;
+	private StaticScope parentScope_;
 	private SimpleList subScopes_;
 	protected Declaration associatedDeclaration_;
 	private final Map<String,ObjectDeclaration> objectDeclarationDictionary_;
@@ -791,6 +863,10 @@ public class StaticScope {
 	private final Map<String,ArrayList<MethodDeclaration>> methodDeclarationDictionary_;
 	private final Map<String,ContextDeclaration> contextDeclarationDictionary_;
 	private final Map<String,ClassDeclaration> classDeclarationDictionary_;
+	private final Map<String,TemplateDeclaration> templateDeclarationDictionary_;
 	private Map<String,RoleDeclaration> roleDeclarationDictionary_;
 	private boolean hasDeclarationsThatAreLostBetweenPasses_;
+	private TemplateInstantiationInfo templateInstantiationInfo_;
+	
+	private static StaticScope globalScope_ = new StaticScope(null);
 }

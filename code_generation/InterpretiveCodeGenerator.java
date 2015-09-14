@@ -39,6 +39,7 @@ import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Declaration.RoleDeclaration;
 import declarations.Declaration.StagePropDeclaration;
+import declarations.Declaration.TemplateDeclaration;
 import declarations.Declaration.TypeDeclarationList;
 import declarations.FormalParameterList;
 import declarations.Type;
@@ -126,6 +127,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (a instanceof RoleDeclaration) {
 				assert false;	// ever get here?
 				this.compileRole((RoleDeclaration)a);
+			} else if (a instanceof TemplateDeclaration) {
+				this.compileTemplate((TemplateDeclaration)a);
 			} else {
 				System.err.print("Unexpected type in TypeDeclarationList: ");
 				System.err.println(a.getClass().getSimpleName());
@@ -159,6 +162,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void compileRole(RoleDeclaration roleDeclaration) {
 		final StaticScope myScope = roleDeclaration.enclosedScope();
 		this.compileScope(myScope);
+	}
+	private void compileTemplate(TemplateDeclaration roleDeclaration) {
+		// We compile instantiations (classes), not the templates themselves.
 	}
 	private void processPrintStreamCall(MethodDeclaration methodDeclaration, TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
@@ -264,7 +270,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final RTMethod rTMethodDecl = runtimeType.lookupMethod(methodDeclaration.name(), methodDeclaration.formalParameterList());
 			final RTType rTType = rTMethodDecl.rTEnclosingType();
 			assert null != rTType;
-			for (BodyPart bodyPart : declarationList.bodyParts()) {
+			for (final BodyPart bodyPart : declarationList.bodyParts()) {
 				for (final RTCode code : this.compileBodyPartForMethodOfType(bodyPart, rTMethodDecl, rTType)) {
 					retval.add(code);
 				}

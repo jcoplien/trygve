@@ -40,9 +40,19 @@ type_declaration_list
 
 type_declaration
         : 'context' JAVA_ID '{' context_body '}'
-        | 'class'   JAVA_ID '{' class_body   '}'
-        | 'class'   JAVA_ID 'extends' JAVA_ID '{' class_body   '}'
+        | 'class'   JAVA_ID type_parameters '{' class_body '}'
+        | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID '{' class_body '}'
+        | 'class'   JAVA_ID '{' class_body '}'
+        | 'class'   JAVA_ID 'extends' JAVA_ID '{' class_body '}'
         ;
+        
+type_parameters
+    	: '<' type_parameter (',' type_parameter)* '>'
+   		;
+
+type_parameter
+    	:   type_name ('extends' type_name)?
+    	;
 
 context_body
         : context_body context_body_element
@@ -156,6 +166,7 @@ compound_type_name
 
 type_name
         : JAVA_ID
+        | JAVA_ID '<' type_name '>'
         | 'int'
         | 'double'
         | 'char'
@@ -199,10 +210,11 @@ abelian_expr
 		| ABELIAN_SUMOP expr                           
 		| LOGICAL_NEGATION expr
 		| NEW message
-        | NEW type_name '[' expr ']'                            
+        | NEW type_name '[' expr ']'
+        | NEW JAVA_ID '<' type_name '>' '(' argument_list ')' 
 		| abelian_expr ABELIAN_MULOP abelian_expr       
 		| abelian_expr ABELIAN_SUMOP abelian_expr             
-		| abelian_expr ABELIAN_RELOP abelian_expr                    
+		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr                    
 		| null_expr
 		| /* this. */ message
         | JAVA_ID
@@ -321,7 +333,7 @@ NULL : 'null' ;
 
 CONST : 'const' ;
 
-ABELIAN_RELOP : '!=' | '==' | '>' | '<' | '>=' | '<=';
+// ABELIAN_RELOP : '!=' | '==' | GT | LT | '>=' | '<=';
 
 LOGICAL_NOT : '!' ;
 
@@ -338,6 +350,10 @@ ABELIAN_MULOP : '*' | '/' | '%' ;
 MINUS : '-' ;
 
 PLUS : '+' ;
+
+LT : '<' ;
+
+GT : '>' ;
 
 LOGICAL_NEGATION : '!' ;
 

@@ -31,6 +31,7 @@ import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.MethodSignature;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Declaration.RoleDeclaration;
+import declarations.Declaration.TemplateDeclaration;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import run_time.RTCode;
@@ -95,8 +96,8 @@ public abstract class Type implements ExpressionStackAPI
 		return retval;
 	}
 	public static class ClassType extends Type {
-		public ClassType(String name, StaticScope scope, ClassType baseClass) {
-			super(scope);
+		public ClassType(String name, StaticScope enclosedScope, ClassType baseClass) {
+			super(enclosedScope);
 			baseClass_ = baseClass;
 			name_ = name;
 		}
@@ -145,6 +146,63 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			return retval;
+		}
+		public void elaborateFromTemplate(TemplateDeclaration templateDeclaration, ClassType baseClass,
+				StaticScope newEnclosedScope, Declaration newAssociatedDeclaration) {
+			baseClass_ = baseClass;
+			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
+			assert null != newEnclosedScope.parentScope();
+			enclosedScope_ = newEnclosedScope;
+			staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
+			for (Map.Entry<String,ObjectDeclaration> iter : nominalType.staticObjectDeclarationDictionary_.entrySet()) {
+				final String name = iter.getKey();
+				final ObjectDeclaration decl = iter.getValue();
+				final ObjectDeclaration declCopy = decl.copy();
+				staticObjectDeclarationDictionary_.put(new String(name), declCopy);
+			}
+			
+			staticObjects_ = new HashMap<String, RTCode>();
+			for (final Map.Entry<String,RTCode> iter : nominalType.staticObjects_.entrySet()) {
+				final String name = iter.getKey();
+				final RTCode programElement = iter.getValue();
+				
+				// We really should do a copy here of program element, but
+				// we'll presume that code isn't modified and cross our
+				// fingers. Adding a dup() function to that class hierarchy
+				// would be quite a chore...
+				staticObjects_.put(new String(name), programElement);
+			}
+		}
+		
+		private String name_;
+		private ClassType baseClass_;
+	}
+	public static class TemplateType extends Type {
+		public TemplateType(String name, StaticScope scope, ClassType baseClass) {
+			super(scope);
+			baseClass_ = baseClass;
+			name_ = name;
+		}
+		@Override public String name() {
+			return name_;
+		}
+		public ClassType baseClass() {
+			return baseClass_;
+		}
+		public void updateBaseType(ClassType baseType) {
+			baseClass_ = baseType;
+		}
+		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+			return true;
+		}
+		@Override public boolean canBeConvertedFrom(Type t) {
+			return true;
+		}
+		@Override public Type type() {
+			return this;
+		}
+		@Override public boolean isBaseClassOf(Type aDerived) {
+			return false;
 		}
 		
 		private String name_;
@@ -413,6 +471,33 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 	}
 	
+	public static class TemplateParameterType extends Type {
+		public TemplateParameterType(String name, ClassType baseClassType) {
+			super(null);
+			name_ = name;
+			baseClassType_ = baseClassType;
+		}
+		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+			return true;
+		}
+		@Override public boolean canBeConvertedFrom(Type t) {
+			return true;
+		}
+		@Override public String name() {
+			return name_;
+		}
+		@Override public Type type() {
+			return this;
+		}
+		public ClassType baseClassType() {
+			return baseClassType_;
+		}
+		
+		private final ClassType baseClassType_;
+		private final String name_;
+	}
+	
+	
 	public abstract boolean canBeConvertedFrom(Type t);
 	public abstract boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass);
 	
@@ -467,7 +552,7 @@ public abstract class Type implements ExpressionStackAPI
 				HierarchySelector.ThisClassOnly);
 	}
 	
-	private StaticScope enclosedScope_;
-	private Map<String, ObjectDeclaration> staticObjectDeclarationDictionary_;
-	private Map<String, RTCode> staticObjects_;
+	protected StaticScope enclosedScope_;
+	protected Map<String, ObjectDeclaration> staticObjectDeclarationDictionary_;
+	protected Map<String, RTCode> staticObjects_;
 }

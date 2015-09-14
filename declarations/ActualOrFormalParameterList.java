@@ -1,5 +1,7 @@
 package declarations;
 
+import java.util.List;
+
 /*
  * Trygve IDE
  *   Copyright ©2015 James O. Coplien
@@ -27,4 +29,5 @@ public interface ActualOrFormalParameterList {
 	public int count();
 	public Type typeOfParameterAtPosition(int i);
 	public String nameOfParameterAtPosition(int i);
+	public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo lt);
 }

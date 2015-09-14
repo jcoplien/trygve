@@ -81,27 +81,6 @@ public class RTMethod extends RTCode {
 		nextCodeIndex_ = 0;
 
 		initializationList_ = new HashMap<String, RTExpression>();
-		processInitializationOfLocals();		// only call to this method...
-	}
-
-	private void processInitializationOfLocals() {
-		// DEPRECATED. FIXME. TODO.
-		return;
-		/*
-		final StaticScope methodScope = methodDeclaration_.enclosedScope();
-		List<ObjectDeclaration> objectDeclarations = methodScope
-				.objectDeclarations();
-		for (ObjectDeclaration objectDecl : objectDeclarations) {
-			final Expression initializationExpression = objectDecl.initializationExpression();
-			if (null != initializationExpression) {
-				// Generate some code to initialize the local
-				final String objectName = objectDecl.name();
-				final RTExpression init = RTExpression
-						.makeExpressionFrom(initializationExpression);
-				initializationList_.put(objectName, init);
-			}
-		}
-		*/
 	}
 
 	public void addCode(List<RTCode> code) {
@@ -112,7 +91,7 @@ public class RTMethod extends RTCode {
 
 	private void growListIfNecessary() {
 		if (nextCodeIndex_ + 1 >= codeSize_) {
-			RTCode[] saveCode = code_;
+			final RTCode[] saveCode = code_;
 			final int saveCodeSize = codeSize_;
 			codeSize_ *= 2;
 			code_ = new RTCode[codeSize_];
@@ -141,10 +120,8 @@ public class RTMethod extends RTCode {
 
 	private void populateActivationRecord() {
 		final StaticScope methodScope = methodDeclaration_.enclosedScope();
-		final List<ObjectDeclaration> objectDeclarations = methodScope
-				.objectDeclarations();
-		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_
-				.currentDynamicScope();
+		final List<ObjectDeclaration> objectDeclarations = methodScope.objectDeclarations();
+		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 		for (ObjectDeclaration od : objectDeclarations) {
 			// RTType runTimeDeclaration =
 			// InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(od);
@@ -164,11 +141,10 @@ public class RTMethod extends RTCode {
 
 	private void initializeLocals() {
 		// NOTE: initializationList_ is not linked in with code_
-
+		
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_
 				.currentDynamicScope();
-		for (Map.Entry<String, RTExpression> iterator : initializationList_
-				.entrySet()) {
+		for (Map.Entry<String, RTExpression> iterator : initializationList_.entrySet()) {
 			// Go into the initializer, and run it to completion
 			final RTExpression initializer = iterator.getValue();
 			for (RTCode pc = initializer.run(); pc != null;) {
@@ -181,8 +157,7 @@ public class RTMethod extends RTCode {
 
 			// Pop off the expression that was previously evaluated
 			// as the initialization value
-			final RTObject value = (RTObject) RunTimeEnvironment.runTimeEnvironment_
-					.popStack();
+			final RTObject value = (RTObject) RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (null == value) {
 				assert null != value;
 			}
@@ -196,8 +171,7 @@ public class RTMethod extends RTCode {
 		// resume execution autonomously.
 	}
 
-	@Override
-	public RTCode run() {
+	@Override public RTCode run() {
 		// A new activation record has just been pushed
 		// by the caller. Parameters are already set up.
 		// Populate it with local variables.
@@ -222,8 +196,7 @@ public class RTMethod extends RTCode {
 		return retval;
 	}
 
-	@Override
-	public void setNextCode(RTCode next) {
+	@Override public void setNextCode(RTCode next) {
 		if (0 < nextCodeIndex_) {
 			code_[nextCodeIndex_].setNextCode(next);
 		}
@@ -244,10 +217,8 @@ public class RTMethod extends RTCode {
 	}
 
 	public RTType rTEnclosingType() {
-		final StaticScope classOrRoleOrContextScope = methodDeclaration_
-				.enclosingScope();
-		final RTType rTType = InterpretiveCodeGenerator
-				.scopeToRTTypeDeclaration(classOrRoleOrContextScope);
+		final StaticScope classOrRoleOrContextScope = methodDeclaration_.enclosingScope();
+		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classOrRoleOrContextScope);
 		return rTType;
 	}
 

@@ -23,36 +23,27 @@ package declarations;
  * 
  */
 
+import java.util.List;
+
 import declarations.Declaration.ObjectDeclaration;
+import declarations.Type.TemplateParameterType;
+import declarations.Type.TemplateType;
 import mylibrary.SimpleList;
 
 
-public class FormalParameterList implements ActualOrFormalParameterList {
+public class FormalParameterList extends ParameterListCommon implements ActualOrFormalParameterList {
 	public FormalParameterList() {
-		formalParameters_ = new SimpleList();
+		super(new SimpleList());
 	}
 	public void addFormalParameter(Declaration parameter) {
-		formalParameters_.insertAtStart(parameter);
-	}
-	public int count() {
-		return formalParameters_.count();
+		insertAtStart(parameter);
 	}
 	public ObjectDeclaration parameterAtPosition(int i) {
-		return (ObjectDeclaration) formalParameters_.objectAtIndex(i);
-	}
-	
-	// NOTE: This method is here just for genericity in
-	// implementing the ActualOrFormalParameterList interface
-	public Type typeOfParameterAtPosition(int i) {
-		return this.parameterAtPosition(i).type();
-	}
-	public String nameOfParameterAtPosition(int i) {
-		return this.parameterAtPosition(i).name();
+		return (ObjectDeclaration) parameterAtIndex(i);
 	}
 	public boolean alignsWith(ActualOrFormalParameterList pl) {
 		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null);
 	}
-	
 	public static boolean alignsWithParameterListIgnoringParam(ActualOrFormalParameterList pl1, ActualOrFormalParameterList pl2, String paramToIgnore) {
 		boolean retval = true;
 		final int myCount = pl1.count();
@@ -67,19 +58,17 @@ public class FormalParameterList implements ActualOrFormalParameterList {
 			final int plCount = pl2.count();
 			if (plCount != myCount) {
 				retval = false;
-// System.out.print("\t");System.out.print(plCount);System.out.print(" ");System.out.print(myCount);System.out.println(" argument count disagreement");
 			} else {
 				for (int i = 0; i < plCount; i++) {
 					final String plName = pl2.nameOfParameterAtPosition(i);
 					if (null != plName && null != paramToIgnore && plName.equals(paramToIgnore)) {
 						continue;
 					}
-// System.out.print("\t");System.out.print(i);System.out.print(": ");System.out.print(pl1.nameOfParameterAtPosition(i));System.out.print(" ");System.out.println(pl2.nameOfParameterAtPosition(i));
 					final Type plt = pl2.typeOfParameterAtPosition(i);
 					final Type myt = pl1.typeOfParameterAtPosition(i);
 					if (plt.enclosedScope() == myt.enclosedScope()) {
 						continue;
-					} else if(plt.isBaseClassOf(myt)) {
+					} else if (plt.isBaseClassOf(myt)) {
 						continue;
 					} else {
 						retval = false;
@@ -91,5 +80,35 @@ public class FormalParameterList implements ActualOrFormalParameterList {
 		return retval;
 	}
 	
-	private SimpleList formalParameters_;
+	@Override public Type typeOfParameterAtPosition(int i) {
+		return parameterAtPosition(i).type();
+	}
+	@Override public String nameOfParameterAtPosition(int i) {
+		return parameterAtPosition(i).name();
+	}
+	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+		final FormalParameterList retval = new FormalParameterList();
+		for (int i = count() - 1; i >= 0; --i) {
+			final ObjectDeclaration aParameter = parameterAtPosition(i);
+			final Type typeOfParameter = typeOfParameterAtPosition(i);
+			
+			// This method's scope has been been given a templateTypes
+			// list only if that scope corresponds to an instantiated
+			// class. We can get here for the lookup in the initial template,
+			// in which case templateTypes.size() == 0. 
+			if (typeOfParameter instanceof TemplateParameterType && templateTypes.size() > 0) {
+				assert templateTypes.size() > i - 1;
+				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
+						aParameter.name(), templateTypes.get(i - 1), aParameter.lineNumber());
+				retval.addFormalParameter(substituteDecl);
+			} else if (typeOfParameter instanceof TemplateType) {
+				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
+						aParameter.name(), templateTypes.classType(), aParameter.lineNumber());
+				retval.addFormalParameter(substituteDecl);
+			} else {
+				retval.addFormalParameter(aParameter);
+			}
+		}
+		return retval;
+	}
 }

@@ -23,7 +23,7 @@ package run_time;
  * 
  */
 
-public class RTCode implements RTStackable {
+public abstract class RTCode implements RTStackable {
 	public RTCode() {
 		super();
 		referenceCount_ = 1;
@@ -43,7 +43,6 @@ public class RTCode implements RTStackable {
 	public RTCode run() {
 		return nextCode_;
 	}
-	
 	public void incrementReferenceCount() {
 		referenceCount_++;
 	}
@@ -53,7 +52,7 @@ public class RTCode implements RTStackable {
 	public long referenceCount() {
 		return referenceCount_;
 	}
-	
-	private long referenceCount_;
+
+	protected long referenceCount_;
 	protected RTCode nextCode_;
 }

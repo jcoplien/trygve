@@ -33,11 +33,13 @@ import declarations.Type.ArrayType;
 import declarations.Type.ClassType;
 import declarations.Type.ContextType;
 import declarations.Type.RoleType;
+import declarations.Type.TemplateParameterType;
+import declarations.Type.TemplateType;
 import semantic_analysis.StaticScope;
 import semantic_analysis.StaticScope.StaticRoleScope;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
-import expressions.Expression;
+import expressions.Expression.IdentifierExpression;
 
 public abstract class Declaration implements BodyPart {
 	public Declaration(String name) {
@@ -59,6 +61,11 @@ public abstract class Declaration implements BodyPart {
 			lineNumber_ = lineNumber;
 			type_ = type;
 		}
+		public ObjectDeclaration copy() {
+			final ObjectDeclaration retval = new ObjectDeclaration(name(), type_, lineNumber_);
+			retval.setEnclosingScope(enclosingScope());
+			return retval;
+		}
 		@Override public Type type() {
 			return type_;
 		}
@@ -75,15 +82,7 @@ public abstract class Declaration implements BodyPart {
 			return name();
 		}
 		
-		// The following two are deprecated. FIXME. TODO.
-		public void setInitializationExpression(Expression initializationExpression) {
-			initializationExpression_ = initializationExpression;
-		}
-		public Expression initializationExpression() {
-			return initializationExpression_;
-		}
-		@Override public int lineNumber()
-		{
+		@Override public int lineNumber() {
 			return lineNumber_;
 		}
 		public void setEnclosingScope(StaticScope scope) {
@@ -94,7 +93,6 @@ public abstract class Declaration implements BodyPart {
 		}
 
 		private Type type_;
-		private Expression initializationExpression_;
 		private int lineNumber_;
 		private StaticScope containingScope_;
 	}
@@ -138,7 +136,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
-		
+
 		private int lineNumber_;
 		protected StaticScope myEnclosedScope_;
 		protected Type type_;
@@ -166,6 +164,7 @@ public abstract class Declaration implements BodyPart {
 		public ClassDeclaration(String name, StaticScope myEnclosedScope, ClassDeclaration baseClass, int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			baseClass_ = baseClass;
+			templateDeclaration_ = null;
 		}
 		public void setType(Type t) {
 			assert t instanceof ClassType;
@@ -174,8 +173,84 @@ public abstract class Declaration implements BodyPart {
 		public ClassDeclaration baseClass() {
 			return baseClass_;
 		}
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, TemplateInstantiationInfo newTypes) {
+			templateDeclaration_ = templateDeclaration;
+			// This turns a TemplateDeclaration into a class
+			final ClassType baseClassType = null == baseClass_? null: (ClassType)baseClass_.type();
+			assert null == baseClassType || baseClassType instanceof ClassType;
+			
+			final StaticScope newEnclosedScope = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(), this, newTypes);
+			final ClassType newClassType = new ClassType(name(), newEnclosedScope, baseClassType);
+			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, newEnclosedScope, this);
+			myEnclosedScope_ = newEnclosedScope;
+			this.setType(newClassType);
+		}
+		public TemplateDeclaration generatingTemplate() {
+			return templateDeclaration_;
+		}
 
 		private ClassDeclaration baseClass_;
+		private TemplateDeclaration templateDeclaration_;
+	}
+	
+	public static class TypeParameter extends Object {
+		public TypeParameter(String name, ClassType baseClassType) {
+			name_ = name;
+			baseClassType_ = baseClassType;
+		}
+		public ClassType baseClassDeclaration() {
+			return baseClassType_;
+		}
+		public String name() {
+			return name_;
+		}
+		public void setArgumentPosition(int i) {
+			argumentPosition_ = i;
+		}
+		public int argumentPosition(int i) {
+			return argumentPosition_;
+		}
+		
+		final private String name_;
+		final private ClassType baseClassType_;
+		private int argumentPosition_;
+	}
+	
+	public static class TemplateDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	{
+		public TemplateDeclaration(String name, StaticScope myEnclosedScope, TypeDeclaration baseClass, int lineNumber) {
+			super(name, lineNumber, myEnclosedScope);
+			baseClass_ = baseClass;
+			argumentPositionCounter_ = 0;
+			typeParameters_ = new ArrayList<TypeParameter>();
+		}
+		public void setType(Type t) {
+			assert t instanceof TemplateType;
+			type_ = t;
+		}
+		public TypeDeclaration baseClass() {
+			return baseClass_;
+		}
+		public List<TypeParameter> typeParameters() {
+			return typeParameters_;
+		}
+		public void addTypeParameter(IdentifierExpression rawTypeParameter) {
+			final TemplateParameterType parameterType = (TemplateParameterType)rawTypeParameter.type();
+			if (null == myEnclosedScope_.lookupTypeDeclaration(parameterType.name())) {
+				final ClassType baseClassType = parameterType.baseClassType();
+				final TypeParameter typeParameter = new TypeParameter(rawTypeParameter.name(),
+						baseClassType);
+				typeParameter.setArgumentPosition(argumentPositionCounter_);
+				argumentPositionCounter_++;
+				typeParameters_.add(typeParameter);
+			
+				myEnclosedScope_.declareType(parameterType);
+			}
+		}
+		
+		private TypeDeclaration baseClass_;
+		private List<TypeParameter> typeParameters_;
+		private int argumentPositionCounter_;
 	}
 	
 	public static class RoleDeclaration extends TypeDeclarationCommon implements TypeDeclaration
@@ -250,17 +325,37 @@ public abstract class Declaration implements BodyPart {
 			if (associatedDeclaration instanceof ContextDeclaration ||
 					associatedDeclaration instanceof ClassDeclaration) {
 				if (name().equals(associatedDeclaration.name())) {
-					assert returnType == null;
+					if (null != returnType) {
+						assert returnType == null;
+					}
+				} else if (associatedDeclaration instanceof ClassDeclaration &&
+						null != ((ClassDeclaration)associatedDeclaration).generatingTemplate()) {
+					if (name().equals(((ClassDeclaration)associatedDeclaration).generatingTemplate().name())) {
+						if (null != returnType) {
+							assert returnType == null;
+						}
+					} else {
+						if (null == returnType) {
+							assert returnType != null;
+						}
+					}
 				} else {
-					assert returnType != null;
+					if (null == returnType) {
+						assert returnType != null;
+					}
 				}
 			} else {
-				assert returnType != null;
+				if (null == returnType) {
+					assert returnType != null;
+				}
 			}
 			returnType_ = returnType;
 			myEnclosedScope_ = myEnclosedScope;
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;
+		}
+		public void setMyEnclosingScope(StaticScope scope) {
+			myEnclosedScope_.setParentScope(scope);
 		}
 		public void addParameterList(FormalParameterList formalParameterList) {
 			assert null != signature_;
@@ -311,6 +406,17 @@ public abstract class Declaration implements BodyPart {
 			} else {
 				retval = new ArrayList<BodyPart>();
 			}
+			return retval;
+		}
+		
+		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(StaticScope newEnclosingScope, TemplateInstantiationInfo newTypes) {
+			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy", newEnclosingScope, null, newTypes);
+			final MethodDeclaration retval = new MethodDeclaration(
+					name(), enclosedScope, returnType_,
+					accessQualifier_, lineNumber_);
+			retval.addParameterList(signature_.formalParameterList());
+			enclosedScope.setDeclaration(retval);
+			retval.body_ = body_;
 			return retval;
 		}
 		
