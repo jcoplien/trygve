@@ -50,8 +50,12 @@ type_parameters
     	: '<' type_parameter (',' type_parameter)* '>'
    		;
 
+type_list
+		: '<' type_name (',' type_name)* '>'
+		;
+
 type_parameter
-    	:   type_name ('extends' type_name)?
+    	: type_name ('extends' type_name)?
     	;
 
 context_body
@@ -166,7 +170,7 @@ compound_type_name
 
 type_name
         : JAVA_ID
-        | JAVA_ID '<' type_name '>'
+        | JAVA_ID type_list
         | 'int'
         | 'double'
         | 'char'
@@ -211,7 +215,7 @@ abelian_expr
 		| LOGICAL_NEGATION expr
 		| NEW message
         | NEW type_name '[' expr ']'
-        | NEW JAVA_ID '<' type_name '>' '(' argument_list ')' 
+        | NEW JAVA_ID type_list '(' argument_list ')' 
 		| abelian_expr ABELIAN_MULOP abelian_expr       
 		| abelian_expr ABELIAN_SUMOP abelian_expr             
 		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr                    

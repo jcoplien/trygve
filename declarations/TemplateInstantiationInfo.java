@@ -3,12 +3,15 @@ package declarations;
 import java.util.ArrayList;
 import java.util.List;
 
+import declarations.Declaration.TemplateDeclaration;
+import declarations.Declaration.TypeParameter;
 import declarations.Type.ClassType;
 
 public class TemplateInstantiationInfo {
-	public TemplateInstantiationInfo() {
+	public TemplateInstantiationInfo(TemplateDeclaration templateDecl) {
 		super();
 		actualParameters_ = new ArrayList<Type>();
+		templateDeclaration_ = templateDecl;
 	}
 	public void addTypeParameter(Type typeParameter) {
 		actualParameters_.add(typeParameter);
@@ -32,7 +35,13 @@ public class TemplateInstantiationInfo {
 	public int size() {
 		return actualParameters_.size();
 	}
+	public Type classSubstitionForTemplateTypeNamed(final String templateTypeName) {
+		final TypeParameter formalTypeParam = templateDeclaration_.typeParameterNamed(templateTypeName);
+		final int parameterPositionOfFormalParam = formalTypeParam.argumentPosition();
+		return this.parameterAtIndex(parameterPositionOfFormalParam);
+	}
 	
 	private List<Type> actualParameters_;
 	private ClassType classType_;
+	private final TemplateDeclaration templateDeclaration_;
 }

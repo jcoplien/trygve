@@ -23,6 +23,7 @@ package parser;
  * 
  */
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -61,6 +62,7 @@ public class ParsingData {
 		expressions_ = new Stack<ExpressionStackAPI>();
 		argumentLists_ = new Stack<ActualArgumentList>();
 		declarationList_ = new Stack<DeclarationList>();
+		typeNameListStack_ = new Stack<ArrayList<String>>();
 		classDeclarations_ = new Stack<ClassDeclaration>();
 		forExpressionStack_ = new Stack<ForExpression>();
 		loopExpressionStack_ = new Stack<Expression>();
@@ -75,6 +77,7 @@ public class ParsingData {
 		breakableRTExpressions_ = new HashMap<String, RTBreakableExpression>();
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
+		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
 	}
 	
 	public void addBreakableExpression(String uniqueName, BreakableExpression breakableExpression) {
@@ -111,6 +114,7 @@ public class ParsingData {
 
 	
 	private Stack<ActualArgumentList>   argumentLists_;
+	private Stack<ArrayList<String>>    typeNameListStack_;
 	private Stack<BlockExpression>      blockExpressionStack_;
 	private Stack<ClassDeclaration>     classDeclarations_;
 	private Stack<DeclarationList>      declarationList_;
@@ -124,6 +128,7 @@ public class ParsingData {
 	private Stack<MethodSignature>      methodSignatureStack_;
 	private Stack<SwitchExpression>     switchExpressionStack_;
 	private Stack<TemplateDeclaration>  templateDeclarations_;
+	private TypeDeclarationList         templateInstantationList_;
 	private Stack<TypeDeclarationList>  typeDeclarationListStack_;
 	private Stack<WhileExpression>      whileExpressionStack_;
 
@@ -142,7 +147,9 @@ public class ParsingData {
 	public ExprAndDeclList			 popExprAndDecl() { return exprAndDeclListStack_.pop(); }
 	public void						pushExprAndDecl(ExprAndDeclList e) { exprAndDeclListStack_.push(e); }
 	public ExprAndDeclList	     currentExprAndDecl() { return exprAndDeclListStack_.peek(); }
-	public void 					pushExpression(ExpressionStackAPI expression) { assert null != expression; expressions_.push(expression); }
+	public void 					pushExpression(ExpressionStackAPI expression) {
+		assert null != expression;
+		expressions_.push(expression); }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
 	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
 	public ForExpression  			 popForExpression() { popBreakableExpression();  return forExpressionStack_.pop(); }
@@ -157,10 +164,13 @@ public class ParsingData {
 	public TemplateDeclaration 	     popTemplateDeclaration() { return templateDeclarations_.pop(); }	
 	public TemplateDeclaration 	 currentTemplateDeclaration() { return templateDeclarations_.peek(); }
 	public void 					pushTemplateDeclaration(TemplateDeclaration td) { templateDeclarations_.push(td); };
-
 	public void					    pushTypeDeclarationList(TypeDeclarationList decl) { typeDeclarationListStack_.push(decl); }
 	public TypeDeclarationList		 popTypeDeclarationList() { return typeDeclarationListStack_.pop(); }
 	public TypeDeclarationList   currentTypeDeclarationList() { return typeDeclarationListStack_.peek(); }
+	public TypeDeclarationList   currentTemplateInstantiationList() { return templateInstantationList_; }
+	public void                     pushTypeNameList(ArrayList<String> los) { typeNameListStack_.push(los); }
+    public ArrayList<String>         popTypeNameList() { return typeNameListStack_.pop(); }
+    public ArrayList<String>     currentTypeNameList() { return typeNameListStack_.peek(); }
 	public WhileExpression  		 popWhileExpression() { popBreakableExpression(); return whileExpressionStack_.pop(); }
 	public void 					pushWhileExpression(WhileExpression expr) { whileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public WhileExpression 		 currentWhileExpression() { return whileExpressionStack_.peek(); }

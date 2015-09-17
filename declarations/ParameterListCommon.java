@@ -1,7 +1,5 @@
 package declarations;
 
-import java.util.List;
-
 import mylibrary.SimpleList;
 
 public abstract class ParameterListCommon implements ActualOrFormalParameterList  {

@@ -39,6 +39,7 @@ import parser.KantParser.ProgramContext;
 import parser.KantParser.Role_bodyContext;
 import parser.KantParser.Role_declContext;
 import parser.KantParser.Type_declarationContext;
+import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.Declaration;
 import declarations.Declaration.ContextDeclaration;
@@ -59,6 +60,7 @@ import declarations.ActualArgumentList;
 import declarations.FormalParameterList;
 import declarations.Type.ContextType;
 import declarations.Type.StagePropType;
+import declarations.Type.TemplateType;
 import declarations.TypeDeclaration;
 import semantic_analysis.StaticScope;
 import error.ErrorLogger;
@@ -84,8 +86,6 @@ public class Pass2Listener extends Pass1Listener {
 		currentScope_ = parsingData_.globalScope();
 		currentContext_ = null;
 	}
-	
-	// Here's where Contexts are created
 	
 	@Override protected ClassDeclaration lookupOrCreateNewClassDeclaration(String name, StaticScope newScope, ClassDeclaration rawBaseClass, int lineNumber) {
 		return currentScope_.lookupClassDeclarationRecursive(name);
@@ -366,6 +366,7 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	
 	// ------------------------------------------------------------------------------------------------------- 
+	
 	public ExpressionStackAPI exprFromExprDotJavaId(TerminalNode ctxJAVA_ID, Token ctxGetStart) {
 		// : expr '.' JAVA_ID
 		// Pop the expression for the indicated object and message
@@ -417,17 +418,21 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != type) {
 			// Under error conditions we sometimes get a null type parameter
 			final StaticScope declarationScope = type.enclosedScope();
-			final MethodDeclaration constructor = declarationScope.lookupMethodDeclaration(type.name(), actualArgumentList, false);
-			if (null != actualArgumentList && 1 < actualArgumentList.count()) {
-				// So the "new" message actually had arguments, which means
-				// it's expecting a constructor
-				if (null == constructor) {
-					errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
+			
+			// Can be null in error condition
+			if (null != declarationScope) {
+				final MethodDeclaration constructor = declarationScope.lookupMethodDeclaration(type.name(), actualArgumentList, false);
+				if (null != actualArgumentList && 1 < actualArgumentList.count()) {
+					// So the "new" message actually had arguments, which means
+					// it's expecting a constructor
+					if (null == constructor) {
+						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
+					}
+				} else if (null != actualArgumentList && 1 == actualArgumentList.count()) {
+					// Could be that just the t$his argument is in the
+					// actual argument list.
+					message.setArgumentList(new ActualArgumentList());
 				}
-			} else if (null != actualArgumentList && 1 == actualArgumentList.count()) {
-				// Could be that just the t$his argument is in the
-				// actual argument list.
-				message.setArgumentList(new ActualArgumentList());
 			}
 		}
 	}
@@ -493,11 +498,26 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		} else if (objectType instanceof ClassType) {
 			final ClassType classObjectType = (ClassType) objectType;
-			final MethodDeclaration methodDeclaration = classObjectType.enclosedScope().lookupMethodDeclarationRecursive(
-					message.selectorName(), message.argumentList(), false);
+			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
+			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
+			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
+						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
+						null;
+			MethodDeclaration methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
+						null;
 			if (null == methodDeclaration) {
-				// Mainly for error recovery (bad argument to method)
-				return null;		// punt
+				// If we're inside of a template, many argument types won't match.
+				// Try anyhow and see if we can find something.
+				methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
+							null;
+				if (null == methodDeclaration) {
+					// Mainly for error recovery (bad argument to method)
+					return null;		// punt
+				} else {
+					methodSignature = methodDeclaration.signature();
+				}
 			} else {
 				methodSignature = methodDeclaration.signature();
 			}
@@ -561,11 +581,17 @@ public class Pass2Listener extends Pass1Listener {
 				if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
 					continue;
 				} else {
-					final String actualParamMsg = actualParameter.getText() + " (" + actualParameterType.name() + ")";
-					final String formalParamMsg = "`" + formalParameter.name() + "« (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of actual parameter ", actualParamMsg,
-							" in call of `", mdecl.name(), "« does not match type of formal parameter ", formalParamMsg);
-				}
+					final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+					if (enclosingType instanceof TemplateType) {
+						// It could just work. This is just the template we're processing. Check things out
+						// later in the class instead.
+					} else {
+						final String actualParamMsg = actualParameter.getText() + "« (" + actualParameterType.name() + ")";
+						final String formalParamMsg = "`" + formalParameter.name() + "« (" + formalParameterType.name() + " " + formalParameter.name() + ")";
+						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+								" in call of `", mdecl.name(), "« does not match type of formal parameter ", formalParamMsg);
+					}
+				}	
 			}
 		}
 	}

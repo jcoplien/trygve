@@ -68,7 +68,7 @@ public class StaticScope {
 		classDeclarationDictionary_ = new HashMap<String, ClassDeclaration>();
 		templateDeclarationDictionary_ = new HashMap<String, TemplateDeclaration>();
 		hasDeclarationsThatAreLostBetweenPasses_ = false;
-		templateInstantiationInfo_ = new TemplateInstantiationInfo();
+		templateInstantiationInfo_ = null;
 	}
 	
 	public StaticScope(StaticScope parentScope, boolean losesMemory) {
@@ -76,19 +76,32 @@ public class StaticScope {
 		hasDeclarationsThatAreLostBetweenPasses_ = losesMemory;
 	}
 	
-	public StaticScope(StaticScope scope, String copy, StaticScope newEnclosingScope, Declaration newAssociatedDeclaration, TemplateInstantiationInfo newTypes) {
+	public StaticScope(StaticScope scope, String copy, StaticScope newEnclosingScope,
+			Declaration newAssociatedDeclaration, TemplateInstantiationInfo newTypes) {
 		// Special copy constructor, mainly for instantiating templates
-		parentScope_ = newEnclosingScope;
-		subScopes_ = scope.subScopes_;
+		super();
+		assert null != newTypes;
+		
+		parentScope_ = newEnclosingScope;	// could be global scope. just don't want it to be the template
+		if (null != parentScope_) {
+			parentScope_.addSubScope(this);
+		}
+		subScopes_ = scope.subScopes_;		// will update below
 		
 		// This will point to the template declaration?
-		associatedDeclaration_ = newAssociatedDeclaration;
+		// No, not always. Ideally, a class like List<int,String>
+		this.setDeclaration(newAssociatedDeclaration);
 		
 		objectDeclarationDictionary_ = scope.objectDeclarationDictionary_;
 		staticObjectDeclarationDictionary_ = scope.staticObjectDeclarationDictionary_;
 		typeDeclarationDictionary_ = scope.typeDeclarationDictionary_;
+		contextDeclarationDictionary_ = scope.contextDeclarationDictionary_;
+		classDeclarationDictionary_ = scope.classDeclarationDictionary_;
+		templateDeclarationDictionary_ = scope.templateDeclarationDictionary_;
+		roleDeclarationDictionary_ = scope.roleDeclarationDictionary_;
+		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
+		templateInstantiationInfo_ = newTypes;
 		
-		// methodDeclarationDictionary_ = scope.methodDeclarationDictionary_;
 		methodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
 		for (Map.Entry<String,ArrayList<MethodDeclaration>> iter : scope.methodDeclarationDictionary_.entrySet()) {
 			final String methodSelector = iter.getKey();
@@ -97,15 +110,11 @@ public class StaticScope {
 			for (MethodDeclaration methodDecl : oldDecls) {
 				final MethodDeclaration newMethodDecl = methodDecl.copyWithNewEnclosingScopeAndTemplateParameters(this, newTypes);
 				decls.add(newMethodDecl);
+				subScopes_.remove(methodDecl.enclosedScope());
+				subScopes_.add(newMethodDecl.enclosedScope());
 			}
 			methodDeclarationDictionary_.put(methodSelector, decls);
 		}
-		contextDeclarationDictionary_ = scope.contextDeclarationDictionary_;
-		classDeclarationDictionary_ = scope.classDeclarationDictionary_;
-		templateDeclarationDictionary_ = scope.templateDeclarationDictionary_;
-		roleDeclarationDictionary_ = scope.roleDeclarationDictionary_;
-		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
-		templateInstantiationInfo_ = newTypes;
 	}
 	
 	public static void resetGlobalScope() {
@@ -675,7 +684,7 @@ public class StaticScope {
 	}
 	
 	// Scope management
-	public void setDeclaration(Declaration associatedDeclaration) {
+	public void setDeclaration(final Declaration associatedDeclaration) {
 		associatedDeclaration_ = associatedDeclaration;
 	}
 	public Declaration associatedDeclaration() {
@@ -852,6 +861,10 @@ public class StaticScope {
 		}
 		
 		private Map<String,ArrayList<MethodDeclaration>> requiredMethodDeclarationDictionary_;
+	}
+	
+	public final TemplateInstantiationInfo templateInstantiationInfo() {
+		return templateInstantiationInfo_;
 	}
 	
 	private StaticScope parentScope_;

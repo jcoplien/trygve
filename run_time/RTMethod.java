@@ -33,9 +33,11 @@ import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.FormalParameterList;
 import declarations.Type;
+import declarations.Type.ClassType;
+import declarations.Type.TemplateType;
+import declarations.TemplateInstantiationInfo;
 import expressions.Expression;
 import expressions.Expression.ReturnExpression;
-import expressions.Expression.NullExpression;
 import expressions.Expression.TopOfStackExpression;
 import run_time.RTExpression.RTReturn;
 import run_time.RTObjectCommon.RTNullObject;
@@ -43,15 +45,27 @@ import run_time.RTObjectCommon.RTNullObject;
 public class RTMethod extends RTCode {
 	public RTMethod(String name, MethodDeclaration methodDeclaration) {
 		super();
+		
+		// Get ClassType as a handle to template information
+		final StaticScope methodScope = methodDeclaration.enclosedScope();
+		Type rawClassType = Expression.nearestEnclosingMegaTypeOf(methodScope);
+		if (false == rawClassType instanceof ClassType) {
+			rawClassType = null;
+		}
+		final ClassType classType = (null == rawClassType)? null: (ClassType)rawClassType;
+		final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
+		
 		ReturnExpression returnExpression = null;
 		name_ = name;
 		codeSize_ = 10;
 		nextCodeIndex_ = 0;
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
-		if (null != returnType_
-				&& returnType_ != StaticScope.globalScope()
-						.lookupTypeDeclaration("void")) {
+		if (null != returnType_ && returnType_ instanceof TemplateType) {
+			assert null != templateInstantiationInfo;
+			returnType_ = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType_.name());
+		} else if (null != returnType_
+				&& returnType_ != StaticScope.globalScope().lookupTypeDeclaration("void")) {
 			final Expression dummyReturnExpression = new TopOfStackExpression();
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber());

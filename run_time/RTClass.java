@@ -43,8 +43,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		nameToStagePropObjectMap_ = new HashMap<String, RTStageProp>();
 		RunTimeEnvironment.runTimeEnvironment_.addToListOfAllClasses(this);
 		
-		populateNameToTypeObjectMap();
-		populateNameToStaticObjectMap();
+		super.populateNameToTypeObjectMap();
+		super.populateNameToStaticObjectMap();
 	}
 	@Override public void addClass(String typeName, RTClass classDecl) {
 		stringToClassDeclMap_.put(typeName, classDecl);

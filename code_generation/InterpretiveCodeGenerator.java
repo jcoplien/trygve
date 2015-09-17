@@ -110,9 +110,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		List<TypeDeclaration> typeDeclarationList = SystemClass.typeDeclarationList();
 		compileDeclarations(typeDeclarationList);
 				
-		final TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
+		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
 		typeDeclarationList = typeDeclarationListWrapper.declarations();
 		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationListWrapper = program_.templateInstantiations();
+		typeDeclarationList = typeDeclarationListWrapper.declarations();
+		compileDeclarations(typeDeclarationList);
+		
 		compileMain();
 	}
 	private void compileDeclarations(final List<TypeDeclaration> typeDeclarationList) {

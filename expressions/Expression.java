@@ -48,6 +48,7 @@ import declarations.Declaration.ObjectDeclaration;
 import declarations.Declaration.RoleDeclaration;
 import declarations.Declaration;
 import declarations.Declaration.StagePropDeclaration;
+import declarations.Declaration.TemplateDeclaration;
 import declarations.Message;
 import declarations.Type;
 import declarations.Type.ClassType;
@@ -1350,6 +1351,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			} else if (associatedDeclaration instanceof RoleDeclaration) {
 				return associatedDeclaration.type();
 			} else if (associatedDeclaration instanceof ContextDeclaration) {
+				return associatedDeclaration.type();
+			} else if (associatedDeclaration instanceof TemplateDeclaration) {
 				return associatedDeclaration.type();
 			}
 			scope = scope.parentScope();

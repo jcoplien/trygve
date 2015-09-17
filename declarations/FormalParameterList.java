@@ -23,8 +23,6 @@ package declarations;
  * 
  */
 
-import java.util.List;
-
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Type.TemplateParameterType;
 import declarations.Type.TemplateType;
@@ -87,6 +85,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return parameterAtPosition(i).name();
 	}
 	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+		// templateTypes can be null if we're processing a lookup in an actual template
 		final FormalParameterList retval = new FormalParameterList();
 		for (int i = count() - 1; i >= 0; --i) {
 			final ObjectDeclaration aParameter = parameterAtPosition(i);
@@ -96,12 +95,12 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			// list only if that scope corresponds to an instantiated
 			// class. We can get here for the lookup in the initial template,
 			// in which case templateTypes.size() == 0. 
-			if (typeOfParameter instanceof TemplateParameterType && templateTypes.size() > 0) {
+			if (null != typeOfParameter && typeOfParameter instanceof TemplateParameterType && null != templateTypes && templateTypes.size() > 0) {
 				assert templateTypes.size() > i - 1;
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
 						aParameter.name(), templateTypes.get(i - 1), aParameter.lineNumber());
 				retval.addFormalParameter(substituteDecl);
-			} else if (typeOfParameter instanceof TemplateType) {
+			} else if (null != typeOfParameter && typeOfParameter instanceof TemplateType && null != templateTypes) {
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
 						aParameter.name(), templateTypes.classType(), aParameter.lineNumber());
 				retval.addFormalParameter(substituteDecl);

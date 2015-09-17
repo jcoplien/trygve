@@ -30,8 +30,10 @@ import java.util.Map;
 import code_generation.InterpretiveCodeGenerator;
 import semantic_analysis.StaticScope;
 import declarations.Declaration.ObjectDeclaration;
+import declarations.Type.ClassType;
 import declarations.ActualOrFormalParameterList;
 import declarations.FormalParameterList;
+import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.TypeDeclaration;
 import run_time.RTObjectCommon.RTNullObject;
@@ -48,6 +50,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 		nameToRoleDeclMap_ = new HashMap<String, RTRole>();
 		nameToRoleBindingMap_ = new HashMap<String, RTObject>();;
 		typeDeclaration_ = typeDeclaration;
+		
+		// Get TemplateInstantiationInfo, if a any
+		final Type classType = typeDeclaration.type();
+		if (classType instanceof ClassType) {
+			templateInstantiationInfo_ = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
+		} else {
+			templateInstantiationInfo_ = null;
+		}
 	}
 	@Override public RTObject defaultObject() {
 		final RTObject retval = new RTObjectCommon(this);
@@ -66,7 +76,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 	protected void populateNameToStaticObjectMap() {
 		assert null != typeDeclaration_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
-		Map<String, ObjectDeclaration> staticDeclarations = enclosedScope.staticObjectDeclarations();
+		final Map<String, ObjectDeclaration> staticDeclarations = enclosedScope.staticObjectDeclarations();
 		
 		final RTObject nullObject = new RTNullObject();
 
@@ -107,7 +117,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 	public RTRole getRole(String name) {
 		return nameToRoleDeclMap_.get(name);
 	}
-	public void addMethod(String methodName, RTMethod methodDecl) {
+	@Override public void addMethod(String methodName, RTMethod methodDecl) {
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
 			for (Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
@@ -118,7 +128,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);
 		} else {
-			Map<FormalParameterList, RTMethod> newVector = new HashMap<FormalParameterList, RTMethod>();
+			final Map<FormalParameterList, RTMethod> newVector = new HashMap<FormalParameterList, RTMethod>();
 			newVector.put(methodDecl.formalParameters(), methodDecl);
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}
@@ -130,9 +140,15 @@ public abstract class RTClassAndContextCommon implements RTType {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
-			for (Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
+			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
 				final FormalParameterList loggedSignature = aPair.getKey();
-				if (FormalParameterList.alignsWithParameterListIgnoringParam(loggedSignature, pl, ignoreName)) {
+				
+				ActualOrFormalParameterList mappedLoggedSignature = loggedSignature;
+				if (null != templateInstantiationInfo_) {
+					mappedLoggedSignature = loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				}
+				
+				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, pl, ignoreName)) {
 					retval = aPair.getValue();
 					break;
 				}
@@ -170,4 +186,5 @@ public abstract class RTClassAndContextCommon implements RTType {
 	private Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
 	protected Map<String, RTObject> nameToStaticObjectMap_;
 	private Map<String, Type> nameToStaticObjectTypeMap_;
+	final TemplateInstantiationInfo templateInstantiationInfo_;
 }

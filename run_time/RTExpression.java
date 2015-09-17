@@ -32,6 +32,7 @@ import java.util.Stack;
 import parser.ParsingData;
 import code_generation.InterpretiveCodeGenerator;
 import declarations.ActualArgumentList;
+import declarations.ActualOrFormalParameterList;
 import declarations.BodyPart;
 import declarations.Declaration;
 import declarations.Declaration.ContextDeclaration;
@@ -39,6 +40,7 @@ import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.RoleDeclaration;
 import declarations.FormalParameterList;
 import declarations.Message;
+import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.Type.ArrayType;
 import declarations.Type.ClassType;
@@ -497,6 +499,15 @@ public abstract class RTExpression extends RTCode {
 							methodSelectorName_, " on a null Java object", "");
 					assert null != rTTypeOfSelf;
 				}
+				
+				final ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
+				final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.templateInstantiationInfo();
+				
+				ActualOrFormalParameterList actualParameters = actualParameters_;
+				if (null != templateInstantiationInfo) {
+					actualParameters = actualParameters.mapTemplateParameters(templateInstantiationInfo);
+				}
+				
 				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName_, actualParameters_, "this");
 				if (null == methodDecl) {
 					assert null != methodDecl;
@@ -511,7 +522,7 @@ public abstract class RTExpression extends RTCode {
 			RTCode pc = start;
 			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 			RTObject self = null;
-			for (int loopCounter = 0; null != pc; loopCounter++) {
+			while (null != pc) {
 				// This evaluation leaves a result on the stack Ñ
 				// a result which will be a parameter to the method
 				
@@ -521,22 +532,7 @@ public abstract class RTExpression extends RTCode {
 				// off the stack Ñ but what's sitting on the stack is the return
 				// address for the method (RTPostReturnProcessing) and "nextInstruction"
 				// points to a method
-				@SuppressWarnings("unused")
-				RTCode nextInstruction = pc.run();
-				
-				/*
-				if (loopCounter == expressionCounterForThisExtraction) {
-					assert RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0;
-					self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.peekStack();
-				}
-				
-				final RTCode oldPc = pc;
-				pc = pc.nextCode();
-				if (null != pc) {
-					pc.incrementReferenceCount();
-				}
-				oldPc.decrementReferenceCount();
-				*/
+				final RTCode nextInstruction = pc.run();
 				
 				final RTCode oldPc = pc;
 				pc = nextInstruction;

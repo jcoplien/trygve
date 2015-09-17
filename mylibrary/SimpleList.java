@@ -67,7 +67,10 @@ public class SimpleList {
 		boolean removed = false;
 		for (int i = 0; i < numElements_; i++) {
 			if (removed) {
-				rep_[i] = rep_[i+1];
+				if (i+1 < numElements_) {
+					// Only if we haven't just removed the last one
+					rep_[i] = rep_[i+1];
+				}
 			} else {
 				if (o == rep_[i]) {
 					rep_[i] = rep_[i+1];

@@ -27,9 +27,10 @@ import declarations.Declaration.TypeDeclarationList;
 import expressions.Expression;
 
 public class Program {
-	public Program(Expression main, TypeDeclarationList theRest) {
+	public Program(Expression main, TypeDeclarationList theRest, TypeDeclarationList templateInstantationList_) {
 		main_ = main;
 		theRest_ = theRest;
+		templateInstantiations_ = templateInstantationList_;
 		program_ = this;
 	}
 	public static Program program() {
@@ -38,10 +39,13 @@ public class Program {
 	public Expression main() {
 		return main_;
 	}
+	public TypeDeclarationList templateInstantiations() {
+		return templateInstantiations_;
+	}
 	public TypeDeclarationList theRest() {
 		return theRest_;
 	}
-	private Expression main_;
-	private TypeDeclarationList theRest_;
+	private final Expression main_;
+	private final TypeDeclarationList theRest_, templateInstantiations_;
 	private static Program program_ = null;
 }

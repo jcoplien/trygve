@@ -179,10 +179,10 @@ public abstract class Declaration implements BodyPart {
 			final ClassType baseClassType = null == baseClass_? null: (ClassType)baseClass_.type();
 			assert null == baseClassType || baseClassType instanceof ClassType;
 			
-			final StaticScope newEnclosedScope = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(), this, newTypes);
-			final ClassType newClassType = new ClassType(name(), newEnclosedScope, baseClassType);
-			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, newEnclosedScope, this);
-			myEnclosedScope_ = newEnclosedScope;
+			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
+					this, newTypes);
+			final ClassType newClassType = new ClassType(name(), myEnclosedScope_, baseClassType);
+			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, myEnclosedScope_, this);
 			this.setType(newClassType);
 		}
 		public TemplateDeclaration generatingTemplate() {
@@ -207,7 +207,7 @@ public abstract class Declaration implements BodyPart {
 		public void setArgumentPosition(int i) {
 			argumentPosition_ = i;
 		}
-		public int argumentPosition(int i) {
+		public int argumentPosition() {
 			return argumentPosition_;
 		}
 		
@@ -233,6 +233,16 @@ public abstract class Declaration implements BodyPart {
 		}
 		public List<TypeParameter> typeParameters() {
 			return typeParameters_;
+		}
+		public TypeParameter typeParameterNamed(final String name) {
+			TypeParameter retval = null;
+			for (final TypeParameter tp : typeParameters_) {
+				if (tp.name().equals(name)) {
+					retval = tp;
+					break;
+				}
+			}
+			return retval;
 		}
 		public void addTypeParameter(IdentifierExpression rawTypeParameter) {
 			final TemplateParameterType parameterType = (TemplateParameterType)rawTypeParameter.type();
@@ -409,8 +419,12 @@ public abstract class Declaration implements BodyPart {
 			return retval;
 		}
 		
-		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(StaticScope newEnclosingScope, TemplateInstantiationInfo newTypes) {
-			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy", newEnclosingScope, null, newTypes);
+		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(
+				StaticScope newEnclosingScope,
+				TemplateInstantiationInfo newTypes
+		) {
+			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy",
+					newEnclosingScope, null, newTypes);
 			final MethodDeclaration retval = new MethodDeclaration(
 					name(), enclosedScope, returnType_,
 					accessQualifier_, lineNumber_);

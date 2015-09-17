@@ -173,6 +173,9 @@ public abstract class Type implements ExpressionStackAPI
 				staticObjects_.put(new String(name), programElement);
 			}
 		}
+		public final TemplateInstantiationInfo templateInstantiationInfo() {
+			return enclosedScope_.templateInstantiationInfo();
+		}
 		
 		private String name_;
 		private ClassType baseClass_;
