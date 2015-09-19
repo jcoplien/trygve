@@ -637,6 +637,9 @@ private void showCButtonActionPerformed() {//GEN-FIRST:event_showCButtonActionPe
 			"10. If you wish to incorporate parts of the Program into other free programs whose distribution conditions are different, write to the author to ask for permission. For software which is copyrighted by the Free Software Foundation, write to the Free Software Foundation; we sometimes make exceptions for this. Our decision will be guided by the two goals of preserving the free status of all derivatives of our free software and of promoting the sharing and reuse of software generally.\n\n");
 }//GEN-LAST:event_showCFileButtonActionPerformed
 
+public String getFileNameField() {
+	return fileSystemTextField.getText();
+}
 public void setFileNameField(String fileName) {
 	fileSystemTextField.setText(fileName);
 }

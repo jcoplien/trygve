@@ -68,13 +68,13 @@ public class RTMethod extends RTCode {
 				&& returnType_ != StaticScope.globalScope().lookupTypeDeclaration("void")) {
 			final Expression dummyReturnExpression = new TopOfStackExpression();
 			returnExpression = new ReturnExpression(dummyReturnExpression,
-					methodDeclaration.lineNumber());
+					methodDeclaration.lineNumber(), rawClassType);
 			returnExpression.setResultIsConsumed(true);
 		} else {
 			// Put one in anyhow, even though there is no return value...
 			final Expression dummyReturnExpression = null;
 			returnExpression = new ReturnExpression(dummyReturnExpression,
-					methodDeclaration.lineNumber());
+					methodDeclaration.lineNumber(), rawClassType);
 			returnExpression.setResultIsConsumed(false);
 		}
 

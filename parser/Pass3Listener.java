@@ -107,7 +107,8 @@ public class Pass3Listener extends Pass2Listener {
 		}
 		final MethodDeclaration methodDecl = (MethodDeclaration)findProperMethodScopeAround(ctxExpr, ctxParent, ctxGetStart);
 		if (null == methodDecl) {
-			returnExpression = new ReturnExpression(new NullExpression(), ctxGetStart.getLine());
+			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			returnExpression = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
 			ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
 		} else {
 			assert methodDecl instanceof MethodDeclaration;
@@ -132,7 +133,10 @@ public class Pass3Listener extends Pass2Listener {
 	@Override protected void setMethodBodyAccordingToPass(MethodDeclaration currentMethod)
 	{
 		final ExprAndDeclList body = parsingData_.popExprAndDecl();
-		body.addAssociatedDeclaration(currentMethod);	// maybe not needed, but looks nice 
+		body.addAssociatedDeclaration(currentMethod);	// maybe not needed, but looks nice
+		// Because we set bodies just here in Pass 3, we need
+		// another pass for template instantiations to pull
+		// the body code
 		currentMethod.setBody(body);
 	}
 	

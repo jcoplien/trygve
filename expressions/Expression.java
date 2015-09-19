@@ -30,7 +30,6 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.Token;
 
-import parser.KantParser.MessageContext;
 import parser.ParsingData;
 import parser.Pass1Listener;
 import code_generation.CodeGenerator;
@@ -73,7 +72,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class NullExpression extends Expression {
 		public NullExpression() {
-			super("null", StaticScope.globalScope().lookupTypeDeclaration("Null"));
+			super("null", StaticScope.globalScope().lookupTypeDeclaration("Null"), null);
 		}
 		@Override public String getText() {
 			return "<NULL>";
@@ -88,7 +87,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class QualifiedIdentifierExpression extends Expression {
 		public QualifiedIdentifierExpression(Expression qualifier, String id, Type idType) {
-			super(id, idType);
+			super(id, idType, qualifier.enclosingMegaType());
 			qualifier_ = qualifier;
 			qualifier_.setResultIsConsumed(true);
 		}
@@ -107,7 +106,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class QualifiedIdentifierExpressionUnaryOp extends Expression {
 		public QualifiedIdentifierExpressionUnaryOp(Expression qualifier, String id, Type idType, String operator, PreOrPost preOrPost) {
-			super(id, idType);
+			super(id, idType, qualifier.enclosingMegaType());
 			qualifier_ = qualifier;
 			qualifier_.setResultIsConsumed(true);
 			preOrPost_ = preOrPost;
@@ -136,7 +135,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class QualifiedClassMemberExpression extends Expression {
 		public QualifiedClassMemberExpression(ClassType theClass, String id, Type type) {
-			super(id, type);
+			super(id, type, type);
 			theClass_ = theClass;
 		}
 		@Override public String getText() {
@@ -154,7 +153,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class QualifiedClassMemberExpressionUnaryOp extends Expression {
 		public QualifiedClassMemberExpressionUnaryOp(ClassType theClass, String id, Type type, String operator, PreOrPost preOrPost) {
-			super(id, type);
+			super(id, type, type);
 			theClass_ = theClass;
 			preOrPost_ = preOrPost;
 			operator_ = operator;
@@ -183,7 +182,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class MessageExpression extends Expression
 	{
 		public MessageExpression(Expression object, Message message, Type type, int lineNumber) {
-			super(message.selectorName(), type);
+			super(message.selectorName(), type, object.enclosingMegaType());
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
@@ -212,7 +211,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class DupMessageExpression extends Expression
 	{
 		public DupMessageExpression(Expression object, Type type) {
-			super("clone", type);
+			super("clone", type, object.enclosingMegaType());
 			object_ = object;
 			object_.setResultIsConsumed(true);
 		}
@@ -231,8 +230,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class IdentifierExpression extends Expression
 	{
-		public IdentifierExpression(String id, Type type, StaticScope scopeWhereDeclared){
-			super(id, type);
+		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared){
+			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
 			scopeWhereDeclared_ = scopeWhereDeclared;
 		}
 		@Override public String getText() {
@@ -251,7 +250,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class RelopExpression extends Expression
 	{
 		public RelopExpression(Expression lhs, String operator, Expression rhs) {
-			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
 			assert operator.equals("==") || operator.equals("!=") || operator.equals(">")
 				|| operator.equals("<")  || operator.equals(">=") || operator.equals("<=");
 			lhs_ = lhs;
@@ -284,7 +283,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class BooleanExpression extends Expression
 	{
 		public BooleanExpression(Expression lhs, String operator, Expression rhs) {
-			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
 			assert operator.equals("&&") || operator.equals("||") || operator.equals("^")
 				|| (operator.equals("!") && null == rhs);
 			lhs_ = lhs;
@@ -318,7 +317,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	{
 		public BinopExpression(Expression lhs, String operator, Expression rhs) {
 			// For unary operators, one or the other of lhs or rhs could be null
-			super(operator, null != lhs? lhs.type(): rhs.type());
+			super(operator, null != lhs? lhs.type(): rhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("*") || operator.equals("/") || operator.equals("+") || operator.equals("-")
 									    || operator.equals("%");
 			lhs_ = lhs;
@@ -353,7 +352,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public enum PreOrPost { Pre, Post };
 		public UnaryopExpressionWithSideEffect(Expression lhs, String operator, PreOrPost preOrPost) {
 			// For unary operators, one or the other of lhs or rhs could be null
-			super(operator, lhs.type());
+			super(operator, lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("++") || operator.equals("--");
 			lhs_ = lhs;
 			lhs_.setResultIsConsumed(true);
@@ -388,7 +387,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	{
 		public UnaryAbelianopExpression(Expression rhs, String operator) {
 			// For unary operators, one or the other of lhs or rhs could be null
-			super(operator, rhs.type());
+			super(operator, rhs.type(), rhs.enclosingMegaType());
 			assert operator.equals("+") || operator.equals("-");
 			rhs_ = rhs;
 			rhs_.setResultIsConsumed(true);
@@ -415,7 +414,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class AssignmentExpression extends Expression
 	{
 		public AssignmentExpression(Expression lhs, String operator, Expression rhs) {
-			super(lhs.getText(), lhs.type());
+			super(lhs.getText(), lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			lhs_ = lhs;
 			rhs_ = rhs;
@@ -440,8 +439,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class NewExpression extends Expression
 	{
-		public NewExpression(Type classType, Message message, int lineNumber) {
-			super("new", classType);
+		public NewExpression(Type classType, Message message, int lineNumber, Type enclosingMegaType) {
+			super("new", classType, enclosingMegaType);
 			message_ = message;
 			classOrContextType_ = classType;
 			lineNumber_ = lineNumber;
@@ -473,8 +472,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class NewArrayExpression extends Expression
 	{
 		// | 'new' type_name '[' expr ']'
-		public NewArrayExpression(Type classType, Expression sizeExpression) {
-			super("new", new ArrayType(classType.name() + "[" + "]", classType));
+		public NewArrayExpression(Type classType, Expression sizeExpression, Type enclosingMegaType) {
+			super("new", new ArrayType(classType.name() + "[" + "]", classType), enclosingMegaType);
 			classOrContextType_ = classType;
 			sizeExpression_ = sizeExpression;
 			sizeExpression_.setResultIsConsumed(true);
@@ -499,7 +498,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ArrayIndexExpression extends Expression {
 		// expr '[' expr ']'
 		public ArrayIndexExpression(ArrayExpression array, Expression index) {
-			super(array.getText() + " [ " + index.getText() + " ]", array.baseType());
+			super(array.getText() + " [ " + index.getText() + " ]", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
 			index_.setResultIsConsumed(true);
@@ -526,7 +525,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ArrayIndexExpressionUnaryOp extends Expression {
 		// expr '[' expr ']'
 		public ArrayIndexExpressionUnaryOp(ArrayExpression array, Expression index, String operation, PreOrPost preOrPost) {
-			super(array.getText() + " [ " + index.getText() + " ] ++", array.baseType());
+			super(array.getText() + " [ " + index.getText() + " ] ++", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
 			index_.setResultIsConsumed(true);
@@ -563,7 +562,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ArrayExpression extends Expression {
 		// array_expr : expr
 		public ArrayExpression(Expression expr, Type baseType) {
-			super("array", null);
+			super("array", null, expr.enclosingMegaType());
 			expr_ = expr;
 			baseType_ = baseType;
 		}
@@ -587,7 +586,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class IfExpression extends Expression
 	{
 		public IfExpression(Expression conditional, Expression thenPart, Expression elsePart) {
-			super("if (" + conditional.getText() + ")", null != elsePart? thenPart.type(): StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("if (" + conditional.getText() + ")", null != elsePart? thenPart.type(): StaticScope.globalScope().lookupTypeDeclaration("void"),
+					conditional.enclosingMegaType());
 			conditional_ = conditional;
 			conditional_.setResultIsConsumed(true);
 			thenPart_ = thenPart;
@@ -643,7 +643,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ForExpression extends Expression implements BreakableExpression {
 		public ForExpression(List <ObjectDeclaration> initDecl, Expression test, Expression increment, Expression body,
 				StaticScope scope, int lineNumber, ParsingData parsingData) {
-			super("for", StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("for", StaticScope.globalScope().lookupTypeDeclaration("void"),
+					Expression.nearestEnclosingMegaTypeOf(scope));
 			initDecl_ = initDecl;
 			if (null == initDecl_) {
 				initDecl_ = new ArrayList<ObjectDeclaration>();
@@ -747,8 +748,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class WhileExpression extends Expression implements BreakableExpression {
-		public WhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData) {
-			super("while", StaticScope.globalScope().lookupTypeDeclaration("void"));
+		public WhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData, Type nearestEnclosingMegaType) {
+			super("while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
 			body_ = body;		
 			lineNumber_ = lineNumber;
@@ -795,8 +796,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class DoWhileExpression extends Expression implements BreakableExpression {
-		public DoWhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData) {
-			super("do_while", StaticScope.globalScope().lookupTypeDeclaration("void"));
+		public DoWhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData, Type nearestEnclosingMegaType) {
+			super("do_while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
 			body_ = body;		
 			lineNumber_ = lineNumber;
@@ -845,8 +846,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class SwitchBodyElement extends Expression {
-		public SwitchBodyElement(Constant constant, boolean isDefault, ExprAndDeclList expressionAndDeclList) {
-			super("case", StaticScope.globalScope().lookupTypeDeclaration("void"));
+		public SwitchBodyElement(Constant constant, boolean isDefault, ExprAndDeclList expressionAndDeclList, Type enclosingMegaType) {
+			super("case", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			constant_ = constant;
 			isDefault_ = isDefault;
 			expressionAndDeclList_ = expressionAndDeclList;	// seems to work
@@ -878,8 +879,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class SwitchExpression extends Expression implements BreakableExpression {
-		public SwitchExpression(ParsingData parsingData) {
-			super("", StaticScope.globalScope().lookupTypeDeclaration("void"));
+		public SwitchExpression(ParsingData parsingData, Type enclosingMegaType) {
+			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			indexedSwitchBodyElements_ = new HashMap<Constant, SwitchBodyElement>();
 			orderedSwitchBodyElements_ = new ArrayList<SwitchBodyElement>();
 			expression_ = null;
@@ -940,7 +941,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class BreakExpression extends Expression
 	{
 		public BreakExpression(int lineNumber, Expression loop, long nestingLevelInsideBreakable) {
-			super("", StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
 			lineNumber_ = lineNumber;
 			assert loop instanceof BreakableExpression;
 			loop_ = (BreakableExpression)loop;
@@ -969,7 +970,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ContinueExpression extends Expression
 	{
 		public ContinueExpression(int lineNumber, Expression loop, long nestingLevelInsideBreakable) {
-			super("", StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
 			lineNumber_ = lineNumber;
 			assert loop instanceof BreakableExpression;
 			loop_ = (BreakableExpression)loop;
@@ -1000,8 +1001,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ExpressionList extends Expression
 	{
-		public ExpressionList(Expression seedExpression) {
-			super("<expression list>", seedExpression.type());
+		public ExpressionList(Expression seedExpression, Type enclosingMegaType) {
+			super("<expression list>", seedExpression.type(), enclosingMegaType);
 			expressions_ = new ArrayList<Expression>();
 			this.addExpression(seedExpression);
 		}
@@ -1028,7 +1029,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class SumExpression extends Expression
 	{
 		public SumExpression(Expression lhs, String operator, Expression rhs) {
-			super("<sum>", lhs.type());
+			super("<sum>", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
@@ -1065,7 +1066,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ProductExpression extends Expression
 	{
 		public ProductExpression(Expression lhs, String operator, Expression rhs, Token ctxGetStart, Pass1Listener pass1Listener) {
-			super("<product>", lhs.type());
+			super("<product>", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
@@ -1115,7 +1116,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class PowerExpression extends Expression
 	{
 		public PowerExpression(Expression lhs, String operator, Expression rhs, Token ctxGetStart, Pass1Listener pass1Listener) {
-			super("<power>", lhs.type());
+			super("<power>", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
@@ -1165,7 +1166,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class TopOfStackExpression extends Expression {
 		// Kind of a dummy Ñ used in RTMethod.java. Never used on the parser side.
 		public TopOfStackExpression() {
-			super("", null);
+			super("", null, null);
 		}
 		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
 			assert false;
@@ -1175,10 +1176,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ReturnExpression extends Expression
 	{
-		public ReturnExpression(Expression returnExpression, int lineNumber) {
+		public ReturnExpression(Expression returnExpression, int lineNumber, Type nearestEnclosingMegaType) {
 			super(null != returnExpression? returnExpression.getText(): "return",
 					null != returnExpression? returnExpression.type():
-						StaticScope.globalScope().lookupTypeDeclaration("void"));
+						StaticScope.globalScope().lookupTypeDeclaration("void"),
+						nearestEnclosingMegaType);
 			returnExpression_ = returnExpression;
 			lineNumber_ = lineNumber;
 		}
@@ -1206,9 +1208,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BlockExpression extends Expression
 	{
-		public BlockExpression(int lineNumber, ExprAndDeclList exprAndDeclList, StaticScope scope) {
+		public BlockExpression(int lineNumber, ExprAndDeclList exprAndDeclList, StaticScope scope, Type enclosingMegaType) {
 			super("<block>", null != exprAndDeclList? exprAndDeclList.type():
-				StaticScope.globalScope().lookupTypeDeclaration("void"));
+				StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			exprAndDeclList_ = exprAndDeclList;
 			lineNumber_ = lineNumber;
 			
@@ -1305,7 +1307,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class PromoteToDoubleExpr extends Expression {
 		public PromoteToDoubleExpr(Expression promotee) {
-			super("(double)", StaticScope.globalScope().lookupTypeDeclaration("double"));
+			super("(double)", StaticScope.globalScope().lookupTypeDeclaration("double"), promotee.enclosingMegaType());
 			promotee_ = promotee;
 			promotee_.setResultIsConsumed(true);
 		}
@@ -1318,10 +1320,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final Expression promotee_;
 	}
 	
-	public Expression(String id, Type type) {
+	public Expression(String id, Type type, Type enclosingMegaType) {
 		id_ = id;
 		type_ = type;
 		resultIsConsumed_ = false;
+		enclosingMegaType_ = enclosingMegaType;
+	}
+	public Type enclosingMegaType() {
+		return enclosingMegaType_;
 	}
 	public Type type() {
 		return type_;
@@ -1399,6 +1405,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	protected Type type_;
 	private static long labelCounter_ = 0;
 	private boolean resultIsConsumed_;
+	final Type enclosingMegaType_;
 }
 
 

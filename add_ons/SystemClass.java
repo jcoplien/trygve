@@ -45,7 +45,7 @@ import run_time.RTObjectCommon.RTIntegerObject;
 import run_time.RTObjectCommon.RTStringObject;
 import run_time.RunTimeEnvironment;
 
-public class SystemClass {
+public final class SystemClass {
 	public static void addTypedPrintStreamPrintDeclaration(String methodName, Type argumentType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
@@ -143,6 +143,9 @@ public class SystemClass {
 			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
 			final ActualArgumentList argList = new ActualArgumentList();
 			Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
+			
+			assert null != enclosedMethodScope;
+			
 			final IdentifierExpression toprint = new IdentifierExpression(methodName, stringType, enclosedMethodScope);
 			argList.addActualArgument(toprint);
 			final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);

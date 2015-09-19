@@ -61,6 +61,7 @@ public class TestRunner {
 		};
 	}
 	public void runTests() {
+		final String saveFileNameField = gui_.getFileNameField();
 		String testResults = gui_.errorPanelContents();
 		String lastTestResults = testResults;
 		passCounter_ = failCounter_ = 0;
@@ -89,6 +90,9 @@ public class TestRunner {
 		System.err.print(failCounter_);
 		System.err.println(" tests failed.");
 		gui_.console().redirectErr(java.awt.Color.RED, null);
+		if (0 == failCounter_) {
+			gui_.setFileNameField(saveFileNameField);
+		}
 	}
 	private void runATest(String pathname) {
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);

@@ -88,7 +88,7 @@ public abstract class Type implements ExpressionStackAPI
 		final StaticScope globalScope = StaticScope.globalScope();
 		String retval = "";
 		StaticScope scope = this.enclosedScope();
-		while(scope != globalScope) {
+		while (scope != globalScope) {
 			final Declaration associatedDeclaration = scope.associatedDeclaration();
 			retval = associatedDeclaration.name() + "." + retval;
 			scope = scope.parentScope();

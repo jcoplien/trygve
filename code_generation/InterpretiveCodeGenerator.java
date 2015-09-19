@@ -29,6 +29,7 @@ import java.util.Stack;
 
 import parser.ParsingData;
 import add_ons.SystemClass;
+import declarations.ActualOrFormalParameterList;
 import declarations.BodyPart;
 import declarations.Declaration;
 import declarations.Declaration.ClassDeclaration;
@@ -42,6 +43,7 @@ import declarations.Declaration.StagePropDeclaration;
 import declarations.Declaration.TemplateDeclaration;
 import declarations.Declaration.TypeDeclarationList;
 import declarations.FormalParameterList;
+import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.TypeDeclaration;
 import expressions.Constant;
@@ -234,6 +236,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void compileMethod(MethodDeclaration methodDeclaration) {
 		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
+		// Duck: Null body parts here for "add" declaration in simpletemplate.k
+		// Called by compileScope for List<int,String> scope, from compileClass,
+		// from compileDeclarations, from original compile
 		
 		TypeDeclaration typeDeclaration = null;
 		final StaticScope myScope = methodDeclaration.enclosingScope();
@@ -272,7 +277,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			// or List<RTCode> instead of just RTCode...
 			retval = new ArrayList<RTCode>();
 			final DeclarationList declarationList = (DeclarationList)declaration;
-			final RTMethod rTMethodDecl = runtimeType.lookupMethod(methodDeclaration.name(), methodDeclaration.formalParameterList());
+			ActualOrFormalParameterList parameterList = methodDeclaration.formalParameterList();
+			TemplateInstantiationInfo templateInstantiationInfo = null;
+			if (runtimeType instanceof RTClass) {
+				templateInstantiationInfo = ((RTClass)runtimeType).templateInstantiationInfo();
+				parameterList = parameterList.mapTemplateParameters(templateInstantiationInfo);
+			}
+			final RTMethod rTMethodDecl = runtimeType.lookupMethod(methodDeclaration.name(), parameterList);
 			final RTType rTType = rTMethodDecl.rTEnclosingType();
 			assert null != rTType;
 			for (final BodyPart bodyPart : declarationList.bodyParts()) {
@@ -410,7 +421,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileAssignmentExpression(AssignmentExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTAssignment(expr));
+		retval.add(new RTAssignment(expr, rtTypeDeclaration));
 		return retval;
 	}
 	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
@@ -672,6 +683,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public static RTType scopeToRTTypeDeclaration(StaticScope enclosedScope) {
 		RTType retval = null;
+		if (null == enclosedScope) {
+			assert null != enclosedScope;
+		}
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();

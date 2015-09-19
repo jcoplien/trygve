@@ -46,6 +46,8 @@ import declarations.Type.ArrayType;
 import declarations.Type.ClassType;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Type.RoleType;
+import declarations.Type.TemplateParameterType;
+import declarations.Type.TemplateType;
 import declarations.TypeDeclaration;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
@@ -87,7 +89,6 @@ import expressions.Expression.ReturnExpression;
 import expressions.Expression.SumExpression;
 import expressions.Expression.SwitchBodyElement;
 import expressions.Expression.SwitchExpression;
-import expressions.Expression.TopOfStackExpression;
 import expressions.Expression.UnaryAbelianopExpression;
 import expressions.Expression.UnaryopExpressionWithSideEffect;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
@@ -199,13 +200,102 @@ public abstract class RTExpression extends RTCode {
 		} else if (expr instanceof NewExpression) {
 			retval = new RTNew((NewExpression)expr);
 		} else if (expr instanceof NewArrayExpression) {
-			// assert false; Ñ Nope, we make it here.
+			assert true;
 			retval = new RTNewArray((NewArrayExpression)expr);
 		} else if (expr instanceof ArrayExpression) {
-			// assert false;	// we get here...
+			assert true;
 			retval = new RTArrayExpression((ArrayExpression)expr);
 		} else if (expr instanceof ArrayIndexExpression) {
-			// assert false; Ñ Nope, we make it here.
+			assert true;
+			retval = new RTArrayIndexExpression((ArrayIndexExpression)expr);
+		} else if (expr instanceof ArrayIndexExpressionUnaryOp) {
+			retval = new RTArrayIndexExpressionUnaryOp((ArrayIndexExpressionUnaryOp)expr);
+		} else if (expr instanceof PromoteToDoubleExpr) {
+			retval = new RTPromoteToDoubleExpr((PromoteToDoubleExpr)expr);
+		} else if (expr instanceof NullExpression) {
+			retval = new RTNullExpression();
+		} else {
+			retval = new RTNullExpression();
+		}
+		return retval;
+	}
+	public static RTExpression makeExpressionFrom(Expression expr, RTType nearestEnclosingType) {
+		RTExpression retval = null;
+		if (expr instanceof QualifiedIdentifierExpression) {
+			retval = new RTQualifiedIdentifier(expr.name(), expr);
+		} else if (expr instanceof QualifiedIdentifierExpressionUnaryOp) {
+			retval = new RTQualifiedIdentifierUnaryOp(expr.name(), expr);
+		} else if (expr instanceof QualifiedClassMemberExpression) {
+			retval = new RTClassMemberIdentifier(expr.name(), expr);
+		} else if (expr instanceof QualifiedClassMemberExpressionUnaryOp) {
+			retval = new RTClassMemberIdentifierUnaryOp(expr.name(), expr);
+		} else if (expr instanceof MessageExpression) {
+			retval = new RTMessage(expr.name(), (MessageExpression)expr);
+		} else if (expr instanceof DupMessageExpression) {
+			retval = new RTDupMessage(expr.name(), (DupMessageExpression)expr);
+		} else if (expr instanceof IdentifierExpression) {
+			retval = RTIdentifier.makeIdentifier(expr.name(), (IdentifierExpression)expr);
+		} else if (expr instanceof RelopExpression) {
+			retval = new RTRelop((RelopExpression)expr);
+		} else if (expr instanceof BooleanExpression) {
+			retval = new RTBoolean((BooleanExpression)expr);
+		} else if (expr instanceof BinopExpression) {
+			retval = new RTBinop((BinopExpression)expr);
+		} else if (expr instanceof UnaryAbelianopExpression) {
+			retval = new RTUnaryAbelianop((UnaryAbelianopExpression)expr);
+		} else if (expr instanceof UnaryopExpressionWithSideEffect) {
+			retval = new RTUnaryopWithSideEffect((UnaryopExpressionWithSideEffect)expr);
+		} else if (expr instanceof AssignmentExpression) {
+			retval = new RTAssignment((AssignmentExpression)expr);
+		} else if (expr instanceof IfExpression) {
+			retval = new RTIf((IfExpression)expr);
+		} else if (expr instanceof ForExpression) {
+			final ForExpression exprAsFor = (ForExpression) expr;
+			if (null == exprAsFor.thingToIterateOver()) {
+				retval = new RTFor((ForExpression)expr);
+			} else {
+				retval = new RTForIteration((ForExpression)expr);
+			}
+		} else if (expr instanceof WhileExpression) {
+			retval = new RTWhile((WhileExpression)expr);
+		} else if (expr instanceof DoWhileExpression) {
+			retval = new RTDoWhile((DoWhileExpression)expr);
+		} else if (expr instanceof ExpressionList) {
+			retval = new RTExpressionList((ExpressionList)expr);
+		} else if (expr instanceof AssignmentExpression) {
+			retval = new RTExpressionList(expr);
+		} else if (expr instanceof SwitchExpression) {
+			retval = new RTSwitch((SwitchExpression)expr);
+		} else if (expr instanceof SwitchBodyElement) {
+			// Handled by switch processing?
+			assert false;
+			// retval = new RTCase((SwitchBodyElement)expr);
+		} else if (expr instanceof Constant) {
+			retval = new RTConstant((Constant)expr);
+		} else if (expr instanceof BreakExpression) {
+			retval = new RTBreak((BreakExpression)expr);
+		} else if (expr instanceof ContinueExpression) {
+			retval = new RTContinue((ContinueExpression)expr);
+		} else if (expr instanceof SumExpression) {
+			retval = new RTSum((SumExpression)expr);
+		} else if (expr instanceof ProductExpression) {
+			retval = new RTProduct((ProductExpression)expr);
+		} else if (expr instanceof PowerExpression) {
+			retval = new RTPower((PowerExpression)expr);
+		} else if (expr instanceof ReturnExpression) {
+			retval = new RTReturn("return", (ReturnExpression)expr);
+		} else if (expr instanceof BlockExpression) {
+			retval = new RTBlock((BlockExpression)expr);
+		} else if (expr instanceof NewExpression) {
+			retval = new RTNew((NewExpression)expr, nearestEnclosingType);
+		} else if (expr instanceof NewArrayExpression) {
+			assert true;
+			retval = new RTNewArray((NewArrayExpression)expr);
+		} else if (expr instanceof ArrayExpression) {
+			assert true;
+			retval = new RTArrayExpression((ArrayExpression)expr);
+		} else if (expr instanceof ArrayIndexExpression) {
+			assert true;
 			retval = new RTArrayIndexExpression((ArrayIndexExpression)expr);
 		} else if (expr instanceof ArrayIndexExpressionUnaryOp) {
 			retval = new RTArrayIndexExpressionUnaryOp((ArrayIndexExpressionUnaryOp)expr);
@@ -1284,7 +1374,29 @@ public abstract class RTExpression extends RTCode {
 	public static class RTAssignment extends RTExpression {
 		public RTAssignment(AssignmentExpression expr) {
 			super();
-			rhs_ = RTExpression.makeExpressionFrom(expr.rhs());
+			final Type nearestEnclosedType = null == expr? null: expr.enclosingMegaType();
+			final RTType nearestEnclosedrTType = nearestEnclosedType == null? null:
+				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(nearestEnclosedType.enclosedScope());
+			ctorCommon(expr, nearestEnclosedrTType);
+			if (nearestEnclosedType instanceof ClassType) {
+				final ClassType typeAsClassType = (ClassType)nearestEnclosedType;
+				templateInstantiationInfo_ = typeAsClassType.templateInstantiationInfo();
+			} else {
+				templateInstantiationInfo_ = null;
+			}
+		}
+		public RTAssignment(AssignmentExpression expr, RTType nearestEnclosedType) {
+			super();
+			
+			if (nearestEnclosedType instanceof RTClass) {
+				final RTClass rtTypeDeclAsRTClass = (RTClass)nearestEnclosedType;
+				this.setTemplateInstantiationInfo(rtTypeDeclAsRTClass.templateInstantiationInfo());
+			}
+			
+			ctorCommon(expr, nearestEnclosedType);
+		}
+		private void ctorCommon(AssignmentExpression expr, RTType nearestEnclosedType) {
+			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosedType);
 			part2_ = new RTAssignmentPart2(expr, rhs_);
 			rhs_.setNextCode(part2_);
 			rhs_.setResultIsConsumed(true);
@@ -1473,8 +1585,13 @@ public abstract class RTExpression extends RTCode {
 			private RTCode staticNextCode_;
 		}
 		
+		public void setTemplateInstantiationInfo(TemplateInstantiationInfo templateInstantiationInfo) {
+			templateInstantiationInfo_ = templateInstantiationInfo;
+		}
+		
 		private RTExpression rhs_;
-		private final RTAssignmentPart2 part2_;
+		private RTAssignmentPart2 part2_;
+		private TemplateInstantiationInfo templateInstantiationInfo_;
 	}
 	
 	public static class RTNew extends RTExpression {
@@ -1485,11 +1602,90 @@ public abstract class RTExpression extends RTCode {
 			// counter_++;
 			classType_ = expr.classType();
 			final StaticScope classScope = classType_.enclosedScope();
-			rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
+			if (null == classScope) {
+				// Maybe a template
+				if (classType_ instanceof TemplateType) {
+					final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
+					final TemplateInstantiationInfo templateInstantiationInfo = ((ClassType)classType_).templateInstantiationInfo();
+					if (null != templateInstantiationInfo) {
+						final Type boundType = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(rTType_.name());
+						if (null != boundType) {
+							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(boundType.enclosedScope());
+						} else {
+							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
+						}
+					} else {
+						rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
+					}
+				}
+			} else {
+				rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
+			}
 			
+			rtNewCommon(expr, classScope);
+		}
+		public RTNew(NewExpression expr, RTType nearestEnclosingType) {
+			super();
+			currentContextVariableName_ = "current$context"; // + counter_;  TODO - FIXME
+			thisVariableName_ = "t$his"; //  + counter_;   TODO - FIXME
+			// counter_++;
+			classType_ = expr.classType();
+			StaticScope classScope = classType_.enclosedScope();
+			if (null == classScope) {
+				final RTClass rtClass = nearestEnclosingType instanceof RTClass? (RTClass)nearestEnclosingType: null;
+				final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
+				
+				// Maybe a template (e.g., new List<int,String>)
+				if (classType_ instanceof TemplateType) {
+					assert false;	// do we ever get here? fish. depends on rTType_.name(), which hasn't been set...
+					final TemplateInstantiationInfo templateInstantiationInfo = null == rtClass? null: rtClass.templateInstantiationInfo();
+					if (null != templateInstantiationInfo) {
+						final Type boundType = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(rTType_.name());
+						if (null != boundType) {
+							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(boundType.enclosedScope());
+						} else {
+							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
+						}
+					} else {
+						rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
+					}
+				} else if (classType_ instanceof TemplateParameterType) { // e.g., "new T" within a template
+					final TemplateInstantiationInfo templateInstantiationInfo = null == rtClass? null: rtClass.templateInstantiationInfo();
+					if (null != templateInstantiationInfo) {
+						final Type boundType = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(classType_.name());
+						if (null != boundType) {
+							classScope = boundType.enclosedScope();
+						} else {
+							classScope = voidType.enclosedScope();
+						}
+						rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
+					} else {
+						rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
+					}
+				}
+			} else {
+				rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
+			}
+			
+			rtNewCommon(expr, classScope);
+		}
+		private void rtNewCommon(NewExpression expr, StaticScope classScope) {
 			final ActualArgumentList actualArguments = expr.argumentList();
 			final Message message = expr.message();
-			final MethodDeclaration constructor = classScope.lookupMethodDeclaration(message.selectorName(),
+			
+			if (null == classScope) {
+				assert null != classScope;
+			}
+			
+			String constructorSelectorName = message.selectorName();
+			if (null != classScope.templateInstantiationInfo()) {
+				// Then it's a template instantiation. The name of the constructor won't
+				// be List<int,String> but rather List
+				final TemplateInstantiationInfo templateInstantiationInfo = classScope.templateInstantiationInfo();
+				constructorSelectorName = templateInstantiationInfo.templateName();
+			}
+			final MethodDeclaration constructor = classScope.lookupMethodDeclaration(
+					constructorSelectorName,
 					actualArguments, false);
 			if (null == constructor) {
 				rTConstructor_ = null;
@@ -1498,7 +1694,7 @@ public abstract class RTExpression extends RTCode {
 					// The only actual argument is the t$his argument. We
 					// added it as a ruse to try to find the matching
 					// constructor. We didn't find it. Get rid of it now.
-					assert false;
+					// assert false;
 					expr.message().setArgumentList(new ActualArgumentList());
 				}
 			} else {

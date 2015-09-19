@@ -220,6 +220,6 @@ public abstract class Constant extends Expression {
 	}
 	
 	private Constant(String name, Type type) {
-		super(name, type);
+		super(name, type, null);
 	}
 }

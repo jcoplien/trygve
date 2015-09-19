@@ -412,7 +412,7 @@ public class Pass2Listener extends Pass1Listener {
     }
 	@Override public void ctorCheck(Type type, Message message, int lineNumber) {
 		// Is there a constructor?
-		// We're not ready for this until Pass 2
+		// We're not ready for this until here in Pass 2
 		final String className = message.selectorName();
 		final ActualArgumentList actualArgumentList = message.argumentList();
 		if (null != type) {

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Hashtable;
 
 import declarations.Type.ArrayType;
+import declarations.Type.BuiltInType;
 import declarations.Type.ClassType;
 import declarations.Type.ContextType;
 import declarations.Type.RoleType;
@@ -165,9 +166,10 @@ public abstract class Declaration implements BodyPart {
 			super(name, lineNumber, myEnclosedScope);
 			baseClass_ = baseClass;
 			templateDeclaration_ = null;
+			methodsHaveBodyParts_ = false;
 		}
 		public void setType(Type t) {
-			assert t instanceof ClassType;
+			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
 		}
 		public ClassDeclaration baseClass() {
@@ -188,9 +190,16 @@ public abstract class Declaration implements BodyPart {
 		public TemplateDeclaration generatingTemplate() {
 			return templateDeclaration_;
 		}
+		public boolean methodsHaveBodyParts() {
+			return methodsHaveBodyParts_;
+		}
+		public void setMethodsHaveBodyParts(boolean tf) {
+			methodsHaveBodyParts_ = tf;
+		}
 
 		private ClassDeclaration baseClass_;
 		private TemplateDeclaration templateDeclaration_;
+		private boolean methodsHaveBodyParts_;
 	}
 	
 	public static class TypeParameter extends Object {
@@ -244,13 +253,18 @@ public abstract class Declaration implements BodyPart {
 			}
 			return retval;
 		}
-		public void addTypeParameter(IdentifierExpression rawTypeParameter) {
+		public void addTypeParameter(IdentifierExpression rawTypeParameter, int numberOfTypeParameters) {
 			final TemplateParameterType parameterType = (TemplateParameterType)rawTypeParameter.type();
 			if (null == myEnclosedScope_.lookupTypeDeclaration(parameterType.name())) {
 				final ClassType baseClassType = parameterType.baseClassType();
 				final TypeParameter typeParameter = new TypeParameter(rawTypeParameter.name(),
 						baseClassType);
-				typeParameter.setArgumentPosition(argumentPositionCounter_);
+				
+				// These type parameters are added here in reverse order, so we
+				// need to reverse the ordering. List<T, U> will call here first
+				// with U and then with T. So squeegee the index. Positions are
+				// zero-indexed in lexical order
+				typeParameter.setArgumentPosition(numberOfTypeParameters - argumentPositionCounter_ - 1);
 				argumentPositionCounter_++;
 				typeParameters_.add(typeParameter);
 			
@@ -425,12 +439,17 @@ public abstract class Declaration implements BodyPart {
 		) {
 			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy",
 					newEnclosingScope, null, newTypes);
+			
 			final MethodDeclaration retval = new MethodDeclaration(
 					name(), enclosedScope, returnType_,
 					accessQualifier_, lineNumber_);
+			
+			retval.signature_ = signature_;
+			retval.body_ = body_;	// Duck: body_ is null at this point! Wait -- that's O.K. on pass 1 - body not set until pass 3
+			
 			retval.addParameterList(signature_.formalParameterList());
 			enclosedScope.setDeclaration(retval);
-			retval.body_ = body_;
+
 			return retval;
 		}
 		
@@ -567,6 +586,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		public void addDeclaration(TypeDeclaration d) {
 			declarations_.add(d);
+		}
+		public void removeDeclaration(TypeDeclaration d) {
+			declarations_.remove(d);
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;

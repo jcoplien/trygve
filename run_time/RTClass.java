@@ -98,8 +98,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		assert false;
 		return nameToRoleObjectMap_;
 	}
-	// ---------------------
 	
+	// ---------------------
 	
 	public RTObject performUnaryOpOnStaticObjectNamed(String objectName, String operator, PreOrPost preOrPost) {
 		RTObject retval = null;
@@ -132,12 +132,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		
 		return retval;
 	}
-	
-	private Map<String, RTContext> stringToContextDeclMap_;
-	private Map<String, RTClass> stringToClassDeclMap_;
-	private Map<String, RTRole> nameToRoleObjectMap_;
-	private Map<String, RTStageProp> nameToStagePropObjectMap_;
-	private Map<String, RTObject> nameToObjectDeclMap_;
+
 	
 	public static class RTIntegerClass extends RTClass {
 		public RTIntegerClass(TypeDeclaration associatedType) {
@@ -179,4 +174,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("boolean"); }
 	}
+	
+	private Map<String, RTContext> stringToContextDeclMap_;
+	private Map<String, RTClass> stringToClassDeclMap_;
+	private Map<String, RTRole> nameToRoleObjectMap_;
+	private Map<String, RTStageProp> nameToStagePropObjectMap_;
+	private Map<String, RTObject> nameToObjectDeclMap_;
 }

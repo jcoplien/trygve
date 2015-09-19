@@ -64,6 +64,10 @@ public class ParseRun {
         		this.pass1(parsingData, tree);
         		this.pass2(parsingData, tree);
         		this.pass3(parsingData, tree);
+        		
+        		// Pass 4 mainly does template instantiations
+        		this.pass4(parsingData, tree);
+        		
         		this.generateCode(parsingData);
         	}
         	catch (NoSuchMethodException nsme) {
@@ -93,6 +97,10 @@ public class ParseRun {
 
 	private void pass3(ParsingData parsingData, ParserRuleContext tree) {
         ParseTreeWalker.DEFAULT.walk(new Pass3Listener(parsingData), tree);
+	}
+	
+	private void pass4(ParsingData parsingData, ParserRuleContext tree) {
+        ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
 	private void generateCode(ParsingData parsingData) {

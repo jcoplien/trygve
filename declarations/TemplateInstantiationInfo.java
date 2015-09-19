@@ -40,6 +40,9 @@ public class TemplateInstantiationInfo {
 		final int parameterPositionOfFormalParam = formalTypeParam.argumentPosition();
 		return this.parameterAtIndex(parameterPositionOfFormalParam);
 	}
+	public final String templateName() {
+		return templateDeclaration_.name();
+	}
 	
 	private List<Type> actualParameters_;
 	private ClassType classType_;

@@ -163,6 +163,9 @@ public class StaticScope {
 	private static Type reinitializeInt(String typeName) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final Type intType = new BuiltInType(typeName);
+
+		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intType.enclosedScope(), null, 0);
+		
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, 0);
 		final ObjectDeclaration self = new ObjectDeclaration("t$his", intType, 0);
 		final FormalParameterList formals = new FormalParameterList();
@@ -184,11 +187,19 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(intType);
+		
+
+		intType.enclosedScope().setDeclaration(intDeclaration);
+		intDeclaration.setType(intType);
+		
 		return intType;
 	}
 	
 	private static void reinitializeDouble() {
 		final Type doubleType = new BuiltInType("double");
+
+		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleType.enclosedScope(), null, 0);
+		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, 0);
 		final ObjectDeclaration self = new ObjectDeclaration("t$his", doubleType, 0);
@@ -208,10 +219,16 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(doubleType);
+
+		doubleType.enclosedScope().setDeclaration(doubleDeclaration);
+		doubleDeclaration.setType(doubleType);
 	}
 	
 	private static void reinitializeString(Type intType) {
 		final Type stringType = new BuiltInType("String");
+		
+		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
+		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", stringType, 0);
 		final ObjectDeclaration self = new ObjectDeclaration("t$his", stringType, 0);
@@ -227,6 +244,9 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(stringType);
+		
+		stringType.enclosedScope().setDeclaration(stringDeclaration);
+		stringDeclaration.setType(stringType);
 	}
 	
 	public static StaticScope globalScope() { return globalScope_; }
@@ -349,6 +369,16 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
+	public void undeclareClass(ClassDeclaration decl) {
+		final String className = decl.name();
+		if (classDeclarationDictionary_.containsKey(className)) {
+			assert classDeclarationDictionary_.containsValue(decl);
+			classDeclarationDictionary_.remove(className);
+		} else {
+			assert false;
+		}
+	}
+	
 	public void declareTemplate(TemplateDeclaration decl) {
 		final String templateName = decl.name();
 		if (templateDeclarationDictionary_.containsKey(templateName)) {
@@ -457,6 +487,16 @@ public class StaticScope {
 			} else {
 				typeDeclarationDictionary_.put(typeName, typeDecl);
 			}
+		}
+	}
+	
+	public void undeclareType(Type typeDecl) {
+		final String typeName = typeDecl.name();
+		if (typeDeclarationDictionary_.containsKey(typeName)) {
+			assert typeDeclarationDictionary_.containsValue(typeDecl);
+			typeDeclarationDictionary_.remove(typeName);
+		} else {
+			assert false;
 		}
 	}
 	
@@ -748,6 +788,12 @@ public class StaticScope {
 		return retval;
 	}
 	public String pathName() {
+		if (null == associatedDeclaration_) {
+			assert null != associatedDeclaration_;
+		}
+		if (null == associatedDeclaration_.type()) {
+			assert null != associatedDeclaration_.type();
+		}
 		return associatedDeclaration_.type().pathName();
 	}
 	

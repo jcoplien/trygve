@@ -29,6 +29,7 @@ import java.util.Map;
 
 import code_generation.InterpretiveCodeGenerator;
 import semantic_analysis.StaticScope;
+import declarations.Declaration.ClassDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Type.ClassType;
 import declarations.ActualOrFormalParameterList;
@@ -174,6 +175,9 @@ public abstract class RTClassAndContextCommon implements RTType {
 	}
 	public long referenceCount() {
 		return referenceCount_;
+	}
+	public final TemplateInstantiationInfo templateInstantiationInfo() {
+		return templateInstantiationInfo_;
 	}
 	
 	

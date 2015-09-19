@@ -63,6 +63,7 @@ import declarations.Declaration.ExprAndDeclList;
 import declarations.Declaration.MethodSignature;
 import declarations.Declaration.TypeDeclarationList;
 import declarations.Declaration.TemplateDeclaration;
+import declarations.Declaration.TypeParameter;
 import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.Type.ContextType;
@@ -327,10 +328,11 @@ public class Pass1Listener extends KantBaseListener {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
 						"Duplicate template parameter name: ", type_name.name(), "", "");
 				currentTemplateDecl.addTypeParameter(new IdentifierExpression("$error$",
-						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_));
+						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_),
+						numberOfActualParameters);
 			} else {
 				dupMap.put(type_name.name(), type_name.name());
-				currentTemplateDecl.addTypeParameter(type_name);
+				currentTemplateDecl.addTypeParameter(type_name, numberOfActualParameters);
 			}
 		}
 		
@@ -1143,6 +1145,8 @@ public class Pass1Listener extends KantBaseListener {
 	    //	| 'double'
 	    //	| 'char'
 	    //	| 'String'
+		
+		// All three passes
 	
 		Type type = null;
 		String typeName = null;
@@ -1438,8 +1442,10 @@ public class Pass1Listener extends KantBaseListener {
 					}
 				}
 				final Message message = new Message(compoundTypeName, argument_list, ctx.getStart().getLine());
-				final NewExpression newExpr = new NewExpression((Type)type, message, ctx.getStart().getLine());
+				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				final NewExpression newExpr = new NewExpression(type, message, ctx.getStart().getLine(), enclosingMegaType);
 				ctorCheck(type, message, ctx.getStart().getLine());
+				addSelfAccordingToPass(type, message, currentScope_);
 				expression = newExpr;
 			}
 			
@@ -1800,7 +1806,8 @@ public class Pass1Listener extends KantBaseListener {
 		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart().getLine());
 		parsingData_.pushExprAndDecl(newList);
 
-		final BlockExpression blockExpression = new BlockExpression(ctx.getStart().getLine(), newList, currentScope_);
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final BlockExpression blockExpression = new BlockExpression(ctx.getStart().getLine(), newList, currentScope_, enclosingMegaType);
 		currentScope_.setDeclaration(oldScope.associatedDeclaration());	/// hmmm....
 		
 		parsingData_.pushBlockExpression(blockExpression);
@@ -2086,8 +2093,10 @@ public class Pass1Listener extends KantBaseListener {
 		
 		// This is just a placeholder so that enclosed declarations get
 		// registered. We fill in the meat in exitWhile_expr
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		final WhileExpression whileExpression = new WhileExpression(null, null,
-				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass());
+				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass(),
+				nearestEnclosingMegaType);
 		
 		parsingData_.pushWhileExpression(whileExpression);
 	}
@@ -2131,8 +2140,10 @@ public class Pass1Listener extends KantBaseListener {
 
 		// This is just a placeholder so that enclosed declarations get
 		// registered. We fill in the meat in exitFor_expr
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		final DoWhileExpression doWhileExpression = new DoWhileExpression(null, null,
-				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass());
+				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass(),
+				nearestEnclosingMegaType);
 		
 		parsingData_.pushDoWhileExpression(doWhileExpression);
 	}
@@ -2171,7 +2182,8 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void enterSwitch_expr(@NotNull KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
-		final SwitchExpression switchExpression = new SwitchExpression(parsingDataArgumentAccordingToPass());
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final SwitchExpression switchExpression = new SwitchExpression(parsingDataArgumentAccordingToPass(), enclosingMegaType);
 		parsingData_.pushSwitchExpr(switchExpression);
 	}
 	
@@ -2249,7 +2261,8 @@ public class Pass1Listener extends KantBaseListener {
 			constant.setResultIsConsumed(true);
 		}
 		
-		final SwitchBodyElement switchBodyElement = new SwitchBodyElement(constant, isDefault, expr_and_decl_list);
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final SwitchBodyElement switchBodyElement = new SwitchBodyElement(constant, isDefault, expr_and_decl_list, enclosingMegaType);
 		parsingData_.currentSwitchExpr().addSwitchBodyElement(switchBodyElement);
 		currentScope_ = currentScope_.parentScope();
 		
@@ -2402,6 +2415,12 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	protected Type lookupOrCreateTemplateInstantiation(String templateName, List<String> parameterTypeNames, int lineNumber) {
+		// This varies by pass. On the last pass we first remove the instantiation, so that the
+		// new one picks up the body created in Pass 3.
+		return lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, lineNumber);
+	}
+	
+	protected Type lookupOrCreateTemplateInstantiationCommon(String templateName, List<String> parameterTypeNames, int lineNumber) {
 		Type retval = null;
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);
 		if (null == templateDeclaration) {
@@ -2720,7 +2739,8 @@ public class Pass1Listener extends KantBaseListener {
 		} else {
 			// What the hell?
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
-			expression = new IdentifierExpression(id, type, null);
+			final StaticScope scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+			expression = new IdentifierExpression(id, type, scope);
 		}
 		
 		return expression;
@@ -2883,6 +2903,7 @@ public class Pass1Listener extends KantBaseListener {
 		Expression expression = null;
 		final String isItNew = ctxChildren.get(0).getText();
 		final Message message = parsingData_.popMessage();
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (isItNew.equals("new") == false) {
 			// redundant now
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Invalid class operator: ", isItNew, "", "");
@@ -2894,7 +2915,7 @@ public class Pass1Listener extends KantBaseListener {
 			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false) {
 				if (type instanceof TemplateParameterType) {
 					// then it's Ok
-					expression = new NewExpression(type, message, ctxMessage.getStart().getLine());
+					expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 					addSelfAccordingToPass(type, message, currentScope_);
 				} else {
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", className, "«: can apply `new« only to a class or Context type", "");
@@ -2902,7 +2923,7 @@ public class Pass1Listener extends KantBaseListener {
 				}
 			} else {
 				// On the first pass, message doesn't yet have an argument list
-				expression = new NewExpression(type, message, ctxMessage.getStart().getLine());
+				expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 				
 				// This adds a hokey argument to the message that
 				// is used mainly for signature checking Ñ to see
@@ -2926,7 +2947,7 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new NullExpression();
 			} else {
 				expr.setResultIsConsumed(true);
-				expression = new NewArrayExpression(type, expr);
+				expression = new NewArrayExpression(type, expr, enclosingMegaType);
 			}
 		} else {
 			assert false;	// internal error of some kind
@@ -3164,13 +3185,27 @@ public class Pass1Listener extends KantBaseListener {
 				declaringScope = globalScope;
 			}
 			
+			// NOTE: This will also lump in references to Role identifiers
+			// They are distinguished by their enclosing scope
+			StaticScope scope = declaringScope;
+			if (null == scope) {
+				scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				if (enclosingMegaType instanceof TemplateType) {
+					// aha
+					final TemplateType enclosingClass = (TemplateType)enclosingMegaType;
+					final TemplateDeclaration associatedDeclaration =
+							(TemplateDeclaration)enclosingClass.enclosedScope().associatedDeclaration();
+					final Declaration identifierDeclaration = enclosingClass.enclosedScope().lookupObjectDeclarationRecursive(idName);
+					final TypeParameter typeParameter = associatedDeclaration.typeParameterNamed("abc");
+				}
+			}
+			
 			if (null == type) {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 			
-			// NOTE: This will also lump in references to Role identifiers
-			// They are distinguished by their enclosing scope
-			expression = new IdentifierExpression(idName, type, declaringScope);
+			expression = new IdentifierExpression(idName, type, scope);
 		}
 		
 		assert null != expression;
@@ -3288,7 +3323,8 @@ public class Pass1Listener extends KantBaseListener {
 			returnExpression = parsingData_.popExpression();
 		}
 		returnExpression.setResultIsConsumed(true);
-		final Expression retval = new ReturnExpression(returnExpression, ctxGetStart.getLine());
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final Expression retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
 		return retval;
 	}
 	
