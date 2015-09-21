@@ -80,7 +80,7 @@ public class RTMethod extends RTCode {
 
 		methodDeclaration_ = methodDeclaration;
 
-		returnInstruction_ = new RTReturn(methodDeclaration_.name(), returnExpression);
+		returnInstruction_ = new RTReturn(methodDeclaration_.name(), returnExpression, null);
 		this.addCode(returnInstruction_);
 		
 		// All dogs go to heaven and all procedures that have something to return

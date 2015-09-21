@@ -29,7 +29,6 @@ import java.util.Map;
 
 import code_generation.InterpretiveCodeGenerator;
 import semantic_analysis.StaticScope;
-import declarations.Declaration.ClassDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Type.ClassType;
 import declarations.ActualOrFormalParameterList;
@@ -52,7 +51,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		nameToRoleBindingMap_ = new HashMap<String, RTObject>();;
 		typeDeclaration_ = typeDeclaration;
 		
-		// Get TemplateInstantiationInfo, if a any
+		// Get TemplateInstantiationInfo, if any
 		final Type classType = typeDeclaration.type();
 		if (classType instanceof ClassType) {
 			templateInstantiationInfo_ = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
@@ -137,19 +136,22 @@ public abstract class RTClassAndContextCommon implements RTType {
 	@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) {
 		return this.lookupMethodIgnoringParameterInSignature(methodName, pl, null);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignature(String methodName, ActualOrFormalParameterList pl, String ignoreName) {
+	@Override public RTMethod lookupMethodIgnoringParameterInSignature(String methodName, ActualOrFormalParameterList suppliedParameters, String ignoreName) {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
 			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
-				final FormalParameterList loggedSignature = aPair.getKey();
+				final FormalParameterList declaredMethodSignature = aPair.getKey();
 				
-				ActualOrFormalParameterList mappedLoggedSignature = loggedSignature;
+				ActualOrFormalParameterList mappedDeclaredMethodSignature = declaredMethodSignature,
+				                            mappedSuppliedParameters = suppliedParameters;
 				if (null != templateInstantiationInfo_) {
-					mappedLoggedSignature = loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+					mappedDeclaredMethodSignature = declaredMethodSignature.mapTemplateParameters(templateInstantiationInfo_);
+					mappedSuppliedParameters = suppliedParameters.mapTemplateParameters(templateInstantiationInfo_);
+	
 				}
 				
-				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, pl, ignoreName)) {
+				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName)) {
 					retval = aPair.getValue();
 					break;
 				}
@@ -163,7 +165,6 @@ public abstract class RTClassAndContextCommon implements RTType {
 		return null == typeDeclaration_? "*null*": typeDeclaration_.name();
 	}
 	public TypeDeclaration typeDeclaration() {
-		assert false;	// ever get here?
 		return typeDeclaration_;
 	}
 	

@@ -28,10 +28,11 @@ import declarations.ActualArgumentList;
 import expressions.Expression;
 
 public class Message {
-	public Message(String selectorName, ActualArgumentList argumentList, long lineNumber) {
+	public Message(String selectorName, ActualArgumentList argumentList, long lineNumber, Type enclosingMegaType) {
 		selectorName_ = selectorName;
 		argumentList_ = argumentList;
 		lineNumber_ = lineNumber;
+		enclosingMegaType_ = enclosingMegaType;
 		
 		// Just a default until it gets filled in Ñ avoid null ptr problems
 		returnType_ = StaticScope.globalScope().lookupTypeDeclaration("void");
@@ -74,8 +75,12 @@ public class Message {
 	public Type returnType() {
 		return returnType_;
 	}
+	public Type enclosingMegaType() {
+		return enclosingMegaType_;
+	}
 	
 	private String selectorName_;
+	private final Type enclosingMegaType_;
 	private ActualArgumentList argumentList_;
 	private long lineNumber_;
 	private Type returnType_;

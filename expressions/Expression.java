@@ -77,7 +77,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return "<NULL>";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			/* Trivial */
 			List<RTCode> retval = new ArrayList<RTCode>();
 			retval.add(new RTNullExpression());
@@ -94,8 +94,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return qualifier_.getText() + "." + name();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileQualifiedIdentifierExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileQualifiedIdentifierExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression qualifier() {
 			return qualifier_;
@@ -115,8 +115,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return qualifier_.getText() + "." + name();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileQualifiedIdentifierExpressionUnaryOp(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileQualifiedIdentifierExpressionUnaryOp(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression qualifier() {
 			return qualifier_;
@@ -141,8 +141,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return theClass_.getText() + "." + name();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileQualifiedClassMemberExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileQualifiedClassMemberExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public ClassType qualifier() {
 			return theClass_;
@@ -161,8 +161,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return theClass_.getText() + "." + name();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileQualifiedClassMemberExpressionUnaryOp(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileQualifiedClassMemberExpressionUnaryOp(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public ClassType qualifier() {
 			return theClass_;
@@ -182,7 +182,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class MessageExpression extends Expression
 	{
 		public MessageExpression(Expression object, Message message, Type type, int lineNumber) {
-			super(message.selectorName(), type, object.enclosingMegaType());
+			super(message.selectorName(), type, message.enclosingMegaType());
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
@@ -190,8 +190,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return object_.getText() + message_.getText();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileMessageExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileMessageExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Message message() {
 			return message_;
@@ -218,8 +218,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return object_.getText() + ".clone";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileDupMessageExpression(this, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileDupMessageExpression(this, rtTypeDeclaration, scope);
 		}
 		public Expression objectToClone() {
 			return object_;
@@ -237,8 +237,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return name();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileIdentifierExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileIdentifierExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public StaticScope scopeWhereDeclared() {
 			return scopeWhereDeclared_;
@@ -272,8 +272,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			String retval = "[" + lhs_.getText() + " " + operator_ + " " + rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileRelopExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileRelopExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -305,8 +305,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			String retval = "[" + lhs_.getText() + " " + operator_ + " " + rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileBooleanExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileBooleanExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -339,8 +339,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			String retval = "[" + lhs_.getText() + " " + operator_ + " " + rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileBinopExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileBinopExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -371,8 +371,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 									"[ " +  operator_ + lhs_.getText()  + " ]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileUnaryopExpressionWithSideEffect(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileUnaryopExpressionWithSideEffect(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public PreOrPost preOrPost() {
 			return preOrPost_;
@@ -403,8 +403,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			String retval = "[ " + operator_ + rhs_.getText() + " ]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileUnaryAbelianopExpression(this, operator_);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileUnaryAbelianopExpression(this, operator_, scope, rtTypeDeclaration);
 		}
 		
 		private final Expression rhs_;
@@ -430,8 +430,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			String retval = lhs_.getText() + " = " + rhs_.getText();
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -457,8 +457,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return "[new " + classOrContextType_.name() + "]";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileNewExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileNewExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
@@ -487,8 +487,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return "[new " + classOrContextType_.name() + "[" + "] ]";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileNewArrayExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileNewArrayExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Type classOrContextType_;
@@ -508,8 +508,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileArrayIndexExpression(this);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileArrayIndexExpression(this, scope, rtTypeDeclaration);
 		}
 		public Expression indexExpr() {
 			return index_;
@@ -537,8 +537,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileArrayIndexExpressionUnaryOp(this);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileArrayIndexExpressionUnaryOp(this, scope, rtTypeDeclaration);
 		}
 		public Expression indexExpr() {
 			return index_;
@@ -569,8 +569,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return expr_.getText();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileArrayExpression(this);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileArrayExpression(this, scope);
 		}
 		@Override public Type baseType() {
 			return baseType_;
@@ -626,8 +626,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression elsePart() {
 			return elsePart_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileIfExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileIfExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public void setResultIsConsumed(boolean tf) {
 			super.setResultIsConsumed(tf);
@@ -719,11 +719,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public StaticScope scope() {
 			return scope_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			if (null == thingToIterateOver_) {
-				return codeGenerator.compileForExpression(this, methodDeclaration, rtTypeDeclaration);
+				return codeGenerator.compileForExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 			} else {
-				return codeGenerator.compileForIterationExpression(this, methodDeclaration, rtTypeDeclaration);
+				return codeGenerator.compileForIterationExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 			}
 		}
 		@Override public String uniqueLabel() {
@@ -780,8 +780,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression body() {
 			return body_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileWhileExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileWhileExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
 			return label_;
@@ -830,8 +830,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression body() {
 			return body_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileDoWhileExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileDoWhileExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
 			return label_;
@@ -855,7 +855,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		
 		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) Ñ RTSwitch fetches
 		// our body parts and compiles them
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			assert(false);
 			return null;
 		}
@@ -907,8 +907,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression switchExpression() {
 			return expression_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileSwitchExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileSwitchExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
 			return label_;
@@ -953,8 +953,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileBreakExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileBreakExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public BreakableExpression loop() {
 			return loop_;
@@ -983,8 +983,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileContinueExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileContinueExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public BreakableExpression loop() {
 			return loop_;
@@ -1019,8 +1019,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public List<Expression> expressions() {
 			return expressions_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileExpressionList(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileExpressionList(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private List<Expression> expressions_;
@@ -1046,8 +1046,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public Type type() {
 			return lhs_.type();
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileSumExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileSumExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
 			return lhs_;
@@ -1096,8 +1096,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			retval += rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileProductExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileProductExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
 			return lhs_;
@@ -1146,8 +1146,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			retval += rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compilePowerExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compilePowerExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
 			return lhs_;
@@ -1168,7 +1168,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public TopOfStackExpression() {
 			super("", null, null);
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			assert false;
 			return null;
 		}
@@ -1198,8 +1198,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileReturnExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileReturnExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
 		private final Expression returnExpression_;	// may be null
@@ -1231,8 +1231,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-			return codeGenerator.compileBlockExpression(this, methodDeclaration, rtTypeDeclaration);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileBlockExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public List<BodyPart> bodyParts() {
 			final List<BodyPart> retval = exprAndDeclList_.bodyParts();
@@ -1311,8 +1311,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			promotee_ = promotee;
 			promotee_.setResultIsConsumed(true);
 		}
-		@Override public List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration d, RTType t) {
-			return codeGenerator.compilePromoteToDoubleExpression(this);
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration d, RTType t, StaticScope scope) {
+			return codeGenerator.compilePromoteToDoubleExpression(this, scope, t);
 		}
 		public Expression promotee() {
 			return promotee_;
@@ -1348,22 +1348,25 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static Type nearestEnclosingMegaTypeOf(StaticScope scope) {
-		while (scope != StaticScope.globalScope()) {
-			final Declaration associatedDeclaration = scope.associatedDeclaration();
-			if (associatedDeclaration instanceof ClassDeclaration) {
-				return associatedDeclaration.type();
-			} else if (associatedDeclaration instanceof StagePropDeclaration) {
-				return associatedDeclaration.type();
-			} else if (associatedDeclaration instanceof RoleDeclaration) {
-				return associatedDeclaration.type();
-			} else if (associatedDeclaration instanceof ContextDeclaration) {
-				return associatedDeclaration.type();
-			} else if (associatedDeclaration instanceof TemplateDeclaration) {
-				return associatedDeclaration.type();
+		Type retval = null;
+		if (null != scope) {
+			while (scope != StaticScope.globalScope()) {
+				final Declaration associatedDeclaration = scope.associatedDeclaration();
+				if (associatedDeclaration instanceof ClassDeclaration) {
+					retval = associatedDeclaration.type(); break;
+				} else if (associatedDeclaration instanceof StagePropDeclaration) {
+					retval = associatedDeclaration.type(); break;
+				} else if (associatedDeclaration instanceof RoleDeclaration) {
+					retval = associatedDeclaration.type(); break;
+				} else if (associatedDeclaration instanceof ContextDeclaration) {
+					retval = associatedDeclaration.type(); break;
+				} else if (associatedDeclaration instanceof TemplateDeclaration) {
+					retval = associatedDeclaration.type(); break;
+				}
+				scope = scope.parentScope();
 			}
-			scope = scope.parentScope();
 		}
-		return null;
+		return retval;
 	}
 	
 	public static StaticScope nearestEnclosingMethodScopeOf(StaticScope scope) {
@@ -1399,7 +1402,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		type_ = t;
 	}
 	
-	public abstract List<RTCode> compileCodeFor(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration);
+	public abstract List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	
 	private final String id_;
 	protected Type type_;

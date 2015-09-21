@@ -296,7 +296,8 @@ public class Pass2Listener extends Pass1Listener {
 			argument.setResultIsConsumed(true);
 		}
 		
-		final Message newMessage = new Message(selectorName, argumentList, lineNumber);
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final Message newMessage = new Message(selectorName, argumentList, lineNumber, enclosingMegaType);
 		parsingData_.pushMessage(newMessage);
 	}
 	
@@ -454,7 +455,16 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// Pop the expression for the indicated object and message
 		if (ctxExpr != null) {
-			object = parsingData_.popExpression();
+			if (null == parsingData_.peekExpression()) {
+				// Get rid of the null junk (error stumbling logic)
+				@SuppressWarnings("unused")
+				final Object unused = parsingData_.popRawExpression();
+				
+				// Come in with a suitable substitute
+				object = new NullExpression();
+			} else {
+				object = parsingData_.popExpression();
+			}
 		} else {
 			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope);
 		}
@@ -494,7 +504,10 @@ public class Pass2Listener extends Pass1Listener {
 				// NOTE: Leaves methodSignature null.
 				// We need it for call of checkForMessageSendViolatingConstness below.
 				final MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclaration(message.selectorName(), message.argumentList(), false);
-				methodSignature = methodDecl.signature();
+				if (null != methodDecl) {
+					// Null check is related to error stumbling
+					methodSignature = methodDecl.signature();
+				}
 			}
 		} else if (objectType instanceof ClassType) {
 			final ClassType classObjectType = (ClassType) objectType;

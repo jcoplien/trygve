@@ -23,8 +23,14 @@ package declarations;
  * 
  */
 
+import declarations.Declaration.ObjectDeclaration;
+import declarations.Type.ArrayType;
+import declarations.Type.TemplateParameterType;
+import declarations.Type.TemplateType;
 import mylibrary.SimpleList;
 import expressions.Expression;
+import expressions.Expression.ArrayExpression;
+import expressions.Expression.ArrayIndexExpression;
 
 public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList{
 	public ActualArgumentList() {
@@ -54,5 +60,48 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	}
 	@Override public String nameOfParameterAtPosition(int i) {
 		return parameterAtPosition(i).name();
+	}
+	private Type typeMap(TemplateInstantiationInfo templateTypes, int i) {
+		// This method's scope has been been given a templateTypes
+		// list only if that scope corresponds to an instantiated
+		// class. We can get here for the lookup in the initial template,
+		// in which case templateTypes.size() == 0.
+		Type retval = null;
+		final Type typeOfParameter = typeOfParameterAtPosition(i);
+		if (null != typeOfParameter && typeOfParameter instanceof TemplateParameterType &&
+				null != templateTypes && templateTypes.size() > 0) {
+			retval = templateTypes.get(i - 1);
+		} else if (null != typeOfParameter && typeOfParameter instanceof TemplateType && null != templateTypes) {
+			retval = templateTypes.classType();
+		} else {
+			retval = typeOfParameter;
+		}
+		return retval;
+	}
+	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+		// templateTypes can be null if we're processing a lookup in an actual template
+		ActualArgumentList retval = null;
+		if (null == templateTypes) {
+			return this;
+		} else {
+			retval = new ActualArgumentList();
+			//for (int i = count() - 1; i >= 0; --i) {
+			for (int i = 0; i < count(); i++) {
+				final Expression aParameter = parameterAtPosition(i);
+				final Type newType = this.typeMap(templateTypes, i);
+				
+				if (aParameter instanceof ArrayIndexExpression) {
+					final ArrayIndexExpression aParam = (ArrayIndexExpression)aParameter;
+					final ArrayExpression aParamBase = aParam.arrayExpr();
+					final ArrayExpression newArrayExpr = new ArrayExpression(aParamBase.originalExpression(), newType);
+					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr());
+					retval.addActualArgument(newParameter);
+				} else {
+					retval.addActualArgument(aParameter);
+				}
+				
+			}
+			return retval;
+		}
 	}
 }

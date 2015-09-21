@@ -1,7 +1,5 @@
 package declarations;
 
-import java.util.List;
-
 /*
  * Trygve IDE
  *   Copyright ©2015 James O. Coplien

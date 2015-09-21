@@ -63,7 +63,6 @@ import declarations.Declaration.ExprAndDeclList;
 import declarations.Declaration.MethodSignature;
 import declarations.Declaration.TypeDeclarationList;
 import declarations.Declaration.TemplateDeclaration;
-import declarations.Declaration.TypeParameter;
 import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.Type.ContextType;
@@ -1172,6 +1171,9 @@ public class Pass1Listener extends KantBaseListener {
 			for (int i = 0; i < typeNameList.size(); i++) {
 				final String parameterName = typeNameList.get(i);
 				parameterListString = parameterListString + parameterName;
+				if (i < typeNameList.size() - 1) {
+					parameterListString = parameterListString + ",";
+				}
 			}
 			typeName = templateName + "<" + parameterListString + ">";
 			
@@ -1430,6 +1432,9 @@ public class Pass1Listener extends KantBaseListener {
 				String compoundTypeName = JAVA_ID + "<";
 				for (int i = 0; i < typeParameterNameList.size(); i++) {
 					compoundTypeName = compoundTypeName + typeParameterNameList.get(i);
+					if (i < typeParameterNameList.size() - 1) {
+						compoundTypeName = compoundTypeName + ",";
+					}
 				}
 				compoundTypeName = compoundTypeName + ">";
 				type = currentScope_.lookupTypeDeclarationRecursive(compoundTypeName);
@@ -1441,8 +1446,9 @@ public class Pass1Listener extends KantBaseListener {
 						type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					}
 				}
-				final Message message = new Message(compoundTypeName, argument_list, ctx.getStart().getLine());
+				
 				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				final Message message = new Message(compoundTypeName, argument_list, ctx.getStart().getLine(), enclosingMegaType);
 				final NewExpression newExpr = new NewExpression(type, message, ctx.getStart().getLine(), enclosingMegaType);
 				ctorCheck(type, message, ctx.getStart().getLine());
 				addSelfAccordingToPass(type, message, currentScope_);
@@ -1551,7 +1557,7 @@ public class Pass1Listener extends KantBaseListener {
 			final PreOrPost preOrPost = JavaIDInterval.startsAfter(OperatorInterval)?
 					UnaryopExpressionWithSideEffect.PreOrPost.Pre: UnaryopExpressionWithSideEffect.PreOrPost.Post;
 			
-			expression = this.jAVA_IDAtomUtility(id);
+			expression = this.jAVA_IDAtomUtility(id, ctx.getStart().getLine());
 			
 			assert null != expression;
 			expression = new UnaryopExpressionWithSideEffect(expression, ctx.ABELIAN_INCREMENT_OP().getText(), preOrPost);
@@ -1725,7 +1731,8 @@ public class Pass1Listener extends KantBaseListener {
 		
 		// Leave argument list processing to Pass 2...
 		
-		final Message newMessage = new Message(selectorName, null, ctx.getStart().getLine());
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		final Message newMessage = new Message(selectorName, null, ctx.getStart().getLine(), enclosingMegaType);
 		parsingData_.pushMessage(newMessage);
 		
 		// ... but clean up the stack by popping off the arguments
@@ -2705,7 +2712,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	private Expression jAVA_IDAtomUtility(String id) {
+	private Expression jAVA_IDAtomUtility(final String id, int lineNumber) {
 		Expression expression = null;
 		Type type = null;
 		assert null != id && 0 < id.length();
@@ -2738,6 +2745,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else {
 			// What the hell?
+			errorHook5p2(ErrorType.Fatal, lineNumber, "Identifier ", id, " is not declared.", "");
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			final StaticScope scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 			expression = new IdentifierExpression(id, type, scope);
@@ -3190,6 +3198,9 @@ public class Pass1Listener extends KantBaseListener {
 			StaticScope scope = declaringScope;
 			if (null == scope) {
 				scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				/*
+				 * There was clearly something going on here, but I don't know what
+				 *
 				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 				if (enclosingMegaType instanceof TemplateType) {
 					// aha
@@ -3199,6 +3210,7 @@ public class Pass1Listener extends KantBaseListener {
 					final Declaration identifierDeclaration = enclosingClass.enclosedScope().lookupObjectDeclarationRecursive(idName);
 					final TypeParameter typeParameter = associatedDeclaration.typeParameterNamed("abc");
 				}
+				*/
 			}
 			
 			if (null == type) {

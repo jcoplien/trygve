@@ -215,8 +215,8 @@ public abstract class Constant extends Expression {
 		private boolean tf_;
 	}
 	
-	@Override public List<RTCode> compileCodeFor(CodeGenerator cg, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration) {
-		return cg.compileConstant(this, methodDeclaration, rtTypeDeclaration);
+	@Override public List<RTCode> compileCodeForInScope(CodeGenerator cg, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		return cg.compileConstant(this, methodDeclaration, rtTypeDeclaration, scope);
 	}
 	
 	private Constant(String name, Type type) {
