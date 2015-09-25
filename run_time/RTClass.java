@@ -81,22 +81,20 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	
-	// All of these seem fishy as class members...  TODO. Cleanup.
+	// All of these are fishy as class members...  They're here just to
+	// satisfy the pure virtuals in the base class..
 	@Override public void addObjectDeclaration(String objectName, RTType objectType) {
 		assert false;
-		nameToTypeObjectMap_.put(objectName, objectType);
 	}
 	@Override public void addStageProp(String stagePropName, RTStageProp stagePropType) {
 		assert false;
-		nameToStagePropObjectMap_.put(stagePropName, stagePropType);
 	}
 	@Override public void addRole(String roleName, RTRole roleType) {
 		assert false;
-		nameToRoleObjectMap_.put(roleName, roleType);
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		assert false;
-		return nameToRoleObjectMap_;
+		return null;
 	}
 	
 	// ---------------------

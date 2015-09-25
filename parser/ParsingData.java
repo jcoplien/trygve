@@ -147,9 +147,8 @@ public class ParsingData {
 	public ExprAndDeclList			 popExprAndDecl() { return exprAndDeclListStack_.pop(); }
 	public void						pushExprAndDecl(ExprAndDeclList e) { exprAndDeclListStack_.push(e); }
 	public ExprAndDeclList	     currentExprAndDecl() { return exprAndDeclListStack_.peek(); }
-	public void 					pushExpression(ExpressionStackAPI expression) {
-		assert null != expression;
-		expressions_.push(expression); }
+	public boolean               currentExprAndDeclExists() { return exprAndDeclListStack_.size() > 0; }
+	public void 					pushExpression(ExpressionStackAPI expression) { assert null != expression; expressions_.push(expression); }
 	public Expression               peekExpression() { return (Expression)expressions_.peek(); }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
 	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }

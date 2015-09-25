@@ -90,7 +90,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 	public void metaInit() {
 		// This method sets up static members
 		for (Map.Entry<String, RTObject> iter : nameToStaticObjectMap_.entrySet()) {
-			// Get a default value. TODO: Check for static initialiezer and use that instead
+			// Get a default value. TODO: Check for static initializer and use that instead
 			final Type typeOfStatic = nameToStaticObjectTypeMap_.get(iter.getKey());
 			final TypeDeclaration typeDeclaration = (TypeDeclaration) typeOfStatic.enclosedScope().associatedDeclaration();
 			assert typeDeclaration instanceof TypeDeclaration;

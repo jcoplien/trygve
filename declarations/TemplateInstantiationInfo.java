@@ -8,10 +8,11 @@ import declarations.Declaration.TypeParameter;
 import declarations.Type.ClassType;
 
 public class TemplateInstantiationInfo {
-	public TemplateInstantiationInfo(TemplateDeclaration templateDecl) {
+	public TemplateInstantiationInfo(TemplateDeclaration templateDecl, String typeName) {
 		super();
 		actualParameters_ = new ArrayList<Type>();
 		templateDeclaration_ = templateDecl;
+		typeName_ = typeName;
 	}
 	public void addTypeParameter(Type typeParameter) {
 		actualParameters_.add(typeParameter);
@@ -43,8 +44,12 @@ public class TemplateInstantiationInfo {
 	public final String templateName() {
 		return templateDeclaration_.name();
 	}
+	public final String fullTypeName() {
+		return typeName_;
+	}
 	
 	private List<Type> actualParameters_;
 	private ClassType classType_;
 	private final TemplateDeclaration templateDeclaration_;
+	private final String typeName_;
 }

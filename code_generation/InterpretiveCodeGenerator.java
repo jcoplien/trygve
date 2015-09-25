@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Stack;
 
 import parser.ParsingData;
+import add_ons.ListClass;
 import add_ons.SystemClass;
 import declarations.ActualOrFormalParameterList;
 import declarations.BodyPart;
@@ -111,6 +112,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	@Override public void compile() {
 		List<TypeDeclaration> typeDeclarationList = SystemClass.typeDeclarationList();
 		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = ListClass.typeDeclarationList();
+		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
 		typeDeclarationList = typeDeclarationListWrapper.declarations();
@@ -172,6 +176,31 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void compileTemplate(TemplateDeclaration roleDeclaration) {
 		// We compile instantiations (classes), not the templates themselves.
+	}
+	private void processListCall(MethodDeclaration methodDeclaration, TypeDeclaration typeDeclaration) {
+		final RTType rtListTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtListTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> listCode = new ArrayList<RTCode>();
+		if (methodDeclaration.name().equals("List")) {
+			listCode.add(new ListClass.RTListCtorCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("size")) {
+			listCode.add(new ListClass.RTSizeCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("add")) {
+			listCode.add(new ListClass.RTAddCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("get")) {
+			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("indexOf")) {
+			listCode.add(new ListClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("contains")) {
+			listCode.add(new ListClass.RTContainsCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("isEmpty")) {
+			listCode.add(new ListClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
+		} else {
+			assert false;	// error message instead? Should be caught earlier
+		}
+		rtMethod.addCode(listCode);
 	}
 	private void processPrintStreamCall(MethodDeclaration methodDeclaration, TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
@@ -253,6 +282,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().startsWith("List<")) {
+				processListCall(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -425,9 +457,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		return retval;
 	}
 	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
-		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTNew(expr));
-		return retval;
+		assert false;
+		// final List<RTCode> retval = new ArrayList<RTCode>();
+		// retval.add(new RTNew(expr));
+		// return retval;
+		return null;
 	}
 	public List<RTCode> compileNewArrayExpression(NewArrayExpression expr, MethodDeclaration methodDeclaration,
 			RTType rtTypeDeclaration, StaticScope scope) {

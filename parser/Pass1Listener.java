@@ -1065,19 +1065,27 @@ public class Pass1Listener extends KantBaseListener {
 				// if we come to allow inline initialization of object members in the class
 				// syntax, and handle the intializations in some other way (e.g., letting
 				// the constructor handle them.
-				final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
-				for (int z = 0; z < intializationExprs.size(); z++) {
-					if (null != currentForExpression) {
-						// For loops are special
-						final List<BodyPart> bodyParts = new ArrayList<BodyPart>();
-						bodyParts.add(intializationExprs.get(z));
-						currentForExpression.addInitExprs(bodyParts);
-					} else if (null != currentBlockExpression) {
-						// Blocks are... kind of special...
-						currentBlockExpression.bodyParts().add(intializationExprs.get(z));
-					} else {
-						currentExprAndDecl.addBodyPart(intializationExprs.get(z));
+				
+				// In any case, errors can cause currentExprAndDecl() to be empty, so we
+				// need to bail out accordinglly
+				
+				if (parsingData_.currentExprAndDeclExists()) {
+					final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
+					for (int z = 0; z < intializationExprs.size(); z++) {
+						if (null != currentForExpression) {
+							// For loops are special
+							final List<BodyPart> bodyParts = new ArrayList<BodyPart>();
+							bodyParts.add(intializationExprs.get(z));
+							currentForExpression.addInitExprs(bodyParts);
+						} else if (null != currentBlockExpression) {
+							// Blocks are... kind of special...
+							currentBlockExpression.bodyParts().add(intializationExprs.get(z));
+						} else {
+							currentExprAndDecl.addBodyPart(intializationExprs.get(z));
+						}
 					}
+				} else {
+					return;	// punt Ñ error return
 				}
 			}
 			
@@ -2454,7 +2462,7 @@ public class Pass1Listener extends KantBaseListener {
 			ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
 			if (null == classDeclaration) {
 				// Create a new type vector from the type parameters
-				final TemplateInstantiationInfo newTypes = new TemplateInstantiationInfo(templateDeclaration);
+				final TemplateInstantiationInfo newTypes = new TemplateInstantiationInfo(templateDeclaration, typeName);
 				for (final String aTypeName : parameterTypeNames) {
 					final Type correspondingType = currentScope_.lookupTypeDeclarationRecursive(aTypeName);
 					if (null == correspondingType) {
@@ -2909,14 +2917,9 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'new' type_name '[' expr ']'
 		// Called in all passes.
 		Expression expression = null;
-		final String isItNew = ctxChildren.get(0).getText();
 		final Message message = parsingData_.popMessage();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		if (isItNew.equals("new") == false) {
-			// redundant now
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Invalid class operator: ", isItNew, "", "");
-			expression = new NullExpression();
-		} else if (null == ctxExpr && null != ctxMessage){
+		if (null == ctxExpr && null != ctxMessage){
 			// : 'new' message
 			final String className = message.selectorName(); // I know ÑÊkludge ...
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(className);

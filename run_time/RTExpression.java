@@ -118,7 +118,7 @@ public abstract class RTExpression extends RTCode {
 				rTStatement = RTExpression.makeExpressionFrom((Expression)statement, enclosingMegaType);
 			} else if (statement instanceof Declaration) {
 				// ignore
-				continue;	// gnu!
+				continue;
 			} else {
 				assert false;	// something wrong...
 			}
@@ -130,101 +130,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		return retval;
 	}
-	public static RTExpression makeExpressionFrom(Expression expr, int fooledYa) {
-		RTExpression retval = null;
-		/*
-		if (expr instanceof QualifiedIdentifierExpression) {
-			retval = new RTQualifiedIdentifier(expr.name(), expr, nearestEnclosingType);
-		} else if (expr instanceof QualifiedIdentifierExpressionUnaryOp) {
-			retval = new RTQualifiedIdentifierUnaryOp(expr.name(), expr, nearestEnclosingType);
-		} else if (expr instanceof QualifiedClassMemberExpression) {
-			retval = new RTClassMemberIdentifier(expr.name(), expr);
-		} else if (expr instanceof QualifiedClassMemberExpressionUnaryOp) {
-			retval = new RTClassMemberIdentifierUnaryOp(expr.name(), expr);
-		} else if (expr instanceof MessageExpression) {
-			assert false;
-			retval = new RTMessage(expr.name(), (MessageExpression)expr, (RTType)null);
-		} else if (expr instanceof DupMessageExpression) {
-			assert false;
-			retval = new RTDupMessage(expr.name(), (DupMessageExpression)expr, null);
-		} else if (expr instanceof IdentifierExpression) {
-			retval = RTIdentifier.makeIdentifier(expr.name(), (IdentifierExpression)expr);
-		} else if (expr instanceof RelopExpression) {
-			retval = new RTRelop((RelopExpression)expr);
-		} else if (expr instanceof BooleanExpression) {
-			retval = new RTBoolean((BooleanExpression)expr);
-		} else if (expr instanceof BinopExpression) {
-			retval = new RTBinop((BinopExpression)expr);
-		} else if (expr instanceof UnaryAbelianopExpression) {
-			retval = new RTUnaryAbelianop((UnaryAbelianopExpression)expr);
-		} else if (expr instanceof UnaryopExpressionWithSideEffect) {
-			retval = new RTUnaryopWithSideEffect((UnaryopExpressionWithSideEffect)expr);
-		} else if (expr instanceof AssignmentExpression) {
-			retval = new RTAssignment((AssignmentExpression)expr);
-		} else if (expr instanceof IfExpression) {
-			retval = new RTIf((IfExpression)expr);
-		} else if (expr instanceof ForExpression) {
-			final ForExpression exprAsFor = (ForExpression) expr;
-			if (null == exprAsFor.thingToIterateOver()) {
-				retval = new RTFor((ForExpression)expr);
-			} else {
-				retval = new RTForIteration((ForExpression)expr);
-			}
-		} else if (expr instanceof WhileExpression) {
-			retval = new RTWhile((WhileExpression)expr);
-		} else if (expr instanceof DoWhileExpression) {
-			retval = new RTDoWhile((DoWhileExpression)expr);
-		} else if (expr instanceof ExpressionList) {
-			retval = new RTExpressionList((ExpressionList)expr);
-		} else if (expr instanceof AssignmentExpression) {
-			retval = new RTExpressionList(expr);
-		} else if (expr instanceof SwitchExpression) {
-			assert false;
-			retval = new RTSwitch((SwitchExpression)expr, null);
-		} else if (expr instanceof SwitchBodyElement) {
-			// Handled by switch processing?
-			assert false;
-			// retval = new RTCase((SwitchBodyElement)expr);
-		} else if (expr instanceof Constant) {
-			retval = new RTConstant((Constant)expr);
-		} else if (expr instanceof BreakExpression) {
-			retval = new RTBreak((BreakExpression)expr);
-		} else if (expr instanceof ContinueExpression) {
-			retval = new RTContinue((ContinueExpression)expr);
-		} else if (expr instanceof SumExpression) {
-			retval = new RTSum((SumExpression)expr);
-		} else if (expr instanceof ProductExpression) {
-			retval = new RTProduct((ProductExpression)expr);
-		} else if (expr instanceof PowerExpression) {
-			retval = new RTPower((PowerExpression)expr);
-		} else if (expr instanceof ReturnExpression) {
-			retval = new RTReturn("return", (ReturnExpression)expr);
-		} else if (expr instanceof BlockExpression) {
-			retval = new RTBlock((BlockExpression)expr);
-		} else if (expr instanceof NewExpression) {
-			retval = new RTNew((NewExpression)expr);
-		} else if (expr instanceof NewArrayExpression) {
-			assert true;
-			retval = new RTNewArray((NewArrayExpression)expr);
-		} else if (expr instanceof ArrayExpression) {
-			assert true;
-			retval = new RTArrayExpression((ArrayExpression)expr);
-		} else if (expr instanceof ArrayIndexExpression) {
-			assert true;
-			retval = new RTArrayIndexExpression((ArrayIndexExpression)expr);
-		} else if (expr instanceof ArrayIndexExpressionUnaryOp) {
-			retval = new RTArrayIndexExpressionUnaryOp((ArrayIndexExpressionUnaryOp)expr);
-		} else if (expr instanceof PromoteToDoubleExpr) {
-			retval = new RTPromoteToDoubleExpr((PromoteToDoubleExpr)expr);
-		} else if (expr instanceof NullExpression) {
-			retval = new RTNullExpression();
-		} else {
-			retval = new RTNullExpression();
-		}
-		*/
-		assert false;
-		return retval;
-	}
+
 	public static RTExpression makeExpressionFrom(Expression expr, RTType nearestEnclosingType) {
 		RTExpression retval = null;
 
@@ -368,12 +274,17 @@ public abstract class RTExpression extends RTCode {
 			@Override public RTCode run() {
 				// Pop the expression off the stack
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
-				dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor -- increments ref count, don't worry
-				final RTObject value = qualifier.getObject(idName_);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-				qualifier.decrementReferenceCount();
-				setLastExpressionResult(value);
-				return nextCode_;
+				if (qualifier == null) {
+					// Run-time error
+					return null;
+				} else {
+					dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor -- increments ref count, don't worry
+					final RTObject value = qualifier.getObject(idName_);
+					RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+					qualifier.decrementReferenceCount();
+					setLastExpressionResult(value);
+					return nextCode_;
+				}
 			}
 			
 			private RTDynamicScope dynamicScope_;	// this should not be in a program element. FIXME.
@@ -533,35 +444,12 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(postReturnProcessing_);	// necessary?
 			setResultIsConsumed(!resultNeedsToBePopped);
 		}
-		/*
-		public RTMessage(final String name, MessageExpression messageExpr, TemplateInstantiationInfo templateInstantiationInfo) {
-			super();
-			methodSelectorName_ = messageExpr.name();
-			
-			assert false;
-			templateInstantiationInfo_ = templateInstantiationInfo;
-			
-			
-			messageExpr_ = messageExpr;
-			final Message message = messageExpr_.message();
-			actualParameters_ = message.argumentList();
-			expressionsCountInArguments_ = new int [actualParameters_.count()];
-			lineNumber_ = messageExpr.lineNumber();
-			argPush_ = this.buildArgumentPushList();
-			final Type returnType = messageExpr.returnType();
-			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
-					(returnType.name().equals("void") == false);
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
-			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
-			super.setNextCode(postReturnProcessing_);	// necessary?
-			setResultIsConsumed(!resultNeedsToBePopped);
-		}
-		*/
+		
 		public RTMessage(String name, ActualArgumentList actualParameters, Type returnType) {
 			super();
 			methodSelectorName_ = name;
 			
-			// for built-in methods like System.out.print
+			// for built-in methods like System.out.print, List
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
@@ -642,7 +530,8 @@ public abstract class RTExpression extends RTCode {
 				} else if (null == rTTypeOfSelf) {
 					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method ",
 							methodSelectorName_, " on a null Java object", "");
-					assert null != rTTypeOfSelf;
+					return null;
+					//assert null != rTTypeOfSelf;
 				}
 				
 				ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
@@ -846,6 +735,9 @@ public abstract class RTExpression extends RTCode {
 				final Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
 				assert null != anArgument && anArgument instanceof Expression;
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
+				if (i < 0 || i >= expressionsCountInArguments_.length) {
+					assert i >= 0 && i < expressionsCountInArguments_.length;
+				}
 				expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
 				if (null != rtCodePointer) { 	// can happen with programmer errors
 					rtCodePointer.setNextCode(null);		// just neatness
@@ -1675,35 +1567,6 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTNew extends RTExpression {
-		public RTNew(NewExpression expr) {
-			super();
-			currentContextVariableName_ = "current$context"; // + counter_;  TODO - FIXME
-			thisVariableName_ = "t$his"; //  + counter_;   TODO - FIXME
-			// counter_++;
-			classType_ = expr.classType();
-			final StaticScope classScope = classType_.enclosedScope();
-			if (null == classScope) {
-				// Maybe a template
-				if (classType_ instanceof TemplateType) {
-					final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
-					final TemplateInstantiationInfo templateInstantiationInfo = ((ClassType)classType_).templateInstantiationInfo();
-					if (null != templateInstantiationInfo) {
-						final Type boundType = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(rTType_.name());
-						if (null != boundType) {
-							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(boundType.enclosedScope());
-						} else {
-							rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
-						}
-					} else {
-						rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(voidType.enclosedScope());
-					}
-				}
-			} else {
-				rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
-			}
-			
-			rtNewCommon(expr, classScope);
-		}
 		public RTNew(NewExpression expr, RTType nearestEnclosingType) {
 			super();
 			currentContextVariableName_ = "current$context"; // + counter_;  TODO - FIXME
@@ -1764,19 +1627,13 @@ public abstract class RTExpression extends RTCode {
 				final TemplateInstantiationInfo templateInstantiationInfo = classScope.templateInstantiationInfo();
 				constructorSelectorName = templateInstantiationInfo.templateName();
 			}
+
 			final MethodDeclaration constructor = classScope.lookupMethodDeclaration(
 					constructorSelectorName,
 					actualArguments, false);
+			
 			if (null == constructor) {
 				rTConstructor_ = null;
-				
-				if (null != actualArguments && actualArguments.count() == 1) {
-					// The only actual argument is the t$his argument. We
-					// added it as a ruse to try to find the matching
-					// constructor. We didn't find it. Get rid of it now.
-					// assert false;
-					expr.message().setArgumentList(new ActualArgumentList());
-				}
 			} else {
 				// compile it
 				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope);
@@ -1821,6 +1678,8 @@ public abstract class RTExpression extends RTCode {
 			RTObject newlyCreatedObject = null;
 			if (isAContextConstructor) {
 				newlyCreatedObject = new RTContextObject(rTType_);
+			} else if (classType_.name().startsWith("List<")) {
+				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}

@@ -49,6 +49,7 @@ import declarations.Type.ContextType;
 import declarations.TypeDeclaration;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
+import add_ons.ListClass;
 import add_ons.SystemClass;
 
 public class StaticScope {
@@ -157,6 +158,7 @@ public class StaticScope {
 			globalScope_.declareType(nullType);
 			
 			SystemClass.setup();
+			ListClass.setup();
 		}
 	}
 	

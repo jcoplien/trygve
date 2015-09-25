@@ -440,12 +440,17 @@ public abstract class Declaration implements BodyPart {
 			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy",
 					newEnclosingScope, null, newTypes);
 			
+			Type returnType = returnType_;
+			if (null != returnType && returnType_.name().equals(newTypes.templateName())) {
+				returnType = myEnclosedScope_.parentScope().lookupTypeDeclarationRecursive(newTypes.fullTypeName());
+			}
+			
 			final MethodDeclaration retval = new MethodDeclaration(
-					name(), enclosedScope, returnType_,
+					name(), enclosedScope, returnType,
 					accessQualifier_, lineNumber_);
 			
 			retval.signature_ = signature_;
-			retval.body_ = body_;	// Duck: body_ is null at this point! Wait -- that's O.K. on pass 1 - body not set until pass 3
+			retval.body_ = body_;
 			
 			retval.addParameterList(signature_.formalParameterList());
 			enclosedScope.setDeclaration(retval);

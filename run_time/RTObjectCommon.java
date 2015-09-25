@@ -36,7 +36,7 @@ import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
 
 // Doubles for classes and contexts
-public class RTObjectCommon implements RTObject, RTContextInstance {
+public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
 	public RTObjectCommon(RTType classs) {
 		classOrContext_ = classs;
 		objectMembers_ = new HashMap<String, RTObject>();
@@ -93,60 +93,6 @@ public class RTObjectCommon implements RTObject, RTContextInstance {
 	}
 	@Override public RTType rTType() {
 		return classOrContext_;
-	}
-	@Override public boolean equals(RTObject another) {
-		return false;
-	}
-	@Override public boolean gt(RTObject another) {
-		return false;
-	}
-	@Override public RTObject plus(RTObject other) {
-		assert false;
-		return null;
-	}
-	@Override public RTObject minus(RTObject other) {
-		assert false;
-		return null;
-	}
-	@Override public RTObject times(RTObject other) {
-		assert false;
-		return null;
-	}
-	@Override public RTObject divideBy(RTObject other) {
-		assert false;
-		return null;
-	}
-	@Override public RTObject modulus(RTObject other) {
-		assert false;
-		return null;
-	}
-	@Override public RTObject unaryPlus() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject unaryMinus() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject preIncrement() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject postIncrement() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject preDecrement() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject postDecrement() {
-		assert false;
-		return null;
-	}
-	@Override public RTObject toThePowerOf(RTObject other) {
-		assert false;
-		return null;
 	}
 	
 	@Override public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
@@ -492,7 +438,7 @@ public class RTObjectCommon implements RTObject, RTContextInstance {
 		private String foobar_;
 	}
 	public static class RTBooleanObject extends RTObjectCommon implements RTObject {
-		RTBooleanObject(boolean foobar) {
+		public RTBooleanObject(boolean foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("boolean"));
 			foobar_ = foobar;
 		}

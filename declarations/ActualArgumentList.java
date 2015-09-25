@@ -23,14 +23,20 @@ package declarations;
  * 
  */
 
-import declarations.Declaration.ObjectDeclaration;
-import declarations.Type.ArrayType;
+import semantic_analysis.StaticScope;
 import declarations.Type.TemplateParameterType;
 import declarations.Type.TemplateType;
 import mylibrary.SimpleList;
+import expressions.Constant;
 import expressions.Expression;
 import expressions.Expression.ArrayExpression;
 import expressions.Expression.ArrayIndexExpression;
+import expressions.Expression.BreakExpression;
+import expressions.Expression.ContinueExpression;
+import expressions.Expression.IdentifierExpression;
+import expressions.Expression.MessageExpression;
+import expressions.Expression.NullExpression;
+import expressions.Expression.QualifiedIdentifierExpression;
 
 public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList{
 	public ActualArgumentList() {
@@ -85,7 +91,8 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 			return this;
 		} else {
 			retval = new ActualArgumentList();
-			//for (int i = count() - 1; i >= 0; --i) {
+			// We don't need to return an *exact* copy Ñ just one good
+			// enough for type comparison
 			for (int i = 0; i < count(); i++) {
 				final Expression aParameter = parameterAtPosition(i);
 				final Type newType = this.typeMap(templateTypes, i);
@@ -96,8 +103,30 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					final ArrayExpression newArrayExpr = new ArrayExpression(aParamBase.originalExpression(), newType);
 					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr());
 					retval.addActualArgument(newParameter);
-				} else {
+				} else if (aParameter instanceof IdentifierExpression) {
+					final IdentifierExpression aParam = (IdentifierExpression)aParameter;
+					final IdentifierExpression newParameter = new IdentifierExpression(aParam.name(), newType, aParam.scopeWhereDeclared());
+					retval.addActualArgument(newParameter);
+				} else if (aParameter instanceof QualifiedIdentifierExpression) {
+					final QualifiedIdentifierExpression aParam = (QualifiedIdentifierExpression)aParameter;
+					final QualifiedIdentifierExpression newParameter = new QualifiedIdentifierExpression(aParam.qualifier(), aParam.name(), newType);
+					retval.addActualArgument(newParameter);
+				} else if (aParameter instanceof MessageExpression) {
+					final MessageExpression aParam = (MessageExpression)aParameter;
+					final MessageExpression newParameter = new MessageExpression(
+							aParam.objectExpression(), aParam.message(), newType, aParam.lineNumber());
+					retval.addActualArgument(newParameter);
+				} else if (aParameter instanceof NullExpression) {
 					retval.addActualArgument(aParameter);
+				} else if (aParameter instanceof Constant) {
+					retval.addActualArgument(aParameter);
+				} else {
+					// retval.addActualArgument(aParameter);
+					
+					// Can always treat like an identifier and get by.
+					// It's really the type that matters.
+					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope());
+					retval.addActualArgument(newParameter);
 				}
 				
 			}

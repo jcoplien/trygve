@@ -422,17 +422,14 @@ public class Pass2Listener extends Pass1Listener {
 			
 			// Can be null in error condition
 			if (null != declarationScope) {
-				final MethodDeclaration constructor = declarationScope.lookupMethodDeclaration(type.name(), actualArgumentList, false);
+				final String typeName = type.name();
+				final MethodDeclaration constructor = declarationScope.lookupMethodDeclaration(typeName, actualArgumentList, false);
 				if (null != actualArgumentList && 1 < actualArgumentList.count()) {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor
 					if (null == constructor) {
 						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
 					}
-				} else if (null != actualArgumentList && 1 == actualArgumentList.count()) {
-					// Could be that just the t$his argument is in the
-					// actual argument list.
-					message.setArgumentList(new ActualArgumentList());
 				}
 			}
 		}

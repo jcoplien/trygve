@@ -202,6 +202,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Type returnType() {
 			return message_.returnType();
 		}
+		public Expression objectExpression() {
+			return object_;
+		}
 		
 		private final Expression object_;
 		private final Message message_;
@@ -442,6 +445,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public NewExpression(Type classType, Message message, int lineNumber, Type enclosingMegaType) {
 			super("new", classType, enclosingMegaType);
 			message_ = message;
+
 			classOrContextType_ = classType;
 			lineNumber_ = lineNumber;
 		}
