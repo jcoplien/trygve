@@ -26,8 +26,12 @@ package run_time;
 import java.util.HashMap;
 import java.util.Map;
 
+import code_generation.InterpretiveCodeGenerator;
 import semantic_analysis.StaticScope;
 import declarations.ActualOrFormalParameterList;
+import declarations.Type;
+import declarations.Declaration.ClassDeclaration;
+import declarations.Type.ClassType;
 import declarations.TypeDeclaration;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
@@ -35,16 +39,35 @@ import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 public class RTClass extends RTClassAndContextCommon implements RTType {
 	public RTClass(TypeDeclaration decl) {
 		super(decl);
+		assert decl instanceof ClassDeclaration;
+		
 		stringToContextDeclMap_ = new HashMap<String, RTContext>();
 		stringToClassDeclMap_ = new HashMap<String, RTClass>();
 		nameToObjectDeclMap_ = new HashMap<String, RTObject>();
-		nameToTypeObjectMap_ = new HashMap<String, RTType>();
-		nameToRoleObjectMap_ = new HashMap<String, RTRole>();
-		nameToStagePropObjectMap_ = new HashMap<String, RTStageProp>();
 		RunTimeEnvironment.runTimeEnvironment_.addToListOfAllClasses(this);
+		
+		final Type rawClassType = decl.type();
+		if (null != rawClassType) {
+			assert rawClassType instanceof ClassType;
+			final ClassType classType = (ClassType)rawClassType;
+			this.doBaseClassProcessing(classType);
+		}
 		
 		super.populateNameToTypeObjectMap();
 		super.populateNameToStaticObjectMap();
+	}
+	private void doBaseClassProcessing(ClassType classType) {
+		final ClassType baseClassType = classType.baseClass();
+		if (null != baseClassType) {
+			// Add base class stuff, too.
+			final StaticScope baseClassEnclosedScope = baseClassType.enclosedScope();
+			final RTType rawBaseClass = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(baseClassEnclosedScope);
+			assert rawBaseClass instanceof RTClass;
+			final RTClass baseClass = (RTClass)rawBaseClass;
+			baseClass.doBaseClassProcessing(baseClassType);	// recur up the inheritance hierarchy
+			baseClass.populateNameToTypeObjectMap(nameToTypeObjectMap_);
+			baseClass.populateNameToStaticObjectMap(nameToStaticObjectMap_, nameToStaticObjectTypeMap_);
+		}
 	}
 	@Override public void addClass(String typeName, RTClass classDecl) {
 		stringToClassDeclMap_.put(typeName, classDecl);
@@ -175,7 +198,5 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	
 	private Map<String, RTContext> stringToContextDeclMap_;
 	private Map<String, RTClass> stringToClassDeclMap_;
-	private Map<String, RTRole> nameToRoleObjectMap_;
-	private Map<String, RTStageProp> nameToStagePropObjectMap_;
 	private Map<String, RTObject> nameToObjectDeclMap_;
 }

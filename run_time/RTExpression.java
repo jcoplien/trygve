@@ -560,7 +560,6 @@ public abstract class RTExpression extends RTCode {
 				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName, actualParameters, "this");
 				if (null == methodDecl) {
 					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName, actualParameters, "this");
-					
 					assert null != methodDecl;
 				}
 			}
@@ -715,6 +714,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private int expressionsInExpression(RTCode rtCodePointer) {
+			if (null == rtCodePointer) {
+				assert null != rtCodePointer;
+			}
 			RTCode pc = rtCodePointer;
 			int retval = 0;
 			do {
@@ -735,6 +737,9 @@ public abstract class RTExpression extends RTCode {
 				final Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
 				assert null != anArgument && anArgument instanceof Expression;
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
+				if (null == rtCodePointer) {
+					assert null != rtCodePointer;
+				}
 				if (i < 0 || i >= expressionsCountInArguments_.length) {
 					assert i >= 0 && i < expressionsCountInArguments_.length;
 				}
@@ -3297,6 +3302,8 @@ public abstract class RTExpression extends RTCode {
 	public void setRoleBinding(String name, RTObject value) {
 		assert false;
 	}
+	
+	
 	protected static void setLastExpressionResult(RTObject value) {
 		if (null == value) {
 			assert null != value;

@@ -29,6 +29,7 @@ import java.util.Map;
 
 import code_generation.InterpretiveCodeGenerator;
 import semantic_analysis.StaticScope;
+import declarations.Declaration.ClassDeclaration;
 import declarations.Declaration.ObjectDeclaration;
 import declarations.Type.ClassType;
 import declarations.ActualOrFormalParameterList;
@@ -48,12 +49,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 		nameToStaticObjectMap_ = new HashMap<String, RTObject>();
 		nameToStaticObjectTypeMap_ = new HashMap<String, Type>();
 		nameToRoleDeclMap_ = new HashMap<String, RTRole>();
-		nameToRoleBindingMap_ = new HashMap<String, RTObject>();;
+		nameToRoleBindingMap_ = new HashMap<String, RTObject>();
+		nameToTypeObjectMap_ = new HashMap<String, RTType>();
 		typeDeclaration_ = typeDeclaration;
 		
 		// Get TemplateInstantiationInfo, if any
-		final Type classType = typeDeclaration.type();
-		if (classType instanceof ClassType) {
+		final Type rawClassType = typeDeclaration.type();
+		if (rawClassType instanceof ClassType) {
+			final ClassType classType = (ClassType)rawClassType;
 			templateInstantiationInfo_ = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 		} else {
 			templateInstantiationInfo_ = null;
@@ -63,17 +66,21 @@ public abstract class RTClassAndContextCommon implements RTType {
 		final RTObject retval = new RTObjectCommon(this);
 		return retval;
 	}
-	protected void populateNameToTypeObjectMap() {
+	protected void populateNameToTypeObjectMap(Map<String, RTType> nameToTypeObjectMap) {
 		assert null != typeDeclaration_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
 		List<ObjectDeclaration> objectDeclarations = enclosedScope.objectDeclarations();
 		for (final ObjectDeclaration objectDecl : objectDeclarations) {
 			final String name = objectDecl.name();
 			RTType rTObjectDecl = null;
-			nameToTypeObjectMap_.put(name, rTObjectDecl);
+			nameToTypeObjectMap.put(name, rTObjectDecl);
 		}
 	}
-	protected void populateNameToStaticObjectMap() {
+	protected void populateNameToTypeObjectMap() {
+		this.populateNameToTypeObjectMap(nameToTypeObjectMap_);
+	}
+	protected void populateNameToStaticObjectMap(Map<String, RTObject> nameToStaticObjectMap,
+												 Map<String, Type> nameToStaticObjectTypeMap) {
 		assert null != typeDeclaration_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
 		final Map<String, ObjectDeclaration> staticDeclarations = enclosedScope.staticObjectDeclarations();
@@ -83,9 +90,12 @@ public abstract class RTClassAndContextCommon implements RTType {
 		for (final Map.Entry<String,ObjectDeclaration> iter : staticDeclarations.entrySet()) {
 			final ObjectDeclaration objectDecl = iter.getValue();
 			final String name = objectDecl.name();
-			nameToStaticObjectMap_.put(name, nullObject);
-			nameToStaticObjectTypeMap_.put(name, objectDecl.type());
+			nameToStaticObjectMap.put(name, nullObject);
+			nameToStaticObjectTypeMap.put(name, objectDecl.type());
 		}
+	}
+	protected void populateNameToStaticObjectMap() {
+		this.populateNameToStaticObjectMap(nameToStaticObjectMap_, nameToStaticObjectTypeMap_);
 	}
 	public void metaInit() {
 		// This method sets up static members
@@ -156,10 +166,20 @@ public abstract class RTClassAndContextCommon implements RTType {
 					break;
 				}
 			}
+		} else if (null != this.baseClassDeclaration()) {
+			// We inherit base class methods. Recur.
+			RTType runTimeBaseClassType = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
+			assert (runTimeBaseClassType instanceof RTClass);
+			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignature(methodName, suppliedParameters, ignoreName);
 		} else {
 			retval = null;
 		}
 		return retval;
+	}
+	public ClassDeclaration baseClassDeclaration() {
+		final ClassDeclaration classDeclaration = typeDeclaration_ instanceof ClassDeclaration? (ClassDeclaration)typeDeclaration_: null;
+		final ClassDeclaration baseClassDeclaration = null == classDeclaration? null: classDeclaration.baseClassDeclaration();
+		return baseClassDeclaration;
 	}
 	public String name() {
 		return null == typeDeclaration_? "*null*": typeDeclaration_.name();
@@ -190,6 +210,6 @@ public abstract class RTClassAndContextCommon implements RTType {
 	protected TypeDeclaration typeDeclaration_;
 	private Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
 	protected Map<String, RTObject> nameToStaticObjectMap_;
-	private Map<String, Type> nameToStaticObjectTypeMap_;
+	protected Map<String, Type> nameToStaticObjectTypeMap_;
 	final TemplateInstantiationInfo templateInstantiationInfo_;
 }

@@ -40,7 +40,9 @@ import semantic_analysis.StaticScope;
 import semantic_analysis.StaticScope.StaticRoleScope;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
+import expressions.Expression;
 import expressions.Expression.IdentifierExpression;
+import expressions.Expression.MessageExpression;
 
 public abstract class Declaration implements BodyPart {
 	public Declaration(String name) {
@@ -172,7 +174,7 @@ public abstract class Declaration implements BodyPart {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
 		}
-		public ClassDeclaration baseClass() {
+		public ClassDeclaration baseClassDeclaration() {
 			return baseClass_;
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, TemplateInstantiationInfo newTypes) {
@@ -346,6 +348,9 @@ public abstract class Declaration implements BodyPart {
 				AccessQualifier accessQualifier, int lineNumber) {
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
+			
+			bodyPrefix_ = new ExprAndDeclList(lineNumber);
+			
 			if (associatedDeclaration instanceof ContextDeclaration ||
 					associatedDeclaration instanceof ClassDeclaration) {
 				if (name().equals(associatedDeclaration.name())) {
@@ -368,15 +373,68 @@ public abstract class Declaration implements BodyPart {
 						assert returnType != null;
 					}
 				}
+				ctorCheck(myEnclosedScope, parentScope, lineNumber);
 			} else {
 				if (null == returnType) {
 					assert returnType != null;
 				}
 			}
+			
 			returnType_ = returnType;
 			myEnclosedScope_ = myEnclosedScope;
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;
+		}
+		private void ctorCheck(StaticScope methodScope, StaticScope parentScope, int lineNumber) {
+			// Am I a constructor?
+			boolean isCtor = false;
+			final String className = parentScope.name();
+			final String methodSelectorName = signature_.name();
+			
+			if (methodSelectorName.equals(className)) {
+				isCtor = true;
+			} else {
+				if (className.matches("[a-zA-Z]<.*>") || className.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+					final int msnl = methodSelectorName.length();
+					if (className.startsWith(methodSelectorName) && className.length() < msnl) {
+						if (className.charAt(msnl-1) == '<') {
+							isCtor = true;
+						}
+					}
+				}
+			}
+			
+			if (isCtor) {
+				// Do we have a base class?
+				final Declaration associatedDeclaration = null == parentScope? null: parentScope.associatedDeclaration();
+				final Type megaType = null == associatedDeclaration? null: associatedDeclaration.type();
+				if (null != megaType && megaType instanceof ClassType) {
+					ClassType theClass = (ClassType)megaType;
+					
+					// It's a class. Does the class have a base class?
+					final ClassType baseClass = theClass.baseClass();
+					
+					if (null != baseClass) {
+						// Look up constructor in that base class
+						final String baseClassName = baseClass.name();
+						final ActualArgumentList actualArgumentList = new ActualArgumentList();
+						final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope);
+						actualArgumentList.addActualArgument(self);
+						final StaticScope baseClassScope = baseClass.enclosedScope();
+						if (null != baseClassScope) {
+							final MethodDeclaration constructor = baseClassScope.lookupMethodDeclaration(baseClassName, actualArgumentList, false);
+						
+							// If there's a constructor, set up to call it from the beginning
+							// of this constructor. Very first thing.
+							if (null!= constructor) {
+								final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
+								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber);
+								bodyPrefix_.addBodyPart(messageExpr);
+							}
+						}
+					}
+				}
+			}
 		}
 		public void setMyEnclosingScope(StaticScope scope) {
 			myEnclosedScope_.setParentScope(scope);
@@ -426,9 +484,10 @@ public abstract class Declaration implements BodyPart {
 		@Override public List<BodyPart> bodyParts() {
 			List<BodyPart> retval = null;
 			if (null != body_) {
-				retval = body_.bodyParts();
+				retval = bodyPrefix_.bodyParts();
+				retval.addAll(body_.bodyParts());
 			} else {
-				retval = new ArrayList<BodyPart>();
+				retval = bodyPrefix_.bodyParts();
 			}
 			return retval;
 		}
@@ -464,6 +523,7 @@ public abstract class Declaration implements BodyPart {
 		private int lineNumber_;
 		private ExprAndDeclList body_;
 		private MethodSignature signature_;
+		private ExprAndDeclList bodyPrefix_;
 	}
 	
 	public static class MethodSignature extends Declaration

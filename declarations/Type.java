@@ -177,7 +177,7 @@ public abstract class Type implements ExpressionStackAPI
 			return enclosedScope_.templateInstantiationInfo();
 		}
 		
-		private String name_;
+		private final String name_;
 		private ClassType baseClass_;
 	}
 	public static class TemplateType extends Type {

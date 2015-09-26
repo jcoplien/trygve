@@ -635,7 +635,7 @@ public class StaticScope {
 			// If this is a class, see if the base class has it
 			if (associatedDeclaration_ instanceof ClassDeclaration) {
 				final ClassDeclaration thisClass = (ClassDeclaration)associatedDeclaration_;
-				final ClassDeclaration baseClass = thisClass.baseClass();
+				final ClassDeclaration baseClass = thisClass.baseClassDeclaration();
 				if (null != baseClass) {
 					final StaticScope baseClassScope = baseClass.enclosedScope();
 					retval = baseClassScope.lookupMethodDeclarationRecursive(methodSelector, parameterList, ignoreSignature);
@@ -699,7 +699,7 @@ public class StaticScope {
 			// If this is a class, see if the base class has it
 			if (associatedDeclaration_ instanceof ClassDeclaration) {
 				final ClassDeclaration thisClass = (ClassDeclaration)associatedDeclaration_;
-				final ClassDeclaration baseClass = thisClass.baseClass();
+				final ClassDeclaration baseClass = thisClass.baseClassDeclaration();
 				final StaticScope baseClassScope = baseClass.enclosedScope();
 				retval = baseClassScope.lookupMethodDeclarationRecursiveWithLineNumber(methodSelector, lineNumber);
 			}

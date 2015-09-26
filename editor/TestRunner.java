@@ -58,7 +58,8 @@ public class TestRunner {
 			"file:///Users/cope/Programs/Trygve/forloop2.k",
 			"file:///Users/cope/Programs/Trygve/fact.k",
 			"file:///Users/cope/Programs/Trygve/simpleprintchain.k",
-			"file:///Users/cope/Programs/Trygve/simpletemplate.k"
+			"file:///Users/cope/Programs/Trygve/simpletemplate.k",
+			"file:///Users/cope/Programs/Trygve/basectortest.k"
 		};
 	}
 	public void runTests() {

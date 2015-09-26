@@ -31,8 +31,6 @@ import expressions.Constant;
 import expressions.Expression;
 import expressions.Expression.ArrayExpression;
 import expressions.Expression.ArrayIndexExpression;
-import expressions.Expression.BreakExpression;
-import expressions.Expression.ContinueExpression;
 import expressions.Expression.IdentifierExpression;
 import expressions.Expression.MessageExpression;
 import expressions.Expression.NullExpression;
@@ -121,8 +119,6 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 				} else if (aParameter instanceof Constant) {
 					retval.addActualArgument(aParameter);
 				} else {
-					// retval.addActualArgument(aParameter);
-					
 					// Can always treat like an identifier and get by.
 					// It's really the type that matters.
 					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope());
