@@ -35,7 +35,7 @@ public interface RTObject extends RTStackable {
 	public void setObject(String objectName, RTObject object);
 	public Map<String, RTObject> objectMembers();
 	public RTType rTType();
-	public boolean equals(RTObject another);
+	public boolean equals(Object another);
 	public boolean gt(RTObject another);
 	public RTObject plus(RTObject other);
 	public RTObject minus(RTObject other);

@@ -989,9 +989,11 @@ public class Pass1Listener extends KantBaseListener {
 		final int lineNumber = ctx.getStart().getLine();
 		final parser.KantParser.Access_qualifierContext accessQualifierContext = ctx.access_qualifier();
 		final String accessQualifierString = accessQualifierContext != null? accessQualifierContext.getText(): "";
-		final AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
+		AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
 		if (null != accessQualifier) {
 			assert accessQualifier instanceof AccessQualifier;
+		} else {
+			accessQualifier = AccessQualifier.accessQualifierFromString("private");
 		}
 		List<ObjectDeclaration> declaredObjectDeclarations = null;
 		
@@ -1040,7 +1042,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 			
 			final Identifier_listContext identifier_list = ctx.identifier_list();
-			final DeclarationsAndInitializers idInfo = this.processIdentifierList(identifier_list, type, lineNumber);
+			final DeclarationsAndInitializers idInfo = this.processIdentifierList(identifier_list, type, lineNumber, accessQualifier);
 			declaredObjectDeclarations = idInfo.objectDecls();
 			
 			
@@ -1063,11 +1065,11 @@ public class Pass1Listener extends KantBaseListener {
 				// There may not even be a currentExprAndDecl... We presume that initializations
 				// occur where there are ExprAndDecl blocks in play. We'll have to change this
 				// if we come to allow inline initialization of object members in the class
-				// syntax, and handle the intializations in some other way (e.g., letting
+				// syntax, and handle the intialisations in some other way (e.g., letting
 				// the constructor handle them.
 				
 				// In any case, errors can cause currentExprAndDecl() to be empty, so we
-				// need to bail out accordinglly
+				// need to bail out accordingly
 				
 				if (parsingData_.currentExprAndDeclExists()) {
 					final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
@@ -1191,7 +1193,12 @@ public class Pass1Listener extends KantBaseListener {
 			assert false;
 		}
 		
-		parsingData_.pushExpression(type);
+		if (null != type) {
+			// error stumbling null check
+			parsingData_.pushExpression(type);
+		} else {
+			parsingData_.pushExpression(new NullExpression());
+		}
 		
 		if (printProductionsDebug) {
 			if (null != ctx.JAVA_ID()) {
@@ -1693,7 +1700,10 @@ public class Pass1Listener extends KantBaseListener {
 			assert false;
 		}
 		
-		parsingData_.pushExpression(expression);
+		if (null != expression) {
+			// null check is error stumbling check
+			parsingData_.pushExpression(expression);
+		}
 		
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
@@ -2031,7 +2041,6 @@ public class Pass1Listener extends KantBaseListener {
 			//  | 'for' '(' JAVA_ID ':' expr ')' expr
 			final Expression body = parsingData_.popExpression();
 			final Expression thingToIncrementOver = parsingData_.popExpression();
-			// final IdentifierExpression JAVA_ID = (IdentifierExpression)parsingData_.popExpression();
 			final String JAVA_IDasString = ctx.JAVA_ID().getText();
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
@@ -2043,7 +2052,9 @@ public class Pass1Listener extends KantBaseListener {
 			body.setResultIsConsumed(false);
 			thingToIncrementOver.setResultIsConsumed(true);
 			
-			if (thingToIncrementOver.type() instanceof ArrayType == false) {
+			final Type typeIncrementingOver = thingToIncrementOver.type();
+			if (typeIncrementingOver instanceof ArrayType == false &&
+					typeIncrementingOver.name().startsWith("List<") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
 						"« is not iterable", "");
 			}
@@ -2070,8 +2081,10 @@ public class Pass1Listener extends KantBaseListener {
 			
 			body.setResultIsConsumed(false);
 			thingToIncrementOver.setResultIsConsumed(true);
-					
-			if (thingToIncrementOver.type() instanceof ArrayType == false) {
+			
+			final Type typeIncrementingOver = thingToIncrementOver.type();
+			if (typeIncrementingOver instanceof ArrayType == false &&
+					typeIncrementingOver.name().startsWith("List<") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
 						"« is not iterable", "");
 			}
@@ -2593,13 +2606,13 @@ public class Pass1Listener extends KantBaseListener {
 	
 	protected SimpleList variablesToInitialize_, initializationExpressions_;
 	
-	private DeclarationsAndInitializers processIdentifierList(Identifier_listContext identifier_list, Type type, int lineNumber)
+	private DeclarationsAndInitializers processIdentifierList(Identifier_listContext identifier_list, Type type, int lineNumber, AccessQualifier accessQualifier)
 	{
 		variablesToInitialize_ = new SimpleList();
 		initializationExpressions_ = new SimpleList();
 		final List<ObjectDeclaration> objectDecls = new ArrayList<ObjectDeclaration>();
 		
-		this.processIdentifierListRecursive(identifier_list, type, lineNumber);
+		this.processIdentifierListRecursive(identifier_list, type, lineNumber, accessQualifier);
 		
 		final List<BodyPart> intializationExpressionsToReturn = new ArrayList<BodyPart>();
 		
@@ -2626,7 +2639,7 @@ public class Pass1Listener extends KantBaseListener {
 		return retval;
 	}
 	
-	private void processIdentifierListRecursive(Identifier_listContext identifier_list, Type type, int lineNumber)
+	private void processIdentifierListRecursive(Identifier_listContext identifier_list, Type type, int lineNumber, AccessQualifier accessQualifier)
 	{
 		final List<ParseTree> children = identifier_list.children;
 		Token tok;
@@ -2646,6 +2659,7 @@ public class Pass1Listener extends KantBaseListener {
 						if (null == objDecl) {
 							objDecl = new ObjectDeclaration(tokAsText, type, lineNumber);
 							declareObjectSuitableToPass(currentScope_, objDecl);
+							objDecl.setAccess(accessQualifier);
 						} else {
 							// Doesn't hurt to update type
 							objDecl.updateType(type);
@@ -2667,6 +2681,7 @@ public class Pass1Listener extends KantBaseListener {
 							if (null == objDecl) {
 								objDecl = new ObjectDeclaration(tokAsText, type, lineNumber);
 								declareObjectSuitableToPass(currentScope_, objDecl);
+								objDecl.setAccess(accessQualifier);
 							} else {
 								// Doesn't hurt to update type
 								objDecl.updateType(type);
@@ -2675,7 +2690,7 @@ public class Pass1Listener extends KantBaseListener {
 					}
 				}
 			} else if (pt instanceof Identifier_listContext) {
-				this.processIdentifierListRecursive((Identifier_listContext)pt, type, lineNumber);
+				this.processIdentifierListRecursive((Identifier_listContext)pt, type, lineNumber, accessQualifier);
 				// System.err.print("Alert: ");
 				// System.err.println(pt.getText());
 			} else if (pt instanceof ExprContext) {
@@ -3161,6 +3176,7 @@ public class Pass1Listener extends KantBaseListener {
 		final String idName = ctxJAVA_ID.getText();
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(idName);
+		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 		if (null != objdecl) {
 			if (null != this.isRoleAssignmentWithinContext(idName)) {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
@@ -3182,7 +3198,6 @@ public class Pass1Listener extends KantBaseListener {
 			final RoleType roleType = (RoleType)declaringScope.lookupTypeDeclaration(idName);	// Type$RoleType
 			assert roleType instanceof RoleType;
 			if (this.isInsideMethodDeclaration(ctxJAVA_ID)) {
-				final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 				final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope);
 				qualifier.setResultIsConsumed(true);
 				expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
@@ -3194,38 +3209,23 @@ public class Pass1Listener extends KantBaseListener {
 			if (null != cdecl) {
 				type = globalScope.lookupTypeDeclaration("Class");
 				declaringScope = globalScope;
+			} else if (null == declaringScope) {
+				// NOTE: This will also lump in references to Role identifiers
+				// They are distinguished by their enclosing scope
+				declaringScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 			}
-			
-			// NOTE: This will also lump in references to Role identifiers
-			// They are distinguished by their enclosing scope
-			StaticScope scope = declaringScope;
-			if (null == scope) {
-				scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
-				/*
-				 * There was clearly something going on here, but I don't know what
-				 *
-				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-				if (enclosingMegaType instanceof TemplateType) {
-					// aha
-					final TemplateType enclosingClass = (TemplateType)enclosingMegaType;
-					final TemplateDeclaration associatedDeclaration =
-							(TemplateDeclaration)enclosingClass.enclosedScope().associatedDeclaration();
-					final Declaration identifierDeclaration = enclosingClass.enclosedScope().lookupObjectDeclarationRecursive(idName);
-					final TypeParameter typeParameter = associatedDeclaration.typeParameterNamed("abc");
-				}
-				*/
-			}
-			
+				
 			if (null == type) {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
-			
-			expression = new IdentifierExpression(idName, type, scope);
+				
+			expression = new IdentifierExpression(idName, type, declaringScope);
 		}
 		
 		assert null != expression;
 		return expression;
 	}
+	
 	private boolean isInsideMethodDeclaration(TerminalNode ctx) {
 		ParseTree walker = ctx;
 		boolean retval = false;

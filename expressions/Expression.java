@@ -233,7 +233,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class IdentifierExpression extends Expression
 	{
-		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared){
+		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
 			scopeWhereDeclared_ = scopeWhereDeclared;
 		}

@@ -273,7 +273,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("//Users/cope/Programs/Trygve/basectortest.k");
+        fileSystemTextField.setText("//Users/cope/Programs/Trygve/inheritance5.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);

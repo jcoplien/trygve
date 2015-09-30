@@ -40,7 +40,6 @@ import semantic_analysis.StaticScope;
 import semantic_analysis.StaticScope.StaticRoleScope;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
-import expressions.Expression;
 import expressions.Expression.IdentifierExpression;
 import expressions.Expression.MessageExpression;
 
@@ -63,6 +62,7 @@ public abstract class Declaration implements BodyPart {
 			super(name);
 			lineNumber_ = lineNumber;
 			type_ = type;
+			accessQualifier_ = AccessQualifier.PrivateAccess;
 		}
 		public ObjectDeclaration copy() {
 			final ObjectDeclaration retval = new ObjectDeclaration(name(), type_, lineNumber_);
@@ -72,7 +72,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public Type type() {
 			return type_;
 		}
-		public void updateType(Type newType) {
+		public void updateType(final Type newType) {
 			// Used when later passes pick up forward
 			// declarations and can come back to patch
 			// things up
@@ -84,7 +84,9 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
-		
+		public void setAccess(AccessQualifier accessLevel) {
+			accessQualifier_ = accessLevel;
+		}
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
@@ -98,6 +100,7 @@ public abstract class Declaration implements BodyPart {
 		private Type type_;
 		private int lineNumber_;
 		private StaticScope containingScope_;
+		public AccessQualifier accessQualifier_;
 	}
 	
 	public static class TypeDeclarationCommon extends Declaration implements TypeDeclaration

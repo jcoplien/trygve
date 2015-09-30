@@ -35,7 +35,7 @@ import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
-public class RTArrayObject implements RTObject {
+public class RTArrayObject implements RTObject, RTIterable {
 	public RTArrayObject(int size, RTArrayType arrayType) {
 		super();
 		size_ = size;
@@ -108,7 +108,7 @@ public class RTArrayObject implements RTObject {
 		assert false;
 		return null;
 	}
-	@Override public boolean equals(RTObject another) {
+	@Override public boolean equals(Object another) {
 		assert false;
 		return false;
 	}

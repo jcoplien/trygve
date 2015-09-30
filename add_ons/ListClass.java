@@ -241,8 +241,7 @@ public final class ListClass {
 		}
 		@Override public void runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTStackable stackableArgument = activationRecord.getObject("element");
-			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
+			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("element");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);

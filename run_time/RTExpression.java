@@ -736,15 +736,16 @@ public abstract class RTExpression extends RTCode {
 			for (int i = 0; i < actualParameters_.count(); i++) {
 				final Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
 				assert null != anArgument && anArgument instanceof Expression;
+				
+				// Can be null on error conditions
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
-				if (null == rtCodePointer) {
-					assert null != rtCodePointer;
-				}
+				
 				if (i < 0 || i >= expressionsCountInArguments_.length) {
 					assert i >= 0 && i < expressionsCountInArguments_.length;
 				}
-				expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
+				
 				if (null != rtCodePointer) { 	// can happen with programmer errors
+					expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
 					rtCodePointer.setNextCode(null);		// just neatness
 					if (0 == i) {
 						previous = retval = rtCodePointer;
@@ -887,7 +888,7 @@ public abstract class RTExpression extends RTCode {
 					} else {
 						retval = new RTIdentifier(name, expression);
 					}
-				} else if(null != expression && expression.type() instanceof ArrayType) {
+				} else if (null != expression && expression.type() instanceof ArrayType) {
 					final ArrayType arrayType = (ArrayType)expression.type();
 					final Type baseType = arrayType.baseType();
 					retval = new RTArrayIdentifier(name, expression, baseType);
@@ -967,6 +968,7 @@ public abstract class RTExpression extends RTCode {
 		public RTDynamicScope dynamicScope() {
 			RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			if (declaringScope_ instanceof TypeDeclaration) {
+				assert false; // can never be. maybe mean "declaringScoe.associatedDeclaration()" ?
 				scope = new RTDynamicScope(this.name(), scope.getObject("this"), null);
 			} else {
 				;
@@ -1348,6 +1350,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTAssignment extends RTExpression {
 		public RTAssignment(AssignmentExpression expr) {
 			super();
+			assert false;
 			final Type nearestEnclosedType = null == expr? null: expr.enclosingMegaType();
 			final RTType nearestEnclosedrTType = nearestEnclosedType == null? null:
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(nearestEnclosedType.enclosedScope());
@@ -1452,7 +1455,9 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
-				assert null != dynamicScope;
+				if (null == dynamicScope) {
+					assert null != dynamicScope;
+				}
 				
 				// Reference count increment is done within the dynamic scope object
 				// (Note: setNamedSlotToValue decrements the reference count of
@@ -2227,8 +2232,8 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public RTCode run() {
 			final RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTArrayIterator iterator = (RTArrayIterator)dynamicScope.getObject("for$iterator");
-			assert iterator instanceof RTArrayIterator;
+			final RTIterator iterator = (RTIterator)dynamicScope.getObject("for$iterator");
+			assert iterator instanceof RTIterator;
 			RTCode retval = null;
 			if (iterator.isThereANext()) {
 				retval = part2_;
@@ -2322,9 +2327,9 @@ public abstract class RTExpression extends RTCode {
 			while (null != pc) {
 				pc = pc.run();
 			}
-			final RTArrayObject rTThingToIterateOver = (RTArrayObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
-			assert rTThingToIterateOver instanceof RTArrayObject;
-			final RTIterator iterator = new RTArrayIterator(rTThingToIterateOver);
+			final RTIterable rTThingToIterateOver = (RTIterable)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rTThingToIterateOver instanceof RTIterable;
+			final RTIterator iterator = RTIterator.makeIterator(rTThingToIterateOver);
 			dynamicScope_.addObjectDeclaration("for$iterator", null);
 			dynamicScope_.setObject("for$iterator", iterator);
 		}
@@ -2810,7 +2815,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public void setObject(String objectName, RTObject object) { assert false; }
 		@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
-		@Override public boolean equals(RTObject another) { return rTExpr_.equals(another); }
+		@Override public boolean equals(Object another) { return rTExpr_.equals(another); }
 		@Override public boolean gt(RTObject another) { return rTExpr_.gt(another); }
 		@Override public RTObject plus(RTObject other) { return rTExpr_.plus(other); }
 		@Override public RTObject minus(RTObject other) { return rTExpr_.minus(other); }

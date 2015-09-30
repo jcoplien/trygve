@@ -39,6 +39,7 @@ import parser.KantParser.ProgramContext;
 import parser.KantParser.Role_bodyContext;
 import parser.KantParser.Role_declContext;
 import parser.KantParser.Type_declarationContext;
+import declarations.AccessQualifier;
 import declarations.TemplateInstantiationInfo;
 import declarations.Type;
 import declarations.Declaration;
@@ -452,15 +453,20 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// Pop the expression for the indicated object and message
 		if (ctxExpr != null) {
-			if (null == parsingData_.peekExpression()) {
-				// Get rid of the null junk (error stumbling logic)
-				@SuppressWarnings("unused")
-				final Object unused = parsingData_.popRawExpression();
-				
-				// Come in with a suitable substitute
-				object = new NullExpression();
+			// Error stumbling check
+			if (parsingData_.currentExpressionExists()) {
+				if (null == parsingData_.peekExpression()) {
+					// Get rid of the null junk (error stumbling logic)
+					@SuppressWarnings("unused")
+					final Object unused = parsingData_.popRawExpression();
+					
+					// Come in with a suitable substitute
+					object = new NullExpression();
+				} else {
+					object = parsingData_.popExpression();
+				}
 			} else {
-				object = parsingData_.popExpression();
+				return null;	// get out
 			}
 		} else {
 			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope);
@@ -613,12 +619,12 @@ public class Pass2Listener extends Pass1Listener {
 		Expression retval = null;
 		RoleDeclaration aRoleDecl = null;
 		StaticScope declaringScope = null;
+		final StaticScope globalScope = StaticScope.globalScope();
 		final String idText = ctxJAVA_ID.getText();
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idText);
 		if (null != objdecl) {
 			type = objdecl.type();
 			declaringScope = objdecl.enclosingScope();
-			final StaticScope globalScope = StaticScope.globalScope();
 			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			StaticScope megaTypeScope = null;
 			if (null != enclosingMegaType) {
@@ -634,6 +640,9 @@ public class Pass2Listener extends Pass1Listener {
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
 				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope);
 				retval = new QualifiedIdentifierExpression(self, idText, type);
+				
+				// Further checks
+				this.ensureNotDuplicatedInBaseClass(associatedDeclaration, idText, ctxGetStart.getLine());
 			} else {
 				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 			}
@@ -663,20 +672,90 @@ public class Pass2Listener extends Pass1Listener {
 						type = possibleContextScope.lookupTypeDeclaration(idText);
 						declaringScope = roleDecl.enclosingScope();
 					}
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 				} else {
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 				}
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
-				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+				// Could be a base class reference
+				retval = this.lookToBaseClassForHelp(idText, ctxGetStart.getLine(), currentScope_);
+				
+				// That was about the last chance
+				if (null == retval) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
+					type = StaticScope.globalScope().lookupTypeDeclaration("void");
+				}
 			}
-			assert null != type;
-			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 		}
-		assert null != retval;
 		return retval;
     }
+
+	private void ensureNotDuplicatedInBaseClass(final Declaration associatedDeclaration, final String idName, int lineNumber) {
+		if (associatedDeclaration instanceof ClassDeclaration) {
+			// See if there is a base declaration
+			final ClassDeclaration cdecl = (ClassDeclaration)associatedDeclaration;
+			final ClassDeclaration baseClassDeclaration = cdecl.baseClassDeclaration();
+			if (null != baseClassDeclaration) {
+				// See if the base class also has this name
+				final StaticScope baseClassScope = baseClassDeclaration.enclosedScope();
+				final ObjectDeclaration baseClassInstance = baseClassScope.lookupObjectDeclaration(idName);
+				if (null != baseClassInstance) {
+					// Hmmm. It also exists in the base class
+					errorHook6p2(ErrorType.Fatal, lineNumber, "Object declaration ", idName, " appears both in class ",
+							associatedDeclaration.name(), " and in base class ", baseClassDeclaration.name());
+					errorHook5p2(ErrorType.Fatal, lineNumber, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
+							"", "", "");
+				}
+			}
+		}
+	}
+	
+	private Expression lookToBaseClassForHelp(final String idName, int lineNumber, StaticScope scope) {
+		Expression retval = null;
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(scope);
+		StaticScope megaTypeScope = null;
+		if (null != enclosingMegaType) {
+			megaTypeScope = enclosingMegaType.enclosedScope();
+		} else {
+			megaTypeScope = StaticScope.globalScope();
+		}
+		final Declaration associatedDeclaration = megaTypeScope.associatedDeclaration();
+		if (associatedDeclaration instanceof ClassDeclaration) {
+			// See if there is a base declaration
+			final ClassDeclaration cdecl = (ClassDeclaration)associatedDeclaration;
+			final ClassDeclaration baseClassDeclaration = cdecl.baseClassDeclaration();
+			if (null != baseClassDeclaration) {
+				// See if the base class also has this name
+				final StaticScope baseClassScope = baseClassDeclaration.enclosedScope();
+				final ObjectDeclaration baseClassInstance = baseClassScope.lookupObjectDeclaration(idName);
+				if (null != baseClassInstance) {
+					// Good. It also exists in the base class
+					if (baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
+						Type type = baseClassInstance.type();
+						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope);
+						self.setResultIsConsumed(true);
+						retval = new QualifiedIdentifierExpression(self, idName, type);
+					} else {
+						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol ", idName,
+								" is not public and so is not accessible to ", associatedDeclaration.name());
+					}
+				} else {
+					final ClassDeclaration nextBaseClassDeclaration = baseClassDeclaration.baseClassDeclaration();
+					if (null == nextBaseClassDeclaration) {
+						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol ", idName, " cannot be found.", "");
+					} else {
+						// Recur
+						retval = this.lookToBaseClassForHelp(idName, lineNumber, nextBaseClassDeclaration.enclosedScope());
+					}
+				}
+			}
+		}
+		return retval;
+	}
+	
 	@Override protected ContextDeclaration lookupOrCreateContextDeclaration(String name, int lineNumber) {
 		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(name);
 		assert null != contextDecl;  // maybe turn into an error message later

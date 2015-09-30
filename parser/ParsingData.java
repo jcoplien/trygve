@@ -150,6 +150,7 @@ public class ParsingData {
 	public boolean               currentExprAndDeclExists() { return exprAndDeclListStack_.size() > 0; }
 	public void 					pushExpression(ExpressionStackAPI expression) { assert null != expression; expressions_.push(expression); }
 	public Expression               peekExpression() { return (Expression)expressions_.peek(); }
+	public boolean               currentExpressionExists() { return expressions_.size() > 0; }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
 	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
 	public ForExpression  			 popForExpression() { popBreakableExpression();  return forExpressionStack_.pop(); }

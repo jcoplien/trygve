@@ -33,7 +33,7 @@ import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
-public class RTListObject extends RTObjectCommon implements RTObject {
+public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
 	public RTListObject(RTType listType) {
 		super(listType);	// 
 		listType_ = listType;	// e.g. an instance of RTClass

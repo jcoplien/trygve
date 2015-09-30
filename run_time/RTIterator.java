@@ -15,9 +15,22 @@ public abstract class RTIterator implements RTObject {
 	public abstract void advance();
 	public abstract RTObject next();
 	
+	public static RTIterator makeIterator(RTIterable iterable) {
+		RTIterator retval = null;
+		if (iterable instanceof RTArrayObject) {
+			retval = new RTArrayIterator(iterable);
+		} else if (iterable instanceof RTListObject) {
+			retval = new RTListIterator(iterable);
+		} else {
+			assert false;
+		}
+		return retval;
+	}
+	
 	public static class RTArrayIterator extends RTIterator {
-		public RTArrayIterator(RTArrayObject whatIAmIteratingOver) {
+		public RTArrayIterator(RTIterable whatIAmIteratingOver) {
 			super();
+			assert whatIAmIteratingOver instanceof RTArrayObject;
 			whatIAmIteratingOver_ = whatIAmIteratingOver;
 			arraySize_ = whatIAmIteratingOver_.size();
 			currentIndex_ = 0;
@@ -33,9 +46,33 @@ public abstract class RTIterator implements RTObject {
 		public void advance() {
 			currentIndex_++;
 		}
-		private final RTArrayObject whatIAmIteratingOver_;
+		private final RTIterable whatIAmIteratingOver_;
 		private int currentIndex_;
 		private final int arraySize_;
+	}
+	
+	public static class RTListIterator extends RTIterator {
+		public RTListIterator(RTIterable whatIAmIteratingOver) {
+			super();
+			assert whatIAmIteratingOver instanceof RTListObject;
+			whatIAmIteratingOver_ = (RTListObject)whatIAmIteratingOver;
+			listSize_ = whatIAmIteratingOver_.size();
+			currentIndex_ = 0;
+		}
+		public boolean isThereANext() {
+			return currentIndex_ < listSize_;
+		}
+		public RTObject next() {
+			assert currentIndex_ < listSize_;
+			return whatIAmIteratingOver_.get(currentIndex_);
+		}
+		public void advance() {
+			currentIndex_++;
+		}
+		
+		private final RTListObject whatIAmIteratingOver_;
+		private int currentIndex_;
+		private final int listSize_;
 	}
 
 	@Override public RTObject getObject(String name) { assert false; return null; }
@@ -44,7 +81,7 @@ public abstract class RTIterator implements RTObject {
 	@Override public void setObject(String objectName, RTObject object) { assert false; }
 	@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
 	@Override public RTType rTType() { assert false; return null; }
-	@Override public boolean equals(RTObject another) { assert false; return false; }
+	@Override public boolean equals(Object another) { assert false; return false; }
 	@Override public boolean gt(RTObject another) { assert false; return false; }
 	@Override public RTObject plus(RTObject other) { assert false; return null; }
 	@Override public RTObject minus(RTObject other) { assert false; return null; }
