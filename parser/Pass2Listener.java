@@ -733,7 +733,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != baseClassInstance) {
 					// Good. It also exists in the base class
 					if (baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
-						Type type = baseClassInstance.type();
+						final Type type = baseClassInstance.type();
 						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope);
 						self.setResultIsConsumed(true);

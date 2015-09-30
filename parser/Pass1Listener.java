@@ -1496,8 +1496,17 @@ public class Pass1Listener extends KantBaseListener {
 		} else if ((null != ctx.expr()) && (ctx.expr().size() == 1) && (null != ctx.abelian_expr()) &&
 				(ctx.abelian_expr().size() == 1) && null != ctx.ASSIGN()) {
 			// : lhs '=' rhs
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
+			Expression rhs = null, lhs = null;
+			if (parsingData_.currentExpressionExists()) {
+				rhs = parsingData_.popExpression();
+			} else {
+				rhs = new NullExpression();
+			}
+			if (parsingData_.currentExpressionExists()) {
+				lhs = parsingData_.popExpression();
+			} else {
+				lhs = new NullExpression();
+			}
 			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
 			expression = this.assignmentExpr(lhs, ctx.ASSIGN().getText(), rhs, ctx);
 			if (printProductionsDebug) { System.err.println("ablian_expr : ablian_expr ASSIGN expr"); }

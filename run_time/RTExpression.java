@@ -1350,7 +1350,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTAssignment extends RTExpression {
 		public RTAssignment(AssignmentExpression expr) {
 			super();
-			assert false;
+			assert true;
 			final Type nearestEnclosedType = null == expr? null: expr.enclosingMegaType();
 			final RTType nearestEnclosedrTType = nearestEnclosedType == null? null:
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(nearestEnclosedType.enclosedScope());
