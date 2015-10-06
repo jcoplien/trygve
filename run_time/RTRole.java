@@ -26,6 +26,7 @@ package run_time;
 import java.util.HashMap;
 import java.util.Map;
 
+import declarations.Declaration.RoleArrayDeclaration;
 import declarations.Type;
 import declarations.Declaration.RoleDeclaration;
 
@@ -79,6 +80,9 @@ public class RTRole extends RTClassAndContextCommon implements RTType  {
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		return new HashMap<String, RTRole>();
+	}
+	public boolean isArray() {
+		return associatedDeclaration_ instanceof RoleArrayDeclaration;
 	}
 	
 	private Map<String, RTContext> stringToContextDeclMap_;

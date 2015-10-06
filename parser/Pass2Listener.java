@@ -76,6 +76,7 @@ import expressions.Expression.QualifiedIdentifierExpression;
 import expressions.Expression.MessageExpression;
 import expressions.Expression.NullExpression;
 import expressions.Expression.IdentifierExpression;
+import expressions.Expression.RoleArrayIndexExpression;
 import expressions.Expression.UnaryopExpressionWithSideEffect;
 import expressions.ExpressionStackAPI;
 
@@ -97,7 +98,7 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
 	}
 
-	@Override protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber) {
+	@Override protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber, boolean isRoleArray) {
 		// Return value is through currentRole_
 		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(roleName);
 		if (null == currentRole_) {
@@ -250,6 +251,16 @@ public class Pass2Listener extends Pass1Listener {
 		super.enterRole_decl(ctx);
 		this.processRequiredDeclarations(ctx.getStart().getLine());
 	}
+	@Override public void exitRole_decl(@NotNull KantParser.Role_declContext ctx)
+	{
+		// : 'role' JAVA_ID '{' role_body '}'
+		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
+		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		
+		this.processDeclareRoleArrayAlias(ctx.getStart().getLine());
+		super.exitRole_decl(ctx);	// necessary? some of the cleanup seems relevant
+	}
 	@Override public void enterStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
 	{
 		// : 'stageprop' JAVA_ID '{' role_body '}'
@@ -302,18 +313,41 @@ public class Pass2Listener extends Pass1Listener {
 		parsingData_.pushMessage(newMessage);
 	}
 	
-	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr) {
+	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr, int lineNumber) {
 		Expression expression = null;
 		
 		// On pass one, types may not yet be set up so we may
 		// stumble here (particularly if there is a forward reference
 		// to a type). Here on pass 2 we're a bit more anal
-		final ArrayType arrayType = (ArrayType)rawArrayBase.type();
-		assert arrayType instanceof ArrayType;
-		final Type baseType = arrayType.baseType();
-		final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
-		arrayBase.setResultIsConsumed(true);
-		expression = new ArrayIndexExpression(arrayBase, indexExpr);
+		final Type baseType = rawArrayBase.type();
+		if (baseType instanceof RoleType) {
+			final String roleName = rawArrayBase.name();
+			final RoleType roleBaseType = (RoleType)baseType;
+			// Look up the actual array. It is in the current scope as a type
+			final StaticScope contextScope = roleBaseType.contextDeclaration().type().enclosedScope();
+			final RoleDeclaration roleDecl = contextScope.lookupRoleDeclaration(roleName);
+			if (null == roleDecl) {
+				assert false;
+			} else {
+				// do something useful
+				
+				final Type contextType = Expression.nearestEnclosingMegaTypeOf(roleDecl.enclosedScope());
+				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope);
+				final Expression roleNameInvocation = new QualifiedIdentifierExpression(currentContext, roleName, roleDecl.type());
+				expression = new RoleArrayIndexExpression(roleName, roleNameInvocation, indexExpr);
+			}
+		} else if (baseType instanceof ArrayType) {
+			final Type arrayBaseType = rawArrayBase.type();
+			final ArrayType arrayType = (ArrayType)arrayBaseType;	// instance of ArrayType
+			assert arrayType instanceof ArrayType;
+			final Type aBaseType = arrayType.baseType();	// like int
+			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, aBaseType);
+			arrayBase.setResultIsConsumed(true);
+			expression = new ArrayIndexExpression(arrayBase, indexExpr);
+		} else {
+			assert false;
+		}
 		return expression;
 	}
 	
@@ -541,7 +575,12 @@ public class Pass2Listener extends Pass1Listener {
 			final ContextType contextObjectType = (ContextType) objectType;
 			final MethodDeclaration methodDeclaration = contextObjectType.enclosedScope().lookupMethodDeclarationRecursive(
 					message.selectorName(), message.argumentList(), false);
-			methodSignature = methodDeclaration.signature();
+			if (null != methodDeclaration) {
+				methodSignature = methodDeclaration.signature();
+			} else {
+				// Mainly for error stumbling
+				methodSignature = null;
+			}
 		}
 		
 		final Type returnType = this.processReturnType(ctxGetStart, object, objectType, message);
@@ -890,8 +929,31 @@ public class Pass2Listener extends Pass1Listener {
     // -------------------------------------------------------------------------------------------------------
 
 	// WARNING. Tricky code here
-	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) { s.declareObject(objdecl); }
-	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl) { s.declareRole(roledecl); }
+	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) {
+		s.declareObject(objdecl);
+	}
+	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) {
+		s.declareRole(roledecl);	// probably redundant; done in pass 1
+	}
+	private void processDeclareRoleArrayAlias(int lineNumber) {
+		// Declare an actual object for the Role, if the Role is a RoleArray type
+		if (currentRole_.isArray()) {
+			final String roleName = currentRole_.type().getText();
+			
+			// Then declare an array base handle for it as well
+			final String compoundName = roleName + "_array";
+			Type newType = currentScope_.lookupTypeDeclarationRecursive(compoundName);
+			if (null == newType) {
+				newType = new ArrayType(compoundName, currentRole_.type());
+				final ContextDeclaration contextDeclaration = currentRole_.contextDeclaration();
+				final StaticScope contextScope = contextDeclaration.type().enclosedScope();
+				contextScope.declareType(newType);
+				
+				final ObjectDeclaration baseArrayObject = new ObjectDeclaration(compoundName, newType, lineNumber);
+				contextScope.declareObject(baseArrayObject);
+			}
+		}
+	}
 
 	protected StagePropDeclaration currentStageProp_;
 	protected ActualArgumentList currentArgumentList() { return parsingData_.currentArgumentList(); }

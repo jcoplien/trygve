@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 
 import run_time.RTContext.RTContextInfo;
+import run_time.RTExpression.RTArrayExpression;
+import run_time.RTExpression.RTArrayIndexExpression;
+import run_time.RTExpression.RTRoleArrayIndexExpression;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
@@ -98,7 +101,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		return classOrContext_;
 	}
 	
-	@Override public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void enlistAsRolePlayerForContext(final String roleName, RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -128,7 +131,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 	
-	@Override public void unenlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void unenlistAsRolePlayerForContext(final String roleName, RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -146,6 +149,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			super(classs);
 			nameToRoleMap_ = new HashMap<String, RTRole>();
 			nameToRoleBindingMap_ = new HashMap<String, RTObject>();
+			isRoleArrayMap_ = new HashMap<String, String>();
 			
 			// context$info is used to track things like
 			// who our roleplayers are. It kind of seemed like this
@@ -157,11 +161,13 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			// this.setObject("context$info", contextInfo);
 		}
 		public void addRoleDeclaration(String name, RTRole role) {
-			nameToRoleMap_.put(name, role);
-			final RTNullObject nullObject = new RTNullObject();
-			nameToRoleBindingMap_.put(name, nullObject);
 			final RTContextInfo contextInfo = this.contextInfo();
-			contextInfo.addRolePlayer(name, nullObject);
+			final RTNullObject nullObject = new RTNullObject();
+			if (role.isArray() == false) {
+				nameToRoleMap_.put(name, role);
+				nameToRoleBindingMap_.put(name, nullObject);
+				contextInfo.addRolePlayer(name, nullObject);
+			}
 		}
 		public Map<String, RTRole> roleDeclarations() {
 			return nameToRoleMap_;
@@ -192,7 +198,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return contextInfo;
 		}
-		public void setRoleBinding(String name, RTObject value) {
+		public void setRoleBinding(final String name, final RTObject value) {
 			value.incrementReferenceCount();
 			RTObject oldValue = null;
 			if (nameToRoleBindingMap_.containsKey(name)) {
@@ -215,7 +221,71 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				contextInfo.addRolePlayer(name, value);
 			}
 		}
-		public RTObject dup() {
+		public void designateRoleAsArray(final String roleArrayName) {
+			isRoleArrayMap_.put(roleArrayName, roleArrayName);
+		}
+		public void setRoleArrayBinding(RTArrayExpression lhs, RTArrayObject rhs) {
+			// Assign each of the objects in RHS
+			// to a Role in the corresponding position in LHS
+			rhs.incrementReferenceCount();
+			final String roleName = lhs.arrayName();
+			RTArrayObject oldValue = null;
+			if (nameToRoleBindingMap_.containsKey(roleName)) {
+				oldValue = (RTArrayObject)nameToRoleBindingMap_.get(roleName);
+			}
+			
+			nameToRoleBindingMap_.put(roleName, rhs);
+			
+			final RTContextInfo contextInfo = this.contextInfo();
+			assert null != contextInfo;
+			assert contextInfo instanceof RTContextInfo;
+			
+			for (int i = 0; i < oldValue.size(); i++) {
+				final RTObject value = rhs.get(i);
+				if (value instanceof RTStageProp == false) {
+					value.decrementReferenceCount();
+					contextInfo.removeRoleArrayPlayer(roleName, i);
+				}
+			}
+			
+			for (Map.Entry<String, String> iter : isRoleArrayMap_.entrySet()) {
+				contextInfo.designateRoleAsArray(iter.getKey());
+			}
+			
+			for (int i = 0; i < rhs.size(); i++) {
+				final RTObject value = rhs.get(i);
+				if (value instanceof RTStageProp == false) {
+					contextInfo.addRoleArrayPlayer(roleName, i, value);
+				}
+			}
+		}
+		
+		public void setRoleArrayElementBinding(RTRoleArrayIndexExpression lhs, RTObject rhs) {
+			// Assign indicated object in RHS to a Role in LHS
+			
+			final String roleName = lhs.roleName();
+			
+			// Evaluate the index
+			RTCode pc = lhs.indexExpression();
+			do {
+				pc = pc.run();
+			} while (null != pc);
+			
+			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawIndexResult instanceof RTIntegerObject;
+			final RTIntegerObject indexResult = (RTIntegerObject) rawIndexResult;
+			
+			// Current context could be in current$context if we're in a Role method,
+			// or simply in "this" if we're in a Context method
+			final RTObject currentContext = this;
+			final RTObject rawContextInfo = currentContext.getObject("context$info");
+			assert rawContextInfo instanceof RTContextInfo;
+			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
+			
+			contextInfo.setRolePlayerNamedAndIndexed(roleName, indexResult, rhs);
+		}
+		
+		@Override public RTObject dup() {
 			assert false;
 			return null;
 		}
@@ -236,12 +306,13 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		
 		// Debugging only
-		public void incrementReferenceCount() {
+		@Override public void incrementReferenceCount() {
 			super.incrementReferenceCount();
 		}
 	
 		private final Map<String, RTRole> nameToRoleMap_;
 		private final Map<String, RTObject> nameToRoleBindingMap_;
+		private final Map<String, String> isRoleArrayMap_;
 	}
 	
 	public static class RTIntegerObject extends RTObjectCommon implements RTObject {

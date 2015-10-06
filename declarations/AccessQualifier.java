@@ -26,22 +26,17 @@ package declarations;
 public enum AccessQualifier {
 	PublicAccess ("public"),
 	PrivateAccess ("private"),
-	ProtectedAccess ("protected"),
 	UNKNOWN ("UNKNOWN");
 	
 	private final String clearVersion;
-	private AccessQualifier(String clear)
-	{
+	private AccessQualifier(final String clear) {
 		this.clearVersion = clear;
 	}
-	public String asString()
-	{
+	public String asString() {
 		return this.clearVersion;
 	}
-	public static AccessQualifier accessQualifierFromString(String arg)
-	{
-		for (AccessQualifier s : AccessQualifier.values())
-		{
+	public static AccessQualifier accessQualifierFromString(String arg) {
+		for (final AccessQualifier s : AccessQualifier.values()) {
 			if (s.asString().equals(arg))
 				return s;
 		}

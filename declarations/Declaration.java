@@ -289,7 +289,7 @@ public abstract class Declaration implements BodyPart {
 			context_ = context;
 			requiredSelfSignatures_ = new Hashtable<String, MethodSignature>();
 		}
-		public ContextDeclaration context() {
+		public ContextDeclaration contextDeclaration() {
 			return context_;
 		}
 		public boolean requiresConstMethods() {
@@ -318,9 +318,21 @@ public abstract class Declaration implements BodyPart {
 				myEnclosedScope.declareRequiredMethod(methodDecl);
 			}
 		}
+		public boolean isArray() {
+			return false;
+		}
 		
-		private ContextDeclaration context_;
-		private Map<String, MethodSignature> requiredSelfSignatures_;
+		protected ContextDeclaration context_;
+		protected Map<String, MethodSignature> requiredSelfSignatures_;
+	}
+	
+	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {
+		public RoleArrayDeclaration(String name, StaticScope myEnclosedScope, ContextDeclaration context, int lineNumber) {
+			super(name, myEnclosedScope, context, lineNumber);
+		}
+		public boolean isArray() {
+			return true;
+		}
 	}
 	
 	public static class StagePropDeclaration extends RoleDeclaration implements TypeDeclaration

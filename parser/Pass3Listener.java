@@ -153,7 +153,7 @@ public class Pass3Listener extends Pass2Listener {
 		/* Nothing */
 	}
 	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) { }
-	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl) { }
+	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { }
 	@Override public void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) { }
 	@Override public void errorHook6p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) { }
 	@Override public void errorHook5p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4) { }

@@ -73,6 +73,7 @@ import declarations.Type.RoleType;
 import declarations.Declaration.ContextDeclaration;
 import declarations.Declaration.ClassDeclaration;
 import declarations.Declaration.RoleDeclaration;
+import declarations.Declaration.RoleArrayDeclaration;
 import declarations.Declaration.StagePropDeclaration;
 import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.ObjectDeclaration;
@@ -94,6 +95,7 @@ import expressions.Expression.ArrayIndexExpression;
 import expressions.Expression.ArrayIndexExpressionUnaryOp;
 import expressions.Expression.DoWhileExpression;
 import expressions.Expression.IfExpression;
+import expressions.Expression.RoleArrayIndexExpression;
 import expressions.Expression.UnaryopExpressionWithSideEffect;
 import expressions.Expression.BlockExpression;
 import expressions.Expression.RelopExpression;
@@ -412,12 +414,15 @@ public class Pass1Listener extends KantBaseListener {
 
 	@Override public void enterRole_decl(@NotNull KantParser.Role_declContext ctx)
 	{
-		// : 'role' JAVA_ID '{' role_body '}'
-		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
-		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
-		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		//
 		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
 			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "Gratuitous access qualifier `",
@@ -434,7 +439,7 @@ public class Pass1Listener extends KantBaseListener {
 			final String roleName = JAVA_ID.getText();
 		
 			// Return value is through currentRole_
-			lookupOrCreateRoleDeclaration(roleName, ctx.getStart().getLine());
+			lookupOrCreateRoleDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
 		
 			assert null != currentRole_;
 		
@@ -450,15 +455,22 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitRole_decl(@NotNull KantParser.Role_declContext ctx)
 	{
-		// : 'role' JAVA_ID '{' role_body '}'
-		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		
+		// All three passes. INVOKED BY PASS 2 VERSION (probably shouldn't
+		// be, as it does nothing in pass 2. FIXME)
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		// In the self_methods rule we've been gathering signatures
 		// in the "requires" section and storing them in the Role
 		// declaration. Just tell the type about the declaration so
 		// that type checking can track it back.
+		
 		if (null != currentRole_) {
 			// The IF statement is just to recover from bad
 			// behaviour elicited by syntax errors. See
@@ -473,13 +485,21 @@ public class Pass1Listener extends KantBaseListener {
 		}
 		if (printProductionsDebug) {
 			if (ctx.self_methods() == null && ctx.access_qualifier() == null) {
-				System.err.println("role_decl : 'role' JAVA_ID '{' role_body '}'");
+				System.err.print("role_decl : ");
+				if (isRoleArray) System.err.print("[] ");
+				System.err.println("'role' JAVA_ID '{' role_body '}'");
 			} else if(ctx.self_methods() != null && ctx.access_qualifier() == null) {
-				System.err.println("role_decl : 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
+				System.err.print("role_decl : ");
+				if (isRoleArray) System.err.print("[] ");
+				System.err.println("'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
 			} else if(ctx.self_methods() == null && ctx.access_qualifier() != null) {
-				System.err.println("role_decl : access_qualifier 'role' JAVA_ID '{' role_body '}'");
+				System.err.println("role_decl : access_qualifier ");
+				if (isRoleArray) System.err.print("[] ");
+				System.err.println("'role' JAVA_ID '{' role_body '}'");
 			} else {
-				System.err.println("role_decl : access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
+				System.err.print("role_decl : access_qualifier ");
+				if (isRoleArray) System.err.print("[] ");
+				System.err.println("'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
@@ -1092,8 +1112,9 @@ public class Pass1Listener extends KantBaseListener {
 			}
 			
 			for (final ObjectDeclaration aDecl : declaredObjectDeclarations) {
-				if (aDecl.name().equals("this") || aDecl.name().equals("Ralph") || aDecl.name().equals("Sue")) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Please avoid the use of the names this, Sue and Ralph for identifiers", "", "", "");
+				if (aDecl.name().equals("this") || aDecl.name().equals("Ralph") || aDecl.name().equals("Sue")
+						 || aDecl.name().equals("index")) {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Please avoid the use of the names this, Sue, index and Ralph for identifiers", "", "", "");
 				}
 			}
 		}
@@ -1426,7 +1447,8 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctx.LOGICAL_NEGATION() && null != ctx.expr() && ctx.expr().size() > 0) {
 			//	| LOGICAL_NEGATION  expr
 			
-			assert false;	// to be implemented. TODO.
+			errorHook5p2(ErrorType.Unimplemented, ctx.getStart().getLine(),
+					"Logical negation is on the To-Do list", "", "", "");	// to be implemented. TODO.
 			if (printProductionsDebug) {
 				System.err.println("unary_abelian_expr : '!' product");
 			}
@@ -1539,7 +1561,7 @@ public class Pass1Listener extends KantBaseListener {
 
 			final Expression rhs = parsingData_.popExpression();
 			final Expression lhs = parsingData_.popExpression();
-			lhs.setResultIsConsumed(true);
+			lhs.setResultIsConsumed(true);	// is this right? FIXME
 			rhs.setResultIsConsumed(true);
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression '", rhs.getText(), "' is not of the right type","");
@@ -1630,7 +1652,8 @@ public class Pass1Listener extends KantBaseListener {
 			
 			// The fidelity of this varies according to how much
 			// type information we have at hand
-			expression = processIndexExpression(rawArrayBase, indexExpr);
+			final int lineNumber = ctx.getStart().getLine();
+			expression = processIndexExpression(rawArrayBase, indexExpr, lineNumber);
 			
 			if (printProductionsDebug) {
 				System.err.println("abelian_expr : abelian_expr '[' expr ']'");
@@ -1717,7 +1740,9 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr) {
+	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr, int unused) {
+		// Pass 1 version. Overridden in Pass 2
+		
 		Expression expression = null;
 		
 		// On pass one, types may not yet be set up so we may
@@ -1725,12 +1750,15 @@ public class Pass1Listener extends KantBaseListener {
 		// to a type). So be generous.
 		final Type arrayBaseType = rawArrayBase.type();
 		if (arrayBaseType instanceof ArrayType) {
-			final ArrayType arrayType = (ArrayType)arrayBaseType;
+			final ArrayType arrayType = (ArrayType)arrayBaseType;	// instance of ArrayType
 			assert arrayType instanceof ArrayType;
-			final Type baseType = arrayType.baseType();
+			final Type baseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
 			arrayBase.setResultIsConsumed(true);
 			expression = new ArrayIndexExpression(arrayBase, indexExpr);
+		} else if (arrayBaseType instanceof RoleType) {
+			// Just the Pass 1 Blues
+			expression = new NullExpression();
 		} else {
 			expression = new NullExpression();
 		}
@@ -2400,7 +2428,7 @@ public class Pass1Listener extends KantBaseListener {
 		newTemplate.setType(newTemplateType);
 	}
 	
-	protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber) {
+	protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber, boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleDeclaration(roleName);
 		if (null != requestedRole) {
 			currentRole_ = requestedRole;
@@ -2411,9 +2439,15 @@ public class Pass1Listener extends KantBaseListener {
 			assert false;
 		} else {
 			final StaticScope rolesScope = new StaticRoleScope(currentScope_);
-			final RoleDeclaration roleDecl = new RoleDeclaration(roleName, rolesScope, currentContext_, lineNumber);
+			final RoleDeclaration roleDecl =
+					isRoleArray
+					   ? new RoleArrayDeclaration(roleName, rolesScope, currentContext_, lineNumber)
+					   : new RoleDeclaration(roleName, rolesScope, currentContext_, lineNumber);
 			rolesScope.setDeclaration(roleDecl);
-			declareRole(currentScope_, roleDecl);
+			
+			// declareRole will also declare the name as an array handle
+			// if isRoleArray was set (in pass 2)
+			declareRole(currentScope_, roleDecl, lineNumber);
 			
 			final RoleType roleType = new RoleType(roleName, rolesScope);
 			currentScope_.declareType(roleType);
@@ -2439,7 +2473,7 @@ public class Pass1Listener extends KantBaseListener {
 			final StaticScope stagePropScope = new StaticRoleScope(currentScope_);
 			final StagePropDeclaration stagePropDecl = new StagePropDeclaration(roleName, stagePropScope, currentContext_, lineNumber);
 			stagePropScope.setDeclaration(stagePropDecl);
-			declareRole(currentScope_, stagePropDecl);
+			declareRole(currentScope_, stagePropDecl, lineNumber);
 			
 			final StagePropType stagePropType = new StagePropType(roleName, stagePropScope);
 			currentScope_.declareType(stagePropType);
@@ -2819,7 +2853,7 @@ public class Pass1Listener extends KantBaseListener {
 
 	// WARNING. Tricky code here
 	protected void declareObject(StaticScope s, ObjectDeclaration objdecl) { s.declareObject(objdecl); }
-	public void declareRole(StaticScope s, RoleDeclaration roledecl) { s.declareRole(roledecl); }
+	public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { s.declareRole(roledecl); }
 	
 	protected void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
@@ -3308,9 +3342,14 @@ public class Pass1Listener extends KantBaseListener {
 			if (null != anotherLhsType && null != rhsType && anotherLhsType.canBeConvertedFrom(rhsType) == false) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of ", lhs.getText(), " is incompatible with expression type ", rhsType.name());
 			}
+		} else if (lhs instanceof RoleArrayIndexExpression) {
+			if (lhsType.canBeConvertedFrom(rhsType) == false) {
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role ", lhsType.name(), " cannot be played by object of type ", rhsType.name(), ":", "");
+				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
+			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
 				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifer or qualified identifier", "", "", "");
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier or qualified identifier", "", "", "");
 		}
 		
 		rhs.setResultIsConsumed(true);

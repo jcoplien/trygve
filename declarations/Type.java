@@ -349,6 +349,9 @@ public abstract class Type implements ExpressionStackAPI
 		public MethodSignature lookupMethodSignatureDeclaration(final String methodName) {
 			return associatedDeclaration_.lookupMethodSignatureDeclaration(methodName);
 		}
+		public Declaration contextDeclaration() {
+			return associatedDeclaration_.contextDeclaration();
+		}
 		
 		protected String name_;
 		protected RoleDeclaration associatedDeclaration_;
@@ -439,7 +442,7 @@ public abstract class Type implements ExpressionStackAPI
 		}
 	}
 	
-	public static class ArrayType extends Type {
+	public static class ArrayType extends Type implements IndexableType {
 		public ArrayType(String name, Type baseType) {
 			super(null);
 			name_ = name;

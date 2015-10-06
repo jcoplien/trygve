@@ -53,7 +53,7 @@ class NumberedParagraphView extends ParagraphView {
         super.paintChild(g, r, n);
         int previousLineCount = getPreviousLineCount();
         int numberX = r.x - getLeftInset();
-        int numberY = r.y + r.height - 5;
+        int numberY = r.y + r.height - 3;	// was 5
         String formattedNumber = Integer.toString(previousLineCount + n + 1);
         while (formattedNumber.length() < 3) {
         	formattedNumber = " " + formattedNumber;

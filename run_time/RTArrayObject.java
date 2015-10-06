@@ -75,6 +75,9 @@ public class RTArrayObject implements RTObject, RTIterable {
 		final RTObject retval = theArray_[theIndex];
 		return retval;
 	}
+	public RTObject get(int theIndex) {
+		return theArray_[theIndex];
+	}
 	public int size() {
 		return size_;
 	}

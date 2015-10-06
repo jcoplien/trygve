@@ -211,5 +211,5 @@ public abstract class RTClassAndContextCommon implements RTType {
 	private Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
 	protected Map<String, RTObject> nameToStaticObjectMap_;
 	protected Map<String, Type> nameToStaticObjectTypeMap_;
-	final TemplateInstantiationInfo templateInstantiationInfo_;
+	private final TemplateInstantiationInfo templateInstantiationInfo_;
 }

@@ -563,6 +563,31 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final String operation_;
 	}
 	
+	public static class RoleArrayIndexExpression extends Expression {
+		public RoleArrayIndexExpression(final String roleName, Expression roleNameInvocation, Expression indexExpr) {
+			super(roleName, roleNameInvocation.type(), roleNameInvocation.enclosingMegaType());
+			indexExpr_ = indexExpr;
+			roleNameInvocation_ = roleNameInvocation;
+			roleName_ = roleName;
+		}
+		public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDecl, RTType rTType, StaticScope staticScope) {
+			return codeGenerator.compileRoleArrayIndexExpression(this, rTType, staticScope);
+		}
+		public Expression indexExpression() {
+			return indexExpr_;
+		}
+		public Expression roleNameInvocation() {
+			return roleNameInvocation_;
+		}
+		public final String roleName() {
+			return roleName_;
+		}
+		
+		private final Expression indexExpr_;
+		private final Expression roleNameInvocation_;
+		private String roleName_;
+	}
+	
 	public static class ArrayExpression extends Expression {
 		// array_expr : expr
 		public ArrayExpression(Expression expr, Type baseType) {

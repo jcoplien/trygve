@@ -68,6 +68,7 @@ public interface CodeGenerator {
 	public List<RTCode> compileArrayExpression(ArrayExpression expr, StaticScope scope);
 	public List<RTCode> compileArrayIndexExpression(ArrayIndexExpression expr, StaticScope scope, RTType rtTypeDeclaration);
 	public List<RTCode> compileArrayIndexExpressionUnaryOp(ArrayIndexExpressionUnaryOp expr, StaticScope scope, RTType rtTypeDeclaration);
+	public List<RTCode> compileRoleArrayIndexExpression(RoleArrayIndexExpression expr, RTType nearestEnclosingType, StaticScope scope);
 	public List<RTCode> compilePromoteToDoubleExpression(PromoteToDoubleExpr expr, StaticScope scope, RTType t);
 	public RunTimeEnvironment virtualMachine();
 	public RTExpression mainExpr();

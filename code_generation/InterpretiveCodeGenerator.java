@@ -76,6 +76,7 @@ import expressions.Expression.QualifiedClassMemberExpression;
 import expressions.Expression.QualifiedIdentifierExpressionUnaryOp;
 import expressions.Expression.RelopExpression;
 import expressions.Expression.ReturnExpression;
+import expressions.Expression.RoleArrayIndexExpression;
 import expressions.Expression.SumExpression;
 import expressions.Expression.SwitchExpression;
 import expressions.Expression.UnaryAbelianopExpression;
@@ -484,6 +485,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	{
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTArrayIndexExpressionUnaryOp(expr, rtTypeDeclaration));
+		return retval;
+	}
+	public List<RTCode> compileRoleArrayIndexExpression(RoleArrayIndexExpression expr, RTType nearestEnclosingType, StaticScope scope) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTRoleArrayIndexExpression(expr, nearestEnclosingType));
 		return retval;
 	}
 	public List<RTCode> compileIfExpression(IfExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {

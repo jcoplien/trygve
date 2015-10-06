@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import parser.ParsingData;
@@ -86,6 +87,7 @@ import expressions.Expression.QualifiedIdentifierExpression;
 import expressions.Expression.QualifiedIdentifierExpressionUnaryOp;
 import expressions.Expression.RelopExpression;
 import expressions.Expression.ReturnExpression;
+import expressions.Expression.RoleArrayIndexExpression;
 import expressions.Expression.SumExpression;
 import expressions.Expression.SwitchBodyElement;
 import expressions.Expression.SwitchExpression;
@@ -99,6 +101,7 @@ import run_time.RTObjectCommon.RTIntegerObject;
 import run_time.RTObjectCommon.RTDoubleObject;
 import run_time.RTObjectCommon.RTBooleanObject;
 import run_time.RTObjectCommon.RTContextObject;
+import run_time.RTContext.RTContextInfo;
 import run_time.RTIterator.RTArrayIterator;
 import semantic_analysis.StaticScope;
 
@@ -165,7 +168,7 @@ public abstract class RTExpression extends RTCode {
 		} else if (expr instanceof UnaryopExpressionWithSideEffect) {
 			retval = new RTUnaryopWithSideEffect((UnaryopExpressionWithSideEffect)expr, nearestEnclosingType);
 		} else if (expr instanceof AssignmentExpression) {
-			retval = new RTAssignment((AssignmentExpression)expr);
+			retval = new RTAssignment((AssignmentExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof IfExpression) {
 			retval = new RTIf((IfExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof ForExpression) {
@@ -218,6 +221,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTArrayIndexExpression((ArrayIndexExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof ArrayIndexExpressionUnaryOp) {
 			retval = new RTArrayIndexExpressionUnaryOp((ArrayIndexExpressionUnaryOp)expr, nearestEnclosingType);
+		} else if (expr instanceof RoleArrayIndexExpression) {
+			retval = new RTRoleArrayIndexExpression((RoleArrayIndexExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof PromoteToDoubleExpr) {
 			retval = new RTPromoteToDoubleExpr((PromoteToDoubleExpr)expr, nearestEnclosingType);
 		} else if (expr instanceof NullExpression) {
@@ -411,16 +416,8 @@ public abstract class RTExpression extends RTCode {
 		public RTMessage(final String name, MessageExpression messageExpr, RTType nearestEnclosingType, StaticScope scope) {
 			super();
 			
-			if (name.equals("println")) {
-				@SuppressWarnings("unused")
-				int i = 0;
-				i ++;
-			}
-			
-			
 			methodSelectorName_ = messageExpr.name();
-			
-			
+
 			templateInstantiationInfo_ = null == scope? null : scope.templateInstantiationInfo();
 			if (null != nearestEnclosingType && nearestEnclosingType instanceof RTClass) {
 				final RTClass enclosingClass = (RTClass)nearestEnclosingType;
@@ -428,7 +425,6 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			nearestEnclosingType_ = nearestEnclosingType;
-			
 			
 			messageExpr_ = messageExpr;
 			final Message message = messageExpr_.message();
@@ -1348,26 +1344,14 @@ public abstract class RTExpression extends RTCode {
 		private final RTUnaryAbelianopPart2 part2_;
 	}
 	public static class RTAssignment extends RTExpression {
-		public RTAssignment(AssignmentExpression expr) {
-			super();
-			assert true;
-			final Type nearestEnclosedType = null == expr? null: expr.enclosingMegaType();
-			final RTType nearestEnclosedrTType = nearestEnclosedType == null? null:
-				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(nearestEnclosedType.enclosedScope());
-			ctorCommon(expr, nearestEnclosedrTType);
-			if (nearestEnclosedType instanceof ClassType) {
-				final ClassType typeAsClassType = (ClassType)nearestEnclosedType;
-				templateInstantiationInfo_ = typeAsClassType.templateInstantiationInfo();
-			} else {
-				templateInstantiationInfo_ = null;
-			}
-		}
 		public RTAssignment(AssignmentExpression expr, RTType nearestEnclosedType) {
 			super();
 			
 			if (nearestEnclosedType instanceof RTClass) {
 				final RTClass rtTypeDeclAsRTClass = (RTClass)nearestEnclosedType;
 				this.setTemplateInstantiationInfo(rtTypeDeclAsRTClass.templateInstantiationInfo());
+			} else {
+				templateInstantiationInfo_ = null;
 			}
 			
 			ctorCommon(expr, nearestEnclosedType);
@@ -1428,6 +1412,25 @@ public abstract class RTExpression extends RTCode {
 					dynamicScope = lhs.dynamicScope();
 					name = lhs.name();
 				*/
+				} else if (lhs_ instanceof RTRoleArrayIndexExpression) {
+					// Role array member assignment.
+					final RTRoleArrayIndexExpression lhs = (RTRoleArrayIndexExpression)lhs_;
+					this.processRoleArrayElementBinding(lhs, rhs);
+					if (this.resultIsConsumed()) {
+						RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
+					}	
+					return staticNextCode_;
+				} else if (lhs_ instanceof RTArrayExpression && ((RTArrayExpression)lhs_).baseType() instanceof RoleType) {
+					// Role array member assignment.
+					final RTArrayExpression lhs = (RTArrayExpression)lhs_;
+					
+					assert rhs instanceof RTArrayObject;
+					final RTArrayObject rhsAsArray = (RTArrayObject)rhs;
+					
+					this.processRoleArrayBinding(lhs, rhsAsArray);
+					
+					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
+					return staticNextCode_;
 				} else if (lhs_ instanceof RTIdentifier) {
 					final RTIdentifier lhs = (RTIdentifier)lhs_;
 					dynamicScope = lhs.dynamicScope();
@@ -1441,8 +1444,8 @@ public abstract class RTExpression extends RTCode {
 				} else if (lhs_ instanceof RTArrayIndexExpression) {
 					final RTArrayIndexExpression indexedExpression = (RTArrayIndexExpression) lhs_;
 					
-					@SuppressWarnings("unused")
 					final RTCode haltInstruction = indexedExpression.assign(rhs);
+					assert null == haltInstruction;
 					// ... I think this will always return null
 					
 					// We don't need the rest of the processing below Ñ
@@ -1451,6 +1454,7 @@ public abstract class RTExpression extends RTCode {
 				} else if (lhs_ instanceof RTArrayIndexExpressionUnaryOp) {
 					ErrorLogger.error(ErrorType.Internal, 0, "Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
 				} else {
+					// Odd. RTRole isn't processed here but appears to work...
 					assert false;	// to be implemented (RTRole, RTQualifiedClassMember, etc.)
 				}
 				
@@ -1508,6 +1512,30 @@ public abstract class RTExpression extends RTCode {
 				
 				assert contextScope.rTType() instanceof RTContext;
 				contextScope.setRoleBinding(lhs.name(), rhs);
+			}
+			
+			private void processRoleArrayBinding(RTArrayExpression lhs, RTArrayObject rhs) {
+				// Analogous to processRoleBinding(RTObject rhs) but the Role type
+				// is declared as an array, and we're handling the binding of an object
+				// to one of those elements
+				
+				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				
+				assert contextScope.rTType() instanceof RTContext;
+				contextScope.setRoleArrayBinding(lhs, rhs);
+			}
+			
+			private void processRoleArrayElementBinding(RTRoleArrayIndexExpression lhs, RTObject rhs) {
+				// Analogous to processRoleBinding(RTObject rhs) but the Role type
+				// is declared as an array, and we're handling the binding of an object
+				// to one of those elements
+				
+				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				
+				assert contextScope.rTType() instanceof RTContext;
+				contextScope.setRoleArrayElementBinding(lhs, rhs);
 			}
 			
 			@Override public void setNextCode(RTCode code) {
@@ -1688,6 +1716,9 @@ public abstract class RTExpression extends RTCode {
 			RTObject newlyCreatedObject = null;
 			if (isAContextConstructor) {
 				newlyCreatedObject = new RTContextObject(rTType_);
+				for (final String iter : ((RTContext)rTType_).isRoleArrayMapEntries()) {
+					((RTContextObject)newlyCreatedObject).designateRoleAsArray(iter);
+				}
 			} else if (classType_.name().startsWith("List<")) {
 				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else {
@@ -1728,10 +1759,13 @@ public abstract class RTExpression extends RTCode {
 				assert downcastObject instanceof RTContextObject;
 				for (final Map.Entry<String, RTRole> roleDeclIter : nameToRoleDeclMap.entrySet()) {
 					final String name = roleDeclIter.getKey();
-					downcastObject.addRoleDeclaration(name, roleDeclIter.getValue());
-					final RTNullObject nullObject = new RTNullObject();
-					downcastObject.setRoleBinding(name, nullObject);
-					nullObject.decrementReferenceCount();
+					final RTRole theRole = roleDeclIter.getValue();
+					if (theRole.isArray() == false) {
+						downcastObject.addRoleDeclaration(name, roleDeclIter.getValue());
+						final RTNullObject nullObject = new RTNullObject();
+						downcastObject.setRoleBinding(name, nullObject);
+						nullObject.decrementReferenceCount();
+					}
 				}
 			}
 
@@ -1820,9 +1854,10 @@ public abstract class RTExpression extends RTCode {
 		public RTArrayExpression(ArrayExpression expr, RTType nearestEnclosingType) {
 			super();
 			baseType_ = expr.baseType();
+			arrayName_ = expr.name();
 			
 			// I mean, it's just an expression...
-			arrayBase_ = RTExpression.makeExpressionFrom( expr.originalExpression(), nearestEnclosingType );
+			arrayBase_ = RTExpression.makeExpressionFrom(expr.originalExpression(), nearestEnclosingType);
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
@@ -1832,17 +1867,10 @@ public abstract class RTExpression extends RTCode {
 		public RTExpression arrayExpr() {
 			return arrayBase_;
 		}
+		public final String arrayName() {
+			return arrayName_;
+		}
 		@Override public RTCode run() {
-			// This is called from RTArrayIndexExpression.assign(RTObject). The assign
-			// method first evaluates the ArrayExpression and then in turn evaluates
-			// the index expression to which it already has a handle. That means
-			// that even though we have our hands on the identity of the index
-			// expression (returned by arrayBase_.run()) that it's not used
-			// by RTArrayIndexExpression.assign(RTObject). It's expecting a
-			// null return from here Ñ and nextCode_ is set right. But we end
-			// not suing the return value from arrayBase_.run().
-			//
-			// Ah, woops, this is all bullshit...
 			RTCode pc = arrayBase_;
 			do {
 				pc = pc.run();
@@ -1851,6 +1879,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private final Type baseType_;
+		private final String arrayName_;
 		private final RTExpression arrayBase_;
 	}
 	public static class RTArrayIndexExpression extends RTExpression {
@@ -1877,8 +1906,20 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			final RTStackable rawArrayBase = RunTimeEnvironment.runTimeEnvironment_.popStack();
-			final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
-			result = arrayBase.getObject(theIndex);
+			if (rawArrayBase instanceof RTArrayObject) {
+				final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
+				result = arrayBase.getObject(theIndex);
+			} else if (rawArrayBase instanceof RTNullObject) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "Likely access of uninitialized array.", "", "", "");
+				return null;
+			} else if (true) {
+				assert false;
+			}
+			
+			if (null == result) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "Likely access of uninitialized array element.", "", "", "");
+				return null;
+			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
 			setLastExpressionResult(result);
 			
@@ -1919,6 +1960,9 @@ public abstract class RTExpression extends RTCode {
 			theIndex.decrementReferenceCount();
 			
 			return pc2;
+		}
+		public Type baseType() {
+			return ((RTArrayExpression)rTArrayExpression_).baseType();
 		}
 		
 		private final RTExpression rTIndexExpression_;
@@ -1974,6 +2018,56 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression rTIndexExpression_;
 		private final RTExpression rTArrayExpression_;
 		private final RTArrayIndexExpressionUnaryOpPart2 part2_;
+	}
+	
+	public static class RTRoleArrayIndexExpression extends RTExpression {
+		public RTRoleArrayIndexExpression(RoleArrayIndexExpression accessExpression, RTType nearestEnclosingType) {
+			super();
+			roleName_ = accessExpression.roleName();
+			rTIndexExpression_ = RTExpression.makeExpressionFrom( accessExpression.indexExpression(), nearestEnclosingType );
+			nearestEnclosingType_ = nearestEnclosingType;
+		}
+		
+		@Override public RTCode run() {
+			RTCode pc = rTIndexExpression_;
+			do {
+				pc = pc.run();
+			} while ( null != pc);
+			
+			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawIndexResult instanceof RTIntegerObject;
+			final RTIntegerObject indexResult = (RTIntegerObject) rawIndexResult;
+			
+			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			
+			// This can be elicited either in a Role method or a Context method. If
+			// it's a Role method the Context pointer is in current$context. Otherwise,
+			// current$context is undeclared and we just use "this"
+			RTObject currentContext = null;
+			if (nearestEnclosingType_ instanceof RTRole) {
+				currentContext = currentScope.getObject("current$context");
+			} else {
+				currentContext = currentScope.getObject("this");
+			}
+			
+			final RTObject rawContextInfo = currentContext.getObject("context$info");
+			assert rawContextInfo instanceof RTContextInfo;
+			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
+			
+			final RTObject rolePlayer = contextInfo.rolePlayerNamedAndIndexed(roleName_, indexResult);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(rolePlayer);
+			return nextCode_;
+		}
+		public final String roleName() {
+			return roleName_;
+		}
+		public RTExpression indexExpression() {
+			return rTIndexExpression_;
+		}
+
+		private final RTExpression rTIndexExpression_;
+		private final String roleName_;
+		private final RTType nearestEnclosingType_;
 	}
 	
 	public static class RTIf extends RTExpression {
@@ -3311,6 +3405,7 @@ public abstract class RTExpression extends RTCode {
 	
 	protected static void setLastExpressionResult(RTObject value) {
 		if (null == value) {
+			ErrorLogger.error(ErrorType.Internal, "Internal expression evaluated to a NULL Java object", "", "", "");
 			assert null != value;
 		}
 		final RTObject previousLastResult = lastExpressionResult_;
