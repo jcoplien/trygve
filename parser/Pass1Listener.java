@@ -1323,7 +1323,12 @@ public class Pass1Listener extends KantBaseListener {
 		Expression expression = null;
 		
 		if (null != ctx.abelian_expr()) {
-			expression = parsingData_.popExpression();
+			if (parsingData_.currentExpressionExists()) {
+				// Error stumbling (undefined method)
+				expression = parsingData_.popExpression();
+			} else {
+				expression = new NullExpression();
+			}
 			if (printProductionsDebug) { System.err.println("expr : abelian_expr"); }
 		} else if (null != ctx.boolean_expr()) {
 			expression = parsingData_.popExpression();
@@ -3047,7 +3052,11 @@ public class Pass1Listener extends KantBaseListener {
 		Expression object = null;
 		Type type = null;
 		if (ctxExpr != null) {
-			object = parsingData_.popExpression();
+			if (parsingData_.currentExpressionExists()) {
+				object = parsingData_.popExpression();
+			} else {
+				object = new NullExpression();
+			}
 		} else {
 			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 			object = new IdentifierExpression("this", Expression.nearestEnclosingMegaTypeOf(currentScope_), nearestMethodScope);
@@ -3065,8 +3074,9 @@ public class Pass1Listener extends KantBaseListener {
 						classdecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
 						null;
 		if (null == mdecl) {
-			// skip it Ñ we've already barked at the user
-			// ErrorLogger.error(ctx.getStart().getLine(), "Method `", methodSelectorName, "« not declared in class ", classdecl.name());
+			// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
+			// skip it Ñ we'll barked at the user in pass 2
+			// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", className);
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 		} else {
 			type = mdecl.returnType();

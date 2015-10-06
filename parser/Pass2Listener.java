@@ -481,6 +481,7 @@ public class Pass2Listener extends Pass1Listener {
 		// | message
 		// Certified Pass 2 version. Can maybe be folded with pass 1....
 		
+		MethodDeclaration methodDeclaration = null;
 		Expression object = null, retval = null;
 		final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
@@ -516,7 +517,14 @@ public class Pass2Listener extends Pass1Listener {
 		final Message message = parsingData_.popMessage();
 		message.addActualThisParameter(object);
 		
+		if (message.selectorName().equals("classFunc")) {
+			@SuppressWarnings("unused")
+			int l = 0;
+			l++;
+		}
+		
 		MethodSignature methodSignature = null;
+		boolean isOKMethodSignature = false;
 		
 		if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
@@ -533,6 +541,7 @@ public class Pass2Listener extends Pass1Listener {
 			methodSignature = roleType.lookupMethodSignatureDeclaration(message.selectorName());
 			if (null != methodSignature) {
 				// Then it's in the "required" declarations and is NOT a role method per se
+				isOKMethodSignature = true;
 			} else {
 				final Expression currentContext = new IdentifierExpression("current$context", wannabeContextType, nearestMethodScope);
 				message.argumentList().addFirstActualParameter(currentContext);
@@ -540,10 +549,10 @@ public class Pass2Listener extends Pass1Listener {
 				
 				// NOTE: Leaves methodSignature null.
 				// We need it for call of checkForMessageSendViolatingConstness below.
-				final MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclaration(message.selectorName(), message.argumentList(), false);
-				if (null != methodDecl) {
+				methodDeclaration = objectType.enclosedScope().lookupMethodDeclaration(message.selectorName(), message.argumentList(), false);
+				if (null != methodDeclaration) {
 					// Null check is related to error stumbling
-					methodSignature = methodDecl.signature();
+					methodSignature = methodDeclaration.signature();
 				}
 			}
 		} else if (objectType instanceof ClassType) {
@@ -553,7 +562,7 @@ public class Pass2Listener extends Pass1Listener {
 			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
 						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
 						null;
-			MethodDeclaration methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+			methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
 						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
 						null;
 			if (null == methodDeclaration) {
@@ -563,7 +572,9 @@ public class Pass2Listener extends Pass1Listener {
 							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
 							null;
 				if (null == methodDeclaration) {
-					// Mainly for error recovery (bad argument to method)
+					// Mainly for error recovery (bad argument to method / method not decelared)
+					final String methodSelectorName = message.selectorName();
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", classObjectType.name());
 					return null;		// punt
 				} else {
 					methodSignature = methodDeclaration.signature();
@@ -573,7 +584,7 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		} else if (objectType instanceof ContextType) {
 			final ContextType contextObjectType = (ContextType) objectType;
-			final MethodDeclaration methodDeclaration = contextObjectType.enclosedScope().lookupMethodDeclarationRecursive(
+			methodDeclaration = contextObjectType.enclosedScope().lookupMethodDeclarationRecursive(
 					message.selectorName(), message.argumentList(), false);
 			if (null != methodDeclaration) {
 				methodSignature = methodDeclaration.signature();
@@ -587,6 +598,11 @@ public class Pass2Listener extends Pass1Listener {
 		
 		if (objectType.name().equals(message.selectorName())) {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
+		}
+		
+		if (null == methodDeclaration && isOKMethodSignature == false) {
+			final String methodSelectorName = message.selectorName();
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", "classname");
 		}
 		
 		assert null != returnType;
