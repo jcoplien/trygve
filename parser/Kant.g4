@@ -196,7 +196,7 @@ param_list
         ;
 
 param_decl
-        : type_name JAVA_ID
+        : compound_type_name JAVA_ID
         ;
 
 expr

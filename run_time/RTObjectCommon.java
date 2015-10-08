@@ -30,9 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 import run_time.RTContext.RTContextInfo;
-import run_time.RTExpression.RTArrayExpression;
-import run_time.RTExpression.RTArrayIndexExpression;
 import run_time.RTExpression.RTRoleArrayIndexExpression;
+import run_time.RTExpression.RTRoleIdentifier;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
@@ -224,11 +223,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		public void designateRoleAsArray(final String roleArrayName) {
 			isRoleArrayMap_.put(roleArrayName, roleArrayName);
 		}
-		public void setRoleArrayBinding(RTArrayExpression lhs, RTArrayObject rhs) {
-			// Assign each of the objects in RHS
-			// to a Role in the corresponding position in LHS
+		public void setRoleArrayBindingToArray(RTRoleIdentifier lhs, RTArrayObject rhs) {
 			rhs.incrementReferenceCount();
-			final String roleName = lhs.arrayName();
+			final String roleName = lhs.name();
 			RTArrayObject oldValue = null;
 			if (nameToRoleBindingMap_.containsKey(roleName)) {
 				oldValue = (RTArrayObject)nameToRoleBindingMap_.get(roleName);
@@ -240,11 +237,13 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			assert null != contextInfo;
 			assert contextInfo instanceof RTContextInfo;
 			
-			for (int i = 0; i < oldValue.size(); i++) {
-				final RTObject value = rhs.get(i);
-				if (value instanceof RTStageProp == false) {
-					value.decrementReferenceCount();
-					contextInfo.removeRoleArrayPlayer(roleName, i);
+			if (null != oldValue) {
+				for (int i = 0; i < oldValue.size(); i++) {
+					final RTObject value = rhs.get(i);
+					if (value instanceof RTStageProp == false) {
+						value.decrementReferenceCount();
+						contextInfo.removeRoleArrayPlayer(roleName, i);
+					}
 				}
 			}
 			

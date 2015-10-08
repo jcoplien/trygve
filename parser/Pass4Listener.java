@@ -25,17 +25,10 @@ package parser;
 
 import java.util.List;
 
-import org.antlr.v4.runtime.misc.NotNull;
-
 import semantic_analysis.StaticScope;
-import declarations.ActualArgumentList;
 import declarations.Type;
 import declarations.Declaration.ClassDeclaration;
-import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.TemplateDeclaration;
-import error.ErrorLogger;
-import error.ErrorLogger.ErrorType;
-import expressions.Expression;
 
 public class Pass4Listener extends Pass3Listener {
 	public Pass4Listener(ParsingData parsingData) {

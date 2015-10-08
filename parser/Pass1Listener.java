@@ -1290,16 +1290,19 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void exitParam_decl(@NotNull KantParser.Param_declContext ctx)
 	{
 		// param_decl
-        //		: type_name JAVA_ID
+        //		: compound_type_name JAVA_ID
 		
 		// We need just to pop the type that the type_name production
 		// put on the stack
 		
-		@SuppressWarnings("unused")
-		final ExpressionStackAPI unusedType = parsingData_.popRawExpression();
+		if (parsingData_.currentExpressionExists()) {
+			// This above check shouldn't be needed
+			@SuppressWarnings("unused")
+			final ExpressionStackAPI unusedType = parsingData_.popRawExpression();
+		}
 		
 		if (printProductionsDebug) {
-			System.err.println("param_decl : type_name JAVA_ID");
+			System.err.println("param_decl : compound_type_name JAVA_ID");
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
@@ -2762,12 +2765,32 @@ public class Pass1Listener extends KantBaseListener {
 			// Do most of this parameter stuff here on the second pass, because
 			// we should have most of the type information by then
 			String formalParameterName = ctx.param_decl().JAVA_ID().getText();
-			final String paramTypeName = ctx.param_decl().type_name().getText();
-			Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeName);
+			final String paramTypeName = ctx.param_decl().compound_type_name().getText();
+			String paramTypeBaseName = null;
+			
+			// Handle vector arguments
+			final List<ParseTree> children = ctx.param_decl().compound_type_name().children;
+			final int numberOfChildren = children.size();
+			paramTypeBaseName = children.get(0).getText();
+			boolean isArray = false;
+			if (numberOfChildren == 3) {
+				final String firstModifier = children.get(1).getText();
+				final String secondModifier = children.get(2).getText();
+				if (firstModifier.equals("[") && secondModifier.equals("]")) {
+					// Is an array declaration
+					isArray = true;
+				}
+			}
+			
+			Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
 			if (null == paramType) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
 				paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this«.", "", "", "");
+			} else if (isArray) {
+				// A derived type
+				final String aName = paramType.getText() + "_array";
+				paramType = new ArrayType(aName, paramType);
 			}
 			
 			ObjectDeclaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
@@ -3334,15 +3357,28 @@ public class Pass1Listener extends KantBaseListener {
 		@SuppressWarnings("unused")
 		boolean tf = lhsType instanceof RoleType;
 		tf = null != rhsType;
-		tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
+		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
+			if (((RoleType)lhsType).isArray()) {
+				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), ctx.getStart().getLine(), this);
+			} else {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of ", lhs.getText(), " is incompatible with expression type ", rhsType.name());
+			}
+		} else {
+			tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
+		}
 		
 		if (lhs.name().equals("this")) {
 			errorHook5p2(ErrorType.Noncompliant, ctx.getStart().getLine(),
 					"You're on your own here.", "", "", "");
 		}
 		
-		
-		if (lhsType instanceof RoleType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
+		if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
+			final Type baseType = ((ArrayType)rhsType).baseType();
+			if (lhsType.canBeConvertedFrom(baseType) == false) {
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
+						((ArrayType)rhsType).baseType().name(), ":", "");
+			}
+		} else if (lhsType instanceof RoleType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role ", lhsType.name(), " cannot be played by object of type ", rhsType.name(), ":", "");
 			this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {

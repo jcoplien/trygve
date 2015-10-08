@@ -517,12 +517,6 @@ public class Pass2Listener extends Pass1Listener {
 		final Message message = parsingData_.popMessage();
 		message.addActualThisParameter(object);
 		
-		if (message.selectorName().equals("classFunc")) {
-			@SuppressWarnings("unused")
-			int l = 0;
-			l++;
-		}
-		
 		MethodSignature methodSignature = null;
 		boolean isOKMethodSignature = false;
 		

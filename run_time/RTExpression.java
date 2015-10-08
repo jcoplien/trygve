@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 
 import parser.ParsingData;
@@ -102,7 +101,6 @@ import run_time.RTObjectCommon.RTDoubleObject;
 import run_time.RTObjectCommon.RTBooleanObject;
 import run_time.RTObjectCommon.RTContextObject;
 import run_time.RTContext.RTContextInfo;
-import run_time.RTIterator.RTArrayIterator;
 import semantic_analysis.StaticScope;
 
 
@@ -1401,7 +1399,16 @@ public abstract class RTExpression extends RTCode {
 				RTDynamicScope dynamicScope = null;
 				String name = null;
 				if (lhs_ instanceof RTRoleIdentifier) {
-					this.processRoleBinding(rhs);
+					final StaticScope declaringScope = ((RTRoleIdentifier)lhs_).declaringScope();
+					final RoleDeclaration lhsDecl = declaringScope.lookupRoleDeclaration(((RTRoleIdentifier)lhs_).name());
+					if (lhsDecl.isArray()) {
+						assert rhs instanceof RTArrayObject;
+						final RTArrayObject aRhs = (RTArrayObject)rhs;
+						assert lhs_ instanceof RTRoleIdentifier;
+						this.processRoleArrayBinding2(aRhs);
+					} else {
+						this.processRoleBinding(rhs);
+					}
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
 					return staticNextCode_;
 				/*
@@ -1514,16 +1521,30 @@ public abstract class RTExpression extends RTCode {
 				contextScope.setRoleBinding(lhs.name(), rhs);
 			}
 			
+			private void processRoleArrayBinding2(RTArrayObject rhs) {
+				// Analogous to processRoleBinding(RTObject rhs) but the Role type
+				// is declared as an array, and we're handling the binding of an array object
+				// to that role
+				
+				final RTRoleIdentifier lhs = (RTRoleIdentifier)lhs_;
+				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				
+				assert contextScope.rTType() instanceof RTContext;
+				
+				contextScope.setRoleArrayBindingToArray(lhs, rhs);
+			}
+			
 			private void processRoleArrayBinding(RTArrayExpression lhs, RTArrayObject rhs) {
 				// Analogous to processRoleBinding(RTObject rhs) but the Role type
-				// is declared as an array, and we're handling the binding of an object
-				// to one of those elements
+				// is declared as an array, and we're handling the binding of an array object
+				// to that role
 				
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
 				
 				assert contextScope.rTType() instanceof RTContext;
-				contextScope.setRoleArrayBinding(lhs, rhs);
+				ErrorLogger.error(ErrorType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
 			}
 			
 			private void processRoleArrayElementBinding(RTRoleArrayIndexExpression lhs, RTObject rhs) {

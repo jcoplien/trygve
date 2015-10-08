@@ -30,6 +30,7 @@ import parser.Pass1Listener;
 import declarations.Declaration.MethodDeclaration;
 import declarations.Declaration.MethodSignature;
 import declarations.Declaration.ObjectDeclaration;
+import declarations.Declaration.RoleArrayDeclaration;
 import declarations.Declaration.RoleDeclaration;
 import declarations.Declaration.TemplateDeclaration;
 import error.ErrorLogger;
@@ -352,8 +353,11 @@ public abstract class Type implements ExpressionStackAPI
 		public Declaration contextDeclaration() {
 			return associatedDeclaration_.contextDeclaration();
 		}
+		public boolean isArray() {
+			return associatedDeclaration_ instanceof RoleArrayDeclaration;
+		}
 		
-		protected String name_;
+		protected final String name_;
 		protected RoleDeclaration associatedDeclaration_;
 	}
 	
@@ -520,6 +524,9 @@ public abstract class Type implements ExpressionStackAPI
 	public MethodSignature signatureForMethodSelectorCommon(String methodSelector, MethodSignature methodSignature,
 			String paramToIgnore, HierarchySelector baseClassSearch) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
+		if (null == enclosedScope_) {
+			assert null != enclosedScope_;
+		}
 		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector, methodSignatureFormalParameterList, paramToIgnore);
 		
 		// mDecl can be null under error conditions
