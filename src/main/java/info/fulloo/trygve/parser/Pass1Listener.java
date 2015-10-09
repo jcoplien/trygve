@@ -80,6 +80,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
+import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.IfExpression;
@@ -3253,7 +3254,25 @@ public class Pass1Listener extends KantBaseListener {
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(idName);
 		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
-		if (null != objdecl) {
+		if (idName.equals("index")) {
+			// This is a legal identifier if invoked from within the
+			// scope of a Role, where the Role is declared as a Role
+			// vector type
+			type = StaticScope.globalScope().lookupTypeDeclaration("void");	// default/error value
+			expression = new NullExpression();
+			if (null == currentRole_) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						"Symbol index may be used only within certain Role methods", "", "", "");
+			} else {
+				if (currentRole_.isArray()) {
+					expression = new IndexExpression(currentRole_, currentContext_);
+				} else {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Symbol index may be used only within a Role vector method. The role ",
+							currentRole_.name(), " is a scalar.", "");
+				}
+			}
+		} else if (null != objdecl) {
 			if (null != this.isRoleAssignmentWithinContext(idName)) {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			} else {
@@ -3278,7 +3297,8 @@ public class Pass1Listener extends KantBaseListener {
 				qualifier.setResultIsConsumed(true);
 				expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
 			} else {
-				assert false;	// could be a static initializer? If so: to be coded.
+				errorHook5p2(ErrorType.Unimplemented, ctxGetStart.getLine(),
+						"Static initializers for Roles are unimplemented", "", "", "");
 			}
 		} else {
 			final ClassDeclaration cdecl = currentScope_.lookupClassDeclarationRecursive(idName);

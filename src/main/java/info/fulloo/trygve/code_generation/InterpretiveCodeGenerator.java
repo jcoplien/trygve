@@ -63,6 +63,7 @@ import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.IfExpression;
+import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NewArrayExpression;
 import info.fulloo.trygve.expressions.Expression.NewExpression;
@@ -586,7 +587,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTPromoteToDoubleExpr(expr, t));
 		return retval;
 	}
-
+	public List<RTCode> compileIndexExpression(IndexExpression indexExpression) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTIndexExpression(indexExpression));
+		return retval;
+	}
 	public List<RTCode> compileBodyPartForMethodOfTypeInScope(BodyPart bodyPart, RTMethod rtMethod, RTType rtTypeDeclaration, StaticScope scope) {
 		List<RTCode> retval = new ArrayList<RTCode>();
 		if (bodyPart instanceof Declaration) {

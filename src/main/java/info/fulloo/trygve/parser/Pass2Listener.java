@@ -61,10 +61,11 @@ import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
 import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
+import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
+import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedClassMemberExpression;
-import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.parser.Pass1Listener;
@@ -710,7 +711,17 @@ public class Pass2Listener extends Pass1Listener {
 			final StaticScope possibleRoleScope = null == possibleProcedureScope? null: possibleProcedureScope.parentScope();
 			final StaticScope possibleContextScope = null ==  possibleRoleScope? null: possibleRoleScope.parentScope();
 			final Declaration associatedDeclaration = null == possibleContextScope? null: possibleContextScope.associatedDeclaration();
-			if (associatedDeclaration == currentContext_) {
+			if (null != possibleRoleScope && idText.equals("index")) {
+				// It's O.K.
+				final RoleDeclaration roleDeclaration = (RoleDeclaration)possibleRoleScope.associatedDeclaration();
+				if (roleDeclaration.isArray()) {
+					retval = new IndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
+				} else {
+					retval = new NullExpression();
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"The identifier `“ndex« may be invoked only from a method of an element of a Role vector", "", "", "");
+				}
+			} else if (associatedDeclaration == currentContext_) {
 				if (null != possibleContextScope) {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleDeclaration(idText);
 					if (null == roleDecl) {
