@@ -1,0 +1,13 @@
+build
+bin
+
+.idea
+.gradle
+.settings
+.externalToolBuilders
+*.launch
+.factorypath
+.buildpath
+.target
+
+src/main/generated
