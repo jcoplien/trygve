@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import run_time.RTIterator.RTArrayIterator;
 import run_time.RTObjectCommon.RTContextObject;
 import run_time.RTObjectCommon.RTIntegerObject;
 import declarations.Type;
@@ -242,6 +243,10 @@ public class RTArrayObject implements RTObject, RTIterable {
 			theArray_[k] = theArray_[k].dup();
 		}
 		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+	}
+	public RTIterator makeIterator() {
+		final RTIterator retval = new RTArrayIterator(this);
+		return retval;
 	}
 	@Override public RTObject dup() {
 		final RTArrayObject retval = new RTArrayObject(theArray_, baseType_, size_);

@@ -32,6 +32,7 @@ import declarations.Type;
 import error.ErrorLogger;
 import error.ErrorLogger.ErrorType;
 import expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import run_time.RTIterator.RTListIterator;
 
 public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
 	public RTListObject(RTType listType) {
@@ -121,6 +122,10 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 			theList_.set(k, theList_.get(k));
 		}
 		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+	}
+	public RTIterator makeIterator() {
+		final RTIterator retval = new RTListIterator(this);
+		return retval;
 	}
 	@Override public RTObject dup() {
 		final RTListObject retval = new RTListObject(theList_, baseType_, listType_);
