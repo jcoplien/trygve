@@ -1349,6 +1349,33 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final Expression promotee_;
 	}
 	
+	public static class IndexExpression extends Expression {
+		// IndexExpression is simply an invocation of the identifier "index",
+		// but its use is limited to specific contexts. Currently it can
+		// be used only inside a Role method where the Role is declared
+		// as a Role vector. The resulting type is an integer reflecting
+		// the position (0-indexed) of the Role in the vector
+		public IndexExpression(RoleDeclaration currentRole, ContextDeclaration currentContext) {
+			super("index", StaticScope.globalScope().lookupTypeDeclaration("int"), currentRole.type());
+			enclosingRole_ = currentRole;
+			enclosingContext_ = currentContext;
+		}
+		@Override public String getText() {
+			return name();
+		}
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileIndexExpression(this);
+		}
+		public String roleName() {
+			return enclosingRole_.name();
+		}
+		
+		final private RoleDeclaration enclosingRole_;
+		
+		@SuppressWarnings("unused")
+		final private ContextDeclaration enclosingContext_;
+	}
+	
 	public Expression(String id, Type type, Type enclosingMegaType) {
 		id_ = id;
 		type_ = type;

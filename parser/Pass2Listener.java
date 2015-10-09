@@ -73,9 +73,10 @@ import expressions.Expression.ArrayIndexExpressionUnaryOp;
 import expressions.Expression.AssignmentExpression;
 import expressions.Expression.QualifiedClassMemberExpression;
 import expressions.Expression.QualifiedIdentifierExpression;
+import expressions.Expression.IdentifierExpression;
+import expressions.Expression.IndexExpression;
 import expressions.Expression.MessageExpression;
 import expressions.Expression.NullExpression;
-import expressions.Expression.IdentifierExpression;
 import expressions.Expression.RoleArrayIndexExpression;
 import expressions.Expression.UnaryopExpressionWithSideEffect;
 import expressions.ExpressionStackAPI;
@@ -710,7 +711,17 @@ public class Pass2Listener extends Pass1Listener {
 			final StaticScope possibleRoleScope = null == possibleProcedureScope? null: possibleProcedureScope.parentScope();
 			final StaticScope possibleContextScope = null ==  possibleRoleScope? null: possibleRoleScope.parentScope();
 			final Declaration associatedDeclaration = null == possibleContextScope? null: possibleContextScope.associatedDeclaration();
-			if (associatedDeclaration == currentContext_) {
+			if (null != possibleRoleScope && idText.equals("index")) {
+				// It's O.K.
+				final RoleDeclaration roleDeclaration = (RoleDeclaration)possibleRoleScope.associatedDeclaration();
+				if (roleDeclaration.isArray()) {
+					retval = new IndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
+				} else {
+					retval = new NullExpression();
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"The identifier `“ndex« may be invoked only from a method of an element of a Role vector", "", "", "");
+				}
+			} else if (associatedDeclaration == currentContext_) {
 				if (null != possibleContextScope) {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleDeclaration(idText);
 					if (null == roleDecl) {

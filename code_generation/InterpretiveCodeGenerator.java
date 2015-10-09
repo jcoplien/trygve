@@ -64,6 +64,7 @@ import expressions.Expression.ExpressionList;
 import expressions.Expression.ForExpression;
 import expressions.Expression.IdentifierExpression;
 import expressions.Expression.IfExpression;
+import expressions.Expression.IndexExpression;
 import expressions.Expression.MessageExpression;
 import expressions.Expression.NewArrayExpression;
 import expressions.Expression.NewExpression;
@@ -586,7 +587,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTPromoteToDoubleExpr(expr, t));
 		return retval;
 	}
-
+	public List<RTCode> compileIndexExpression(IndexExpression indexExpression) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTIndexExpression(indexExpression));
+		return retval;
+	}
 	public List<RTCode> compileBodyPartForMethodOfTypeInScope(BodyPart bodyPart, RTMethod rtMethod, RTType rtTypeDeclaration, StaticScope scope) {
 		List<RTCode> retval = new ArrayList<RTCode>();
 		if (bodyPart instanceof Declaration) {

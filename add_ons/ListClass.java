@@ -93,7 +93,7 @@ public final class ListClass {
 			methodDecl.signature().setHasConstModifier(false);
 			listType_.enclosedScope().declareMethod(methodDecl);
 			
-			formalParameter = new ObjectDeclaration("index", integerType, 0);
+			formalParameter = new ObjectDeclaration("theIndex", integerType, 0);
 			formals = new FormalParameterList();
 			formals.addFormalParameter(formalParameter);
 			self = new ObjectDeclaration("this", listType_, 0);

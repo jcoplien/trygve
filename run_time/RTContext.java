@@ -212,6 +212,18 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		private boolean isRoleArray(final String roleName) {
 			return isRoleArrayMap_.containsKey(roleName);
 		}
+		public RTIntegerObject indexOfRolePlayer(final String roleName, final RTObject rolePlayer) {
+			RTIntegerObject retval = new RTIntegerObject(-1);
+			final Map<Integer,RTObject> roleVecElements = roleArrayPlayers_.get(roleName);
+			for (Map.Entry<Integer, RTObject> aRole : roleVecElements.entrySet()) {
+				final RTObject potentialRolePlayer = aRole.getValue();
+				if (potentialRolePlayer == rolePlayer) {
+					retval = new RTIntegerObject(aRole.getKey().intValue());
+					break;
+				}
+			}
+			return retval;
+		}
 		
 		private final Map<String, RTObject> rolePlayers_;
 		private final Map<String, String> isRoleArrayMap_;

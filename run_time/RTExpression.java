@@ -73,6 +73,7 @@ import expressions.Expression.ExpressionList;
 import expressions.Expression.ForExpression;
 import expressions.Expression.IdentifierExpression;
 import expressions.Expression.IfExpression;
+import expressions.Expression.IndexExpression;
 import expressions.Expression.MessageExpression;
 import expressions.Expression.NewArrayExpression;
 import expressions.Expression.NewExpression;
@@ -225,6 +226,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTPromoteToDoubleExpr((PromoteToDoubleExpr)expr, nearestEnclosingType);
 		} else if (expr instanceof NullExpression) {
 			retval = new RTNullExpression();
+		} else if (expr instanceof IndexExpression) {
+			retval = new RTIndexExpression((IndexExpression)expr);
 		} else {
 			retval = new RTNullExpression();
 		}
@@ -3396,6 +3399,26 @@ public abstract class RTExpression extends RTCode {
 			
 			return nextCode_;
 		}
+	}
+	public static class RTIndexExpression extends RTExpression {
+		public RTIndexExpression(IndexExpression indexExpression) {
+			super();
+			roleName_ = indexExpression.roleName();
+		}
+		@Override public RTCode run() {
+			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject currentContext = currentScope.getObject("current$context");
+			final RTObject rawContextInfo = currentContext.getObject("context$info");
+			final RTObject self = currentScope.getObject("this");
+			assert rawContextInfo instanceof RTContextInfo;
+			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
+			
+			final RTIntegerObject theIndex = contextInfo.indexOfRolePlayer(roleName_, self);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
+			return nextCode_;
+		}
+		
+		final private String roleName_;
 	}
 	
 	public static class RTPushEvaluationResult extends RTExpression {
