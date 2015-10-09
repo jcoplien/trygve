@@ -1024,6 +1024,7 @@ public class Pass1Listener extends KantBaseListener {
 			// Just punt for now.
 			return;
 		}
+		
 		final List<ParseTree> children = compound_type_name.children;
 		final int numberOfChildren = children.size();
 		final String typeName = children.get(0).getText();
@@ -1039,11 +1040,11 @@ public class Pass1Listener extends KantBaseListener {
 		
 		final Declaration associatedDeclaration = currentScope_.associatedDeclaration();
 		if (associatedDeclaration instanceof StagePropDeclaration) {
-			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),"Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else if (associatedDeclaration instanceof RoleDeclaration) {
-			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),"Roles are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else {
@@ -1113,10 +1114,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 			
 			for (final ObjectDeclaration aDecl : declaredObjectDeclarations) {
-				if (aDecl.name().equals("this") || aDecl.name().equals("Ralph") || aDecl.name().equals("Sue")
-						 || aDecl.name().equals("index")) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Please avoid the use of the names this, Sue, index and Ralph for identifiers", "", "", "");
-				}
+				this.nameCheck(aDecl.name(), ctx.getStart().getLine());
 			}
 		}
 
@@ -1253,9 +1251,13 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 		if (printProductionsDebug) {
 			if (null != ctx.JAVA_ID() && null == ctx.expr()) {
-				System.err.println("identifier_list : JAVA_ID");
+				System.err.print("identifier_list : JAVA_ID [");
+				System.err.print(ctx.JAVA_ID().getText());
+				System.err.println("]");
 			} else if (null != ctx.JAVA_ID() && null != ctx.identifier_list()) {
-				System.err.println("identifier_list : identifier_list ',' JAVA_ID");
+				System.err.print("identifier_list : identifier_list ',' JAVA_ID [");
+				System.err.print(ctx.JAVA_ID().getText());
+				System.err.println("]");
 			} else if (null != ctx.JAVA_ID() && null != ctx.expr()) {
 				System.err.println("identifier_list : JAVA_ID ASSIGN expr");
 			} else if (null != ctx.identifier_list() && null != ctx.JAVA_ID() && null != ctx.expr()) {
@@ -1977,6 +1979,8 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitTrivial_object_decl(@NotNull KantParser.Trivial_object_declContext ctx) {
 		// trivial_object_decl : compound_type_name JAVA_ID
+		final String idName = ctx.JAVA_ID().getText();
+		
 		final Compound_type_nameContext compound_type_name = ctx.compound_type_name();
 		if (null == compound_type_name) {
 			// It can happen if there's a bad syntax error.
@@ -1992,10 +1996,12 @@ public class Pass1Listener extends KantBaseListener {
 			if (firstModifier.equals("[") && secondModifier.equals("]")) {
 				// Is an array declaration
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Array declaration is not appropriate for this context", "",
+						"An array declaration is not appropriate for this context", "",
 						"", "");
 			}
 		}
+		
+		this.nameCheck(idName, ctx.getStart().getLine());
 		
 		Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 		if (null == type) {
@@ -2004,7 +2010,7 @@ public class Pass1Listener extends KantBaseListener {
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 		}
 		
-		final ObjectDeclaration objectDecl = new ObjectDeclaration(ctx.JAVA_ID().getText(), type, ctx.getStart().getLine());
+		final ObjectDeclaration objectDecl = new ObjectDeclaration(idName, type, ctx.getStart().getLine());
 		currentScope_.declareObject(objectDecl);
 	}
 	
@@ -2707,6 +2713,7 @@ public class Pass1Listener extends KantBaseListener {
 					} else if (tokAsText.equals(",") == true) {
 						;	// skip it; it separates elements
 					} else {
+						this.nameCheck(tokAsText, lineNumber);
 						objDecl = currentScope_.lookupObjectDeclaration(tokAsText);
 						if (null == objDecl) {
 							objDecl = new ObjectDeclaration(tokAsText, type, lineNumber);
@@ -2724,6 +2731,7 @@ public class Pass1Listener extends KantBaseListener {
 						final TerminalNodeImpl tnpt2 = (TerminalNodeImpl)pt2;
 						tok = tnpt2.getSymbol();
 						final String tokAsText = tok.getText();
+						this.nameCheck(tokAsText, lineNumber);
 						if (tokAsText.equals("=") == true) {
 							; // we get it with the ExprContext catch below
 						} else if (tokAsText.equals(",") == true) {
@@ -3392,7 +3400,11 @@ public class Pass1Listener extends KantBaseListener {
 					"You're on your own here.", "", "", "");
 		}
 		
-		if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
+		if (lhs.name().equals("index")) {
+			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					"`“ndex« is a reserved word which is a read-only property of a Role vector element,",
+					" and may not be assigned.", "", "");
+		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
 			if (lhsType.canBeConvertedFrom(baseType) == false) {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
@@ -3415,7 +3427,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
 				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier or qualified identifier", "", "", "");
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier, qualified identifier, or vector element", "", "", "");
 		}
 		
 		rhs.setResultIsConsumed(true);
@@ -3445,8 +3457,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing on pass 1 */
 	}
 	
-	protected <ExprType> Expression expressionFromReturnStatement(ExprType ctxExpr, RuleContext unused, Token ctxGetStart)
-	{
+	protected <ExprType> Expression expressionFromReturnStatement(ExprType ctxExpr, RuleContext unused, Token ctxGetStart) {
 		Expression returnExpression = null;
 		if (null != ctxExpr) {
 			returnExpression = parsingData_.popExpression();
@@ -3455,6 +3466,12 @@ public class Pass1Listener extends KantBaseListener {
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		final Expression retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
 		return retval;
+	}
+	
+	public void nameCheck(final String name, int lineNumber) {
+		if (name.equals("this") || name.equals("Ralph") || name.equals("Sue") || name.equals("index")) {
+			errorHook5p2(ErrorType.Fatal, lineNumber, "Please avoid the use of the names `this«, `Sue«, `index«and `Ralph«for identifiers.", "", "", "");
+		}
 	}
 	
 	protected ParsingData parsingDataArgumentAccordingToPass() {
