@@ -51,6 +51,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
+    final String TrygveVersion = "1.0";
+    
     
     /** Creates new form TextEditorGUI */
     public TextEditorGUI() {
@@ -63,7 +65,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     }
     
     public void oslMsg() {
-    	System.out.println("Trygve IDE, Copyright ©2015 James O. Coplien.");
+    	System.out.print("Trygve IDE, Version ");
+    	System.out.print(TrygveVersion);
+    	System.out.println(". Copyright ©2015 James O. Coplien.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
@@ -272,7 +276,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("/Users/cope/Programs/Trygve/rolevec1.k");
+        fileSystemTextField.setText("/Users/cope/Programs/Trygve/access1.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
@@ -475,7 +479,7 @@ private void selectAllMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN
 }//GEN-LAST:event_selectAllMenuActionPerformed
 
 private void exampleTextMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exampleTextMenuActionPerformed
-    this.editPane.setText("Hello, World!!!");
+	this.editPane.setText("// Press the Parse button, then press the Run button\n\nSystem.out.println(\"Hello, World!!!\")");
 }//GEN-LAST:event_exampleTextMenuActionPerformed
 
 private void saveMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuActionPerformed
@@ -486,7 +490,7 @@ private void saveMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
         writer.close();
     }
     catch (IOException ioe) {
-        this.editPane.setText("Pardon. Can't write file. Please contact with: jcoplien@gmail.com");
+        this.editPane.setText("Pardon. Can't write file. Please contact: jcoplien@gmail.com");
     }
 }//GEN-LAST:event_saveMenuActionPerformed
 

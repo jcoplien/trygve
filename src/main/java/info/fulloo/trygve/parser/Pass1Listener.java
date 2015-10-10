@@ -254,9 +254,13 @@ public class Pass1Listener extends KantBaseListener {
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
 				if ((rawBaseType instanceof ClassType) == false) {
 					// Leave to pass 2
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type ", baseTypeName, " is not a declared class type as base of ", name);
+					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
+							"« is not a declared class type as base of `", name, "«.", "");
 				} else {
 					baseType = (ClassType)rawBaseType;
+					if (baseType.name().equals(name)) {
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
+					}
 				}
 			} else {
 				// Redundant: for readability...
@@ -1014,7 +1018,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (null != accessQualifier) {
 			assert accessQualifier instanceof AccessQualifier;
 		} else {
-			accessQualifier = AccessQualifier.accessQualifierFromString("private");
+			accessQualifier = AccessQualifier.accessQualifierFromString(" default");
 		}
 		List<ObjectDeclaration> declaredObjectDeclarations = null;
 		
@@ -1503,6 +1507,16 @@ public class Pass1Listener extends KantBaseListener {
 				expression = newExpr;
 			}
 			
+			final MethodDeclaration constructor = type.enclosedScope().lookupMethodDeclaration(JAVA_ID, argument_list, false);
+			if (null != constructor) {
+				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), ctx.getStart().getLine());
+				if (isAccessible == false) {
+					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
+							"Cannot access consturcotr `", constructor.name(),
+							"« with `", constructor.accessQualifier().asString(), "« access qualifier.","");
+				}
+			}
+
 			if (printProductionsDebug) {
 				System.err.println("unary_abelian_expr : NEW JAVA_ID type_list '(' argument_list ')'");
 			}
@@ -1699,7 +1713,7 @@ public class Pass1Listener extends KantBaseListener {
 			//	| ABELIAN_INCREMENT_OP expr '.' JAVA_ID
 			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), ctx.ABELIAN_INCREMENT_OP());
 			assert expression instanceof Expression;
-			
+
 			if (printProductionsDebug) { System.err.print("expr : '++' expr '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
 		} else if (null != ctx.abelian_expr() && (ctx.abelian_expr().size() > 0) && null != ctx.JAVA_ID() && null == ctx.CLONE()
 				&& null == ctx.message() && (null == ctx.expr() || (ctx.expr().size() == 0)) && null != ctx.ABELIAN_INCREMENT_OP()) {
@@ -2286,9 +2300,9 @@ public class Pass1Listener extends KantBaseListener {
 			for (SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
 				if (aCase.isDefault()) continue;
 				if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Case statement with expression of type ",
-							aCase.type().name(), " is incompatible with switch expression of type ",
-							switchExpressionType.name());
+					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Case statement with expression of type `",
+							aCase.type().name(), "« is incompatible with switch expression of type `",
+							switchExpressionType.name(), "«.", "");
 				}
 			}
 		}
@@ -2681,7 +2695,8 @@ public class Pass1Listener extends KantBaseListener {
 			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(k);
 			final Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
-			if (null != declarationType && declarationType.canBeConvertedFrom(expressionType)) {
+			if (null != declarationType && null != expressionType &&
+					declarationType.canBeConvertedFrom(expressionType)) {
 				// Still need this, though old initialization framework is gone
 				objectDecls.add(objDecl);
 				
@@ -2689,7 +2704,7 @@ public class Pass1Listener extends KantBaseListener {
 				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression);
 				intializationExpressionsToReturn.add(initialization);
 			} else {
-				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of ", objDecl.name(), "", "");
+				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "«.", "");
 			}
 		}
 		
@@ -2714,11 +2729,11 @@ public class Pass1Listener extends KantBaseListener {
 						;	// skip it; it separates elements
 					} else {
 						this.nameCheck(tokAsText, lineNumber);
-						objDecl = currentScope_.lookupObjectDeclaration(tokAsText);
+						objDecl = this.pass1InitialDeclarationCheck(tokAsText, lineNumber);
 						if (null == objDecl) {
 							objDecl = new ObjectDeclaration(tokAsText, type, lineNumber);
 							declareObjectSuitableToPass(currentScope_, objDecl);
-							objDecl.setAccess(accessQualifier);
+							objDecl.setAccess(accessQualifier, currentScope_, lineNumber);
 						} else {
 							// Doesn't hurt to update type
 							objDecl.updateType(type);
@@ -2737,11 +2752,11 @@ public class Pass1Listener extends KantBaseListener {
 						} else if (tokAsText.equals(",") == true) {
 							; // skip it; it separates elements
 						} else {
-							objDecl = currentScope_.lookupObjectDeclaration(tokAsText);
+							objDecl = this.pass1InitialDeclarationCheck(tokAsText, lineNumber);
 							if (null == objDecl) {
 								objDecl = new ObjectDeclaration(tokAsText, type, lineNumber);
 								declareObjectSuitableToPass(currentScope_, objDecl);
-								objDecl.setAccess(accessQualifier);
+								objDecl.setAccess(accessQualifier, currentScope_, lineNumber);
 							} else {
 								// Doesn't hurt to update type
 								objDecl.updateType(type);
@@ -2762,6 +2777,17 @@ public class Pass1Listener extends KantBaseListener {
 				assert false;
 			}
 		}
+	}
+	
+	public ObjectDeclaration pass1InitialDeclarationCheck(final String name, int lineNumber) {
+		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
+		if (null != objDecl) {
+			final String addedMessage = " (earlier declaration at line " +
+								Integer.toString(objDecl.lineNumber()) + ").";
+			errorHook5p1(ErrorType.Fatal, lineNumber, "Identifier `",
+					name, "« declared multiple times ", addedMessage);
+		}
+		return objDecl;
 	}
 
 	@Override public void enterParam_list(@NotNull KantParser.Param_listContext ctx)
@@ -2830,6 +2856,14 @@ public class Pass1Listener extends KantBaseListener {
 			final StaticScope scopeWhereDeclared = objdecl.enclosingScope();
 			final Declaration associatedDeclaration = scopeWhereDeclared.associatedDeclaration();
 			assert null != associatedDeclaration;
+			
+			final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(objdecl, objdecl.accessQualifier_, lineNumber);
+			if (isAccessible == false) {
+				errorHook6p2(ErrorType.Fatal, lineNumber,
+						"Cannot access identifier `", id,
+						"« with `", objdecl.accessQualifier_.asString(), "« access qualifier.", "");
+			}
+			
 			if (associatedDeclaration instanceof MethodDeclaration) {
 				// It's a local variable
 				expression = new IdentifierExpression(id, type, scopeWhereDeclared);
@@ -2938,7 +2972,14 @@ public class Pass1Listener extends KantBaseListener {
 		scope.declareType(decl);
 	}
 	protected void declareObjectSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
-		scope.declareObject(objDecl);
+		final String objectIdentifier = objDecl.name();
+		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
+		if (null != existingDecl) {
+			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declaration of ",
+					objectIdentifier, "", "");
+		} else {
+			scope.declareObject(objDecl);
+		}
 	}
 	protected void declareFormalParametersSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
 		scope.declareObject(objDecl);
@@ -2992,6 +3033,16 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new QualifiedIdentifierExpressionUnaryOp(object, javaIdString, type, ctxABELIAN_INCREMENT_OP.getText(), preOrPost);
 			} else {
 				expression = new QualifiedIdentifierExpression(object, javaIdString, type);
+			}
+			
+			if (null != odecl) {
+				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(odecl, odecl.accessQualifier_, 
+						ctxGetStart.getLine());
+				if (isAccessible == false) {
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Cannot access expression `", expression.getText(),
+							"« with `", odecl.accessQualifier_.asString(), "« access qualifier.", "");
+				}
 			}
 			
 			if (null == odecl) {
@@ -3389,7 +3440,8 @@ public class Pass1Listener extends KantBaseListener {
 			if (((RoleType)lhsType).isArray()) {
 				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), ctx.getStart().getLine(), this);
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of ", lhs.getText(), " is incompatible with expression type ", rhsType.name());
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
+						"« is incompatible with expression type `", rhsType.name(), "«.", "");
 			}
 		} else {
 			tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
@@ -3411,23 +3463,25 @@ public class Pass1Listener extends KantBaseListener {
 						((ArrayType)rhsType).baseType().name(), ":", "");
 			}
 		} else if (lhsType instanceof RoleType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role ", lhsType.name(), " cannot be played by object of type ", rhsType.name(), ":", "");
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "« cannot be played by object of type `", rhsType.name(), "«:", "");
 			this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of ", lhsType.name(), " is incompatible with expression type ", rhsType.name());
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhsType.name(), "« is incompatible with expression type `", rhsType.name(), "«.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType && anotherLhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of ", lhs.getText(), " is incompatible with expression type ", rhsType.name());
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
+						"« is incompatible with expression type `", rhsType.name(), "«.", "");
 			}
 		} else if (lhs instanceof RoleArrayIndexExpression) {
 			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role ", lhsType.name(), " cannot be played by object of type ", rhsType.name(), ":", "");
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(),
+						"« cannot be played by object of type `", rhsType.name(), "«:", "");
 				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
 				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier, qualified identifier, or vector element", "", "", "");
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier, qualified identifier, or vector element.", "", "", "");
 		}
 		
 		rhs.setResultIsConsumed(true);

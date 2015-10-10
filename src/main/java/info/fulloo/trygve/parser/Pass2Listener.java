@@ -225,6 +225,8 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		// +++++++++++++++++++++++++
 		
+		this.checkMethodAccess(currentMethod, ctx.getStart().getLine());
+		
 		final StaticScope parentScope = currentScope_.parentScope();
 		currentScope_ = parentScope;
 		
@@ -235,6 +237,32 @@ public class Pass2Listener extends Pass1Listener {
 		@SuppressWarnings("unused")
 		final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
 		this.setMethodBodyAccordingToPass(currentMethod);
+	}
+	
+	private void checkMethodAccess(final MethodDeclaration currentMethod, int lineNumber) {
+		final AccessQualifier activeAccessQualifier = currentMethod.accessQualifier();
+		final StaticScope currentScope = currentMethod.enclosedScope();
+		final StaticScope parentScope = currentScope.parentScope();
+		final Declaration otherAssociatedDeclaration = parentScope.associatedDeclaration();
+		if (otherAssociatedDeclaration instanceof ClassDeclaration) {
+			ClassDeclaration baseClass = ((ClassDeclaration) otherAssociatedDeclaration).baseClassDeclaration();
+			while (null != baseClass) {
+				final StaticScope baseClassScope = baseClass.enclosedScope();
+				final MethodDeclaration baseClassVersionOfMethod =
+						baseClassScope.lookupMethodDeclarationIgnoringParameter(currentMethod.name(), currentMethod.formalParameterList(), "this");
+				if (null != baseClassVersionOfMethod) {
+					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
+					if (baseClassAccessQualifier != activeAccessQualifier) {
+						errorHook6p2(ErrorType.Fatal, lineNumber,
+								"Derived class declaration of `", currentMethod.name(),
+								"« must have same access qualifier as that of declaration in base class `",
+								baseClass.name(), "«.", "");
+						break;	// don't cascade errors
+					}
+				}
+				baseClass = baseClass.baseClassDeclaration();
+			}
+		}
 	}
 	
 	protected void setMethodBodyAccordingToPass(MethodDeclaration unused)
@@ -467,6 +495,15 @@ public class Pass2Listener extends Pass1Listener {
 						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
 					}
 				}
+				
+				if (null != constructor) {
+					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
+					if (isAccessible == false) {
+						errorHook6p2(ErrorType.Fatal, lineNumber,
+								"Cannot access constructor `", constructor.name(),
+								"« with `", constructor.accessQualifier().asString(), "« access qualifier.","");
+					}
+				}
 			}
 		}
 	}
@@ -609,6 +646,16 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != methodSignature) {
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
 			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine());
+			if (null == methodDeclaration) {
+				// Could be a "required" method in a Role. TODO.
+			} else {
+				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart.getLine());
+				if (accessOK == false) {
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Cannot access method `", methodDeclaration.name(),
+							"« with `", methodDeclaration.accessQualifier().asString(), "« access qualifier.","");
+				}
+			}
 		} else {
 			// Stumble elegantly
 			retval = new NullExpression();
@@ -725,7 +772,9 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != possibleContextScope) {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleDeclaration(idText);
 					if (null == roleDecl) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
+						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+								
+								"« is not declared in scope `", currentScope_.name(), "«.", "");
 						type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					} else {
 						// it's O.K. Ñ maybe. Can be used as an L-value in an assignment. R-value, too, I guess
@@ -734,7 +783,8 @@ public class Pass2Listener extends Pass1Listener {
 					}
 					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+							"« is not declared in scope `", currentScope_.name(), "«.", "");
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 				}
@@ -744,7 +794,8 @@ public class Pass2Listener extends Pass1Listener {
 				
 				// That was about the last chance
 				if (null == retval) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object ", idText, " is not declared in scope ", currentScope_.name());
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText,
+							"« is not declared in scope `", currentScope_.name(), "«.", "");
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
 				}
 			}
@@ -763,8 +814,10 @@ public class Pass2Listener extends Pass1Listener {
 				final ObjectDeclaration baseClassInstance = baseClassScope.lookupObjectDeclaration(idName);
 				if (null != baseClassInstance) {
 					// Hmmm. It also exists in the base class
-					errorHook6p2(ErrorType.Fatal, lineNumber, "Object declaration ", idName, " appears both in class ",
-							associatedDeclaration.name(), " and in base class ", baseClassDeclaration.name());
+					final String lastPartOfMessage = baseClassDeclaration.name() + "«.";
+					errorHook6p2(ErrorType.Fatal, lineNumber, "Object declaration `", idName,
+							"« appears both in class `",
+							associatedDeclaration.name(), "« and in base class `", lastPartOfMessage);
 					errorHook5p2(ErrorType.Fatal, lineNumber, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
 							"", "", "");
 				}
@@ -799,8 +852,8 @@ public class Pass2Listener extends Pass1Listener {
 						self.setResultIsConsumed(true);
 						retval = new QualifiedIdentifierExpression(self, idName, type);
 					} else {
-						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol ", idName,
-								" is not public and so is not accessible to ", associatedDeclaration.name());
+						errorHook6p2(ErrorType.Fatal, lineNumber, "Symbol `", idName,
+								"« is not public and so is not accessible to `", associatedDeclaration.name(), "«.", "");
 					}
 				} else {
 					final ClassDeclaration nextBaseClassDeclaration = baseClassDeclaration.baseClassDeclaration();
@@ -863,8 +916,14 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override protected void updateInitializationLists(Expression initializationExpr, ObjectDeclaration objDecl) {
 		// It actually is right that one of these is an add and one is an insert...
+		// Same version for pass 2, 3, and 4
 		initializationExpressions_.add(initializationExpr);
 		variablesToInitialize_.insertAtStart(objDecl);
+	}
+	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, int lineNumber) {
+		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
+		// It's been declared, so multiple declarations aren't an error
+		return objDecl;
 	}
 	@Override protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType) {
 		lhsType.reportMismatchesWith(lineNumber, rhsType);

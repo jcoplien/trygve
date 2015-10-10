@@ -62,7 +62,7 @@ public abstract class Declaration implements BodyPart {
 			super(name);
 			lineNumber_ = lineNumber;
 			type_ = type;
-			accessQualifier_ = AccessQualifier.PrivateAccess;
+			accessQualifier_ = AccessQualifier.DefaultAccess;
 		}
 		public ObjectDeclaration copy() {
 			final ObjectDeclaration retval = new ObjectDeclaration(name(), type_, lineNumber_);
@@ -84,7 +84,25 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
-		public void setAccess(AccessQualifier accessLevel) {
+		public void setAccess(AccessQualifier accessLevel, StaticScope currentScope, int lineNumber) {
+			// This method sets the corresponding access level for this declaration, yes,
+			// makes sense at all
+			if (accessLevel != AccessQualifier.DefaultAccess) {
+				assert null != currentScope;
+				if (currentScope.associatedDeclaration() instanceof MethodDeclaration) {
+					final ErrorType errorType = accessLevel == AccessQualifier.PrivateAccess?
+															ErrorType.Warning:
+															ErrorType.Fatal;
+					ErrorLogger.error(errorType, lineNumber, "Identifier `", name(),
+							"« has a gratuitous access qualifier: ",
+							errorType.toString());
+				}
+			} else {
+				;	// Default access (no explicit field) is always O.K.
+					// In roles it defaults to public to the Context scope
+					// Otherwise it will most commonly default to
+					// AccessQualifier.PrivateAccess, interpreted by logic elsewhere
+			}
 			accessQualifier_ = accessLevel;
 		}
 		@Override public int lineNumber() {

@@ -65,7 +65,8 @@ public class TestRunner {
 			"file:///Users/cope/Programs/Trygve/simpleprintchain.k",
 			"file:///Users/cope/Programs/Trygve/simpletemplate.k",
 			"file:///Users/cope/Programs/Trygve/basectortest.k",
-			"file:///Users/cope/Programs/Trygve/rolevec1.k"
+			"file:///Users/cope/Programs/Trygve/rolevec1.k",
+			"file:///Users/cope/Programs/Trygve/access1.k",
 		};
 	}
 	public void runTests() {
@@ -108,7 +109,7 @@ public class TestRunner {
 		System.err.print(plusses_); System.err.print(pathname); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
-		gui_.setFileNameField(pathname);	// just in case user edits / saves - goes to the right place
+		gui_.setFileNameField(pathname.substring("file://".length()));	// just in case user edits / saves - goes to the right place
 		gui_.setWWWFileNameField(pathname);
 		gui_.wwwButtonActionPerformed(null);
 		gui_.parseButtonActionPerformed(null);

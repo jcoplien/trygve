@@ -26,20 +26,21 @@ package info.fulloo.trygve.declarations;
 public enum AccessQualifier {
 	PublicAccess ("public"),
 	PrivateAccess ("private"),
+	DefaultAccess ("default"),
 	UNKNOWN ("UNKNOWN");
 	
 	private final String clearVersion;
 	private AccessQualifier(final String clear) {
 		this.clearVersion = clear;
 	}
-	public String asString() {
+	public final String asString() {
 		return this.clearVersion;
 	}
-	public static AccessQualifier accessQualifierFromString(String arg) {
+	public static final AccessQualifier accessQualifierFromString(final String arg) {
 		for (final AccessQualifier s : AccessQualifier.values()) {
 			if (s.asString().equals(arg))
 				return s;
 		}
-		return UNKNOWN;
+		return DefaultAccess;
 	}
 }

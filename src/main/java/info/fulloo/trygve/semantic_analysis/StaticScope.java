@@ -36,6 +36,7 @@ import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -49,6 +50,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 public class StaticScope {
@@ -520,6 +522,7 @@ public class StaticScope {
 	
 	public void declareObject(ObjectDeclaration decl) {
 		final String objectName = decl.name();
+
 		if (objectDeclarationDictionary_.containsKey(objectName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
 		} else {
@@ -912,6 +915,80 @@ public class StaticScope {
 	
 	public final TemplateInstantiationInfo templateInstantiationInfo() {
 		return templateInstantiationInfo_;
+	}
+	
+	private static boolean aHasBAsBaseClass(ClassDeclaration a, ClassDeclaration b) {
+		final boolean retval = b.type().isBaseClassOf(a.type());
+		return retval;
+	}
+	public boolean canAccessDeclarationWithAccessibility(Declaration decl, AccessQualifier accessQualifier, int lineNumber) {
+		// Can this scope access the given declaration?
+		boolean retval = false;
+		StaticScope myEnclosingMethodScope = null, declsEnclosingMethodScope = null;
+		
+		@SuppressWarnings("unused")
+		boolean declIsInBaseClass = false;	// in case we implement Protected stuff
+		
+		final Type myEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(this);
+		Type declarationEnclosingMegaType = null;
+		if (decl instanceof MethodDeclaration) {
+			StaticScope scope = ((MethodDeclaration)decl).enclosingScope();
+			Declaration associatedScopeDeclaration = scope.associatedDeclaration();
+			while (associatedScopeDeclaration instanceof ClassDeclaration == false &&
+					associatedScopeDeclaration instanceof RoleDeclaration == false &&
+					associatedScopeDeclaration instanceof ContextDeclaration == false &&
+					scope != StaticScope.globalScope()) {
+				scope = scope.parentScope();
+				associatedScopeDeclaration = scope.associatedDeclaration();
+			}
+ 			declarationEnclosingMegaType = associatedScopeDeclaration.type();
+		} else if (decl instanceof ObjectDeclaration) {
+			myEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(this);
+			declsEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(((ObjectDeclaration) decl).enclosingScope());
+		} else {
+			declarationEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(decl.type().enclosedScope());
+		}
+		if (null != myEnclosingMethodScope && null != declsEnclosingMethodScope &&
+				myEnclosingMethodScope.associatedDeclaration() == declsEnclosingMethodScope.associatedDeclaration()) {
+			retval = true;
+		} else if (accessQualifier == AccessQualifier.PublicAccess) {
+			retval = true;
+		} else {
+			final Declaration declForThisScope = this.associatedDeclaration();
+			if (declForThisScope instanceof ClassDeclaration) {
+				final ClassDeclaration meAsClass = (ClassDeclaration)declForThisScope;
+				if (declarationEnclosingMegaType instanceof ClassType) {
+					if (decl.type().pathName().equals(meAsClass.type().pathName())) {
+						retval = true;
+					} else {
+						declIsInBaseClass = aHasBAsBaseClass(meAsClass, (ClassDeclaration)declarationEnclosingMegaType.enclosedScope().associatedDeclaration());
+					}
+				}
+			} else if (myEnclosingMegaType instanceof TemplateType) {
+				retval = true;	// lie, but let it go for now
+			} else if (declForThisScope instanceof MethodDeclaration) {
+				if (decl instanceof ObjectDeclaration) {
+					// See if it's a method accessing instance data
+					final StaticScope declaringScope = ((ObjectDeclaration) decl).enclosingScope();
+					final StaticScope myMegaTypeScope = myEnclosingMegaType.enclosedScope();
+					if (declaringScope == myMegaTypeScope) {
+						retval = true;
+					}
+				} else if (decl instanceof MethodDeclaration) {
+					// See if it's a method calling another instance method
+					final StaticScope declaringScope = ((MethodDeclaration) decl).enclosingScope();
+					final StaticScope myMegaTypeScope = myEnclosingMegaType.enclosedScope();
+					if (declaringScope == myMegaTypeScope) {
+						retval = true;
+					}
+				}
+			} else if (null != declarationEnclosingMegaType &&
+					   null != myEnclosingMegaType &&
+					   declarationEnclosingMegaType.pathName().equals(myEnclosingMegaType.pathName())) {
+				retval = true;
+			}
+		}
+		return retval;
 	}
 	
 	private StaticScope parentScope_;
