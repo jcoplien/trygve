@@ -358,6 +358,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public RTObject unaryMinus() {
 			return new RTIntegerObject(-foobar_);
 		}
+		@Override public RTObject unaryLogicalNegation() {
+			return new RTIntegerObject(foobar_ == 0? 1: 0);
+		}
 		@Override public RTObject preIncrement() {
 			return new RTIntegerObject(++foobar_);
 		}
@@ -436,6 +439,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public RTObject unaryMinus() {
 			return new RTDoubleObject(-foobar_);
+		}
+		@Override public RTObject unaryLogicalNegation() {
+			assert false;
+			return null;
 		}
 		@Override public RTObject preIncrement() {
 			return new RTDoubleObject(++foobar_);
@@ -522,6 +529,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public boolean gt(RTObject another) {
 			return false;
+		}
+		@Override public RTObject unaryLogicalNegation() {
+			return new RTBooleanObject(!foobar_);
 		}
 		@Override public RTBooleanObject dup() {
 			return new RTBooleanObject(foobar_);

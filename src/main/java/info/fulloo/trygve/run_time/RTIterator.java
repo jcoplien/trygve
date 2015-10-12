@@ -105,6 +105,7 @@ public abstract class RTIterator implements RTObject {
 	@Override public RTObject modulus(RTObject other) { assert false; return null; }
 	@Override public RTObject unaryPlus() { assert false; return null; }
 	@Override public RTObject unaryMinus() { assert false; return null; }
+	@Override public RTObject unaryLogicalNegation() { assert false; return null; }
 	@Override public RTObject preIncrement() { assert false; return null; }
 	@Override public RTObject postIncrement() { assert false; return null; }
 	@Override public RTObject preDecrement() { assert false; return null; }

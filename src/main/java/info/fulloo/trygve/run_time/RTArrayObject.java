@@ -148,6 +148,10 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
+	@Override public RTObject unaryLogicalNegation() {
+		assert false;
+		return null;
+	}
 	@Override public RTObject preIncrement() {
 		assert false;
 		return null;

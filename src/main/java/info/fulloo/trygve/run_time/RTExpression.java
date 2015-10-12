@@ -1326,6 +1326,8 @@ public abstract class RTExpression extends RTCode {
 					value = rhs.unaryPlus();
 				} else if (operator_.equals("-")) {
 					value = rhs.unaryMinus();
+				} else if (operator_.equals("!")) {
+					value = rhs.unaryLogicalNegation();
 				} else {
 					assert false;
 				}
@@ -2942,6 +2944,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTObject modulus(RTObject other) { return rTExpr_.modulus(other); }
 		@Override public RTObject unaryPlus() { return rTExpr_.unaryPlus(); }
 		@Override public RTObject unaryMinus() { return rTExpr_.unaryMinus(); }
+		@Override public RTObject unaryLogicalNegation() { return rTExpr_.unaryLogicalNegation(); }
 		@Override public RTObject preIncrement() { return rTExpr_.preIncrement(); }
 		@Override public RTObject postIncrement() { return rTExpr_.postIncrement(); }
 		@Override public RTObject preDecrement() { return rTExpr_.preDecrement(); }

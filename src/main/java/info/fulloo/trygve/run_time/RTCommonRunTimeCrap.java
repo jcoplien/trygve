@@ -69,6 +69,10 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return null;
 	}
+	@Override public RTObject unaryLogicalNegation() {
+		assert false;
+		return null;
+	}
 	@Override public RTObject preIncrement() {
 		assert false;
 		return null;

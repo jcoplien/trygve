@@ -1462,8 +1462,16 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctx.LOGICAL_NEGATION() && null != ctx.expr() && ctx.expr().size() > 0) {
 			//	| LOGICAL_NEGATION  expr
 			
-			errorHook5p2(ErrorType.Unimplemented, ctx.getStart().getLine(),
-					"Logical negation is on the To-Do list", "", "", "");	// to be implemented. TODO.
+			expression = parsingData_.popExpression();
+			final Type type = expression.type();
+			if (StaticScope.globalScope().lookupTypeDeclaration("boolean").canBeConvertedFrom(type)) {
+				;	// is O.K.
+			} else {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"Expression `", expression.getText(), "« is not of type boolean.", "");
+			}
+			expression = new UnaryAbelianopExpression(expression, "!");
+			
 			if (printProductionsDebug) {
 				System.err.println("unary_abelian_expr : '!' product");
 			}

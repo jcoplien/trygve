@@ -183,8 +183,8 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != returnType) {
 			final String returnTypeName = returnType.getText();
 			if (null == currentScope_.lookupTypeDeclarationRecursive(returnTypeName)) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type ", returnTypeName, " not declared for ",
-						currentMethod.name());
+				errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "« not declared for `",
+						currentMethod.name(), "«.", "");
 			} else {
 				currentMethod.setReturnType(returnType);
 			}
@@ -196,7 +196,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 					; // then O.K. Ñ constructor
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for ", currentMethod.name(), "", "");
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "«.", "");
 				}
 			} else if (otherAssociatedDeclaration instanceof ClassDeclaration) {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
@@ -207,20 +207,20 @@ public class Pass2Listener extends Pass1Listener {
 						if (currentMethod.name().equals(templateDeclaration.name())) {
 							// o.k. - constructors on templates don't include parameter names
 						} else {
-							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method ", currentMethod.name(), "", "");
+							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "«.", "");
 						}
 					} else {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method ", currentMethod.name(), "", "");
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "«.", "");
 					}
 				}
 			} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 					; // then O.K. Ñ constructor
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method ", currentMethod.name(), "", "");
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "«.", "");
 				}
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of ", currentMethod.name(), "", "");
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "«.", "");
 			}
 		}
 		// +++++++++++++++++++++++++
@@ -457,7 +457,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == odecl) {
 				final MethodDeclaration javaId2 = qualifier.type().enclosedScope().lookupMethodDeclarationRecursive(javaIdString, null, true);
 				if (null == javaId2) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Identifier ", javaIdString, " not declared for object ", qualifier.name());
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Identifier `", javaIdString, "« not declared for object `", qualifier.name(), "«.", "");
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
 				} else {
 					type = javaId2.returnType();
@@ -492,7 +492,7 @@ public class Pass2Listener extends Pass1Listener {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor
 					if (null == constructor) {
-						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class ", className, " for `new« invocation", "");
+						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class `", className, "« for `new« invocation", "");
 					}
 				}
 				
@@ -987,8 +987,8 @@ public class Pass2Listener extends Pass1Listener {
 			// Can't know without full dataflow analysis
 			errorHook5p2(ErrorType.Warning, ctxGetStart.getLine(),
 					"WARNING: Assignment statement modifies an array member that could be shared; ",
-					"that violates the constness of ",
-					enclosingMethod.name(), "");
+					"that violates the constness of `",
+					enclosingMethod.name(), "«.");
 		}
 	}
 	
