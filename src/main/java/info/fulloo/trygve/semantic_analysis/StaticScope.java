@@ -33,6 +33,7 @@ import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
@@ -69,6 +70,7 @@ public class StaticScope {
 		roleDeclarationDictionary_ = new HashMap<String, RoleDeclaration>();
 		classDeclarationDictionary_ = new HashMap<String, ClassDeclaration>();
 		templateDeclarationDictionary_ = new HashMap<String, TemplateDeclaration>();
+		interfaceDeclarationDictionary_ =  new HashMap<String,InterfaceDeclaration>();
 		hasDeclarationsThatAreLostBetweenPasses_ = false;
 		templateInstantiationInfo_ = null;
 	}
@@ -101,6 +103,7 @@ public class StaticScope {
 		classDeclarationDictionary_ = scope.classDeclarationDictionary_;
 		templateDeclarationDictionary_ = scope.templateDeclarationDictionary_;
 		roleDeclarationDictionary_ = scope.roleDeclarationDictionary_;
+		interfaceDeclarationDictionary_ =  scope.interfaceDeclarationDictionary_;
 		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
 		templateInstantiationInfo_ = newTypes;
 		
@@ -423,6 +426,32 @@ public class StaticScope {
 			retval = classDeclarationDictionary_.get(className);
 		}
 		return retval;
+	}
+	
+	public InterfaceDeclaration lookupInterfaceDeclarationRecursive(final String interfaceName) {
+		InterfaceDeclaration retval = this.lookupInterfaceDeclaration(interfaceName);
+		if (null == retval) {
+			if (null != parentScope_) {
+				retval = parentScope_.lookupInterfaceDeclarationRecursive(interfaceName);
+			}
+		}
+		return retval;
+	}
+	public InterfaceDeclaration lookupInterfaceDeclaration(final String interfaceName) {
+		InterfaceDeclaration retval = null;
+		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
+			retval = interfaceDeclarationDictionary_.get(interfaceName);
+		}
+		return retval;
+	}
+	public void declareInterface(InterfaceDeclaration decl) {
+		final String interfaceName = decl.name();
+		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
+			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of interface ", interfaceName, " in ", name());
+		} else {
+			interfaceDeclarationDictionary_.put(interfaceName, decl);
+		}
+		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
 	public void declareMethod(MethodDeclaration decl) {
@@ -1000,6 +1029,7 @@ public class StaticScope {
 	private final Map<String,ArrayList<MethodDeclaration>> methodDeclarationDictionary_;
 	private final Map<String,ContextDeclaration> contextDeclarationDictionary_;
 	private final Map<String,ClassDeclaration> classDeclarationDictionary_;
+	private final Map<String,InterfaceDeclaration> interfaceDeclarationDictionary_;
 	private final Map<String,TemplateDeclaration> templateDeclarationDictionary_;
 	private Map<String,RoleDeclaration> roleDeclarationDictionary_;
 	private boolean hasDeclarationsThatAreLostBetweenPasses_;

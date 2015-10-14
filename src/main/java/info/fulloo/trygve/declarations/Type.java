@@ -23,7 +23,9 @@ package info.fulloo.trygve.declarations;
  * 
  */
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -101,6 +103,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(enclosedScope);
 			baseClass_ = baseClass;
 			name_ = name;
+			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public String name() {
 			return name_;
@@ -177,9 +180,16 @@ public abstract class Type implements ExpressionStackAPI
 		public final TemplateInstantiationInfo templateInstantiationInfo() {
 			return enclosedScope_.templateInstantiationInfo();
 		}
+		public void addInterfaceType(InterfaceType it) {
+			interfaceTypes_.add(it);
+		}
+		public final List<InterfaceType> interfaceTypes() {
+			return interfaceTypes_;
+		}
 		
 		private final String name_;
 		private ClassType baseClass_;
+		private List<InterfaceType> interfaceTypes_;
 	}
 	public static class TemplateType extends Type {
 		public TemplateType(String name, StaticScope scope, ClassType baseClass) {
@@ -235,6 +245,95 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		
 		private String name_;
+	}
+	public static class InterfaceType extends Type {
+		public InterfaceType(String name, StaticScope enclosedScope) {
+			super(enclosedScope);
+			name_ = name;
+			selectorSignatureMap_ = new HashMap<String, List<MethodSignature>>();
+		}
+		@Override public String name() {
+			return name_;
+		}
+		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+			return this.canBeConvertedFrom(t);
+		}
+		@Override public boolean canBeConvertedFrom(Type t) {
+			boolean retval = t.name().equals(name_);
+			if (!retval) {
+				if (t.name().equals("Null")) {
+					retval = true;
+				} else if (t instanceof ClassType) {
+					final ClassType classyT = (ClassType)t;
+					for (final InterfaceType it : classyT.interfaceTypes()) {
+						if (it.pathName().equals(pathName())) {
+							retval = true;
+							break;
+						}
+					}
+				}
+			}
+			return retval;
+		}
+		@Override public Type type() {
+			return this;
+		}
+		@Override public MethodSignature signatureForMethodSelectorCommon(String methodSelector, MethodSignature methodSignature,
+				String paramToIgnore, HierarchySelector baseClassSearch) {
+			MethodSignature retval = null;
+			assert null == paramToIgnore;
+			
+			assert false;		// ever called?
+			
+			final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
+			
+			List<MethodSignature> signatures = null;
+			if (selectorSignatureMap_.containsKey(methodSelector)) {
+				signatures = selectorSignatureMap_.get(methodSelector);
+				for (final MethodSignature signature : signatures) {
+					if (signature.formalParameterList().alignsWith(methodSignatureFormalParameterList)) {
+						retval = signature;
+						break;
+					}
+				}
+			} else {
+				retval = null;
+			}
+			
+			return retval;
+		}
+		
+		public MethodSignature lookupMethodSignature(final String selectorName, ActualOrFormalParameterList argumentList) {
+			MethodSignature retval = null;
+			List<MethodSignature> signatures = null;
+			if (selectorSignatureMap_.containsKey(selectorName)) {
+				signatures = selectorSignatureMap_.get(selectorName);
+				for (final MethodSignature signature : signatures) {
+					if (signature.formalParameterList().alignsWith(argumentList)) {
+						retval = signature;
+						break;
+					}
+				}
+			} else {
+				retval = null;
+			}
+			
+			return retval;
+		}
+		
+		public void addSignature(final MethodSignature signature) {
+			List<MethodSignature> signatures = null;
+			if (selectorSignatureMap_.containsKey(signature.name())) {
+				signatures = selectorSignatureMap_.get(signature.name());
+			} else {
+				signatures = new ArrayList<MethodSignature>();
+				selectorSignatureMap_.put(signature.name(), signatures);
+			}
+			signatures.add(signature);
+		}
+		
+		private final String name_;
+		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
 	}
 	public static class BuiltInType extends Type {
 		public BuiltInType(String name) {

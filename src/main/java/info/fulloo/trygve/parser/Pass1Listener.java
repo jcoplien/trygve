@@ -41,11 +41,10 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
-import info.fulloo.trygve.declarations.Type;
-import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.DeclarationList;
@@ -58,6 +57,8 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
+import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
@@ -65,6 +66,7 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
@@ -138,6 +140,9 @@ public class Pass1Listener extends KantBaseListener {
 		currentContext_ = null;
 		variableGeneratorCounter_ = 101;
 		
+		currentRole_ = null;
+		currentInterface_ = null;
+		
 		printProductionsDebug = false;
 		stackSnapshotDebug = false;
 	}
@@ -166,15 +171,6 @@ public class Pass1Listener extends KantBaseListener {
 		
 		final TypeDeclarationList currentList = new TypeDeclarationList(ctx.getStart().getLine());
 		parsingData_.pushTypeDeclarationList(currentList);
-		
-		if (printProductionsDebug) {
-			if (null != ctx.main()) {
-				System.err.println("program : type_declaration_list main");
-			} else {
-				System.err.println("program : type_declaration_list [ERROR]");
-			}
-		}
-		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
 	@Override public void exitProgram(@NotNull KantParser.ProgramContext ctx)
@@ -202,6 +198,15 @@ public class Pass1Listener extends KantBaseListener {
 		
 		printProductionsDebug = false;
 		stackSnapshotDebug = false;
+		
+		if (printProductionsDebug) {
+			if (null != ctx.main()) {
+				System.err.println("program : type_declaration_list main");
+			} else {
+				System.err.println("program : type_declaration_list [ERROR]");
+			}
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
 	@Override public void enterMain(@NotNull KantParser.MainContext ctx)
@@ -235,9 +240,12 @@ public class Pass1Listener extends KantBaseListener {
 
 	@Override public void enterType_declaration(@NotNull KantParser.Type_declarationContext ctx)
 	{
-		//  : 'context' JAVA_ID '{' context_body '}'
-        //  | 'class'   JAVA_ID type_parameters? '{' class_body   '}'
-        //  | 'class'   JAVA_ID type_parameters? 'extends' JAVA_ID '{' class_body   '}'
+		// : 'context' JAVA_ID '{' context_body '}'
+		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'interface' JAVA_ID '{' interface_body '}'
 		
 		final String name = ctx.JAVA_ID(0).getText();
 		ClassDeclaration rawBaseClass = null;
@@ -267,6 +275,11 @@ public class Pass1Listener extends KantBaseListener {
 				rawBaseClass = null;
 			}
 			
+			if (ctx.implements_list().size() > 0) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"Unimplemented: `implements«", "",  "", "");
+			}
+			
 			if (null != ctx.type_parameters()) {
 				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
 				currentScope_ = newTemplate.enclosedScope();
@@ -276,6 +289,9 @@ public class Pass1Listener extends KantBaseListener {
 				currentScope_ = newClass.enclosedScope();
 				parsingData_.pushClassDeclaration(newClass);
 			}
+		} else if (null != ctx.interface_body()) {
+			currentInterface_ = this.lookupOrCreateInterfaceDeclaration(name, ctx.getStart().getLine());
+			currentScope_ = currentInterface_.enclosedScope();
 		} else {
 			assert false;	// need diagnostic message for user later
 		}
@@ -283,11 +299,13 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitType_declaration(@NotNull KantParser.Type_declarationContext ctx)
 	{
-		//  : 'context' JAVA_ID '{' context_body '}'
-        //  | 'class'   JAVA_ID '{' class_body   '}'
-        //  | 'class'   JAVA_ID 'extends' JAVA_ID '{' class_body   '}'
-		//  | 'class'   JAVA_ID type_parameters '{' class_body   '}'
-        //  | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID '{' class_body   '}'
+		// : 'context' JAVA_ID '{' context_body '}'
+		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		// | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
+		// | 'interface' JAVA_ID '{' interface_body '}'
 		
 		// One version serves all three passes
 
@@ -307,16 +325,49 @@ public class Pass1Listener extends KantBaseListener {
 			parsingData_.popTemplateDeclaration();
 		} else if (newDeclaration instanceof ClassDeclaration) {
 			parsingData_.popClassDeclaration();
+			// implements_list is taken care of along the way
 		} else if (newDeclaration instanceof TemplateDeclaration) {
 			parsingData_.popTemplateDeclaration();
 		}
+		
+		currentInterface_ = null;
+		currentRole_ = null;
+		
 		if (printProductionsDebug) {
 			if (ctx.context_body() != null) {
 				System.err.println("type_declaration : 'context' JAVA_ID '{' context_body '}'");
 			} else if (ctx.class_body() != null && ctx.JAVA_ID(1) == null) {
 				System.err.println("type_declaration : 'class' JAVA_ID '{' class_body   '}'");
+			} else if (ctx.interface_body() != null && ctx.JAVA_ID(1) == null) {
+				System.err.println("type_declaration : 'interface' JAVA_ID '{' interface_body   '}'");
 			} else {
 				System.err.println("type_declaration : 'class' JAVA_ID 'extends' JAVA_ID '{' class_body  '}'");
+			}
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void exitImplements_list(@NotNull KantParser.Implements_listContext ctx) {
+		// : 'implements' JAVA_ID
+		// | implements_list ',' JAVA_ID
+		
+		final String interfaceName = ctx.JAVA_ID().getText();
+		InterfaceDeclaration anInterface = currentScope_.lookupInterfaceDeclarationRecursive(interfaceName);
+		
+		if (null == anInterface) {
+			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					"Interface ", interfaceName, " is not declared.", "", "", "");
+			anInterface = new InterfaceDeclaration(" error", null, ctx.getStart().getLine());
+		}
+		
+		final ClassType classType = (ClassType)parsingData_.currentClassDeclaration().type();
+		classType.addInterfaceType((InterfaceType)anInterface.type());
+		
+		if (printProductionsDebug) {
+			if (ctx.implements_list() != null) {
+				System.err.println("implements_list : implements_list ',' JAVA_ID");
+			} else {
+				System.err.println("implements_list : JAVA_ID");
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
@@ -719,6 +770,45 @@ public class Pass1Listener extends KantBaseListener {
 	    //	| object_decl
 	    
 		/* nothing */
+	}
+	
+	@Override public void enterInterface_body(@NotNull KantParser.Interface_bodyContext ctx) {
+		parsingData_.pushFormalParameterList(new FormalParameterList());
+	}
+	
+	@Override public void exitInterface_body(@NotNull KantParser.Interface_bodyContext ctx) {
+		// : interface_body ';' method_signature
+		// | method_signature
+		// | interface_body /* null */ ';'
+		
+		final Method_signatureContext contextForSignature = ctx.method_signature();
+		if (null != contextForSignature) {
+			final MethodSignature signature = parsingData_.popMethodSignature();
+			final FormalParameterList plInProgress = parsingData_.popFormalParameterList();
+		
+			// Add a declaration of "this." These are class instance methods, never
+			// role methods, so there is no need to add a current$context argument
+			final ObjectDeclaration self = new ObjectDeclaration("this", currentInterface_.type(), ctx.getStart().getLine());
+			plInProgress.addFormalParameter(self);
+		
+			signature.addParameterList(plInProgress);
+			currentInterface_.addSignature(signature);
+			
+			// Add it to type, too
+			final InterfaceType interfaceType = (InterfaceType)currentInterface_.type();
+			interfaceType.addSignature(signature);
+		}
+		
+		if (printProductionsDebug) {
+			if (null != ctx.interface_body()) {
+				System.err.println("interface_body : interface_body ';' method_signature");
+			} else if (null != ctx.method_signature()) {
+				System.err.println("interface_body : method_signature");
+			} else {
+				System.err.println("interface_body : /* null */ ';'");
+			}
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
 	@Override public void enterMethod_decl(@NotNull KantParser.Method_declContext ctx)
@@ -2464,6 +2554,13 @@ public class Pass1Listener extends KantBaseListener {
 		newScope.setDeclaration(newTemplate);
 		newTemplate.setType(newTemplateType);
 	}
+	protected void createNewInterfaceTypeSuitableToPass(InterfaceDeclaration newInterface, String name, StaticScope newScope) {
+		// Pass1 only
+		final InterfaceType newInterfaceType = new InterfaceType(name, newScope);
+		currentScope_.declareType(newInterfaceType);
+		newScope.setDeclaration(newInterface);
+		newInterface.setType(newInterfaceType);
+	}
 	
 	protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber, boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleDeclaration(roleName);
@@ -2589,6 +2686,21 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		return retval;
+	}
+	
+	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, int lineNumber) {
+		assert null == currentInterface_;
+		assert null != currentScope_;
+		final StaticScope newScope = new StaticScope(currentScope_);
+		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
+		currentScope_.declareInterface(currentInterface_);
+		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);
+		currentScope_ = newScope;
+		return currentInterface_;
+	}
+	
+	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, StaticScope scope, int lineNumber) {
+		return new InterfaceDeclaration(name, scope, lineNumber);
 	}
 	
 	protected void updateInitializationLists(Expression initializationExpr, ObjectDeclaration objDecl) {
@@ -3195,6 +3307,7 @@ public class Pass1Listener extends KantBaseListener {
 		final ClassDeclaration classDecl = currentScope_.lookupClassDeclarationRecursive(objectTypeName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(objectTypeName);
 		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(objectTypeName);
+		final InterfaceDeclaration interfaceDecl = currentScope_.lookupInterfaceDeclarationRecursive(objectTypeName);
 		
 		final String methodSelectorName = message.selectorName();
 		assert null != methodSelectorName;
@@ -3230,11 +3343,16 @@ public class Pass1Listener extends KantBaseListener {
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in Context ", contextDecl.name());
 			}
+		} else if (null != interfaceDecl) {
+			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
+			if (null == methodSignature) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in interface ", interfaceDecl.name());
+			}
 		} else {
 			if (object.name().length() > 0) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class or Role for ", object.name(), "", "");
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "«", "");
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class or Role of this ", "type", "", "");
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 			}
 			assert null == mdecl;
 		}
@@ -3550,6 +3668,7 @@ public class Pass1Listener extends KantBaseListener {
 	protected ParsingData parsingData_;
 	protected StaticScope currentScope_;
 	protected RoleDeclaration currentRole_;
+	protected InterfaceDeclaration currentInterface_;
 	private int variableGeneratorCounter_;
     // -------------------------------------------------------------------------------------------------------
 }

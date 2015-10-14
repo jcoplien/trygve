@@ -32,10 +32,12 @@ import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -604,7 +606,7 @@ public class Pass2Listener extends Pass1Listener {
 							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
 							null;
 				if (null == methodDeclaration) {
-					// Mainly for error recovery (bad argument to method / method not decelared)
+					// Mainly for error recovery (bad argument to method / method not declared)
 					final String methodSelectorName = message.selectorName();
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", classObjectType.name());
 					return null;		// punt
@@ -613,6 +615,19 @@ public class Pass2Listener extends Pass1Listener {
 				}
 			} else {
 				methodSignature = methodDeclaration.signature();
+			}
+		} else if (objectType instanceof InterfaceType) {
+			final InterfaceType classObjectType = (InterfaceType) objectType;
+			final ActualOrFormalParameterList argumentList = message.argumentList();
+			methodSignature = null != classObjectType?
+						classObjectType.lookupMethodSignature(message.selectorName(), argumentList):
+						null;
+			if (null == methodSignature) {
+				// Mainly for error recovery (bad argument to method / method not declared)
+				final String methodSelectorName = message.selectorName();
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in interface ", classObjectType.name());
+			} else {
+				isOKMethodSignature = true;
 			}
 		} else if (objectType instanceof ContextType) {
 			final ContextType contextObjectType = (ContextType) objectType;
@@ -886,6 +901,11 @@ public class Pass2Listener extends Pass1Listener {
 	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(String name, TypeDeclaration rawBaseType, Type baseType, int lineNumber) {
 		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
 		return newTemplate;
+	}
+	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(String name, int lineNumber) {
+		final InterfaceDeclaration newInterface = currentScope_.lookupInterfaceDeclarationRecursive(name);
+		assert null != newInterface;
+		return newInterface;
 	}
 	@Override protected void declareTypeSuitableToPass(StaticScope scope, Type decl) {
 		/* Nothing */

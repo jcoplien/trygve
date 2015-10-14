@@ -44,11 +44,18 @@ type_declaration_list
 
 type_declaration
         : 'context' JAVA_ID '{' context_body '}'
-        | 'class'   JAVA_ID type_parameters '{' class_body '}'
-        | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID '{' class_body '}'
-        | 'class'   JAVA_ID '{' class_body '}'
-        | 'class'   JAVA_ID 'extends' JAVA_ID '{' class_body '}'
+        | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+        | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+        | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+        | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+        | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
+        | 'interface' JAVA_ID '{' interface_body '}'
         ;
+        
+implements_list
+		: 'implements' JAVA_ID
+		| implements_list ',' JAVA_ID
+		;
 
 type_parameters
     	: '<' type_parameter (',' type_parameter)* '>'
@@ -124,6 +131,12 @@ class_body_element
         : method_decl
         | object_decl
         ;
+        
+interface_body
+		: interface_body ';' method_signature
+		| method_signature
+		| interface_body /* null */ ';'
+		;
 
 method_decl
         : method_decl_hook '{' expr_and_decl_list '}'

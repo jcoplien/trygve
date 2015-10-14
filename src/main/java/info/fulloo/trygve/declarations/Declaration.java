@@ -33,6 +33,7 @@ import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
@@ -298,6 +299,28 @@ public abstract class Declaration implements BodyPart {
 		private TypeDeclaration baseClass_;
 		private List<TypeParameter> typeParameters_;
 		private int argumentPositionCounter_;
+	}
+	
+	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
+		public InterfaceDeclaration(final String name, StaticScope enclosedScope, int lineNumber) {
+			super(name, lineNumber, enclosedScope);
+			signatures_ = new HashMap<String, MethodSignature>();
+		}
+		public void setType(Type t) {
+			assert t instanceof InterfaceType;
+			type_ = t;
+		}
+		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
+			return signatures_.get(name);
+		}
+		public MethodSignature lookupMethodSignatureDeclaration(final String methodSelectorName, ActualOrFormalParameterList argumentList) {
+			return ((InterfaceType)type_).lookupMethodSignature(methodSelectorName, argumentList);
+		}
+		public void addSignature(final MethodSignature signature) {
+			signatures_.put(signature.name(), signature);
+		}
+		
+		protected final Map<String, MethodSignature> signatures_;
 	}
 	
 	public static class RoleDeclaration extends TypeDeclarationCommon implements TypeDeclaration

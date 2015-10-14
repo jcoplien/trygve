@@ -32,6 +32,7 @@ import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
@@ -142,6 +143,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				this.compileRole((RoleDeclaration)a);
 			} else if (a instanceof TemplateDeclaration) {
 				this.compileTemplate((TemplateDeclaration)a);
+			} else if (a instanceof InterfaceDeclaration) {
+				this.compileInterface((InterfaceDeclaration)a);
 			} else {
 				System.err.print("Unexpected type in TypeDeclarationList: ");
 				System.err.println(a.getClass().getSimpleName());
@@ -167,6 +170,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		final StaticScope myScope = classDeclaration.enclosedScope();
 		this.compileScope(myScope);
+	}
+	private void compileInterface(InterfaceDeclaration interfaceDeclaration) {
+		// Really nothing to compile Ñ all interface logic should
+		// be absorbed by semantic analysis
 	}
 	private void compileStageProp(StagePropDeclaration stagePropDeclaration) {
 		final StaticScope myScope = stagePropDeclaration.enclosedScope();
