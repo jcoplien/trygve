@@ -922,6 +922,15 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void declareFormalParametersSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
 		scope.reDeclareObject(objDecl);
 	}
+	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
+		interfaceType.addSignature(signature);
+	}
+	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
+		classType.addInterfaceType(interfaceType);
+	}
+	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+		newDeclaration.doIImplementImplementsList(this, lineNumber);
+	}
 	@Override protected void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
 		/* Nothing */
 	}
@@ -931,7 +940,7 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void errorHook5p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
 	}
-	@Override protected void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	@Override public void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
 	@Override protected void updateInitializationLists(Expression initializationExpr, ObjectDeclaration objDecl) {

@@ -332,6 +332,10 @@ public abstract class Type implements ExpressionStackAPI
 			signatures.add(signature);
 		}
 		
+		public final Map<String, List<MethodSignature>> selectorSignatureMap() {
+			return selectorSignatureMap_;
+		}
+		
 		private final String name_;
 		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
 	}

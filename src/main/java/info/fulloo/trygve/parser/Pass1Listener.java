@@ -275,11 +275,6 @@ public class Pass1Listener extends KantBaseListener {
 				rawBaseClass = null;
 			}
 			
-			if (ctx.implements_list().size() > 0) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Unimplemented: `implements«", "",  "", "");
-			}
-			
 			if (null != ctx.type_parameters()) {
 				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
 				currentScope_ = newTemplate.enclosedScope();
@@ -321,8 +316,11 @@ public class Pass1Listener extends KantBaseListener {
 			currentContext_ = currentContext_.parentContext();
 		}
 		
-		if (newDeclaration instanceof ClassDeclaration && null != ((ClassDeclaration)newDeclaration).generatingTemplate()) {
-			parsingData_.popTemplateDeclaration();
+		if (newDeclaration instanceof ClassDeclaration) {
+			if (null != ((ClassDeclaration)newDeclaration).generatingTemplate()) {
+				parsingData_.popTemplateDeclaration();
+			}
+			this.implementsCheck((ClassDeclaration)newDeclaration, ctx.getStart().getLine());
 		} else if (newDeclaration instanceof ClassDeclaration) {
 			parsingData_.popClassDeclaration();
 			// implements_list is taken care of along the way
@@ -347,6 +345,10 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
+	protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+		// nothing on pass one
+	}
+	
 	@Override public void exitImplements_list(@NotNull KantParser.Implements_listContext ctx) {
 		// : 'implements' JAVA_ID
 		// | implements_list ',' JAVA_ID
@@ -361,7 +363,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 		
 		final ClassType classType = (ClassType)parsingData_.currentClassDeclaration().type();
-		classType.addInterfaceType((InterfaceType)anInterface.type());
+		this.addInterfaceTypeSuitableToPass(classType, (InterfaceType)anInterface.type());
 		
 		if (printProductionsDebug) {
 			if (ctx.implements_list() != null) {
@@ -371,6 +373,10 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
+		// nothing on pass one
 	}
 	
 	@Override public void exitType_parameters(@NotNull KantParser.Type_parametersContext ctx) {
@@ -796,7 +802,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			// Add it to type, too
 			final InterfaceType interfaceType = (InterfaceType)currentInterface_.type();
-			interfaceType.addSignature(signature);
+			this.addSignatureSuitableToPass(interfaceType, signature);
 		}
 		
 		if (printProductionsDebug) {
@@ -809,6 +815,10 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
+		// nothing in pass 1
 	}
 
 	@Override public void enterMethod_decl(@NotNull KantParser.Method_declContext ctx)
@@ -2695,7 +2705,7 @@ public class Pass1Listener extends KantBaseListener {
 		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
 		currentScope_.declareInterface(currentInterface_);
 		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);
-		currentScope_ = newScope;
+		// currentScope_ is set by caller after return
 		return currentInterface_;
 	}
 	
@@ -3055,7 +3065,7 @@ public class Pass1Listener extends KantBaseListener {
 	protected void errorHook6p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
-	protected void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	public void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
 		/* nothing */
 	}
 	protected ContextDeclaration lookupOrCreateContextDeclaration(String name, int lineNumber) {

@@ -41,6 +41,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
+import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
@@ -219,6 +220,33 @@ public abstract class Declaration implements BodyPart {
 		}
 		public void setMethodsHaveBodyParts(boolean tf) {
 			methodsHaveBodyParts_ = tf;
+		}
+		public void doIImplementImplementsList(Pass1Listener parser, int lineNumber) {
+			assert null != type_;
+			final List<InterfaceType> theInterfaceTypes = ((ClassType)type_).interfaceTypes();
+			final int listSize = theInterfaceTypes.size();
+			InterfaceType anInterfaceType = null;
+			
+			// Iterate through all the interfaces that I implement
+			for (int i = 0; i < listSize; i++) {
+				anInterfaceType = theInterfaceTypes.get(i);
+				final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
+				
+				// For each interface, iterate over the signatures it declares
+				for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
+					final String signatureMethodSelector = iter.getKey();
+					final List<MethodSignature> signatures = iter.getValue();
+					for (final MethodSignature anInterfaceSignature: signatures) {
+						final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
+						final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this");
+						if (null == methodDecl) {
+							parser.errorHook6p2(ErrorType.Fatal, lineNumber,
+									"Class `", name(), "« does not implement interface `", anInterfaceType.name(),
+									"« because definition of `" + anInterfaceSignature.getText(), "« is missing in the class.");
+						}
+					}
+				}
+			}
 		}
 
 		private ClassDeclaration baseClass_;

@@ -58,10 +58,19 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 				retval = false;
 			} else {
 				for (int i = 0; i < plCount; i++) {
-					final String plName = pl2.nameOfParameterAtPosition(i);
-					if (null != plName && null != paramToIgnore && plName.equals(paramToIgnore)) {
+					final String pl2Name = pl2.nameOfParameterAtPosition(i),
+							     pl1Name = pl1.nameOfParameterAtPosition(i);
+					if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
 						continue;
 					}
+					
+					// We really should be a bit more dutiful about knowing whether it's l1 or
+					// pl2 we're checking. But it's almost always "this" and since it's a
+					// reserved word, it won't be aliased with a user variable
+					if (null != pl1Name && null != paramToIgnore && pl1Name.equals(paramToIgnore)) {
+						continue;
+					}
+					
 					final Type plt = pl2.typeOfParameterAtPosition(i);
 					final Type myt = pl1.typeOfParameterAtPosition(i);
 					if (plt.enclosedScope() == myt.enclosedScope()) {

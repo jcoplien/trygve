@@ -32,10 +32,14 @@ import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
+import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -148,9 +152,17 @@ public class Pass3Listener extends Pass2Listener {
 	protected void processRequiredDeclarations(int lineNumber) {
 		/* Nothing */
 	}
-	@Override protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType)
-	{
+	@Override protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType) {
 		/* Nothing */
+	}
+	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
+		// nothing in pass 3, 4
+	}
+	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
+		// nothing in pass 3, 4
+	}
+	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+		// nothing in pass 3, 4
 	}
 	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) { }
 	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { }
