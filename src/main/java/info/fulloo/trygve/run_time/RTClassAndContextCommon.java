@@ -29,6 +29,7 @@ import java.util.Map;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
@@ -36,6 +37,8 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -127,13 +130,16 @@ public abstract class RTClassAndContextCommon implements RTType {
 	public RTRole getRole(String name) {
 		return nameToRoleDeclMap_.get(name);
 	}
-	@Override public void addMethod(String methodName, RTMethod methodDecl) {
+	@Override public void addMethod(final String methodName, final RTMethod methodDecl) {
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
-			for (Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
+			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
 				final FormalParameterList loggedSignature = aPair.getKey();
 				if (methodDecl.formalParameters().alignsWith(loggedSignature)) {
-					assert false;	 // duplicate signature
+					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
+					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
+					ErrorLogger.error(ErrorType.Internal, lineNumber, "Internal error: Multiple occurrences of signature ",
+							methodName, " in same object.", "");
 				}
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);
@@ -158,7 +164,6 @@ public abstract class RTClassAndContextCommon implements RTType {
 				if (null != templateInstantiationInfo_) {
 					mappedDeclaredMethodSignature = declaredMethodSignature.mapTemplateParameters(templateInstantiationInfo_);
 					mappedSuppliedParameters = suppliedParameters.mapTemplateParameters(templateInstantiationInfo_);
-	
 				}
 				
 				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName)) {
@@ -168,7 +173,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 			}
 		} else if (null != this.baseClassDeclaration()) {
 			// We inherit base class methods. Recur.
-			RTType runTimeBaseClassType = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
+			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
 			assert (runTimeBaseClassType instanceof RTClass);
 			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignature(methodName, suppliedParameters, ignoreName);
 		} else {

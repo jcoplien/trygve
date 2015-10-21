@@ -86,6 +86,52 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	public static boolean alignsWithParameterListIgnoringRoleStuff(ActualOrFormalParameterList pl1, ActualOrFormalParameterList pl2) {
+		boolean retval = true;
+		final int pl1Count = pl1.count();
+		if (null == pl2) {
+			if (pl1Count != 0) {
+				retval = false;
+			} else {
+				// Redundant, but clear
+				retval = true;
+			}
+		} else {
+			final int pl2Count = pl2.count();
+			int i = 0, j = 0;
+			while (i < pl1Count && j < pl2Count) {
+				boolean testFlag = true;
+				final String pl1Name = pl1.nameOfParameterAtPosition(i),
+						     pl2Name = pl2.nameOfParameterAtPosition(j);
+				
+				if (pl1Name.equals("this") || pl1Name.equals("t$this") ||
+						pl1Name.equals("current$context") || pl1Name.equals("current$role")) {
+					i++;
+					testFlag = false;
+				}
+				if (pl2Name.equals("this") || pl2Name.equals("t$this") ||
+						pl2Name.equals("current$context") || pl2Name.equals("current$role")) {
+					j++;
+					testFlag = false;
+				}
+				if (testFlag){
+					final Type plt = pl2.typeOfParameterAtPosition(j);
+					final Type myt = pl1.typeOfParameterAtPosition(i);
+					
+					if (plt.enclosedScope() == myt.enclosedScope()) {
+						i++; j++;
+					} else if (plt.isBaseClassOf(myt)) {
+						i++; j++;
+					} else {
+						retval = false;
+						break;
+					}
+					i++;
+				}
+			}
+		}
+		return retval;
+	}
 	
 	@Override public Type typeOfParameterAtPosition(int i) {
 		return parameterAtPosition(i).type();

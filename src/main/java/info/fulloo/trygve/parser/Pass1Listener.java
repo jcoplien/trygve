@@ -3598,9 +3598,13 @@ public class Pass1Listener extends KantBaseListener {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
 						((ArrayType)rhsType).baseType().name(), ":", "");
 			}
-		} else if (lhsType instanceof RoleType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "« cannot be played by object of type `", rhsType.name(), "«:", "");
-			this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
+			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
+		} else if (lhsType instanceof RoleType && null != rhsType) {
+			if (lhsType.canBeConvertedFrom(rhsType) == false) {
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "« cannot be played by object of type `", rhsType.name(), "«:", "");
+				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
+			}
+			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhsType.name(), "« is incompatible with expression type `", rhsType.name(), "«.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
@@ -3625,6 +3629,27 @@ public class Pass1Listener extends KantBaseListener {
 		checkForAssignmentViolatingConstness(retval, ctx.getStart());
 		
 		return retval;
+	}
+	
+	private void checkRoleClassNameCollision(final RoleType lhsType, final Type baseType, int lineNumber) {
+		if (baseType instanceof ClassType) {
+			// There should be no duplicates between signatures in RoleType
+			// and those in Class Type
+			final ClassType classType = (ClassType)baseType;
+			final List<MethodDeclaration> classMethodList = classType.enclosedScope().methodDeclarations();
+			for (final MethodDeclaration methodDeclaration : classMethodList) {
+				final ActualOrFormalParameterList parameterList = methodDeclaration.formalParameterList();
+				final String methodSelector = methodDeclaration.name();
+				final MethodDeclaration correspondingRoleMethod = lhsType.enclosedScope().lookupMethodDeclarationIgnoringRoleStuff(methodSelector, parameterList);
+				if (null != correspondingRoleMethod) {
+					errorHook6p2(ErrorType.Warning, lineNumber,
+							"WARNING: Both class `" + baseType.name(), "« and Role `" + lhsType.name(),
+							"« contain the same method signature for `", correspondingRoleMethod.name(),
+							"«. This results in several methods of the same name in the same object ",
+							" and may not behave as you expected.");
+				}
+			}
+		}
 	}
 	
 	protected void checkForIncrementOpViolatingExpressionConstness(UnaryopExpressionWithSideEffect assignment, KantParser.ExprContext ctx) {

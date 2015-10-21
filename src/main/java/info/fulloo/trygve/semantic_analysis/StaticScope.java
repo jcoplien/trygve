@@ -723,6 +723,25 @@ public class StaticScope {
 		return retval;
 	}
 	
+	public MethodDeclaration lookupMethodDeclarationIgnoringRoleStuff(final String methodSelector, final ActualOrFormalParameterList parameterList) {
+		MethodDeclaration retval = null;
+		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
+			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
+			for (MethodDeclaration aDecl : oldEntry) {
+				final FormalParameterList loggedSignature = aDecl.formalParameterList();
+				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
+				if (null == mappedLoggedSignature && null == mappedParameterList) {
+					retval = aDecl; break;
+				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringRoleStuff(mappedLoggedSignature, mappedParameterList)) {
+					retval = aDecl; break;
+				}
+			}
+		}
+		return retval;
+	}
 	
 	public MethodDeclaration lookupMethodDeclarationRecursiveWithLineNumber(String methodSelector, int lineNumber) {
 		MethodDeclaration retval = this.lookupMethodDeclarationWithLineNumber(methodSelector, lineNumber);

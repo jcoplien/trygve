@@ -46,6 +46,7 @@ public class TestRunner {
 			"http://fulloo.info/Examples/TrygveExamples/roletest2.k",
 			"http://fulloo.info/Examples/TrygveExamples/roletest3.k",
 			"http://fulloo.info/Examples/TrygveExamples/roletest4.k",
+			"http://fulloo.info/Examples/TrygveExamples/roletest5.k",
 			"http://fulloo.info/Examples/TrygveExamples/trygve1.k",
 			"http://fulloo.info/Examples/TrygveExamples/simplemain.k",
 			"http://fulloo.info/Examples/TrygveExamples/simplearray.k",
@@ -67,6 +68,7 @@ public class TestRunner {
 			"http://fulloo.info/Examples/TrygveExamples/basectortest.k",
 			"http://fulloo.info/Examples/TrygveExamples/rolevec1.k",
 			"http://fulloo.info/Examples/TrygveExamples/access1.k",
+			"http://fulloo.info/Examples/TrygveExamples/roleclass1.k"
 		};
 	}
 	public void runTests() {

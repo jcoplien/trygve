@@ -430,7 +430,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return rhs_;
 		}
 		@Override public String getText() {
-			String retval = lhs_.getText() + " = " + rhs_.getText();
+			final String retval = lhs_.getText() + " = " + rhs_.getText();
 			return retval;
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
