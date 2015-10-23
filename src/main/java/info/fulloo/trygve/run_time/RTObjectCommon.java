@@ -319,7 +319,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("int"));
 			foobar_ = foobar;
 		}
-		protected RTIntegerObject(long foobar, String typeName) {
+		protected RTIntegerObject(final long foobar, final String typeName) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(typeName));
 			foobar_ = foobar;
 		}
@@ -333,23 +333,58 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			else return foobar_ > ((RTIntegerObject)another).intValue();
 		}
 		@Override public RTObject plus(RTObject other) {
-			long result = foobar_ + ((RTIntegerObject)other).intValue();
+			long result = 0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ + (long)((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ + ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject minus(RTObject other) {
-			long result = foobar_ - ((RTIntegerObject)other).intValue();
+			long result = 0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ - (long)((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ - ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject times(RTObject other) {
-			long result = foobar_ * ((RTIntegerObject)other).intValue();
+			long result = 0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ * (long)((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ * ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject divideBy(RTObject other) {
-			long result = foobar_ / ((RTIntegerObject)other).intValue();
+			long result = 0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ / (long)((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ / ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject modulus(RTObject other) {
-			long result = foobar_ % ((RTIntegerObject)other).intValue();
+			long result = 0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ % (long)((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ % ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject unaryPlus() {
@@ -415,24 +450,60 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			else return foobar_ > ((RTDoubleObject)another).doubleValue();
 		}
 		@Override public RTObject plus(RTObject other) {
-			final double result = foobar_ + ((RTDoubleObject)other).doubleValue();
+			double result = 0.0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ + ((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ + ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTDoubleObject(result);
 		}
 		@Override public RTObject minus(RTObject other) {
-			final double result = foobar_ - ((RTDoubleObject)other).doubleValue();
+			double result = 0.0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ - ((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ - ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTDoubleObject(result);
 		}
 		@Override public RTObject times(RTObject other) {
-			final double result = foobar_ * ((RTDoubleObject)other).doubleValue();
+			double result = 0.0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ * ((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ * ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTDoubleObject(result);
 		}
 		@Override public RTObject divideBy(RTObject other) {
-			final double result = foobar_ / ((RTDoubleObject)other).doubleValue();
+			double result = 0.0;
+			if (other instanceof RTDoubleObject) {
+				result = foobar_ / ((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ / ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
 			return new RTDoubleObject(result);
 		}
 		@Override public RTObject modulus(RTObject other) {
-			assert false;
-			return null;
+			double result = 0.0;
+			if (other instanceof RTDoubleObject) {
+				// ???
+				result = foobar_ % ((RTDoubleObject)other).doubleValue();
+			} else if (other instanceof RTIntegerObject) {
+				result = foobar_ % ((RTIntegerObject)other).intValue();
+			} else {
+				assert false;
+			}
+			return new RTDoubleObject(result);
 		}
 		@Override public RTObject unaryPlus() {
 			return new RTDoubleObject(foobar_);
@@ -490,7 +561,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			else return foobar_.compareTo (((RTStringObject)another).stringValue()) > 0;
 		}
 		@Override public RTObject plus(RTObject other) {
-			String result = foobar_ + ((RTStringObject)other).stringValue();
+			final String result = foobar_ + ((RTStringObject)other).stringValue();
 			return new RTStringObject(result);
 		}
 		@Override public RTObjectCommon minus(RTObject other) {

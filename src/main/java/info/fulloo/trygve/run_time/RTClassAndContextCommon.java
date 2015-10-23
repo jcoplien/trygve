@@ -120,14 +120,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 	public Map<String, RTObject> staticObjects() {
 		return nameToStaticObjectMap_;
 	}
-	public RTObject getStaticObject(String objectName) {
+	public RTObject getStaticObject(final String objectName) {
 		RTObject retval = null;
 		if (nameToStaticObjectMap_.containsKey(objectName)) {
 			retval = nameToStaticObjectMap_.get(objectName);
 		}
 		return retval;
 	}
-	public RTRole getRole(String name) {
+	public RTRole getRole(final String name) {
 		return nameToRoleDeclMap_.get(name);
 	}
 	@Override public void addMethod(final String methodName, final RTMethod methodDecl) {
@@ -138,8 +138,8 @@ public abstract class RTClassAndContextCommon implements RTType {
 				if (methodDecl.formalParameters().alignsWith(loggedSignature)) {
 					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
 					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
-					ErrorLogger.error(ErrorType.Internal, lineNumber, "Internal error: Multiple occurrences of signature ",
-							methodName, " in same object.", "");
+					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of ",
+							methodName + " in Role ", name(), ".");
 				}
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);
@@ -149,10 +149,10 @@ public abstract class RTClassAndContextCommon implements RTType {
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}
 	}
-	@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) {
+	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
 		return this.lookupMethodIgnoringParameterInSignature(methodName, pl, null);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignature(String methodName, ActualOrFormalParameterList suppliedParameters, String ignoreName) {
+	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName, final ActualOrFormalParameterList suppliedParameters, String ignoreName) {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
@@ -186,7 +186,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		final ClassDeclaration baseClassDeclaration = null == classDeclaration? null: classDeclaration.baseClassDeclaration();
 		return baseClassDeclaration;
 	}
-	public String name() {
+	public final String name() {
 		return null == typeDeclaration_? "*null*": typeDeclaration_.name();
 	}
 	public TypeDeclaration typeDeclaration() {

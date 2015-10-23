@@ -138,7 +138,7 @@ public class StaticScope {
 			
 			reinitializeInt("Integer");
 			
-			reinitializeDouble();
+			reinitializeDouble(intType);
 		
 			reinitializeString(intType);
 		
@@ -166,7 +166,7 @@ public class StaticScope {
 		}
 	}
 	
-	private static Type reinitializeInt(String typeName) {
+	private static Type reinitializeInt(final String typeName) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final Type intType = new BuiltInType(typeName);
 
@@ -186,6 +186,9 @@ public class StaticScope {
 		methodDecl = new MethodDeclaration("*", intType.enclosedScope(), intType, Public, 0);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
+		methodDecl = new MethodDeclaration("**", intType.enclosedScope(), intType, Public, 0);
+		methodDecl.addParameterList(formals);
+		intType.enclosedScope().declareMethod(methodDecl);
 		methodDecl = new MethodDeclaration("/", intType.enclosedScope(), intType, Public, 0);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
@@ -201,7 +204,7 @@ public class StaticScope {
 		return intType;
 	}
 	
-	private static void reinitializeDouble() {
+	private static void reinitializeDouble(final Type intType) {
 		final Type doubleType = new BuiltInType("double");
 
 		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleType.enclosedScope(), null, 0);
@@ -215,15 +218,32 @@ public class StaticScope {
 		MethodDeclaration methodDecl = new MethodDeclaration("+", doubleType.enclosedScope(), doubleType, Public, 0);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
+		
 		methodDecl = new MethodDeclaration("-", doubleType.enclosedScope(), doubleType, Public, 0);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
+		
 		methodDecl = new MethodDeclaration("*", doubleType.enclosedScope(), doubleType, Public, 0);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
+		
 		methodDecl = new MethodDeclaration("/", doubleType.enclosedScope(), doubleType, Public, 0);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
+		
+		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl.addParameterList(formals);
+		doubleType.enclosedScope().declareMethod(methodDecl);
+		
+		final FormalParameterList formalsWithInt = new FormalParameterList();
+		final ObjectDeclaration formalIntParameter = new ObjectDeclaration("rhs", intType, 0);
+		formalsWithInt.addFormalParameter(formalIntParameter);
+		formalsWithInt.addFormalParameter(self);
+		
+		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl.addParameterList(formalsWithInt);
+		doubleType.enclosedScope().declareMethod(methodDecl);
+		
 		globalScope_.declareType(doubleType);
 
 		doubleType.enclosedScope().setDeclaration(doubleDeclaration);
@@ -680,7 +700,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public MethodDeclaration lookupMethodDeclaration(String methodSelector, ActualOrFormalParameterList parameterList,
+	public MethodDeclaration lookupMethodDeclaration(final String methodSelector, final ActualOrFormalParameterList parameterList,
 			boolean ignoreSignature) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {

@@ -68,7 +68,8 @@ public class TestRunner {
 			"http://fulloo.info/Examples/TrygveExamples/basectortest.k",
 			"http://fulloo.info/Examples/TrygveExamples/rolevec1.k",
 			"http://fulloo.info/Examples/TrygveExamples/access1.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleclass1.k"
+			"http://fulloo.info/Examples/TrygveExamples/roleclass1.k",
+			"http://fulloo.info/Examples/TrygveExamples/roleclass2.k"
 		};
 	}
 	public void runTests() {

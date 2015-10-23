@@ -415,7 +415,8 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void binopTypeCheck(final Expression leftExpr, String operationAsString,
 			final Expression rightExpr, Token ctxGetStart) {
 		// Certified Pass 2 version ;-)
-		final Type resultType = leftExpr.type();
+		final Type leftExprType = leftExpr.type(), rightExprType = rightExpr.type();
+		final Type resultType = leftExprType;
 		if (resultType.canBeConvertedFrom(rightExpr.type()) == false) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Invalid operands to `" +
 					"", operationAsString, "' on type ", leftExpr.type().name(),
@@ -424,10 +425,18 @@ public class Pass2Listener extends Pass1Listener {
 		final ActualArgumentList argList = new ActualArgumentList();
 		argList.addActualArgument(rightExpr);
 		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope());
-		argList.addActualArgument(self);
-		final MethodDeclaration mdecl = resultType.enclosedScope().lookupMethodDeclaration(operationAsString, argList, false);
+		// argList.addActualArgument(self);
+		argList.addFirstActualParameter(self);   // gnu!!
+		final StaticScope enclosedScope = resultType.enclosedScope();
+		final MethodDeclaration mdecl = enclosedScope.lookupMethodDeclaration(operationAsString, argList, false);
 		if (null == mdecl) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "No such operation '", operationAsString, "' on type ",
+					resultType.name(), " for argument ", rightExpr.type().name());
+		}
+		if (leftExprType.canBeLhsOfBinaryOperator(operationAsString) && rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
+			;	// o.k.
+		} else {
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation '", operationAsString, "' cannot be applied to type ",
 					resultType.name(), " for argument ", rightExpr.type().name());
 		}
 	}

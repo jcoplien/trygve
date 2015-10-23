@@ -71,6 +71,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.BooleanExpression;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
 import info.fulloo.trygve.expressions.Constant.BooleanConstant;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
@@ -158,6 +159,7 @@ public class Pass1Listener extends KantBaseListener {
 		public List<BodyPart> initializations() {
 			return initializations_;
 		}
+		
 		private final List<ObjectDeclaration> objectDecls_;
 		private final List<BodyPart> initializations_;
 	}
@@ -1669,7 +1671,7 @@ public class Pass1Listener extends KantBaseListener {
 			//	| abelian_expr op=('*' | '/' | '%') abelian_expr
 			final Expression expr2 = parsingData_.popExpression();
 			final Expression expr1 = parsingData_.popExpression();
-						
+			
 			final String operatorAsString = ctx.ABELIAN_MULOP().getText();
 			expression = new ProductExpression(expr1, operatorAsString, expr2, ctx.getStart(), this);
 		
@@ -1946,6 +1948,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 		Expression expression = null;
 		String operation = null;
+		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
 		
 		if (null != ctx.BOOLEAN_MULOP()) {
 			operation = ctx.BOOLEAN_MULOP().getText();
@@ -1985,6 +1988,13 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else {
 			assert false;
+		}
+		
+		if ((expression.type().canBeConvertedFrom(booleanType)) || (expression.type().canBeConvertedFrom(booleanType))) {
+			;		// ok.
+		} else {
+			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					"Expression ", expression.getText(), " is not of type boolean.", "");
 		}
 		
 		parsingData_.pushExpression(expression);

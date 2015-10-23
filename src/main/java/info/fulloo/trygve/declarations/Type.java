@@ -362,6 +362,52 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
+		@Override public boolean canBeLhsOfBinaryOperator(final String operator) {
+			boolean retval = false;
+			if (this.name().equals("int") || this.name().equals("Integer")) {
+				if (operator.equals("-")) retval = true;
+				else if (operator.equals("+")) retval = true;
+				else if (operator.equals("*")) retval = true;
+				else if (operator.equals("/")) retval = true;
+				else if (operator.equals("%")) retval = true;
+				else if (operator.equals("**")) retval = true;
+			} else if (this.name().equals("double") || this.name().equals("Double")) {
+				if (operator.equals("-")) retval = true;
+				else if (operator.equals("+")) retval = true;
+				else if (operator.equals("*")) retval = true;
+				else if (operator.equals("/")) retval = true;
+				else if (operator.equals("%")) retval = false;
+				else if (operator.equals("**")) retval = true;
+			} else if (this.name().equals("boolean")) {
+				if (operator.equals("||")) retval = true;
+				else if (operator.equals("&&")) retval = true;
+				else if (operator.equals("^")) retval = true;
+			}
+			return retval;
+		}
+		@Override public boolean canBeRhsOfBinaryOperator(final String operator) {
+			boolean retval = false;
+			if (this.name().equals("int") || this.name().equals("Integer")) {
+				if (operator.equals("-")) retval = true;
+				else if (operator.equals("+")) retval = true;
+				else if (operator.equals("*")) retval = true;
+				else if (operator.equals("/")) retval = true;
+				else if (operator.equals("%")) retval = true;
+				else if (operator.equals("**")) retval = true;
+			} else if (this.name().equals("double") || this.name().equals("Double")) {
+				if (operator.equals("-")) retval = true;
+				else if (operator.equals("+")) retval = true;
+				else if (operator.equals("*")) retval = true;
+				else if (operator.equals("/")) retval = true;
+				else if (operator.equals("%")) retval = false;
+				else if (operator.equals("**")) retval = true;
+			} else if (this.name().equals("boolean")) {
+				if (operator.equals("||")) retval = true;
+				else if (operator.equals("&&")) retval = true;
+				else if (operator.equals("^")) retval = true;
+			}
+			return retval;
+		}
 		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
@@ -615,6 +661,12 @@ public abstract class Type implements ExpressionStackAPI
 	public abstract boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass);
 	
 	public boolean hasUnaryOperator(final String operator) {
+		return false;
+	}
+	public boolean canBeLhsOfBinaryOperator(final String operator) {
+		return false;
+	}
+	public boolean canBeRhsOfBinaryOperator(final String operator) {
 		return false;
 	}
 	public String getText() {

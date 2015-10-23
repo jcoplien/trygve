@@ -58,8 +58,8 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 				retval = false;
 			} else {
 				for (int i = 0; i < plCount; i++) {
-					final String pl2Name = pl2.nameOfParameterAtPosition(i),
-							     pl1Name = pl1.nameOfParameterAtPosition(i);
+					final String pl1Name = pl1.nameOfParameterAtPosition(i),
+							     pl2Name = pl2.nameOfParameterAtPosition(i);
 					if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
 						continue;
 					}

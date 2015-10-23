@@ -46,7 +46,7 @@ public class Message {
 	public long lineNumber() {
 		return lineNumber_;
 	}
-	public String getText() {
+	public final String getText() {
 		String argumentListString = null, selectorNameString = null;
 		if (null == argumentList_) {
 			argumentListString = "<no arguments>";
@@ -65,11 +65,11 @@ public class Message {
 		argumentList_.addFirstActualParameter(objectForWhichMethodIsInvoked);
 	}
 	
-	public void setArgumentList(ActualArgumentList argumentList) {
+	public void setArgumentList(final ActualArgumentList argumentList) {
 		argumentList_ = argumentList;
 	}
 	
-	public void setReturnType(Type returnType) {
+	public void setReturnType(final Type returnType) {
 		returnType_ = returnType;
 	}
 	public Type returnType() {

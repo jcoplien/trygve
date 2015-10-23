@@ -1094,7 +1094,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ProductExpression extends Expression
 	{
-		public ProductExpression(Expression lhs, String operator, Expression rhs, Token ctxGetStart, Pass1Listener pass1Listener) {
+		public ProductExpression(final Expression lhs, final String operator, final Expression rhs, final Token ctxGetStart, final Pass1Listener pass1Listener) {
 			super("<product>", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
@@ -1106,7 +1106,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		private void promoteTypesAsNecessary() {
 			final Type lhsType = lhs_.type(), rhsType = rhs_.type();
-			if (lhsType == rhsType) {
+			if (null != operator_ && operator_.equals("**")) {
+				return;
+			} else if (lhsType == rhsType) {
 				return;
 			} else if (lhsType.canBeConvertedFrom(rhsType)) {
 				rhs_ = rhs_.promoteTo(lhsType);
