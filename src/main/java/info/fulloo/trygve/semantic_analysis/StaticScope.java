@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import info.fulloo.trygve.add_ons.ListClass;
+import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -163,6 +164,7 @@ public class StaticScope {
 			
 			SystemClass.setup();
 			ListClass.setup();
+			MathClass.setup();
 		}
 	}
 	
@@ -177,27 +179,26 @@ public class StaticScope {
 		final FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", intType.enclosedScope(), intType, Public, 0);
+		MethodDeclaration methodDecl = new MethodDeclaration("+", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("-", intType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("-", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("*", intType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("*", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("**", intType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("**", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("/", intType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("/", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("%", intType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("%", intType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(intType);
 		
-
 		intType.enclosedScope().setDeclaration(intDeclaration);
 		intDeclaration.setType(intType);
 		
@@ -215,23 +216,23 @@ public class StaticScope {
 		final FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", doubleType.enclosedScope(), doubleType, Public, 0);
+		MethodDeclaration methodDecl = new MethodDeclaration("+", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("-", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl = new MethodDeclaration("-", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("*", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl = new MethodDeclaration("*", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("/", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl = new MethodDeclaration("/", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
@@ -240,7 +241,7 @@ public class StaticScope {
 		formalsWithInt.addFormalParameter(formalIntParameter);
 		formalsWithInt.addFormalParameter(self);
 		
-		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0);
+		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0, false);
 		methodDecl.addParameterList(formalsWithInt);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
@@ -261,10 +262,10 @@ public class StaticScope {
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", stringType.enclosedScope(), stringType, Public, 0);
+		MethodDeclaration methodDecl = new MethodDeclaration("+", stringType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
-		methodDecl = new MethodDeclaration("length", stringType.enclosedScope(), intType, Public, 0);
+		methodDecl = new MethodDeclaration("length", stringType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
 		methodDecl.addParameterList(formals);
@@ -561,7 +562,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public Type lookupTypeDeclaration(String simpleTypeName) {
+	public Type lookupTypeDeclaration(final String simpleTypeName) {
 		Type retval = null;
 		if (typeDeclarationDictionary_.containsKey(simpleTypeName)) {
 			retval = typeDeclarationDictionary_.get(simpleTypeName);
@@ -569,7 +570,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public void declareObject(ObjectDeclaration decl) {
+	public void declareObject(final ObjectDeclaration decl) {
 		final String objectName = decl.name();
 
 		if (objectDeclarationDictionary_.containsKey(objectName)) {
@@ -579,14 +580,14 @@ public class StaticScope {
 		}
 	}
 	
-	public void reDeclareObject(ObjectDeclaration decl) {
+	public void reDeclareObject(final ObjectDeclaration decl) {
 		final String objectName = decl.name();
 		objectDeclarationDictionary_.put(objectName, decl);
 		decl.setEnclosingScope(this);
 		if (null != parentScope_) parentScope_.checkObjectDeclarationShadowing(decl);
 	}
 	
-	public void declareStaticObject(ObjectDeclaration decl) {
+	public void declareStaticObject(final ObjectDeclaration decl) {
 		final String objectName = decl.name();
 		if (objectDeclarationDictionary_.containsKey(objectName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
@@ -611,7 +612,7 @@ public class StaticScope {
 		return staticObjectDeclarationDictionary_;
 	}
 	
-	private void checkObjectDeclarationShadowing(ObjectDeclaration decl) {
+	private void checkObjectDeclarationShadowing(final ObjectDeclaration decl) {
 		final StaticScope parent = this.parentScope();
 		if (null != parent) {
 			final String name = decl.name();
@@ -632,7 +633,7 @@ public class StaticScope {
 	}
 
 	
-	public ObjectDeclaration lookupObjectDeclarationRecursive(String simpleIDName) {
+	public ObjectDeclaration lookupObjectDeclarationRecursive(final String simpleIDName) {
 		ObjectDeclaration retval = this.lookupObjectDeclaration(simpleIDName);
 		if (null == retval) {
 			// Stop searching at Class or Context boundary. If there are nested
@@ -678,7 +679,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public MethodDeclaration lookupMethodDeclarationRecursive(String methodSelector,
+	public MethodDeclaration lookupMethodDeclarationRecursive(final String methodSelector,
 			ActualOrFormalParameterList parameterList,
 			boolean ignoreSignature) {
 		MethodDeclaration retval = this.lookupMethodDeclaration(methodSelector, parameterList, ignoreSignature);
@@ -722,8 +723,8 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(String methodSelector, ActualOrFormalParameterList parameterList,
-			String paramToIgnore) {
+	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
+			final String paramToIgnore) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
@@ -763,7 +764,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public MethodDeclaration lookupMethodDeclarationRecursiveWithLineNumber(String methodSelector, int lineNumber) {
+	public MethodDeclaration lookupMethodDeclarationRecursiveWithLineNumber(final String methodSelector, final int lineNumber) {
 		MethodDeclaration retval = this.lookupMethodDeclarationWithLineNumber(methodSelector, lineNumber);
 		if (null == retval) {
 			// If this is a class, see if the base class has it
@@ -781,7 +782,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public MethodDeclaration lookupMethodDeclarationWithLineNumber(String methodSelector, int lineNumber) {
+	public MethodDeclaration lookupMethodDeclarationWithLineNumber(final String methodSelector, final int lineNumber) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
@@ -802,13 +803,13 @@ public class StaticScope {
 	public Declaration associatedDeclaration() {
 		return associatedDeclaration_;
 	}
-	public void addSubScope(StaticScope child) {
+	public void addSubScope(final StaticScope child) {
 		subScopes_.add(child);
 	}
 	public StaticScope parentScope() {
 		return parentScope_;
 	}
-	public void setParentScope(StaticScope scope) {
+	public void setParentScope(final StaticScope scope) {
 		parentScope_ = scope;
 	}
 	
@@ -874,7 +875,7 @@ public class StaticScope {
 			super(parentScope);
 			requiredMethodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
 		}
-		public void declareMethod(MethodDeclaration decl) {
+		public void declareMethod(final MethodDeclaration decl) {
 			boolean dup = false;
 			final String methodName = decl.name();
 		

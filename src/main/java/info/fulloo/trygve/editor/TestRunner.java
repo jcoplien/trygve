@@ -29,47 +29,53 @@ public class TestRunner {
 		underscores_ = "___________________________________________________________";
 		plusses_ = " +  +  +  ";
 		passCounter_ = failCounter_ = 0;
+		urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
+		localPrefix_ = "/Users/cope/Programs/Trygve/";
 		fileNames_ = new String [] {
-			"http://fulloo.info/Examples/TrygveExamples/ctor1.k",
-			"http://fulloo.info/Examples/TrygveExamples/exprtest.k",
-			"http://fulloo.info/Examples/TrygveExamples/for1.k",
-			"http://fulloo.info/Examples/TrygveExamples/forloop1.k",
-			"http://fulloo.info/Examples/TrygveExamples/forloop2.k",
-			"http://fulloo.info/Examples/TrygveExamples/forloop3.k",
-			"http://fulloo.info/Examples/TrygveExamples/inheritance.k",
-			"http://fulloo.info/Examples/TrygveExamples/inheritance2.k",
-			"http://fulloo.info/Examples/TrygveExamples/inheritance3.k",
-			"http://fulloo.info/Examples/TrygveExamples/inheritance4.k",
-			"http://fulloo.info/Examples/TrygveExamples/inheritance5.k",
-			"http://fulloo.info/Examples/TrygveExamples/inhertest.k",
-			"http://fulloo.info/Examples/TrygveExamples/roletest.k",
-			"http://fulloo.info/Examples/TrygveExamples/roletest2.k",
-			"http://fulloo.info/Examples/TrygveExamples/roletest3.k",
-			"http://fulloo.info/Examples/TrygveExamples/roletest4.k",
-			"http://fulloo.info/Examples/TrygveExamples/roletest5.k",
-			"http://fulloo.info/Examples/TrygveExamples/trygve1.k",
-			"http://fulloo.info/Examples/TrygveExamples/simplemain.k",
-			"http://fulloo.info/Examples/TrygveExamples/simplearray.k",
-			"http://fulloo.info/Examples/TrygveExamples/arraydup.k",
-			"http://fulloo.info/Examples/TrygveExamples/simpleincrement.k",
-			"http://fulloo.info/Examples/TrygveExamples/switchtest.k",
-			"http://fulloo.info/Examples/TrygveExamples/unaryop1.k",
-			"http://fulloo.info/Examples/TrygveExamples/trygve2.k",
-			"http://fulloo.info/Examples/TrygveExamples/trygve3.k",
-			"http://fulloo.info/Examples/TrygveExamples/whiletest.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleplaytest.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleplaytest2.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleplaytest3.k",
-			"http://fulloo.info/Examples/TrygveExamples/assignchain.k",
-			"http://fulloo.info/Examples/TrygveExamples/forloop2.k",
-			"http://fulloo.info/Examples/TrygveExamples/fact.k",
-			"http://fulloo.info/Examples/TrygveExamples/simpleprintchain.k",
-			"http://fulloo.info/Examples/TrygveExamples/simpletemplate.k",
-			"http://fulloo.info/Examples/TrygveExamples/basectortest.k",
-			"http://fulloo.info/Examples/TrygveExamples/rolevec1.k",
-			"http://fulloo.info/Examples/TrygveExamples/access1.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleclass1.k",
-			"http://fulloo.info/Examples/TrygveExamples/roleclass2.k"
+			"ctor1.k",
+			"exprtest.k",
+			"for1.k",
+			"forloop1.k",
+			"forloop2.k",
+			"forloop3.k",
+			"inheritance.k",
+			"inheritance2.k",
+			"inheritance3.k",
+			"inheritance4.k",
+			"inheritance5.k",
+			"inhertest.k",
+			"roletest.k",
+			"roletest2.k",
+			"roletest3.k",
+			"roletest4.k",
+			"roletest5.k",
+			"trygve1.k",
+			"simplemain.k",
+			"simplearray.k",
+			"arraydup.k",
+			"simpleincrement.k",
+			"switchtest.k",
+			"unaryop1.k",
+			"trygve2.k",
+			"trygve3.k",
+			"whiletest.k",
+			"roleplaytest.k",
+			"roleplaytest2.k",
+			"roleplaytest3.k",
+			"assignchain.k",
+			"forloop2.k",
+			"fact.k",
+			"simpleprintchain.k",
+			"simpletemplate.k",
+			"basectortest.k",
+			"rolevec1.k",
+			"access1.k",
+			"roleclass1.k",
+			"roleclass2.k",
+			"sqrt.k",
+			"interface1.k",
+			"interface2.k",
+			"interface3.k",
 		};
 	}
 	public void runTests() {
@@ -106,14 +112,15 @@ public class TestRunner {
 			gui_.setFileNameField(saveFileNameField);
 		}
 	}
-	private void runATest(String pathname) {
+	private void runATest(String filename) {
+		final String url = urlPrefix_ + filename;
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 		System.err.println(underscores_);
-		System.err.print(plusses_); System.err.print(pathname); System.err.println(plusses_);
+		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
-		gui_.setFileNameField(pathname.substring("file://".length()));	// just in case user edits / saves - goes to the right place
-		gui_.setWWWFileNameField(pathname);
+		gui_.setFileNameField(localPrefix_ + filename);	// just in case user edits / saves - goes to the right place
+		gui_.setWWWFileNameField(url);
 		gui_.wwwButtonActionPerformed(null);
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {
@@ -175,4 +182,5 @@ public class TestRunner {
 	private String[] fileNames_;
 	private final String underscores_, plusses_;
 	private int passCounter_, failCounter_;
+	private final String urlPrefix_, localPrefix_;
 }

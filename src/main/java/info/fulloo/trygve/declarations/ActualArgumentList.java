@@ -56,13 +56,13 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		}
 		return retval;
 	}
-	public void addFirstActualParameter(Expression e) {
+	public void addFirstActualParameter(final Expression e) {
 		insertAtStart(e);
 	}
-	@Override public Type typeOfParameterAtPosition(int i) {
+	@Override public Type typeOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).type();
 	}
-	@Override public String nameOfParameterAtPosition(int i) {
+	@Override public String nameOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).name();
 	}
 	private Type typeMap(TemplateInstantiationInfo templateTypes, int i) {
@@ -112,7 +112,8 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 				} else if (aParameter instanceof MessageExpression) {
 					final MessageExpression aParam = (MessageExpression)aParameter;
 					final MessageExpression newParameter = new MessageExpression(
-							aParam.objectExpression(), aParam.message(), newType, aParam.lineNumber());
+							aParam.objectExpression(), aParam.message(), newType,
+							aParam.lineNumber(), false);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof NullExpression) {
 					retval.addActualArgument(aParameter);

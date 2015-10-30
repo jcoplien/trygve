@@ -221,7 +221,7 @@ public abstract class Declaration implements BodyPart {
 		public void setMethodsHaveBodyParts(boolean tf) {
 			methodsHaveBodyParts_ = tf;
 		}
-		public void doIImplementImplementsList(Pass1Listener parser, int lineNumber) {
+		public void doIImplementImplementsList(final Pass1Listener parser, final int lineNumber) {
 			assert null != type_;
 			final List<InterfaceType> theInterfaceTypes = ((ClassType)type_).interfaceTypes();
 			final int listSize = theInterfaceTypes.size();
@@ -230,19 +230,24 @@ public abstract class Declaration implements BodyPart {
 			// Iterate through all the interfaces that I implement
 			for (int i = 0; i < listSize; i++) {
 				anInterfaceType = theInterfaceTypes.get(i);
-				final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
-				
-				// For each interface, iterate over the signatures it declares
-				for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
-					final String signatureMethodSelector = iter.getKey();
-					final List<MethodSignature> signatures = iter.getValue();
-					for (final MethodSignature anInterfaceSignature: signatures) {
-						final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
-						final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this");
-						if (null == methodDecl) {
-							parser.errorHook6p2(ErrorType.Fatal, lineNumber,
-									"Class `", name(), "« does not implement interface `", anInterfaceType.name(),
-									"« because definition of `" + anInterfaceSignature.getText(), "« is missing in the class.");
+				if (null == anInterfaceType) {
+					parser.errorHook5p2(ErrorType.Fatal, lineNumber,
+							"Class `", name(), "« is using an undeclared interface: see other error messages", "");
+				} else {
+					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
+					
+					// For each interface, iterate over the signatures it declares
+					for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
+						final String signatureMethodSelector = iter.getKey();
+						final List<MethodSignature> signatures = iter.getValue();
+						for (final MethodSignature anInterfaceSignature: signatures) {
+							final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
+							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this");
+							if (null == methodDecl) {
+								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
+										"Class `", name(), "« does not implement interface `", anInterfaceType.name(),
+										"« because definition of `" + anInterfaceSignature.getText(), "« is missing in the class.");
+							}
 						}
 					}
 				}
@@ -416,13 +421,15 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class MethodDeclaration extends Declaration
 	{
-		public MethodDeclaration(String name, StaticScope myEnclosedScope, Type returnType,
-				AccessQualifier accessQualifier, int lineNumber) {
+		public MethodDeclaration(final String name, final StaticScope myEnclosedScope,
+				final Type returnType, final AccessQualifier accessQualifier, final int lineNumber,
+				final boolean isStatic) {
 			super(name);
-			signature_ = new MethodSignature(name(), returnType, accessQualifier, lineNumber);
+			signature_ = new MethodSignature(name(), returnType, accessQualifier, lineNumber, isStatic);
 			this.commonInit(myEnclosedScope, returnType, accessQualifier, lineNumber);
 		}
-		public MethodDeclaration(MethodSignature signature, StaticScope myEnclosedScope, int lineNumber) {
+		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
+				final int lineNumber) {
 			super(signature.name());
 			signature_ = signature;
 			this.commonInit(myEnclosedScope, signature.returnType(),
@@ -512,7 +519,7 @@ public abstract class Declaration implements BodyPart {
 							// of this constructor. Very first thing.
 							if (null!= constructor) {
 								final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
-								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber);
+								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false);
 								bodyPrefix_.addBodyPart(messageExpr);
 							}
 						}
@@ -590,7 +597,7 @@ public abstract class Declaration implements BodyPart {
 			
 			final MethodDeclaration retval = new MethodDeclaration(
 					name(), enclosedScope, returnType,
-					accessQualifier_, lineNumber_);
+					accessQualifier_, lineNumber_, signature_.isStatic());
 			
 			retval.signature_ = signature_;
 			retval.body_ = body_;
@@ -612,13 +619,15 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class MethodSignature extends Declaration
 	{
-		public MethodSignature(String name, Type returnType,
-				AccessQualifier accessQualifier, int lineNumber) {
+		public MethodSignature(final String name, final Type returnType,
+				final AccessQualifier accessQualifier, final int lineNumber,
+				final boolean isStatic) {
 			super(name);
 			returnType_ = returnType;
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;
 			hasConstModifier_ = false;
+			isStatic_ = isStatic;
 		}
 		public void addParameterList(FormalParameterList formalParameterList) {
 			formalParameterList_ = formalParameterList;
@@ -651,12 +660,16 @@ public abstract class Declaration implements BodyPart {
 		public boolean hasConstModifier() {
 			return hasConstModifier_;
 		}
+		public boolean isStatic() {
+			return isStatic_;
+		}
 		
 		private Type returnType_;
 		private boolean hasConstModifier_;
 		private FormalParameterList formalParameterList_;
 		private final AccessQualifier accessQualifier_;
 		private final int lineNumber_;
+		private final boolean isStatic_;
 	}
 	
 	public static class ExprAndDeclList extends Declaration

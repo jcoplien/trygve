@@ -181,11 +181,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class MessageExpression extends Expression
 	{
-		public MessageExpression(Expression object, Message message, Type type, int lineNumber) {
+		public MessageExpression(final Expression object, final Message message,
+				final Type type, final int lineNumber, final boolean isStatic) {
 			super(message.selectorName(), type, message.enclosingMegaType());
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
+			isStatic_ = isStatic;
 		}
 		@Override public String getText() {
 			return object_.getText() + message_.getText();
@@ -205,10 +207,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression objectExpression() {
 			return object_;
 		}
+		public boolean isStatic() {
+			return isStatic_;
+		}
 		
 		private final Expression object_;
 		private final Message message_;
 		private final int lineNumber_;
+		private final boolean isStatic_;
 	}
 	
 	public static class DupMessageExpression extends Expression

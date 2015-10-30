@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Stack;
 
 import info.fulloo.trygve.add_ons.ListClass;
+import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
@@ -47,6 +48,8 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
@@ -118,6 +121,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		typeDeclarationList = ListClass.typeDeclarationList();
 		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = MathClass.typeDeclarationList();
+		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
 		typeDeclarationList = typeDeclarationListWrapper.declarations();
@@ -156,11 +162,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final Expression mainExpr = program_.main();
 		rTMainExpr_ = RTExpression.makeExpressionFrom(mainExpr, null);
 	}
-	private void compileContext(ContextDeclaration contextDeclaration) {
+	private void compileContext(final ContextDeclaration contextDeclaration) {
 		final StaticScope myScope = contextDeclaration.enclosedScope();
 		this.compileScope(myScope);
 	}
-	private void compileClass(ClassDeclaration classDeclaration) {
+	private void compileClass(final ClassDeclaration classDeclaration) {
 		if (null == RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(classDeclaration.name())) {
 			if (classDeclaration.enclosingScope() == StaticScope.globalScope()) {
 				// Kludge. But it's direct, and effective.
@@ -171,22 +177,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final StaticScope myScope = classDeclaration.enclosedScope();
 		this.compileScope(myScope);
 	}
-	private void compileInterface(InterfaceDeclaration interfaceDeclaration) {
+	private void compileInterface(final InterfaceDeclaration interfaceDeclaration) {
 		// Really nothing to compile Ñ all interface logic should
 		// be absorbed by semantic analysis
 	}
-	private void compileStageProp(StagePropDeclaration stagePropDeclaration) {
+	private void compileStageProp(final StagePropDeclaration stagePropDeclaration) {
 		final StaticScope myScope = stagePropDeclaration.enclosedScope();
 		this.compileScope(myScope);
 	}
-	private void compileRole(RoleDeclaration roleDeclaration) {
+	private void compileRole(final RoleDeclaration roleDeclaration) {
 		final StaticScope myScope = roleDeclaration.enclosedScope();
 		this.compileScope(myScope);
 	}
-	private void compileTemplate(TemplateDeclaration roleDeclaration) {
+	private void compileTemplate(final TemplateDeclaration roleDeclaration) {
 		// We compile instantiations (classes), not the templates themselves.
 	}
-	private void processListCall(MethodDeclaration methodDeclaration, TypeDeclaration typeDeclaration) {
+	private void processListCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final RTType rtListTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtListTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
@@ -211,7 +217,24 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		rtMethod.addCode(listCode);
 	}
-	private void processPrintStreamCall(MethodDeclaration methodDeclaration, TypeDeclaration typeDeclaration) {
+	private void processMathCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final RTType rtMathTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtMathTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtMathTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> mathCode = new ArrayList<RTCode>();
+		if (methodDeclaration.name().equals("Math")) {
+			ErrorLogger.error(ErrorType.Fatal, "Cannot instantiate class Math", "", "", "");
+		} else if (methodDeclaration.name().equals("random")) {
+			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("sqrt")) {
+			mathCode.add(new MathClass.RTSqrtCode(methodDeclaration.enclosedScope()));
+		} else {
+			assert false;	// error message instead? Should be caught earlier
+		}
+		rtMethod.addCode(mathCode);
+	}
+	private void processPrintStreamCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 2) {
 			final ObjectDeclaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
@@ -294,6 +317,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Math")) {
+				processMathCall(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -422,7 +448,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileMessageExpression(MessageExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTMessage(expr.name(), expr, rtTypeDeclaration, scope));
+		retval.add(new RTMessage(expr.name(), expr, rtTypeDeclaration, scope, expr.isStatic()));
 		return retval;
 	}
 	public List<RTCode> compileDupMessageExpression(DupMessageExpression expr, RTType rtTypeDeclaration, StaticScope scope) {

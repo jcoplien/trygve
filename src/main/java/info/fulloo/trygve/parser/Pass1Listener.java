@@ -854,8 +854,12 @@ public class Pass1Listener extends KantBaseListener {
 		// No signature on the parsingData_.methodSignature() stack yet, since
 		// we're just entering the production. The MethodDeclaration object will
 		// create its own default MethodSignature.
-		final MethodDeclaration currentMethod = new MethodDeclaration(methodSelector, newScope, returnType,
-				accessQualifier, lineNumber);
+		//
+		// There is no "static" modifier in the grammar, so all user-declared functions
+		// will be non-static for now
+		final MethodDeclaration currentMethod = new MethodDeclaration(
+				methodSelector, newScope, returnType,
+				accessQualifier, lineNumber, false);
 		currentMethod.addParameterList(pl);
 		
 		newScope.setDeclaration(currentMethod);
@@ -965,7 +969,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 		
 		final int lineNumber = ctx.getStart().getLine();
-		final MethodSignature currentMethod = new MethodSignature(name, returnType, accessQualifier, lineNumber);
+		final MethodSignature currentMethod = new MethodSignature(name, returnType, accessQualifier, lineNumber, false);
 
 		if (null != ctx.CONST()) {
 			currentMethod.setHasConstModifier(ctx.CONST().size() > 0);
@@ -3267,7 +3271,7 @@ public class Pass1Listener extends KantBaseListener {
 	
 	// You find something analogous with exitExpr here in pass 1.
 	
-	public <ExprType> Expression messageSend(Token ctxGetStart, ExprType ctxExpr) {
+	public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
 		// | expr '.' message
 		// | message
 		// Pass 1 version
@@ -3296,6 +3300,17 @@ public class Pass1Listener extends KantBaseListener {
 		final MethodDeclaration mdecl = classdecl != null?
 						classdecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
 						null;
+						
+		if (null != mdecl && objectType.name().equals("Class")) {
+			// Is of the form ClassType.classMethod()
+			assert object instanceof IdentifierExpression;
+			if (false == mdecl.signature().isStatic()) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						"Attempt to call instance method `" + methodSelectorName,
+						"лл as though it were a static method of class `", objectType.name(), "л");
+			}
+		}				
+										
 		if (null == mdecl) {
 			// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
 			// skip it ╤ we'll barked at the user in pass 2
@@ -3316,13 +3331,14 @@ public class Pass1Listener extends KantBaseListener {
 		assert type != null;
 		
 		object.setResultIsConsumed(true);
-		return new MessageExpression(object, message, type, ctxGetStart.getLine());
+		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
+		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version turns on signature checking
 		return classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, parameterList, true);
 	}
-	protected Type processReturnType(Token ctxGetStart, Expression object, Type objectType, Message message) {
+	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
 		final String objectTypeName = objectType.name();
 		final ClassDeclaration classDecl = currentScope_.lookupClassDeclarationRecursive(objectTypeName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(objectTypeName);
@@ -3367,6 +3383,17 @@ public class Pass1Listener extends KantBaseListener {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "л not declared in interface ", interfaceDecl.name());
+			}
+		} else if (objectTypeName.equals("Class")) {
+			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
+			if (null == classDeclaration) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "л", "");
+			} else {
+				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
+				if (null == mdecl) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
+							"л of class `", object.name(), "л");
+				}
 			}
 		} else {
 			if (object.name().length() > 0) {

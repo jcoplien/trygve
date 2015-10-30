@@ -28,7 +28,8 @@ import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class Message {
-	public Message(String selectorName, ActualArgumentList argumentList, long lineNumber, Type enclosingMegaType) {
+	public Message(final String selectorName, final ActualArgumentList argumentList,
+			final long lineNumber, final Type enclosingMegaType) {
 		selectorName_ = selectorName;
 		argumentList_ = argumentList;
 		lineNumber_ = lineNumber;
@@ -46,7 +47,7 @@ public class Message {
 	public long lineNumber() {
 		return lineNumber_;
 	}
-	public final String getText() {
+	public String getText() {
 		String argumentListString = null, selectorNameString = null;
 		if (null == argumentList_) {
 			argumentListString = "<no arguments>";
@@ -58,11 +59,15 @@ public class Message {
 		} else {
 			argumentListString = selectorName_;
 		}
-		String retval = selectorNameString + "(" + argumentListString + ")";
+		final String retval = selectorNameString + "(" + argumentListString + ")";
 		return retval;
 	}
-	public void addActualThisParameter(Expression objectForWhichMethodIsInvoked) {
-		argumentList_.addFirstActualParameter(objectForWhichMethodIsInvoked);
+	public void addActualThisParameter(final Expression objectForWhichMethodIsInvoked) {
+		if (objectForWhichMethodIsInvoked.type().name().equals("Class")) {
+			;	// add no parameter
+		} else {
+			argumentList_.addFirstActualParameter(objectForWhichMethodIsInvoked);
+		}
 	}
 	
 	public void setArgumentList(final ActualArgumentList argumentList) {

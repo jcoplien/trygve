@@ -42,7 +42,8 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	public boolean alignsWith(ActualOrFormalParameterList pl) {
 		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null);
 	}
-	public static boolean alignsWithParameterListIgnoringParam(ActualOrFormalParameterList pl1, ActualOrFormalParameterList pl2, String paramToIgnore) {
+	public static boolean alignsWithParameterListIgnoringParam(final ActualOrFormalParameterList pl1,
+			final ActualOrFormalParameterList pl2, final String paramToIgnore) {
 		boolean retval = true;
 		final int myCount = pl1.count();
 		if (null == pl2) {

@@ -139,7 +139,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
 					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
 					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of ",
-							methodName + " in Role ", name(), ".");
+							methodName + " in scope ", name(), ".");
 				}
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);

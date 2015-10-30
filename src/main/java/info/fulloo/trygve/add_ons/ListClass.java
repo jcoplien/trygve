@@ -75,7 +75,7 @@ public final class ListClass {
 			ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-			MethodDeclaration methodDecl = new MethodDeclaration("List", methodScope, listType_, Public, 0);
+			MethodDeclaration methodDecl = new MethodDeclaration("List", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(listType_);
 			methodDecl.signature().setHasConstModifier(false);
@@ -87,7 +87,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("add", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("add", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(voidType);
 			methodDecl.signature().setHasConstModifier(false);
@@ -99,7 +99,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("get", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("get", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(T);
 			methodDecl.signature().setHasConstModifier(true);
@@ -111,7 +111,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("indexOf", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("indexOf", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(integerType);
 			methodDecl.signature().setHasConstModifier(true);
@@ -123,7 +123,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("contains", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("contains", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(booleanType);
 			methodDecl.signature().setHasConstModifier(true);
@@ -133,7 +133,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("size", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("size", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(integerType);
 			methodDecl.signature().setHasConstModifier(true);
@@ -143,7 +143,7 @@ public final class ListClass {
 			self = new ObjectDeclaration("this", listType_, 0);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("isEmpty", methodScope, listType_, Public, 0);
+			methodDecl = new MethodDeclaration("isEmpty", methodScope, listType_, Public, 0, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(booleanType);
 			methodDecl.signature().setHasConstModifier(true);
@@ -156,22 +156,10 @@ public final class ListClass {
 	}
 	
 	public static class RTListCommon extends RTMessage {
-		public RTListCommon(String className, String methodName, String parameterName, String parameterTypeName, StaticScope enclosingMethodScope, Type returnType) {
-			super(methodName, RTListCommon.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), returnType);
+		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
+				final StaticScope enclosingMethodScope, final Type returnType) {
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), returnType, false);
 			parameterName_ = parameterName;
-		}
-		private static ActualArgumentList buildArguments(String className, String methodName, String parameterTypeName, StaticScope enclosedMethodScope) {
-			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
-			final ActualArgumentList argList = new ActualArgumentList();
-			Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
-			
-			assert null != enclosedMethodScope;
-			
-			final IdentifierExpression toprint = new IdentifierExpression(methodName, stringType, enclosedMethodScope);
-			argList.addActualArgument(toprint);
-			final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
-			argList.addActualArgument(self);
-			return argList;
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays

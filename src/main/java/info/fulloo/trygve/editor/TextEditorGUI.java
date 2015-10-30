@@ -276,7 +276,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("/Users/cope/Programs/Trygve/roleclass2.k");
+        fileSystemTextField.setText("/Users/cope/Programs/Trygve/sqrt.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);

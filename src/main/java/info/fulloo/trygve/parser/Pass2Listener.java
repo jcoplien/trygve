@@ -518,14 +518,14 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		}
 	}
-	public void addSelfAccordingToPass(Type type, Message message, StaticScope scope) {
+	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		// Apparently called only for constructor processing.
 		// The simple part. Add this.
 		final Expression self = new IdentifierExpression("t$his", type, scope);
 		message.addActualThisParameter(self);
 	}
 	
-	@Override public <ExprType> Expression messageSend(Token ctxGetStart, ExprType ctxExpr) {
+	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
 		// | expr '.' message
 		// | message
 		// Certified Pass 2 version. Can maybe be folded with pass 1....
@@ -569,7 +569,15 @@ public class Pass2Listener extends Pass1Listener {
 		MethodSignature methodSignature = null;
 		boolean isOKMethodSignature = false;
 		
-		if (objectType instanceof RoleType || objectType instanceof StagePropType) {
+		if (objectType.name().equals("Class")) {
+			// Static method invocation. The "object" is really a class name.
+			assert object instanceof IdentifierExpression;
+			final Type type = currentScope_.lookupTypeDeclarationRecursive(object.name());
+			methodDeclaration = type.enclosedScope().lookupMethodDeclaration(
+					message.selectorName(), message.argumentList(), false);
+			methodSignature = methodDeclaration.signature();
+			isOKMethodSignature = null != methodSignature;
+		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
 			if (wannabeContextType instanceof RoleType) {
 				RoleType nearestEMT = (RoleType) nearestEnclosingMegaType;
@@ -658,7 +666,8 @@ public class Pass2Listener extends Pass1Listener {
 		
 		if (null == methodDeclaration && isOKMethodSignature == false) {
 			final String methodSelectorName = message.selectorName();
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", "classname");
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
+					methodSelectorName, "« not declared in class ", "classname");
 		}
 		
 		assert null != returnType;
@@ -669,7 +678,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		if (null != methodSignature) {
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
-			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine());
+			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic());
 			if (null == methodDeclaration) {
 				// Could be a "required" method in a Role. TODO.
 			} else {

@@ -151,7 +151,8 @@ public abstract class RTExpression extends RTCode {
 				final TypeDeclaration typeDeclaration = rTClass.typeDeclaration();
 				scope = typeDeclaration.enclosedScope();
 			}
-			retval = new RTMessage(expr.name(), (MessageExpression)expr, nearestEnclosingType, scope);
+			retval = new RTMessage(expr.name(), (MessageExpression)expr, nearestEnclosingType, scope,
+					((MessageExpression)expr).isStatic());
 		} else if (expr instanceof DupMessageExpression) {
 			retval = new RTDupMessage(expr.name(), (DupMessageExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof IdentifierExpression) {
@@ -414,7 +415,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTMessage extends RTExpression {
-		public RTMessage(final String name, MessageExpression messageExpr, RTType nearestEnclosingType, StaticScope scope) {
+		public RTMessage(final String name, final MessageExpression messageExpr, final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
 			super();
 			
 			methodSelectorName_ = messageExpr.name();
@@ -426,6 +427,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			nearestEnclosingType_ = nearestEnclosingType;
+			isStatic_ = isStatic;
 			
 			messageExpr_ = messageExpr;
 			final Message message = messageExpr_.message();
@@ -442,13 +444,14 @@ public abstract class RTExpression extends RTCode {
 			setResultIsConsumed(!resultNeedsToBePopped);
 		}
 		
-		public RTMessage(String name, ActualArgumentList actualParameters, Type returnType) {
+		public RTMessage(final String name, final ActualArgumentList actualParameters, final Type returnType, final boolean isStatic) {
 			super();
 			methodSelectorName_ = name;
 			
 			// for built-in methods like System.out.print, List
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
+			isStatic_ = isStatic;
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			argPush_ = this.buildArgumentPushList();
 			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
@@ -458,7 +461,7 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(postReturnProcessing_);
 		}
 		
-		private RTMethod getMethodDecl(Type typeOfThisParameterToMethod, int indexForThisExtraction, RTObject self) {
+		private RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTMethod methodDecl = null;
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
@@ -517,7 +520,8 @@ public abstract class RTExpression extends RTCode {
 				}
 			} else {
 				// Calculate the address of the method. Generalize for classes and Contexts.
-				final RTType rTTypeOfSelf = self.rTType();
+				final RTType rTTypeOfSelf = null != self? self.rTType():
+					InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 				if (self instanceof RTNullObject) {
 					ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 							methodSelectorName_, " on a null object", "");
@@ -531,7 +535,7 @@ public abstract class RTExpression extends RTCode {
 					//assert null != rTTypeOfSelf;
 				}
 				
-				ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
+				final ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
 				TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.templateInstantiationInfo();
 				
 				if (null == templateInstantiationInfo) {
@@ -565,7 +569,7 @@ public abstract class RTExpression extends RTCode {
 			return methodDecl;
 		}
 		
-		private RTObject pushArgumentLoop(RTCode start, int expressionCounterForThisExtraction, int indexForThisExtraction) {
+		private RTObject pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction, final int indexForThisExtraction) {
 			RTCode pc = start;
 			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 			RTObject self = null;
@@ -589,9 +593,10 @@ public abstract class RTExpression extends RTCode {
 				oldPc.decrementReferenceCount();
 			}
 			
-			self = (RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
+			self = isStatic()? null:
+				(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
 
-			if (null == self) {
+			if (null == self && false == isStatic()) {
 				assert null != self;
 			}
 			return self;
@@ -667,11 +672,23 @@ public abstract class RTExpression extends RTCode {
 			
 			
 			final ActualArgumentList argList = actualParameters_;
-			final Expression thisDeclaration = (Expression)argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
-			assert null != thisDeclaration && thisDeclaration instanceof Expression;
-			Type typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
-			
-			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod,indexForThisExtraction);
+			Expression thisDeclaration = null;
+			Type typeOfThisParameterToMethod = null;
+			if (this.isStatic()) {
+				// There is no "this" on the stack for static method calls
+				final Expression classNameExpression = this.messageExpr_.objectExpression();
+				assert classNameExpression instanceof IdentifierExpression;
+				final String className = classNameExpression.name();
+				// Works only for global scope types. FIXME.
+				typeOfThisParameterToMethod = StaticScope.globalScope().lookupTypeDeclaration(className);
+				assert null != typeOfThisParameterToMethod;
+			} else {
+				thisDeclaration = (Expression)argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
+				assert null != thisDeclaration && thisDeclaration instanceof Expression;
+				typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
+			}
+
+			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod, indexForThisExtraction);
 			
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null Ñ there
@@ -807,6 +824,23 @@ public abstract class RTExpression extends RTCode {
 		public TemplateInstantiationInfo templateInstantiationInfo() {
 			return templateInstantiationInfo_;
 		}
+		protected static ActualArgumentList buildArguments(final String className, final String methodName,
+				final String parameterTypeName, final StaticScope enclosedMethodScope) {
+			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
+			final ActualArgumentList argList = new ActualArgumentList();
+			final Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
+			
+			assert null != enclosedMethodScope;
+			
+			final IdentifierExpression toprint = new IdentifierExpression(methodName, stringType, enclosedMethodScope);
+			argList.addActualArgument(toprint);
+			final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
+			argList.addActualArgument(self);
+			return argList;
+		}
+		public boolean isStatic() {
+			return isStatic_;
+		}
 
 		private TemplateInstantiationInfo templateInstantiationInfo_;
 		private String methodSelectorName_;
@@ -817,6 +851,7 @@ public abstract class RTExpression extends RTCode {
 		private final int [] expressionsCountInArguments_;
 		private final RTPostReturnProcessing postReturnProcessing_;
 		private RTType nearestEnclosingType_;
+		private final boolean isStatic_;
 	}
 	
 	public static class RTDupMessage extends RTExpression {
@@ -1701,12 +1736,13 @@ public abstract class RTExpression extends RTCode {
 			} else {
 				// compile it
 				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope);
-				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber());
+				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber(),
+						false);
 				
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
 				RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
-				rTConstructor_ = new RTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope);
+				rTConstructor_ = new RTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
 				
 				// In the past, there was code in RTContext::run that checked to see if
 				// rTConstructor was set and, if so, put t$his in the activation record

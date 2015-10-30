@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
-import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
@@ -34,7 +33,6 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
-import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -46,15 +44,15 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public final class SystemClass {
-	public static void addTypedPrintStreamPrintDeclaration(String methodName, Type argumentType) {
+	private static void addTypedPrintStreamPrintDeclaration(String methodName, Type argumentType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
 		final FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
 		formals.addFormalParameter(formalParameter);
-		StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
-		MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0);
+		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.signature().setHasConstModifier(true);
 		printStreamType_.enclosedScope().declareMethod(methodDecl);
@@ -136,21 +134,8 @@ public final class SystemClass {
 	
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(String className, String methodName, String parameterName, String parameterTypeName, StaticScope enclosingMethodScope) {
-			super("println", RTPrintCommon.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), printStreamType_);
+			super("println", RTPrintCommon.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), printStreamType_, false);
 			parameterName_ = parameterName;
-		}
-		private static ActualArgumentList buildArguments(String className, String methodName, String parameterTypeName, StaticScope enclosedMethodScope) {
-			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
-			final ActualArgumentList argList = new ActualArgumentList();
-			Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
-			
-			assert null != enclosedMethodScope;
-			
-			final IdentifierExpression toprint = new IdentifierExpression(methodName, stringType, enclosedMethodScope);
-			argList.addActualArgument(toprint);
-			final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
-			argList.addActualArgument(self);
-			return argList;
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
