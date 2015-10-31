@@ -92,6 +92,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	
     private void initComponents() {
+    	final int numberOfTestCases = TestRunner.numberOfTestCases();
         copyButton = new javax.swing.JButton();
         jScrollPane1 = super.scrollPane(); // new javax.swing.JScrollPane(); 
         if (OLD) {
@@ -147,6 +148,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         pasteMenu = new javax.swing.JMenuItem();
         selectAllMenu = new javax.swing.JMenuItem();
         clearMenu = new javax.swing.JMenuItem();
+        jMenu3 = new javax.swing.JMenu();
+        jMenu3Files = new javax.swing.JMenuItem [numberOfTestCases];
+        for (int i = 0; i < numberOfTestCases; i++) {
+        	jMenu3Files[i] = new javax.swing.JMenuItem();
+        }
         jSeparator1 = new javax.swing.JSeparator();
         exampleTextMenu = new javax.swing.JMenuItem();
 
@@ -276,7 +282,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("/Users/cope/Programs/Trygve/sqrt.k");
+        fileSystemTextField.setText("/Users/cope/Programs/Trygve/quadratic1.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
@@ -365,6 +371,18 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         jMenu2.add(exampleTextMenu);
 
         jMenuBar1.add(jMenu2);
+        
+        jMenu3.setText("Load Test");
+        for (int i = 0; i < numberOfTestCases; i++) {
+        	 jMenu3Files[i].setText(TestRunner.urlForTestCase(i));
+        	 jMenu3Files[i].addActionListener(new java.awt.event.ActionListener() {
+                 public void actionPerformed(java.awt.event.ActionEvent evt) {
+                     loadTestCaseMenuActionPerformed(evt);
+                 }
+             });
+             jMenu3.add(jMenu3Files[i]);
+        }
+        jMenuBar1.add(jMenu3);
 
         setJMenuBar(jMenuBar1);
 
@@ -493,6 +511,12 @@ private void saveMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
         this.editPane.setText("Pardon. Can't write file. Please contact: jcoplien@gmail.com");
     }
 }//GEN-LAST:event_saveMenuActionPerformed
+
+private void loadTestCaseMenuActionPerformed(java.awt.event.ActionEvent evt) {
+	runButton.setEnabled(false);
+	urlTextField.setText(evt.getActionCommand());
+	this.wwwButtonActionPerformed(evt);
+}
 
 private void loadMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadMenuActionPerformed
     JFileChooser fileChooser = new JFileChooser();
@@ -706,6 +730,7 @@ private void updateButtons() {
     private javax.swing.JButton runButton;
     private javax.swing.JButton parseButton;
     private javax.swing.JMenuItem clearMenu;
+    private javax.swing.JMenuItem jMenu3Files[];
     private javax.swing.JButton copyButton;
     private javax.swing.JMenuItem copyMenu;
     private javax.swing.JButton cutButton;
@@ -715,6 +740,7 @@ private void updateButtons() {
     private javax.swing.JMenuItem exampleTextMenu;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenu jMenu3;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

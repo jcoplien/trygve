@@ -8,10 +8,13 @@ import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -101,19 +104,20 @@ public final class MathClass {
 			// Parameters have all been packaged into the
 			// activation record
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			this.runDetails(myEnclosedScope);
-			
-			
+			RTCode retval = this.runDetails(myEnclosedScope);
+
 			// All dogs go to heaven, and all return statements that
 			// have something to return do it. We deal with consumption
 			// in the message. This function's return statement will be
 			// set for a consumed result in higher-level logic.
 			
-			return super.nextCode();
+			return retval;
 		}
-		public void runDetails(RTObject scope) {
+		public RTCode runDetails(RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			assert false;
+			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+			return null;	// halt the machine
+
 		}
 		
 		protected String parameterName_;
@@ -122,22 +126,42 @@ public final class MathClass {
 		public RTRandomCode(StaticScope enclosingMethodScope) {
 			super("Math", "random", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDoubleObject retval = new RTDoubleObject(Math.random());
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+			return super.nextCode();
 		}
 	}
 	public static class RTSqrtCode extends RTMathCommon {
 		public RTSqrtCode(StaticScope enclosingMethodScope) {
 			super("Math", "sqrt", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode retval = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject rawElement = activationRecord.getObject("x");
-			assert rawElement instanceof RTDoubleObject;
-			final RTDoubleObject element = (RTDoubleObject)rawElement;
-			final RTDoubleObject retval = new RTDoubleObject(Math.sqrt(element.doubleValue()));
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+			double argument = 0.0;
+			if (rawElement instanceof RTDoubleObject) {
+				final RTDoubleObject element = (RTDoubleObject)rawElement;
+				argument = Math.sqrt(element.doubleValue());
+			} else if(rawElement instanceof RTIntegerObject) {
+				final RTIntegerObject element = (RTIntegerObject)rawElement;
+				argument = Math.sqrt((double)element.intValue());
+			} else {
+				assert false;
+			}
+				
+			if (argument < 0) {
+				ErrorLogger.error(ErrorType.Runtime, "square root of negative number", "", "", "");
+				final RTDoubleObject answer = new RTDoubleObject(0);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(answer);
+				retval = null;	// halt the machine
+			} else {
+				final RTDoubleObject answer = new RTDoubleObject(argument);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(answer);
+				retval = super.nextCode();
+			}
+			return retval;
 		}
 	}
 	public static List<TypeDeclaration> typeDeclarationList() {

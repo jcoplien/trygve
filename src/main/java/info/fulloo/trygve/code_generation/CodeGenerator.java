@@ -48,6 +48,7 @@ public interface CodeGenerator {
 	public List<RTCode> compileUnaryopExpressionWithSideEffect(UnaryopExpressionWithSideEffect expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	public List<RTCode> compileUnaryAbelianopExpression(UnaryAbelianopExpression expr, String operation, StaticScope scope, RTType rtTypeDeclaration);
 	public List<RTCode> compileAssignmentExpression(AssignmentExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
+	public List<RTCode> compileDoubleCasterExpression(DoubleCasterExpression expr, RTType rtTypeDeclaration);
 	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	public List<RTCode> compileNewArrayExpression(NewArrayExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	public List<RTCode> compileIfExpression(IfExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);

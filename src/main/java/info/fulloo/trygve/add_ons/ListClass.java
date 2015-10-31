@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
-import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
@@ -13,6 +12,8 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
@@ -172,7 +173,7 @@ public final class ListClass {
 			// Parameters have all been packaged into the
 			// activation record
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			this.runDetails(myEnclosedScope);
+			final RTCode retval = this.runDetails(myEnclosedScope);
 			
 			
 			// All dogs go to heaven, and all return statements that
@@ -180,11 +181,12 @@ public final class ListClass {
 			// in the message. This function's return statement will be
 			// set for a consumed result in higher-level logic.
 			
-			return super.nextCode();
+			return retval;
 		}
-		public void runDetails(RTObject scope) {
+		public RTCode runDetails(RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			assert false;
+			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+			return null;	// halt the machine
 		}
 		
 		protected String parameterName_;
@@ -193,84 +195,90 @@ public final class ListClass {
 		public RTListCtorCode(StaticScope enclosingMethodScope) {
 			super("List", "List", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			theListObject.ctor();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(this);
+			return super.nextCode();
 		}
 	}
 	public static class RTAddCode extends RTListCommon {
 		public RTAddCode(StaticScope enclosingMethodScope) {
 			super("List", "add", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 			theListObject.add(rawElement);
+			return super.nextCode();
 		}
 	}
 	public static class RTSizeCode extends RTListCommon {
 		public RTSizeCode(StaticScope enclosingMethodScope) {
 			super("List", "size", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final int rawResult = theListObject.size();
 			final RTIntegerObject result = new RTIntegerObject(rawResult);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return super.nextCode();
 		}
 	}
 	public static class RTGetCode extends RTListCommon {
 		public RTGetCode(StaticScope enclosingMethodScope) {
 			super("List", "get", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("element");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return super.nextCode();
 		}
 	}
 	public static class RTIndexOfCode extends RTListCommon {
 		public RTIndexOfCode(StaticScope enclosingMethodScope) {
 			super("List", "indexOf", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTStackable stackableArgument = activationRecord.getObject("element");
 			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTStackable result = (RTStackable)theListObject.indexOf(argument);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-			System.err.println("Someone asked the indes of a list element");
+			return super.nextCode();
 		}
 	}
 	public static class RTContainsCode extends RTListCommon {
 		public RTContainsCode(StaticScope enclosingMethodScope) {
 			super("List", "contains", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject argument = activationRecord.getObject("element");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTStackable result = (RTStackable)theListObject.contains(argument);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return super.nextCode();
 		}
 	}
 	public static class RTIsEmptyCode extends RTListCommon {
 		public RTIsEmptyCode(StaticScope enclosingMethodScope) {
 			super("List", "isEmpty", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public void runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final boolean rawResult = theListObject.isEmpty();
 			final RTBooleanObject result = new RTBooleanObject(rawResult);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return super.nextCode();
 		}
 	}
 

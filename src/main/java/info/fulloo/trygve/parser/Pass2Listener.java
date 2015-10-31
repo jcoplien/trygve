@@ -552,8 +552,10 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				return null;	// get out
 			}
-		} else {
+		} else if (null != nearestEnclosingMegaType) {
 			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope);
+		} else {
+			object = new NullExpression();
 		}
 		object.setResultIsConsumed(true);
 						
@@ -564,7 +566,12 @@ public class Pass2Listener extends Pass1Listener {
 		assert null != objectType;
 									
 		final Message message = parsingData_.popMessage();
-		message.addActualThisParameter(object);
+		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
+		} else {
+			message.addActualThisParameter(object);
+		}
 		
 		MethodSignature methodSignature = null;
 		boolean isOKMethodSignature = false;

@@ -62,6 +62,7 @@ import info.fulloo.trygve.expressions.Expression.BooleanExpression;
 import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
+import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -243,7 +244,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			List<RTCode> printlnCode = new ArrayList<RTCode>();
+			final List<RTCode> printlnCode = new ArrayList<RTCode>();
 			if (printableArgumentType.name().equals("String")) {
 				if (methodDeclaration.name().equals("println")) {
 					printlnCode.add(new SystemClass.RTPrintlnStringCode(methodDeclaration.enclosedScope()));
@@ -489,6 +490,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	public List<RTCode> compileAssignmentExpression(AssignmentExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTAssignment(expr, rtTypeDeclaration));
+		return retval;
+	}
+	public List<RTCode> compileDoubleCasterExpression(DoubleCasterExpression expr, RTType rtTypeDeclaration) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTDoubleCaster(expr, rtTypeDeclaration));
 		return retval;
 	}
 	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {

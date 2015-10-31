@@ -24,59 +24,66 @@ package info.fulloo.trygve.editor;
  */
 
 public class TestRunner {
+	private final static String urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
+	private final static String localPrefix_ = "/Users/cope/Programs/Trygve/";
+	private final static String fileNames_[] = {
+		"ctor1.k",
+		"exprtest.k",
+		"for1.k",
+		"forloop1.k",
+		"forloop2.k",
+		"forloop3.k",
+		"inheritance.k",
+		"inheritance2.k",
+		"inheritance3.k",
+		"inheritance4.k",
+		"inheritance5.k",
+		"inhertest.k",
+		"roletest.k",
+		"roletest2.k",
+		"roletest3.k",
+		"roletest4.k",
+		"roletest5.k",
+		"trygve1.k",
+		"simplemain.k",
+		"simplearray.k",
+		"arraydup.k",
+		"simpleincrement.k",
+		"switchtest.k",
+		"unaryop1.k",
+		"trygve2.k",
+		"trygve3.k",
+		"whiletest.k",
+		"roleplaytest.k",
+		"roleplaytest2.k",
+		"roleplaytest3.k",
+		"assignchain.k",
+		"forloop2.k",
+		"fact.k",
+		"simpleprintchain.k",
+		"simpletemplate.k",
+		"basectortest.k",
+		"rolevec1.k",
+		"access1.k",
+		"roleclass1.k",
+		"roleclass2.k",
+		"sqrt.k",
+		"interface1.k",
+		"interface2.k",
+		"interface3.k",
+		"quadratic1.k",
+	};
+	public static int numberOfTestCases() {
+		return fileNames_.length;
+	}
+	public static String urlForTestCase(final int i) {
+		return urlPrefix_ + fileNames_[i];
+	}
 	public TestRunner(TextEditorGUI gui) {
 		gui_ = gui;
 		underscores_ = "___________________________________________________________";
 		plusses_ = " +  +  +  ";
 		passCounter_ = failCounter_ = 0;
-		urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
-		localPrefix_ = "/Users/cope/Programs/Trygve/";
-		fileNames_ = new String [] {
-			"ctor1.k",
-			"exprtest.k",
-			"for1.k",
-			"forloop1.k",
-			"forloop2.k",
-			"forloop3.k",
-			"inheritance.k",
-			"inheritance2.k",
-			"inheritance3.k",
-			"inheritance4.k",
-			"inheritance5.k",
-			"inhertest.k",
-			"roletest.k",
-			"roletest2.k",
-			"roletest3.k",
-			"roletest4.k",
-			"roletest5.k",
-			"trygve1.k",
-			"simplemain.k",
-			"simplearray.k",
-			"arraydup.k",
-			"simpleincrement.k",
-			"switchtest.k",
-			"unaryop1.k",
-			"trygve2.k",
-			"trygve3.k",
-			"whiletest.k",
-			"roleplaytest.k",
-			"roleplaytest2.k",
-			"roleplaytest3.k",
-			"assignchain.k",
-			"forloop2.k",
-			"fact.k",
-			"simpleprintchain.k",
-			"simpletemplate.k",
-			"basectortest.k",
-			"rolevec1.k",
-			"access1.k",
-			"roleclass1.k",
-			"roleclass2.k",
-			"sqrt.k",
-			"interface1.k",
-			"interface2.k",
-			"interface3.k",
-		};
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
@@ -179,8 +186,6 @@ public class TestRunner {
 	}
 
 	private final TextEditorGUI gui_;
-	private String[] fileNames_;
 	private final String underscores_, plusses_;
 	private int passCounter_, failCounter_;
-	private final String urlPrefix_, localPrefix_;
 }

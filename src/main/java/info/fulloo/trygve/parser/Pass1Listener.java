@@ -71,7 +71,6 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
-import info.fulloo.trygve.expressions.Expression.BooleanExpression;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
 import info.fulloo.trygve.expressions.Constant.BooleanConstant;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
@@ -3277,7 +3276,9 @@ public class Pass1Listener extends KantBaseListener {
 		// Pass 1 version
 		// Pop the expression for the indicated object and message
 		Expression object = null;
-		Type type = null;
+		Type type = null, enclosingMegaType = null;
+		MethodDeclaration mdecl = null;
+		
 		if (ctxExpr != null) {
 			if (parsingData_.currentExpressionExists()) {
 				object = parsingData_.popExpression();
@@ -3286,49 +3287,61 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else {
 			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
-			object = new IdentifierExpression("this", Expression.nearestEnclosingMegaTypeOf(currentScope_), nearestMethodScope);
+			enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			if (null == enclosingMegaType) {
+				object = new NullExpression();
+			} else {
+				object = new IdentifierExpression("this", enclosingMegaType, nearestMethodScope);
+			}
 		}
 		assert null != object;
 			
 		final Message message = parsingData_.popMessage();
-			
-		final Type objectType = object.type();
-		assert null != objectType;
-			
-		final String methodSelectorName = message.selectorName();
-		final ClassDeclaration classdecl = currentScope_.lookupClassDeclarationRecursive(objectType.name());
-		final MethodDeclaration mdecl = classdecl != null?
-						classdecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
-						null;
-						
-		if (null != mdecl && objectType.name().equals("Class")) {
-			// Is of the form ClassType.classMethod()
-			assert object instanceof IdentifierExpression;
-			if (false == mdecl.signature().isStatic()) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-						"Attempt to call instance method `" + methodSelectorName,
-						"«« as though it were a static method of class `", objectType.name(), "«");
-			}
-		}				
-										
-		if (null == mdecl) {
-			// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
-			// skip it Ñ we'll barked at the user in pass 2
-			// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", className);
-			type = StaticScope.globalScope().lookupTypeDeclaration("void");
+
+		if (null == enclosingMegaType && object instanceof NullExpression) {
+			// Because this here is Pass 1 code this really does nothing.
+			// We'll catch it again on Pass 2
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
 		} else {
-			type = mdecl.returnType();
+			final Type objectType = object.type();
+			assert null != objectType;
+				
+			final String methodSelectorName = message.selectorName();
+			final ClassDeclaration classdecl = currentScope_.lookupClassDeclarationRecursive(objectType.name());
+			mdecl = classdecl != null?
+							classdecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
+							null;
+							
+			if (null != mdecl && objectType.name().equals("Class")) {
+				// Is of the form ClassType.classMethod()
+				assert object instanceof IdentifierExpression;
+				if (false == mdecl.signature().isStatic()) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Attempt to call instance method `" + methodSelectorName,
+							"«« as though it were a static method of class `", objectType.name(), "«");
+				}
+			}				
+											
+			if (null == mdecl) {
+				// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
+				// skip it Ñ we'll barked at the user in pass 2
+				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", className);
+				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+			} else {
+				type = mdecl.returnType();
+				
+				// This is tautological a no-op, because we
+				// castrate this stuff within Pass 1
+				// checkForMessageSendViolatingConstness(mdecl.signature(), ctxGetStart);
+			}
 			
-			// This is tautological a no-op, because we
-			// castrate this stuff within Pass 1
-			// checkForMessageSendViolatingConstness(mdecl.signature(), ctxGetStart);
+			// If there is an error in the method return type, type might still be null
+			if (null == type) {
+				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+			}
+			assert type != null;
 		}
-		
-		// If there is an error in the method return type, type might still be null
-		if (null == type) {
-			type = StaticScope.globalScope().lookupTypeDeclaration("void");
-		}
-		assert type != null;
 		
 		object.setResultIsConsumed(true);
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();

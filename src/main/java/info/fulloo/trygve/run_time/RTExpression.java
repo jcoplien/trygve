@@ -67,6 +67,7 @@ import info.fulloo.trygve.expressions.Expression.BooleanExpression;
 import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
+import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -225,6 +226,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTRoleArrayIndexExpression((RoleArrayIndexExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof PromoteToDoubleExpr) {
 			retval = new RTPromoteToDoubleExpr((PromoteToDoubleExpr)expr, nearestEnclosingType);
+		} else if (expr instanceof DoubleCasterExpression) {
+			retval = new RTDoubleCaster((DoubleCasterExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof NullExpression) {
 			retval = new RTNullExpression();
 		} else if (expr instanceof IndexExpression) {
@@ -1381,8 +1384,38 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression rhs_;
 		private final RTUnaryAbelianopPart2 part2_;
 	}
+	public static class RTDoubleCaster extends RTExpression {
+		public RTDoubleCaster(final DoubleCasterExpression expr, final RTType nearestEnclosingType) {
+			super();
+			originalRHS_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
+			part2_ = new RTDoubleCasterPart2();
+			originalRHS_.setNextCode(part2_);
+		}
+		@Override public RTCode run() {
+			return originalRHS_.run();
+		}
+		@Override public void setNextCode(final RTCode code) {
+			part2_.setNextCode(code);
+		}
+		
+		public static class RTDoubleCasterPart2 extends RTExpression {
+			public RTDoubleCasterPart2() {
+			}
+			@Override public RTCode run() {
+				final RTObject value = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				assert value instanceof RTIntegerObject;
+				final long rawValue = ((RTIntegerObject)value).intValue();
+				final RTDoubleObject newValue = new RTDoubleObject((double)rawValue);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(newValue);
+				return super.nextCode();
+			}
+		}
+		
+		private final RTExpression originalRHS_;
+		private final RTDoubleCasterPart2 part2_;
+	}
 	public static class RTAssignment extends RTExpression {
-		public RTAssignment(AssignmentExpression expr, RTType nearestEnclosedType) {
+		public RTAssignment(final AssignmentExpression expr, final RTType nearestEnclosedType) {
 			super();
 			
 			if (nearestEnclosedType instanceof RTClass) {
@@ -1394,7 +1427,7 @@ public abstract class RTExpression extends RTCode {
 			
 			ctorCommon(expr, nearestEnclosedType);
 		}
-		private void ctorCommon(AssignmentExpression expr, RTType nearestEnclosedType) {
+		private void ctorCommon(final AssignmentExpression expr, final RTType nearestEnclosedType) {
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosedType);
 			part2_ = new RTAssignmentPart2(expr, rhs_, nearestEnclosedType);
 			rhs_.setNextCode(part2_);
@@ -1410,12 +1443,12 @@ public abstract class RTExpression extends RTCode {
 			// So I broke out the real assignment processing into RTAssignmentPart2.
 			return rhs_.run();
 		}
-		public void setNextCode(RTCode pc) {
+		public void setNextCode(final RTCode pc) {
 			part2_.setNextCode(pc);
 		}
 	
 		public static class RTAssignmentPart2 extends RTExpression {
-			public RTAssignmentPart2(AssignmentExpression expr, RTExpression rhs, RTType nearestEnclosingType) {
+			public RTAssignmentPart2(final AssignmentExpression expr, final RTExpression rhs, final RTType nearestEnclosingType) {
 				super();
 				lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 				if (lhs_ instanceof RTQualifiedIdentifier) {
@@ -3128,11 +3161,16 @@ public abstract class RTExpression extends RTCode {
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
 			part2_ = new RTProductPart2(expr);
 			
-			lhs_.setNextCode(rhs_);
-			rhs_.setNextCode(part2_);
-			
-			setResultIsConsumed(expr.resultIsConsumed());
-			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			if (null != rhs_ && null != lhs_) {
+				lhs_.setNextCode(rhs_);
+				rhs_.setNextCode(part2_);
+				
+				setResultIsConsumed(expr.resultIsConsumed());
+				part2_.setResultIsConsumed(expr.resultIsConsumed());
+			} else {
+				lhs_ = rhs_ = new RTNullExpression();
+				ErrorLogger.error(ErrorType.Internal, 0, "Internal error in building RTProduct", "", "", "");
+			}
 		}
 		@Override public RTCode run() {
 			return lhs_;

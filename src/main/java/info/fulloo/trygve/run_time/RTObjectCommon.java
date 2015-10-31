@@ -366,15 +366,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			return new RTIntegerObject(result);
 		}
 		@Override public RTObject divideBy(RTObject other) {
-			long result = 0;
+			RTObject result = null;
 			if (other instanceof RTDoubleObject) {
-				result = foobar_ / (long)((RTDoubleObject)other).doubleValue();
+				result = new RTDoubleObject(((double)foobar_) / ((RTDoubleObject)other).doubleValue());
 			} else if (other instanceof RTIntegerObject) {
-				result = foobar_ / ((RTIntegerObject)other).intValue();
+				result = new RTIntegerObject(foobar_ / ((RTIntegerObject)other).intValue());
 			} else {
 				assert false;
 			}
-			return new RTIntegerObject(result);
+			return result;
 		}
 		@Override public RTObject modulus(RTObject other) {
 			long result = 0;

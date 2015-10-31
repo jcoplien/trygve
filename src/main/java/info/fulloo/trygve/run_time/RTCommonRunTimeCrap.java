@@ -89,7 +89,10 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return null;
 	}
-	@Override public RTObject toThePowerOf(RTObject other) { assert false; return null; }
+	@Override public RTObject toThePowerOf(RTObject other) {
+		assert false;
+		return null;
+	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.
 	@Override public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {

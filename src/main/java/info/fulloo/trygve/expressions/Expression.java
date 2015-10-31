@@ -420,14 +420,45 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final String operator_;
 	}
 	
+	public static class DoubleCasterExpression extends Expression {
+		public DoubleCasterExpression(final Expression rhs) {
+			super("[(double)" + rhs.getText() + "]",
+					StaticScope.globalScope().lookupTypeDeclaration("double"),
+					rhs.enclosingMegaType());
+			rhs_ = rhs;
+			rhs_.setResultIsConsumed(true);
+		}
+		public Expression rhs() {
+			return rhs_;
+		}
+		@Override public String getText() {
+			final String retval = "(double) " + rhs_.getText();
+			return retval;
+		}
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileDoubleCasterExpression(this, rtTypeDeclaration);
+		}
+		
+		private final Expression rhs_;
+	}
+	
 	public static class AssignmentExpression extends Expression
 	{
-		public AssignmentExpression(Expression lhs, String operator, Expression rhs) {
-			super(lhs.getText(), lhs.type(), lhs.enclosingMegaType());
+		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs) {
+			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			lhs_ = lhs;
 			rhs_ = rhs;
+			doTrivialConversions();
 			rhs_.setResultIsConsumed(true);
+		}
+		private void doTrivialConversions() {
+			if (lhs_.type().name().equals("double")) {
+				if (rhs_.type().name().equals("int")) {
+					rhs_ = new DoubleCasterExpression(rhs_);
+					rhs_.setResultIsConsumed(true);
+				}
+			}
 		}
 		public Expression lhs() {
 			return lhs_;
@@ -443,7 +474,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
-		private final Expression lhs_, rhs_;
+		private Expression rhs_;
+		private final Expression lhs_;
 	}
 	
 	public static class NewExpression extends Expression
@@ -1064,7 +1096,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class SumExpression extends Expression
 	{
 		public SumExpression(Expression lhs, String operator, Expression rhs) {
-			super("<sum>", lhs.type(), lhs.enclosingMegaType());
+			super("[" + lhs.getText() + " " + operator + " " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
