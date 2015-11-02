@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
@@ -1522,20 +1523,28 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (null != ctx.abelian_product() && ctx.abelian_product().size() > 1 && null != ctx.ABELIAN_SUMOP()) {
 			//	| abelian_expr op=('+' | '-') abelian_expr
-			expression = parsingData_.popExpression();
 			
-			for (int i = 0; i < ctx.ABELIAN_SUMOP().size(); i++) {
+			// Make it left-associative
+			final int abelianSumopSize = ctx.ABELIAN_SUMOP().size();
+			final Stack<Expression> exprStack = new Stack<Expression>();
+			for (int i = 0; i < abelianSumopSize; i++) {
 				final Expression expr2 = parsingData_.popExpression();
+				exprStack.push(expr2);
+			}
+			
+			expression = parsingData_.popExpression();
+			for (int i = 0; i < abelianSumopSize; i++) {
+				final Expression expr2 = exprStack.pop();
 				final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
-				expression = new SumExpression(expr2, operatorAsString, expression);
+				expression = new SumExpression(expression, operatorAsString, expr2);
 			}
 			
 			if (printProductionsDebug) {
-				System.err.print("abelian_product : abelian_product ");
+				System.err.print("abelian_expr : abelian_expr ");
 				for (int i = 0; i < ctx.ABELIAN_SUMOP().size(); i++) {
 					System.err.print("`");
 					System.err.print(ctx.ABELIAN_SUMOP(i).getText());
-					System.err.print("« abelian_product ");
+					System.err.print("« abelian_expr ");
 				}
 				System.err.println();
 			}
@@ -1606,13 +1615,21 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (null != ctx.abelian_unary_op() && ctx.abelian_unary_op().size() > 1 && null != ctx.ABELIAN_MULOP()) {
 			//	| abelian_expr op=('*' | '/' | '%') abelian_expr
-			expression = parsingData_.popExpression();
 			
-			for (int i = 0; i < ctx.ABELIAN_MULOP().size(); i++) {
+			final int abelianMulopSize = ctx.ABELIAN_MULOP().size();
+			final Stack<Expression> exprStack = new Stack<Expression>();
+			for (int i = 0; i < abelianMulopSize; i++) {
 				final Expression expr2 = parsingData_.popExpression();
-				final String operatorAsString = ctx.ABELIAN_MULOP(i).getText();
-				expression = new ProductExpression(expr2, operatorAsString, expression, ctx.getStart(), this);
+				exprStack.push(expr2);
 			}
+			
+			expression = parsingData_.popExpression();
+			for (int i = 0; i < abelianMulopSize; i++) {
+				final Expression expr2 = exprStack.pop();
+				final String operatorAsString = ctx.ABELIAN_MULOP(i).getText();
+				expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+			}
+			
 			
 			if (printProductionsDebug) {
 				System.err.print("abelian_product : abelian_unary_op ");
@@ -3218,7 +3235,7 @@ public class Pass1Listener extends KantBaseListener {
 		final String objectIdentifier = objDecl.name();
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
-			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declaration of ",
+			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of ",
 					objectIdentifier, "", "");
 		} else {
 			scope.declareObject(objDecl);
@@ -3301,7 +3318,8 @@ public class Pass1Listener extends KantBaseListener {
 		return expression;
 	}
 	
-	public <ExprType> Expression newExpr(List<ParseTree> ctxChildren, Token ctxGetStart, ExprType ctxExpr, MessageContext ctxMessage) {
+	public <ExprType> Expression newExpr(final List<ParseTree> ctxChildren, final Token ctxGetStart,
+			final ExprType ctxExpr, final MessageContext ctxMessage) {
 		// : 'new' message
 		// | 'new' type_name '[' expr ']'
 		// Called in all passes.
