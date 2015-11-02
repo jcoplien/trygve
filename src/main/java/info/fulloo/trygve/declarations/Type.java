@@ -411,7 +411,10 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
+			if (null == t) {
+				assert null != t;
+			}
 			boolean retval = false;
 			if (t.name().equals(name_)) {
 				retval = true;

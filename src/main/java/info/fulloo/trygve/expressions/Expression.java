@@ -1095,7 +1095,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class SumExpression extends Expression
 	{
-		public SumExpression(Expression lhs, String operator, Expression rhs) {
+		public SumExpression(final Expression lhs, final String operator, final Expression rhs) {
 			super("[" + lhs.getText() + " " + operator + " " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
@@ -1133,7 +1133,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ProductExpression extends Expression
 	{
 		public ProductExpression(final Expression lhs, final String operator, final Expression rhs, final Token ctxGetStart, final Pass1Listener pass1Listener) {
-			super("<product>", lhs.type(), lhs.enclosingMegaType());
+			super("[" + lhs.getText() + " " + operator + " " + rhs.getText() + "]",
+					lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
@@ -1184,8 +1185,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class PowerExpression extends Expression
 	{
-		public PowerExpression(Expression lhs, String operator, Expression rhs, Token ctxGetStart, Pass1Listener pass1Listener) {
-			super("<power>", lhs.type(), lhs.enclosingMegaType());
+		public PowerExpression(final Expression lhs, final String operator, final Expression rhs, final Token ctxGetStart, final Pass1Listener pass1Listener) {
+			super("[" + lhs.getText() + " " + operator + " " + rhs.getText() + "]",
+					lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);

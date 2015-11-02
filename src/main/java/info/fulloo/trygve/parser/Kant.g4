@@ -1,9 +1,5 @@
 grammar Kant;
 
-@header {
-    package info.fulloo.trygve.parser;
-}
-
 /*
  * Trygve IDE
  *   Copyright ©2015 James O. Coplien
@@ -26,6 +22,10 @@ grammar Kant;
  *  Jim Coplien at jcoplien@gmail.com
  *
  */
+
+@header {
+    package info.fulloo.trygve.parser;
+}
 
 program
 		: type_declaration_list main
@@ -157,7 +157,7 @@ expr_and_decl_list
         | expr ';' object_decl
         | expr_and_decl_list object_decl
         | expr_and_decl_list expr
-        | expr_and_decl_list /*null-expr */ ';'
+        | expr_and_decl_list /* null-expr */ ';'
         | /* null */
         ;
 
@@ -231,16 +231,31 @@ expr
         | RETURN
         ;
 
+// Abelian grammar inspired by: http://stackoverflow.com/questions/4019687/antlr-problem-differntiating-unary-and-binary-operators-e-g-minus-sign
+
 abelian_expr
-		: <assoc=right>abelian_expr POW abelian_expr
-		| ABELIAN_SUMOP expr
-		| LOGICAL_NEGATION expr
-		| NEW message
+		: abelian_product (ABELIAN_SUMOP abelian_product)*
+		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
+		| <assoc=right> abelian_expr ASSIGN expr
+		;
+		
+abelian_product
+		: <assoc=right> abelian_product POW abelian_atom
+		| abelian_unary_op (ABELIAN_MULOP abelian_unary_op)*
+		| <assoc=left> abelian_product '.' message
+		| abelian_product '.' JAVA_ID
+		;
+		
+abelian_unary_op
+		:  ABELIAN_SUMOP abelian_atom
+  		|  LOGICAL_NEGATION abelian_atom
+  		|  abelian_atom
+ 		;
+	
+abelian_atom
+		: NEW message
         | NEW type_name '[' expr ']'
         | NEW JAVA_ID type_list '(' argument_list ')'
-		| abelian_expr ABELIAN_MULOP abelian_expr
-		| abelian_expr ABELIAN_SUMOP abelian_expr
-		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
 		| null_expr
 		| /* this. */ message
         | JAVA_ID
@@ -248,16 +263,13 @@ abelian_expr
         | ABELIAN_INCREMENT_OP JAVA_ID
         | constant
         | '(' abelian_expr ')'
-        | abelian_expr '[' expr ']'
-        | abelian_expr '[' expr ']' ABELIAN_INCREMENT_OP
+        | abelian_atom '[' expr ']'
+        | abelian_atom '[' expr ']' ABELIAN_INCREMENT_OP
         | ABELIAN_INCREMENT_OP expr '[' expr ']'
         | ABELIAN_INCREMENT_OP expr '.' JAVA_ID
-        | abelian_expr '.' JAVA_ID ABELIAN_INCREMENT_OP
-        | <assoc=left> abelian_expr '.' message
-        | abelian_expr '.' CLONE
-        | abelian_expr '.' CLONE '(' ')'
-        | abelian_expr '.' JAVA_ID
-        | <assoc=right> abelian_expr ASSIGN expr
+        | abelian_atom  '.' JAVA_ID ABELIAN_INCREMENT_OP
+        | abelian_atom '.' CLONE
+        | abelian_atom '.' CLONE '(' ')'
         ;
 
 message
@@ -358,8 +370,6 @@ CLONE : 'clone' ;
 NULL : 'null' ;
 
 CONST : 'const' ;
-
-// ABELIAN_RELOP : '!=' | '==' | GT | LT | '>=' | '<=';
 
 LOGICAL_NOT : '!' ;
 

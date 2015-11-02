@@ -449,7 +449,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			if ((another instanceof RTDoubleObject) == false) return false;
 			else return foobar_ > ((RTDoubleObject)another).doubleValue();
 		}
-		@Override public RTObject plus(RTObject other) {
+		@Override public RTObject plus(final RTObject other) {
 			double result = 0.0;
 			if (other instanceof RTDoubleObject) {
 				result = foobar_ + ((RTDoubleObject)other).doubleValue();
@@ -460,7 +460,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return new RTDoubleObject(result);
 		}
-		@Override public RTObject minus(RTObject other) {
+		@Override public RTObject minus(final RTObject other) {
 			double result = 0.0;
 			if (other instanceof RTDoubleObject) {
 				result = foobar_ - ((RTDoubleObject)other).doubleValue();
