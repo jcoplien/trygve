@@ -435,8 +435,8 @@ public abstract class Declaration implements BodyPart {
 			this.commonInit(myEnclosedScope, signature.returnType(),
 					signature.accessQualifier(), lineNumber);
 		}
-		private void commonInit(StaticScope myEnclosedScope, Type returnType,
-				AccessQualifier accessQualifier, int lineNumber) {
+		private void commonInit(final StaticScope myEnclosedScope, final Type returnType,
+				final AccessQualifier accessQualifier, final int lineNumber) {
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			

@@ -23,60 +23,22 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import info.fulloo.trygve.declarations.Type;
-import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
-import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
-import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
-
-public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
-	public RTListObject(final RTType listType) {
-		super(listType);	// 
-		listType_ = listType;	// e.g. an instance of RTClass
-		baseType_ = null;
-		theList_ = new ArrayList<RTObject>();
+public class RTDateObject extends RTObjectCommon {
+	public RTDateObject(final RTType dateType) {
+		super(dateType);	// 
+		dateType_ = dateType;	// e.g. an instance of RTClass
 		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
 	}
-	
-	public Type baseType() {
-		return baseType_;
-	}
-	private int calculateIndexFrom(final RTObject theIndexObject) {
-		int theIndex = -1;
-		if (theIndexObject instanceof RTIntegerObject) {
-			theIndex = (int)((RTIntegerObject)theIndexObject).intValue();
-		} else {
-			assert false;
-		}
-		
-		assert theIndex >= 0;
-		assert theIndex < theList_.size();
-		return theIndex;
-	}
-	public RTObject getObject(final RTObject theIndexObject) {
-		final int theIndex = calculateIndexFrom(theIndexObject);
-		final RTObject retval = theList_.get(theIndex);
-		return retval;
-	}
-	public int size() {
-		return theList_.size();
-	}
-	public void setObject(final RTObject theIndexObject, final RTObject rhs) {			
-		final int theIndex = calculateIndexFrom(theIndexObject);
-		
-		final RTObject oldValue = theList_.get(theIndex);
-		if (null != oldValue) {
-			oldValue.decrementReferenceCount();
-		}
-		theList_.set(theIndex, rhs);
-		rhs.incrementReferenceCount();
-	}
-	
+
 	// I'm a little unhappy that these are copy-pasted. FIXME.
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
@@ -113,52 +75,62 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		assert false;
 		return null;
 	}
-	private RTListObject(final List<RTObject> theList, final Type baseType, final RTType listType) {
-		super(listType);
-		theList_ = new ArrayList<RTObject>();
-		baseType_ = baseType;
-		listType_ = listType;
-		for (int k = 0; k < theList_.size(); k++) {
-			theList_.set(k, theList_.get(k));
-		}
+	private RTDateObject(final Calendar theDate, final RTType dateType) {
+		super(dateType);
+		theDate_ = (Calendar)theDate.clone();
+		dateType_ = dateType;
 		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
 	}
-	public RTIterator makeIterator() {
-		final RTIterator retval = new RTListIterator(this);
-		return retval;
-	}
 	@Override public RTObject dup() {
-		final RTListObject retval = new RTListObject(theList_, baseType_, listType_);
+		final RTDateObject retval = new RTDateObject(theDate_, dateType_);
 		return retval;
 	}
 	@Override public RTType rTType() {
-		return listType_;
+		return dateType_;
+	}
+	public RTObject getYear() {
+		final int year = theDate_.get(Calendar.YEAR);
+		return new RTIntegerObject(year);
+	}
+	public RTObject getMonth() {
+		final int month = theDate_.get(Calendar.MONTH);
+		return new RTIntegerObject(month);
+	}
+	public RTObject getDate() {
+		final int date = theDate_.get(Calendar.DATE);
+		return new RTIntegerObject(date);
+	}
+	public RTObject getDay() {
+		final int day = theDate_.get(Calendar.DAY_OF_WEEK);
+		return new RTIntegerObject(day);
+	}
+	public RTObject toStringCall() {
+		final String string = theDate_.toString();
+		return new RTStringObject(string);
+	}
+	public void setYear(final RTObject year) {
+		theDate_.set(Calendar.YEAR, 1900 + (int)((RTIntegerObject)year).intValue());
+	}
+	public void setMonth(final RTObject month) {
+		theDate_.set(Calendar.MONTH, (int)((RTIntegerObject)month).intValue());
+	}
+	public void setDate(final RTObject date) {
+		theDate_.set(Calendar.DATE, (int)((RTIntegerObject)date).intValue());
+	}
+	public void setDay(final RTObject day) {
+		theDate_.set(Calendar.DAY_OF_WEEK, (int)((RTIntegerObject)day).intValue());
+	}
+	public void ctor(RTObject date, RTObject month, RTObject year) {
+		simpleCtor();
+		setYear(year);
+		setMonth(month);
+		setDate(date);
+	}
+	public void simpleCtor() {
+		theDate_ = Calendar.getInstance();
 	}
 	
-	public boolean isEmpty() {
-		return theList_.isEmpty();
-	}
-	public RTObject get(int i) {
-		return theList_.get(i);
-	}
-	public void add(RTObject element) {
-		theList_.add(element);
-	}
-	public void ctor() {
-	}
-	public RTObject indexOf(final RTObject element) {
-		final int rawRetval = theList_.indexOf(element);
-		final RTObject retval = new RTIntegerObject(rawRetval);
-		return retval;
-	}
-	public RTObject contains(final RTObject element) {
-		final boolean rawRetval = theList_.contains(element);
-		final RTObject retval = new RTBooleanObject(rawRetval);
-		return retval;
-	}
-	
-	private final List<RTObject> theList_;
-	private final Type baseType_;
+	private Calendar theDate_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
-	private final RTType listType_;
+	private final RTType dateType_;
 }

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.SystemClass;
@@ -56,7 +57,7 @@ import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 public class StaticScope {
-	public StaticScope(StaticScope parentScope) {
+	public StaticScope(final StaticScope parentScope) {
 		// Usual constructor
 		parentScope_ = parentScope;
 		subScopes_ = new SimpleList();
@@ -76,12 +77,12 @@ public class StaticScope {
 		templateInstantiationInfo_ = null;
 	}
 	
-	public StaticScope(StaticScope parentScope, boolean losesMemory) {
+	public StaticScope(final StaticScope parentScope, final boolean losesMemory) {
 		this(parentScope);
 		hasDeclarationsThatAreLostBetweenPasses_ = losesMemory;
 	}
 	
-	public StaticScope(StaticScope scope, String copy, StaticScope newEnclosingScope,
+	public StaticScope(final StaticScope scope, final String copy, final StaticScope newEnclosingScope,
 			Declaration newAssociatedDeclaration, TemplateInstantiationInfo newTypes) {
 		// Special copy constructor, mainly for instantiating templates
 		super();
@@ -165,6 +166,7 @@ public class StaticScope {
 			SystemClass.setup();
 			ListClass.setup();
 			MathClass.setup();
+			DateClass.setup();
 		}
 	}
 	
@@ -251,7 +253,7 @@ public class StaticScope {
 		doubleDeclaration.setType(doubleType);
 	}
 	
-	private static void reinitializeString(Type intType) {
+	private static void reinitializeString(final Type intType) {
 		final Type stringType = new BuiltInType("String");
 		
 		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
@@ -297,7 +299,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public void declareContext(ContextDeclaration decl) {
+	public void declareContext(final ContextDeclaration decl) {
 		final String contextName = decl.name();
 		if (contextDeclarationDictionary_.containsKey(contextName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of context ", contextName, " in ", name());
@@ -307,7 +309,7 @@ public class StaticScope {
 		}
 	}
 	
-	private void checkMegaTypeShadowing(TypeDeclaration decl) {
+	private void checkMegaTypeShadowing(final TypeDeclaration decl) {
 		final StaticScope parent = this.parentScope();
 		if (null != parent) {
 			final String name = decl.name();
@@ -333,7 +335,7 @@ public class StaticScope {
 		}
 	}
 	
-	public ContextDeclaration lookupContextDeclarationRecursive(String contextName)
+	public ContextDeclaration lookupContextDeclarationRecursive(final String contextName)
 	{
 		ContextDeclaration retval = this.lookupContextDeclaration(contextName);
 		if (null == retval) {
@@ -343,7 +345,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public ContextDeclaration lookupContextDeclaration(String contextName) {
+	public ContextDeclaration lookupContextDeclaration(final String contextName) {
 		ContextDeclaration retval = null;
 		if (contextDeclarationDictionary_.containsKey(contextName)) {
 			retval = contextDeclarationDictionary_.get(contextName);
@@ -351,7 +353,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public void declareRole(RoleDeclaration decl) {
+	public void declareRole(final RoleDeclaration decl) {
 		final String roleName = decl.name();
 		if (roleDeclarationDictionary_.containsKey(roleName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of role ", roleName, " in ", name());
@@ -361,7 +363,7 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
-	public RoleDeclaration lookupRoleDeclarationRecursive(String roleName) {
+	public RoleDeclaration lookupRoleDeclarationRecursive(final String roleName) {
 		RoleDeclaration retval = this.lookupRoleDeclaration(roleName);
 		if (null == retval) {
 			// Stop searching at Context boundary. If there are nested
@@ -378,7 +380,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public RoleDeclaration lookupRoleDeclaration(String roleName) {
+	public RoleDeclaration lookupRoleDeclaration(final String roleName) {
 		RoleDeclaration retval = null;
 		if (roleDeclarationDictionary_.containsKey(roleName)) {
 			retval = roleDeclarationDictionary_.get(roleName);
@@ -386,7 +388,7 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public void declareClass(ClassDeclaration decl) {
+	public void declareClass(final ClassDeclaration decl) {
 		final String className = decl.name();
 		if (classDeclarationDictionary_.containsKey(className)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of class ", className, " in ", name());
@@ -396,7 +398,7 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
-	public void undeclareClass(ClassDeclaration decl) {
+	public void undeclareClass(final ClassDeclaration decl) {
 		final String className = decl.name();
 		if (classDeclarationDictionary_.containsKey(className)) {
 			assert classDeclarationDictionary_.containsValue(decl);
@@ -406,7 +408,7 @@ public class StaticScope {
 		}
 	}
 	
-	public void declareTemplate(TemplateDeclaration decl) {
+	public void declareTemplate(final TemplateDeclaration decl) {
 		final String templateName = decl.name();
 		if (templateDeclarationDictionary_.containsKey(templateName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of template ", templateName, " in ", name());
@@ -465,7 +467,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public void declareInterface(InterfaceDeclaration decl) {
+	public void declareInterface(final InterfaceDeclaration decl) {
 		final String interfaceName = decl.name();
 		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of interface ", interfaceName, " in ", name());
@@ -475,7 +477,7 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
-	public void declareMethod(MethodDeclaration decl) {
+	public void declareMethod(final MethodDeclaration decl) {
 		final String methodName = decl.name();
 
 		if (methodDeclarationDictionary_.containsKey(methodName)) {
@@ -499,7 +501,7 @@ public class StaticScope {
 		if (null != parentScope_) parentScope_.checkMethodShadowing(decl);
 	}
 	
-	private void checkMethodShadowing(MethodDeclaration decl) {
+	private void checkMethodShadowing(final MethodDeclaration decl) {
 		final StaticScope parent = this.parentScope();
 		if (null != parent) {
 			final String name = decl.name();
@@ -530,7 +532,7 @@ public class StaticScope {
 		}
 	}
 	
-	public void declareType(Type typeDecl) {
+	public void declareType(final Type typeDecl) {
 		final String typeName = typeDecl.name();
 		if (typeDeclarationDictionary_.containsKey(typeName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of type ", typeName, " in ", name());
@@ -543,7 +545,7 @@ public class StaticScope {
 		}
 	}
 	
-	public void undeclareType(Type typeDecl) {
+	public void undeclareType(final Type typeDecl) {
 		final String typeName = typeDecl.name();
 		if (typeDeclarationDictionary_.containsKey(typeName)) {
 			assert typeDeclarationDictionary_.containsValue(typeDecl);
@@ -553,7 +555,7 @@ public class StaticScope {
 		}
 	}
 	
-	public Type lookupTypeDeclarationRecursive(String typeName) {
+	public Type lookupTypeDeclarationRecursive(final String typeName) {
 		Type retval = this.lookupTypeDeclaration(typeName);
 		if (null == retval) {
 			if (null != parentScope_) {
@@ -649,7 +651,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public ObjectDeclaration lookupObjectDeclarationRecursiveWithinMethod(String simpleIDName) {
+	public ObjectDeclaration lookupObjectDeclarationRecursiveWithinMethod(final String simpleIDName) {
 		ObjectDeclaration retval = this.lookupObjectDeclaration(simpleIDName);
 		if (null == retval) {
 			// Like lookupObjectDeclarationRecursive, but it will also stop if
@@ -668,7 +670,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public ObjectDeclaration lookupObjectDeclaration(String simpleIDName) {
+	public ObjectDeclaration lookupObjectDeclaration(final String simpleIDName) {
 		ObjectDeclaration retval = null;
 		if (objectDeclarationDictionary_.containsKey(simpleIDName)) {
 			retval = objectDeclarationDictionary_.get(simpleIDName);
