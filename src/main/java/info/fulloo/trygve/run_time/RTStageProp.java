@@ -28,9 +28,10 @@ import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 
 public class RTStageProp extends RTClassAndContextCommon implements RTType  {
-	public RTStageProp(StagePropDeclaration associatedDeclaration) {
+	public RTStageProp(final StagePropDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		assert associatedDeclaration instanceof StagePropDeclaration;
 		associatedDeclaration_ = associatedDeclaration;
@@ -39,34 +40,34 @@ public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 	public StagePropDeclaration associatedDeclaration() {
 		return associatedDeclaration_;
 	}
-	@Override public void addClass(String typeName, RTClass classDecl) {
+	@Override public void addClass(final String typeName, final RTClass classDecl) {
 		assert false;
 	}
-	@Override public void addContext(String typeName, RTContext contextDecl) {
+	@Override public void addContext(final String typeName, final RTContext contextDecl) {
 		stringToContextDeclMap_.put(typeName, contextDecl);
 	}
-	public void addObject(String objectName, Type objectType) {
+	public void addObject(final String objectName, final Type objectType) {
 		assert false;
 	}
-	@Override public void addStageProp(String stagePropName, RTStageProp stagePropType) {
+	@Override public void addStageProp(final String stagePropName, final RTStageProp stagePropType) {
 		assert false;
 	}
-	@Override public void addRole(String roleName, RTRole roleType) {
+	@Override public void addRole(final String roleName, final RTRole roleType) {
 		assert false;
 	}
-	@Override public RTType typeNamed(String name) {
+	@Override public RTType typeNamed(final String name) {
 		assert false;
 		return null;
 	}
-	@Override public void setObject(String unused1, RTObject unused2) {
+	@Override public void setObject(final String unused1, final RTObject unused2) {
 		assert false;
 	}
-	@Override public RTObject getObject(String objectName) {
+	@Override public RTObject getObject(final String objectName) {
 		assert false;
 		// Doesn't seem right to get an instance from a stageprop.
 		return null;
 	}
-	@Override public void addObjectDeclaration(String unused1, RTType unused2) {
+	@Override public void addObjectDeclaration(final String unused1, final RTType unused2) {
 		assert false;
 	}
 	@Override public Map<String, RTType> objectDeclarations() {
@@ -75,6 +76,9 @@ public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		return new HashMap<String, RTRole>();
+	}
+	public boolean isArray() {
+		return associatedDeclaration_ instanceof StagePropArrayDeclaration;
 	}
 	
 	private Map<String, RTContext> stringToContextDeclMap_;

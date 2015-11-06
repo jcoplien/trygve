@@ -573,6 +573,7 @@ public void wwwButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     String url = urlTextField.getText();
     
     this.editPane.setText(urlTest.getSite(url));
+    this.fileSystemTextField.setText("");
 }//GEN-LAST:event_wwwButtonActionPerformed
 
 public void openFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed

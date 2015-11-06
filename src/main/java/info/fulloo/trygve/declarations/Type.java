@@ -33,6 +33,7 @@ import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -506,7 +507,8 @@ public abstract class Type implements ExpressionStackAPI
 			return associatedDeclaration_.contextDeclaration();
 		}
 		public boolean isArray() {
-			return associatedDeclaration_ instanceof RoleArrayDeclaration;
+			return associatedDeclaration_ instanceof RoleArrayDeclaration ||
+				   associatedDeclaration_ instanceof StagePropArrayDeclaration;
 		}
 		
 		protected final String name_;

@@ -32,7 +32,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 
 
 public class RTRole extends RTClassAndContextCommon implements RTType  {
-	public RTRole(RoleDeclaration associatedDeclaration) {
+	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		assert associatedDeclaration instanceof RoleDeclaration;
 		associatedDeclaration_ = associatedDeclaration;
@@ -42,14 +42,14 @@ public class RTRole extends RTClassAndContextCommon implements RTType  {
 	@Override protected void populateNameToTypeObjectMap() {
 		assert false;
 	}
-	@Override public RTObject getObject(String objectName) {
+	@Override public RTObject getObject(final String objectName) {
 		assert false;
 		return null;
 	}
 	public RoleDeclaration associatedDeclaration() {
 		return associatedDeclaration_;
 	}
-	@Override public void addClass(String typeName, RTClass classDecl) {
+	@Override public void addClass(final String typeName, RTClass classDecl) {
 		assert false;
 	}
 	@Override public void addContext(String typeName, RTContext contextDecl) {

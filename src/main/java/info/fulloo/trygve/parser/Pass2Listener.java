@@ -101,14 +101,14 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
 	}
 
-	@Override protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber, boolean isRoleArray) {
+	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		// Return value is through currentRole_
 		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(roleName);
 		if (null == currentRole_) {
 			assert null != currentRole_;
 		}
 	}
-	@Override protected void lookupOrCreateStagePropDeclaration(String stagePropName, int lineNumber) {
+	@Override protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
 		// Return value is through currentRole_
 		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(stagePropName);
 		if (null == currentRole_) {

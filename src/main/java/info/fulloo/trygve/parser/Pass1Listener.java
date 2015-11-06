@@ -56,6 +56,7 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.declarations.Type;
@@ -651,11 +652,14 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void enterStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
 	{
 		// stageprop_decl
-		//	: 'stageprop' JAVA_ID '{' stageprop_body '}'
-		//	| 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
-		//	| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}'
-		//	| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// : 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
 			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "Gratuitous access qualifier `",
@@ -669,7 +673,7 @@ public class Pass1Listener extends KantBaseListener {
 			// null condition. Not much to do but to punt
 			
 			final String stagePropName = JAVA_ID.getText();
-			lookupOrCreateStagePropDeclaration(stagePropName, ctx.getStart().getLine());
+			lookupOrCreateStagePropDeclaration(stagePropName, ctx.getStart().getLine(), isStagePropArray);
 			
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
@@ -684,10 +688,13 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void exitStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
 	{
 		// stageprop_decl
-		//	: 'stageprop' JAVA_ID '{' stageprop_body '}'
-		//	| 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
-		//	| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}'
-		//	| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// : 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
 		
 		if (null != currentRole_) {
 			// The IF statement is just to recover from bad
@@ -718,13 +725,21 @@ public class Pass1Listener extends KantBaseListener {
 
 		if (printProductionsDebug) {
 			if (ctx.self_methods() == null && ctx.access_qualifier() == null) {
-				System.err.println("stageprop_decl : 'role' JAVA_ID '{' role_body '}'");
+				System.err.print("stageprop_decl : ");
+				if (isStagePropArray) System.err.print("[] ");
+				System.err.println("'stageprop' JAVA_ID '{' role_body '}'");
 			} else if(ctx.self_methods() != null && ctx.access_qualifier() == null) {
-				System.err.println("stageprop_decl : 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
+				System.err.print("stageprop_decl : ");
+				if (isStagePropArray) System.err.print("[] ");
+				System.err.println("'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
 			} else if(ctx.self_methods() == null && ctx.access_qualifier() != null) {
-				System.err.println("stageprop_decl : access_qualifier 'role' JAVA_ID '{' stageprop_body '}'");
+				System.err.println("stageprop_decl : access_qualifier ");
+				if (isStagePropArray) System.err.print("[] ");
+				System.err.println("'stageprop' JAVA_ID '{' role_body '}'");
 			} else {
-				System.err.println("stageprop_decl : access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'");
+				System.err.print("stageprop_decl : access_qualifier ");
+				if (isStagePropArray) System.err.print("[] ");
+				System.err.println("'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'");
 			}
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
@@ -2702,7 +2717,7 @@ public class Pass1Listener extends KantBaseListener {
 		newInterface.setType(newInterfaceType);
 	}
 	
-	protected void lookupOrCreateRoleDeclaration(String roleName, int lineNumber, boolean isRoleArray) {
+	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleDeclaration(roleName);
 		if (null != requestedRole) {
 			currentRole_ = requestedRole;
@@ -2733,7 +2748,7 @@ public class Pass1Listener extends KantBaseListener {
 		// caller may reset currentScope Ñ NOT us
 	}
 	
-	protected void lookupOrCreateStagePropDeclaration(String roleName, int lineNumber) {
+	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
 		final StagePropDeclaration requestedStageProp = (StagePropDeclaration)currentScope_.lookupRoleDeclaration(roleName);
 		if (null != requestedStageProp) {
 			assert requestedStageProp instanceof StagePropDeclaration;
@@ -2745,7 +2760,10 @@ public class Pass1Listener extends KantBaseListener {
 			assert false;
 		} else {
 			final StaticScope stagePropScope = new StaticRoleScope(currentScope_);
-			final StagePropDeclaration stagePropDecl = new StagePropDeclaration(roleName, stagePropScope, currentContext_, lineNumber);
+			final StagePropDeclaration stagePropDecl =
+					isStagePropArray
+					   ? new StagePropArrayDeclaration(roleName, stagePropScope, currentContext_, lineNumber)
+					   : new StagePropDeclaration(roleName, stagePropScope, currentContext_, lineNumber);
 			stagePropScope.setDeclaration(stagePropDecl);
 			declareRole(currentScope_, stagePropDecl, lineNumber);
 			

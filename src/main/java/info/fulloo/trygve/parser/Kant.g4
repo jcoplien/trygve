@@ -108,10 +108,10 @@ self_methods
 		;
 
 stageprop_decl
-		: 'stageprop' JAVA_ID '{' stageprop_body '}'
-		| 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
-		| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}'
-		| access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		: 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		| 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		;
 
 stageprop_body

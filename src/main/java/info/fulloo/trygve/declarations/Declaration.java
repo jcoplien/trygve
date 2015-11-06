@@ -401,7 +401,7 @@ public abstract class Declaration implements BodyPart {
 	}
 	
 	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {
-		public RoleArrayDeclaration(String name, StaticScope myEnclosedScope, ContextDeclaration context, int lineNumber) {
+		public RoleArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
 			super(name, myEnclosedScope, context, lineNumber);
 		}
 		public boolean isArray() {
@@ -411,10 +411,19 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class StagePropDeclaration extends RoleDeclaration implements TypeDeclaration
 	{
-		public StagePropDeclaration(String name, StaticScope myEnclosedScope, ContextDeclaration context, int lineNumber) {
+		public StagePropDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
 			super(name, myEnclosedScope, context, lineNumber);
 		}
 		@Override public boolean requiresConstMethods() {
+			return true;
+		}
+	}
+	
+	public static class StagePropArrayDeclaration extends StagePropDeclaration implements TypeDeclaration {
+		public StagePropArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
+			super(name, myEnclosedScope, context, lineNumber);
+		}
+		public boolean isArray() {
 			return true;
 		}
 	}
