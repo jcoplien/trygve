@@ -73,6 +73,7 @@ public class TestRunner {
 		"interface3.k",
 		"quadratic1.k",
 		"rightAssociativeSum2.k",
+		"thisqualbug1.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

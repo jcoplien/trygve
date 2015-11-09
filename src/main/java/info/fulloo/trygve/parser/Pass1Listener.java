@@ -1547,11 +1547,15 @@ public class Pass1Listener extends KantBaseListener {
 				exprStack.push(expr2);
 			}
 			
-			expression = parsingData_.popExpression();
-			for (int i = 0; i < abelianSumopSize; i++) {
-				final Expression expr2 = exprStack.pop();
-				final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
-				expression = new SumExpression(expression, operatorAsString, expr2);
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				for (int i = 0; i < abelianSumopSize; i++) {
+					final Expression expr2 = exprStack.pop();
+					final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
+					expression = new SumExpression(expression, operatorAsString, expr2);
+				}
+			} else {
+				expression = new NullExpression();
 			}
 			
 			if (printProductionsDebug) {
@@ -1622,8 +1626,6 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitAbelian_product(@NotNull KantParser.Abelian_productContext ctx) {
 		// : abelian_unary_op (ABELIAN_MULOP abelian_unary_op)*
-		// | abelian_product '.' JAVA_ID
-		// | abelian_atom '.' message
 		// | <assoc=right> abelian_product POW abelian_atom
 		
 		Expression expression = null;
@@ -1634,15 +1636,23 @@ public class Pass1Listener extends KantBaseListener {
 			final int abelianMulopSize = ctx.ABELIAN_MULOP().size();
 			final Stack<Expression> exprStack = new Stack<Expression>();
 			for (int i = 0; i < abelianMulopSize; i++) {
-				final Expression expr2 = parsingData_.popExpression();
-				exprStack.push(expr2);
+				if (parsingData_.currentExpressionExists()) {
+					final Expression expr2 = parsingData_.popExpression();
+					exprStack.push(expr2);
+				} else {
+					break;
+				}
 			}
 			
-			expression = parsingData_.popExpression();
-			for (int i = 0; i < abelianMulopSize; i++) {
-				final Expression expr2 = exprStack.pop();
-				final String operatorAsString = ctx.ABELIAN_MULOP(i).getText();
-				expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				for (int i = 0; i < abelianMulopSize; i++) {
+					final Expression expr2 = exprStack.pop();
+					final String operatorAsString = ctx.ABELIAN_MULOP(i).getText();
+					expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+				}
+			} else {
+				expression = new NullExpression();
 			}
 			
 			
@@ -1660,27 +1670,6 @@ public class Pass1Listener extends KantBaseListener {
 			
 			if (printProductionsDebug) {
 				System.err.println("abelian_product : abelian_unary_op ");
-			}
-		} else if (null != ctx.abelian_product() && null != ctx.JAVA_ID()) {
-			//	| abelian_product '.' JAVA_ID
-			// The following line DOES pop the expression stack
-			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
-			assert expression instanceof Expression;
-			
-			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_expr '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
-		} else if (null != ctx.abelian_product() && null != ctx.message()) {
-			//	| abelian_atom '.' message
-			// This routine actually does pop the expressions stack (and the Message stack)
-			expression = this.messageSend(ctx.getStart(), ctx.abelian_product());
-			
-			if (null == expression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"No match for call: ", ctx.abelian_product().getText(), ".", ctx.message().getText());
-				expression = new NullExpression();
-			}
-												
-			if (printProductionsDebug) {
-				System.err.println("abelian_product : abelian_product '.' message");
 			}
 		} else if (null != ctx.abelian_product()
 				&& null != ctx.abelian_atom() && null != ctx.POW()) {
@@ -1714,10 +1703,13 @@ public class Pass1Listener extends KantBaseListener {
 		Expression expression = null;
 		
 		if (null != ctx.ABELIAN_SUMOP()) {
-			//	ABELIAN_SUMOP abelian_atom
-			expression = parsingData_.popExpression();
-			
-			expression = new UnaryAbelianopExpression(expression, ctx.ABELIAN_SUMOP().getText());
+			// ABELIAN_SUMOP abelian_atom
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				expression = new UnaryAbelianopExpression(expression, ctx.ABELIAN_SUMOP().getText());
+			} else {
+				expression = new NullExpression();
+			}
 			
 			if (printProductionsDebug) {
 				System.err.println("abelian_unary_op : '-' abelian_atom");
@@ -1770,11 +1762,13 @@ public class Pass1Listener extends KantBaseListener {
 		// abelian_expr         
 		//  | NEW message
         //	| NEW type_name '[' expr ']'
-		//  | NEW JAVA_ID type_list '(' argument_list ')'                            
+		//  | NEW JAVA_ID type_list '(' argument_list ')'
+		//  | abelian_atom '.' JAVA_ID
+		//  | abelian_atom '.' message
 		//	| null_expr
 		//	| JAVA_ID
-		//	| JAVA_ID ABELIAN_INCREMENT_OP
-		//	| ABELIAN_INCREMENT_OP JAVA_ID
+		//	| abelian_atom ABELIAN_INCREMENT_OP
+		//	| ABELIAN_INCREMENT_OP abelian_atom
 		//	| constant
 		//	| '(' abelian_expr ')'
 		//	| abelian_atom '[' expr ']'
@@ -1842,6 +1836,27 @@ public class Pass1Listener extends KantBaseListener {
 			if (printProductionsDebug) {
 				System.err.println("abelian_atom : NEW JAVA_ID type_list '(' argument_list ')'");
 			}
+		} else if (null != ctx.abelian_atom() && null != ctx.JAVA_ID()) {
+			//	| abelian_atom '.' JAVA_ID
+			// The following line DOES pop the expression stack
+			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
+			assert expression instanceof Expression;
+			
+			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
+		} else if (null != ctx.abelian_atom() && null != ctx.message()) {
+			//	| abelian_atom '.' message
+			// This routine actually does pop the expressions stack (and the Message stack)
+			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom());
+			
+			if (null == expression) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"No match for call: ", ctx.abelian_atom().getText(), ".", ctx.message().getText());
+				expression = new NullExpression();
+			}
+												
+			if (printProductionsDebug) {
+				System.err.println("abelian_product : abelian_atom '.' message");
+			}
 		} else if (null != ctx.NEW()) {
 			// 'new' message
 			// 'new' type_name '[' expr ']'
@@ -1879,32 +1894,34 @@ public class Pass1Listener extends KantBaseListener {
 				System.err.print(ctx.JAVA_ID().getText());
 				System.err.println(")");
 			}
-		} else if (null != ctx.JAVA_ID() && null != ctx.ABELIAN_INCREMENT_OP() &&
+		} else if (null != ctx.abelian_atom() && null != ctx.ABELIAN_INCREMENT_OP() &&
 				(null == ctx.abelian_expr())) {	
-			//	| JAVA_ID ABELIAN_INCREMENT_OP
-			//	| ABELIAN_INCREMENT_OP JAVA_ID
-			final String id = ctx.JAVA_ID().getText();
-			final Interval JavaIDInterval = ctx.JAVA_ID().getSourceInterval();
+			//	| abelian_atom ABELIAN_INCREMENT_OP
+			//	| ABELIAN_INCREMENT_OP abelian_atom
+			final Interval AbelianAtomInterval = ctx.abelian_atom().getSourceInterval();
 			final Interval OperatorInterval = ctx.ABELIAN_INCREMENT_OP().getSourceInterval();
-			final PreOrPost preOrPost = JavaIDInterval.startsAfter(OperatorInterval)?
+			final PreOrPost preOrPost = AbelianAtomInterval.startsAfter(OperatorInterval)?
 					UnaryopExpressionWithSideEffect.PreOrPost.Pre: UnaryopExpressionWithSideEffect.PreOrPost.Post;
 			
-			expression = this.jAVA_IDAtomUtility(id, ctx.getStart().getLine());
-			
-			assert null != expression;
-			expression = new UnaryopExpressionWithSideEffect(expression, ctx.ABELIAN_INCREMENT_OP().getText(), preOrPost);
-			assert null != expression;
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				assert null != expression;
+				expression = new UnaryopExpressionWithSideEffect(expression, ctx.ABELIAN_INCREMENT_OP().getText(), preOrPost);
+				assert null != expression;
+			} else {
+				expression = new NullExpression();
+			}
 			
 			if (printProductionsDebug) {
 				switch (preOrPost) {
 				case Post:
-					System.err.print("abelian_atom : JAVA_ID (");
-					System.err.print(ctx.JAVA_ID().getText());
+					System.err.print("abelian_atom : abelian_atom (");
+					System.err.print(ctx.abelian_atom().getText());
 					System.err.println(") ABELIAN_INCREMENT_OP");
 					break;
 				case Pre:
-					System.err.print("abelian_atom : ABELIAN_INCREMENT_OP JAVA_ID (");
-					System.err.print(ctx.JAVA_ID().getText());
+					System.err.print("abelian_atom : ABELIAN_INCREMENT_OP abelian_atom (");
+					System.err.print(ctx.abelian_atom().getText());
 					System.err.println(")");
 					break;
 				}

@@ -242,8 +242,6 @@ abelian_expr
 abelian_product
 		: <assoc=right> abelian_product POW abelian_atom
 		| abelian_unary_op (ABELIAN_MULOP abelian_unary_op)*
-		| <assoc=left> abelian_product '.' message
-		| abelian_product '.' JAVA_ID
 		;
 		
 abelian_unary_op
@@ -256,11 +254,13 @@ abelian_atom
 		: NEW message
         | NEW type_name '[' expr ']'
         | NEW JAVA_ID type_list '(' argument_list ')'
+        | <assoc=left> abelian_atom '.' message
+		| abelian_atom '.' JAVA_ID
 		| null_expr
 		| /* this. */ message
         | JAVA_ID
-        | JAVA_ID ABELIAN_INCREMENT_OP
-        | ABELIAN_INCREMENT_OP JAVA_ID
+        | abelian_atom ABELIAN_INCREMENT_OP
+        | ABELIAN_INCREMENT_OP abelian_atom
         | constant
         | '(' abelian_expr ')'
         | abelian_atom '[' expr ']'
