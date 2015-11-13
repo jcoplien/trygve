@@ -10,6 +10,7 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTObject;
@@ -90,7 +91,8 @@ public final class MathClass {
 	public static class RTMathCommon extends RTMessage {
 		public RTMathCommon(final String className, final String methodName, final String parameterName,
 				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), returnType, true);
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+					true);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {
@@ -133,7 +135,7 @@ public final class MathClass {
 		}
 	}
 	public static class RTSqrtCode extends RTMathCommon {
-		public RTSqrtCode(StaticScope enclosingMethodScope) {
+		public RTSqrtCode(final StaticScope enclosingMethodScope) {
 			super("Math", "sqrt", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {

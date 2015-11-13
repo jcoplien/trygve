@@ -152,7 +152,13 @@ public abstract class RTClassAndContextCommon implements RTType {
 	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
 		return this.lookupMethodIgnoringParameterInSignature(methodName, pl, null);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName, final ActualOrFormalParameterList suppliedParameters, String ignoreName) {
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true);
+	}
+	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, false);
+	}
+	private RTMethod lookupMethodIgnoringParameterInSignatureCommon(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName, final boolean allowPromotion) {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
@@ -166,7 +172,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 					mappedSuppliedParameters = suppliedParameters.mapTemplateParameters(templateInstantiationInfo_);
 				}
 				
-				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName)) {
+				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName, allowPromotion)) {
 					retval = aPair.getValue();
 					break;
 				}

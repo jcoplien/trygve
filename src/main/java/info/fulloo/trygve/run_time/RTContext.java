@@ -34,7 +34,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
 public class RTContext extends RTClassAndContextCommon implements RTType, RTContextInstance {
-	public RTContext(TypeDeclaration decl) {
+	public RTContext(final TypeDeclaration decl) {
 		super(decl);
 		stringToContextDeclMap_ = new HashMap<String, RTContext>();
 		stringToClassDeclMap_ = new HashMap<String, RTClass>();
@@ -85,39 +85,39 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 	public Map<String, RTRole> nameToRoleDeclMap() {
 		return nameToRoleDeclMap_;
 	}
-	@Override public void addClass(String typeName, RTClass classDecl) {
+	@Override public void addClass(final String typeName, RTClass classDecl) {
 		stringToClassDeclMap_.put(typeName,  classDecl);
 	}
-	@Override public void addContext(String typeName, RTContext contextDecl) {
+	@Override public void addContext(final String typeName, final RTContext contextDecl) {
 		stringToContextDeclMap_.put(typeName, contextDecl);
 	}
-	@Override public void addStageProp(String stagePropName, RTStageProp stagePropType) {
+	@Override public void addStageProp(final String stagePropName, final RTStageProp stagePropType) {
 		nameToStagePropObjectMap_.put(stagePropName, stagePropType);
 	}
-	public void addRole(String roleName, RTRole roleType) {
+	public void addRole(final String roleName, final RTRole roleType) {
 		// Are these two arrays redundant? TODO
 		if (nameToRoleDeclMap_.containsKey(roleName) == false) {
 			nameToRoleDeclMap_.put(roleName,  roleType);
 		}
 		nameToRoleObjectMap_.put(roleName, roleType);
 	}
-	@Override public void addObjectDeclaration(String objectName, RTType objectType) {
+	@Override public void addObjectDeclaration(final String objectName, final RTType objectType) {
 		nameToTypeObjectMap_.put(objectName, objectType);
 	}
 	@Override public Map<String, RTObject> objectMembers() {
 		return nameToObjectDeclMap_;
 	}
-	@Override public void setObject(String name, RTObject value) {
+	@Override public void setObject(final String name, final RTObject value) {
 		nameToObjectDeclMap_.put(name, value);
 		value.incrementReferenceCount();
 	}
-	@Override public RTObject getObject(String name) {
+	@Override public RTObject getObject(final String name) {
 		return nameToObjectDeclMap_.get(name);
 	}
-	@Override public RTRole getRole(String name) {
+	@Override public RTRole getRole(final String name) {
 		return nameToRoleObjectMap_.get(name);
 	}
-	public RTStageProp getStageProp(String name) {
+	public RTStageProp getStageProp(final String name) {
 		return nameToStagePropObjectMap_.get(name);
 	}
 	@Override public RTType typeNamed(String typeName) {
@@ -148,18 +148,18 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			isRoleArrayMap_ = new HashMap<String, String>();
 			rTContext_ = theContext;
 		}
-		void addRolePlayer(final String roleName, RTObject rolePlayer) {
+		void addRolePlayer(final String roleName, final RTObject rolePlayer) {
 			rolePlayers_.put(roleName, rolePlayer);
 			rolePlayer.enlistAsRolePlayerForContext(roleName, rTContext_);
 		}
-		void addRoleArrayPlayer(final String roleArrayName, int theIndex, RTObject rolePlayer) {
+		void addRoleArrayPlayer(final String roleArrayName, final int theIndex, final RTObject rolePlayer) {
 			if (roleArrayPlayers_.containsKey(roleArrayName) == false) {
 				roleArrayPlayers_.put(roleArrayName, new HashMap<Integer,RTObject>());
 			}
 			roleArrayPlayers_.get(roleArrayName).put(Integer.valueOf(theIndex), rolePlayer);
 			rolePlayer.enlistAsRolePlayerForContext(roleArrayName, rTContext_);
 		}
-		public void setRolePlayerNamedAndIndexed(final String roleArrayName, RTIntegerObject indexObject, RTObject rolePlayer) {
+		public void setRolePlayerNamedAndIndexed(final String roleArrayName, final RTIntegerObject indexObject, final RTObject rolePlayer) {
 			final Integer theIndex = Integer.valueOf((int)indexObject.intValue());
 			Map<Integer,RTObject> intToObjectMap = roleArrayPlayers_.get(roleArrayName);
 			if (null == intToObjectMap) {
@@ -173,11 +173,11 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			// Almost forgot this...
 			rolePlayer.enlistAsRolePlayerForContext(roleArrayName, rTContext_);
 		}
-		public void removeRolePlayer(final String roleName, RTObject rolePlayer) {
+		public void removeRolePlayer(final String roleName, final RTObject rolePlayer) {
 			rolePlayers_.remove(roleName);
 			rolePlayer.unenlistAsRolePlayerForContext(roleName, rTContext_);
 		}
-		public void removeRoleArrayPlayer(final String roleArrayName, int theIndex) {
+		public void removeRoleArrayPlayer(final String roleArrayName, final int theIndex) {
 			final Map<Integer,RTObject> rolePlayerArray = roleArrayPlayers_.get(roleArrayName);
 			final RTObject oldRolePlayer = rolePlayerArray.get(Integer.valueOf(theIndex));
 			assert null != oldRolePlayer;
@@ -200,7 +200,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				}
 			}
 		}
-		public RTObject rolePlayerNamedAndIndexed(final String roleName, RTIntegerObject theIndex) {
+		public RTObject rolePlayerNamedAndIndexed(final String roleName, final RTIntegerObject theIndex) {
 			final Map<Integer,RTObject> intToObjectMap = roleArrayPlayers_.get(roleName);
 			final RTObject retval = intToObjectMap.get(Integer.valueOf((int)theIndex.intValue()));
 			return retval;

@@ -136,7 +136,7 @@ public class RTMethod extends RTCode {
 		final StaticScope methodScope = methodDeclaration_.enclosedScope();
 		final List<ObjectDeclaration> objectDeclarations = methodScope.objectDeclarations();
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-		for (ObjectDeclaration od : objectDeclarations) {
+		for (final ObjectDeclaration od : objectDeclarations) {
 			// RTType runTimeDeclaration =
 			// InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(od);
 

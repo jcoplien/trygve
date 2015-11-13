@@ -47,6 +47,8 @@ import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.parser.Pass1Listener;
@@ -444,17 +446,23 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class AssignmentExpression extends Expression
 	{
-		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs) {
+		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass1Listener parser) {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			lhs_ = lhs;
 			rhs_ = rhs;
-			doTrivialConversions();
+			lineNumber_ = lineNumber;
+			doTrivialConversions(parser);
 			rhs_.setResultIsConsumed(true);
 		}
-		private void doTrivialConversions() {
+		private void doTrivialConversions(final Pass1Listener parser) {
+			// Should be pathnames. FIXME (easy fix).
 			if (lhs_.type().name().equals("double")) {
 				if (rhs_.type().name().equals("int")) {
+					parser.errorHook6p2(ErrorType.Warning, lineNumber_,
+							"WARNING: Substituting double object for `", rhs_.getText(),
+							"« in assignment to `", lhs_.getText(), "«.",
+							"");
 					rhs_ = new DoubleCasterExpression(rhs_);
 					rhs_.setResultIsConsumed(true);
 				}
@@ -476,6 +484,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		
 		private Expression rhs_;
 		private final Expression lhs_;
+		private final int lineNumber_;
 	}
 	
 	public static class NewExpression extends Expression
@@ -1418,7 +1427,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		final private ContextDeclaration enclosingContext_;
 	}
 	
-	public Expression(String id, Type type, Type enclosingMegaType) {
+	public Expression(final String id, final Type type, final Type enclosingMegaType) {
 		id_ = id;
 		type_ = type;
 		resultIsConsumed_ = false;

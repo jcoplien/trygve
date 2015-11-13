@@ -29,6 +29,7 @@ package info.fulloo.trygve.editor;
  */
 
 import java.io.*;
+import java.util.Arrays;
 
 import info.fulloo.trygve.editor.MessageConsole;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -38,6 +39,7 @@ import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 import javax.swing.JFileChooser;
+import javax.swing.JMenu;
 
 /**
  *
@@ -90,7 +92,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	
     private void initComponents() {
-    	final int numberOfTestCases = TestRunner.numberOfTestCases();
+ 
         copyButton = new javax.swing.JButton();
         jScrollPane1 = super.scrollPane(); // new javax.swing.JScrollPane(); 
         if (OLD) {
@@ -146,11 +148,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         pasteMenu = new javax.swing.JMenuItem();
         selectAllMenu = new javax.swing.JMenuItem();
         clearMenu = new javax.swing.JMenuItem();
-        jMenu3 = new javax.swing.JMenu();
-        jMenu3Files = new javax.swing.JMenuItem [numberOfTestCases];
-        for (int i = 0; i < numberOfTestCases; i++) {
-        	jMenu3Files[i] = new javax.swing.JMenuItem();
-        }
         jSeparator1 = new javax.swing.JSeparator();
         exampleTextMenu = new javax.swing.JMenuItem();
 
@@ -280,7 +277,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("/Users/cope/Programs/Trygve/thisqualbug1.k");
+        fileSystemTextField.setText("/Users/cope/Programs/Trygve/interface1.k");
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
@@ -370,17 +367,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
         jMenuBar1.add(jMenu2);
         
-        jMenu3.setText("Load Test");
-        for (int i = 0; i < numberOfTestCases; i++) {
-        	 jMenu3Files[i].setText(TestRunner.urlForTestCase(i));
-        	 jMenu3Files[i].addActionListener(new java.awt.event.ActionListener() {
-                 public void actionPerformed(java.awt.event.ActionEvent evt) {
-                     loadTestCaseMenuActionPerformed(evt);
-                 }
-             });
-             jMenu3.add(jMenu3Files[i]);
-        }
-        jMenuBar1.add(jMenu3);
+        this.initLoadTestMenu();
 
         setJMenuBar(jMenuBar1);
 
@@ -461,6 +448,66 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+    
+    private void initLoadTestMenu() {
+    	final int numberOfTestCases = TestRunner.numberOfTestCases();
+    	
+        jMenu3 = new javax.swing.JMenu();
+        jMenu3Files = new javax.swing.JMenuItem [numberOfTestCases];
+        for (int i = 0; i < numberOfTestCases; i++) {
+        	jMenu3Files[i] = new javax.swing.JMenuItem();
+        }
+        
+    	jMenu3.setText("Load Test");
+    	
+    	/*
+        for (int i = 0; i < numberOfTestCases; i++) {
+         	 jMenu3Files[i].setText(TestRunner.urlForTestCase(i));
+         	 jMenu3Files[i].addActionListener(new java.awt.event.ActionListener() {
+                  public void actionPerformed(java.awt.event.ActionEvent evt) {
+                      loadTestCaseMenuActionPerformed(evt);
+                  }
+              });
+              jMenu3.add(jMenu3Files[i]);
+        }
+        */
+    	
+    	final String [] allFileNames = new String [numberOfTestCases], allURLs = new String [numberOfTestCases];
+    	for (int i = 0; i < numberOfTestCases; i++) {
+    		allFileNames[i] = TestRunner.fileNameForTestCase(i);
+    		allURLs[i] = TestRunner.urlForTestCase(i);
+    	}
+    	
+    	Arrays.sort(allFileNames);
+    	Arrays.sort(allURLs);
+    	
+    	
+    	char [] menuBreaks = { 'g', 'n', 'u', 'z' }; int j = 0;
+		JMenu submenu = new JMenu("a-f");
+    	for (int i = 0; i < numberOfTestCases; i++) {
+    		final String fileName = allFileNames[i];
+    		final char firstChar = fileName.charAt(0);
+    		if (firstChar >= menuBreaks[j]) {
+    			jMenu3.add(submenu);
+    			if (menuBreaks[j] != 'z') {
+	    			final String newRange = menuBreaks[j] + "-" + menuBreaks[j+1];
+	    			submenu = new JMenu(newRange);
+    			}
+    			j++;
+    		}
+        	jMenu3Files[i].setText(allURLs[i]);
+        	jMenu3Files[i].addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                     loadTestCaseMenuActionPerformed(evt);
+                }
+            });
+        	
+            submenu.add(jMenu3Files[i]);
+    	}
+    	jMenu3.add(submenu);
+    	
+        jMenuBar1.add(jMenu3);
+    }
 
 private void copyButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyButtonActionPerformed
     this.editPane.copy();

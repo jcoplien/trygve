@@ -93,6 +93,7 @@ import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
+import info.fulloo.trygve.run_time.RTInterface;
 import info.fulloo.trygve.run_time.RTMethod;
 import info.fulloo.trygve.run_time.RTRole;
 import info.fulloo.trygve.run_time.RTStageProp;
@@ -187,6 +188,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void compileInterface(final InterfaceDeclaration interfaceDeclaration) {
 		// Really nothing to compile Ñ all interface logic should
 		// be absorbed by semantic analysis
+		if (null == RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(interfaceDeclaration.name())) {
+			if (interfaceDeclaration.enclosingScope() == StaticScope.globalScope()) {
+				// Kludge. But it's direct, and effective.
+				final RTInterface rTInterfaceDeclaration = new RTInterface(interfaceDeclaration);
+				RunTimeEnvironment.runTimeEnvironment_.addTopLevelInterface(interfaceDeclaration.name(), rTInterfaceDeclaration);
+			}
+		}
 	}
 	private void compileStageProp(final StagePropDeclaration stagePropDeclaration) {
 		final StaticScope myScope = stagePropDeclaration.enclosedScope();
@@ -531,7 +539,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTClassMemberIdentifierUnaryOp(expr.name(), expr));
 		return retval;
 	}
-	public List<RTCode> compileMessageExpression(MessageExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileMessageExpression(final MessageExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTMessage(expr.name(), expr, rtTypeDeclaration, scope, expr.isStatic()));
 		return retval;
@@ -760,7 +768,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
-	public static RTType TypeDeclarationToRTTypeDeclaration(TypeDeclaration typeDeclaration) {
+	public static RTType TypeDeclarationToRTTypeDeclaration(final TypeDeclaration typeDeclaration) {
 		final StaticScope enclosedScope = typeDeclaration.enclosedScope();
 		return InterpretiveCodeGenerator.scopeToRTTypeDeclaration(enclosedScope);
 	}
@@ -825,7 +833,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		return retval;
 	}
-	private static RTType lookInTopLevelTypeForRTTypeDeclaration(StaticScope enclosedScope) {
+	private static RTType lookInTopLevelTypeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 
 		final TypeDeclaration typeDeclaration = (TypeDeclaration)enclosedScope.associatedDeclaration();
@@ -839,6 +847,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (typeDeclaration instanceof ContextDeclaration) {
 				final RTContext contextDeclaration = new RTContext(typeDeclaration);
 				RunTimeEnvironment.runTimeEnvironment_.addTopLevelContext(typeDeclaration.name(), contextDeclaration);
+			} else if (typeDeclaration instanceof InterfaceDeclaration) {
+				final RTInterface interfaceDeclaration = new RTInterface(typeDeclaration);
+				RunTimeEnvironment.runTimeEnvironment_.addTopLevelInterface(typeDeclaration.name(), interfaceDeclaration);
 			} else {
 				assert false;
 			}
@@ -849,7 +860,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		return retval;
 	}
-	public static RTType scopeToRTTypeDeclaration(StaticScope enclosedScope) {
+	public static RTType scopeToRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 		if (null == enclosedScope) {
 			assert null != enclosedScope;

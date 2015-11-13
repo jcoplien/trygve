@@ -37,7 +37,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
 public class RTClass extends RTClassAndContextCommon implements RTType {
-	public RTClass(TypeDeclaration decl) {
+	public RTClass(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof ClassDeclaration;
 		
@@ -56,7 +56,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		super.populateNameToTypeObjectMap();
 		super.populateNameToStaticObjectMap();
 	}
-	private void doBaseClassProcessing(ClassType classType) {
+	private void doBaseClassProcessing(final ClassType classType) {
 		final ClassType baseClassType = classType.baseClass();
 		if (null != baseClassType) {
 			// Add base class stuff, too.
@@ -69,20 +69,20 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			baseClass.populateNameToStaticObjectMap(nameToStaticObjectMap_, nameToStaticObjectTypeMap_);
 		}
 	}
-	@Override public void addClass(String typeName, RTClass classDecl) {
+	@Override public void addClass(final String typeName, final RTClass classDecl) {
 		stringToClassDeclMap_.put(typeName, classDecl);
 	}
-	@Override public void addContext(String typeName, RTContext contextDecl) {
+	@Override public void addContext(final String typeName, final RTContext contextDecl) {
 		stringToContextDeclMap_.put(typeName, contextDecl);
 	}
-	public RTType typeNamed(String typeName) {
+	public RTType typeNamed(final String typeName) {
 		RTType retval = this.stringToClassDeclMap_.get(typeName);
 		if (null == retval) {
 			retval = this.stringToContextDeclMap_.get(typeName);
 		}
 		return retval;
 	}
-	@Override public void setObject(String objectName, RTObject object) {
+	@Override public void setObject(final String objectName, final RTObject object) {
 		if (nameToObjectDeclMap_.containsKey(objectName)) {
 			final RTObject oldOne = nameToObjectDeclMap_.get(objectName);
 			nameToObjectDeclMap_.put(objectName, object);
@@ -94,7 +94,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		object.incrementReferenceCount();
 	}
-	@Override public RTObject getObject(String objectName) {
+	@Override public RTObject getObject(final String objectName) {
 		RTObject retval = null;
 		if (nameToObjectDeclMap_.containsKey(objectName)) {
 			retval = nameToObjectDeclMap_.get(objectName);
@@ -106,13 +106,13 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	
 	// All of these are fishy as class members...  They're here just to
 	// satisfy the pure virtuals in the base class..
-	@Override public void addObjectDeclaration(String objectName, RTType objectType) {
+	@Override public void addObjectDeclaration(final String objectName, final RTType objectType) {
 		assert false;
 	}
-	@Override public void addStageProp(String stagePropName, RTStageProp stagePropType) {
+	@Override public void addStageProp(final String stagePropName, final RTStageProp stagePropType) {
 		assert false;
 	}
-	@Override public void addRole(String roleName, RTRole roleType) {
+	@Override public void addRole(final String roleName, final RTRole roleType) {
 		assert false;
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
@@ -122,7 +122,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	
 	// ---------------------
 	
-	public RTObject performUnaryOpOnStaticObjectNamed(String objectName, String operator, PreOrPost preOrPost) {
+	public RTObject performUnaryOpOnStaticObjectNamed(final String objectName, final String operator, final PreOrPost preOrPost) {
 		RTObject retval = null;
 		if (nameToStaticObjectMap_.containsKey(objectName)) {
 			retval = nameToStaticObjectMap_.get(objectName);
@@ -159,44 +159,44 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTIntegerClass(TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		@Override public RTType typeNamed(String typeName) { return null; }
+		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("int"); }
 	}
 	public static class RTBigIntegerClass extends RTClass {
-		public RTBigIntegerClass(TypeDeclaration associatedType) {
+		public RTBigIntegerClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		@Override public RTType typeNamed(String typeName) { return null; }
-		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
+		@Override public RTType typeNamed(final String typeName) { return null; }
+		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("Integer"); }
 	}
 	public static class RTDoubleClass extends RTClass {
-		public RTDoubleClass(TypeDeclaration associatedType) {
+		public RTDoubleClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		@Override public RTType typeNamed(String typeName) { return null; }
-		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
+		@Override public RTType typeNamed(final String typeName) { return null; }
+		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("double"); }
 	}
 	public static class RTStringClass extends RTClass {
-		public RTStringClass(TypeDeclaration associatedType) {
+		public RTStringClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		@Override public RTType typeNamed(String typeName) { return null; }
-		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
+		@Override public RTType typeNamed(final String typeName) { return null; }
+		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("String"); }
 	}
 	public static class RTBooleanClass extends RTClass {
-		public RTBooleanClass(TypeDeclaration associatedType) {
+		public RTBooleanClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		@Override public RTType typeNamed(String typeName) { return null; }
-		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
+		@Override public RTType typeNamed(final String typeName) { return null; }
+		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("boolean"); }
 	}
 	
-	private Map<String, RTContext> stringToContextDeclMap_;
-	private Map<String, RTClass> stringToClassDeclMap_;
-	private Map<String, RTObject> nameToObjectDeclMap_;
+	private final Map<String, RTContext> stringToContextDeclMap_;
+	private final Map<String, RTClass> stringToClassDeclMap_;
+	private final Map<String, RTObject> nameToObjectDeclMap_;
 }

@@ -33,17 +33,25 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	public FormalParameterList() {
 		super(new SimpleList());
 	}
-	public void addFormalParameter(Declaration parameter) {
+	public void addFormalParameter(final Declaration parameter) {
 		insertAtStart(parameter);
 	}
-	public ObjectDeclaration parameterAtPosition(int i) {
-		return (ObjectDeclaration) parameterAtIndex(i);
+	public ObjectDeclaration parameterAtPosition(final int i) {
+		final Object backFromParameterAtIndex = parameterAtIndex(i);
+		ObjectDeclaration retval = null;
+		if (null != backFromParameterAtIndex) {
+			retval = (ObjectDeclaration) backFromParameterAtIndex;
+		}
+		return retval;
 	}
-	public boolean alignsWith(ActualOrFormalParameterList pl) {
-		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null);
+	public boolean alignsWith(final ActualOrFormalParameterList pl) {
+		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null, false);
+	}
+	public boolean alignsWithUsingConversion(final ActualOrFormalParameterList pl) {
+		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null, true);
 	}
 	public static boolean alignsWithParameterListIgnoringParam(final ActualOrFormalParameterList pl1,
-			final ActualOrFormalParameterList pl2, final String paramToIgnore) {
+			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
 		boolean retval = true;
 		final int myCount = pl1.count();
 		if (null == pl2) {
@@ -74,10 +82,14 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					
 					final Type plt = pl2.typeOfParameterAtPosition(i);
 					final Type myt = pl1.typeOfParameterAtPosition(i);
-					if (plt.enclosedScope() == myt.enclosedScope()) {
+					if (plt == null || null == myt) {
+						retval = false;
+					} else if (plt.enclosedScope() == myt.enclosedScope()) {
 						continue;
 					} else if (plt.isBaseClassOf(myt)) {
 						continue;
+					} else if (conversionAllowed) {
+						retval = myt.canBeConvertedFrom(plt);
 					} else {
 						retval = false;
 						break;
@@ -87,7 +99,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
-	public static boolean alignsWithParameterListIgnoringRoleStuff(ActualOrFormalParameterList pl1, ActualOrFormalParameterList pl2) {
+	public static boolean alignsWithParameterListIgnoringRoleStuff(final ActualOrFormalParameterList pl1, final ActualOrFormalParameterList pl2) {
 		boolean retval = true;
 		final int pl1Count = pl1.count();
 		if (null == pl2) {
@@ -134,13 +146,13 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return retval;
 	}
 	
-	@Override public Type typeOfParameterAtPosition(int i) {
+	@Override public Type typeOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).type();
 	}
-	@Override public String nameOfParameterAtPosition(int i) {
+	@Override public String nameOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).name();
 	}
-	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
 		// templateTypes can be null if we're processing a lookup in an actual template
 		final FormalParameterList retval = new FormalParameterList();
 		for (int i = count() - 1; i >= 0; --i) {

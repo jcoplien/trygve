@@ -82,6 +82,13 @@ public class RTArrayType implements RTType {
 		assert false;
 		return null;
 	}
+	
+	@Override
+	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName,
+			final ActualOrFormalParameterList pl, final String paramToIgnore) {
+		assert false;
+		return null;
+	}
 
 	@Override
 	public Map<String, RTType> objectDeclarations() {

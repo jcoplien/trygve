@@ -26,22 +26,29 @@ package info.fulloo.trygve.declarations;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 public abstract class ParameterListCommon implements ActualOrFormalParameterList  {
-	public ParameterListCommon(SimpleList formalParameters) {
+	public ParameterListCommon(final SimpleList formalParameters) {
 		parameters_ = formalParameters;
 	}
 	public int count() {
 		return parameters_.count();
 	}
-	public Object parameterAtIndex(int i) {
-		return parameters_.objectAtIndex(i);
+	public Object parameterAtIndex(final int i) {
+		Object retval = null;
+		if (i < parameters_.count()) {
+			retval = parameters_.objectAtIndex(i);
+		} else {
+			// for error stumbling
+			retval = null;
+		}
+		return retval;
 	}
-	public void insertAtStart(Object parameter) {
+	public void insertAtStart(final Object parameter) {
 		parameters_.insertAtStart(parameter);
 	}
-	public void addArgument(Object parameter) {
+	public void addArgument(final Object parameter) {
 		parameters_.add(parameter);
 	}
-	public Object argumentAtPosition(int i) {
+	public Object argumentAtPosition(final int i) {
 		return (Object)parameterAtIndex(i);
 	}
 	// NOTE: This method is here just for genericity in

@@ -1255,7 +1255,7 @@ public class Pass1Listener extends KantBaseListener {
 		// and push it onto the ExprAndDecl stack.
 		final DeclarationList declarationList = new DeclarationList(lineNumber);
 		
-		for (ObjectDeclaration aDecl : declaredObjectDeclarations) {
+		for (final ObjectDeclaration aDecl : declaredObjectDeclarations) {
 			declarationList.addDeclaration(aDecl);
 		}
 		
@@ -2719,14 +2719,14 @@ public class Pass1Listener extends KantBaseListener {
 		newScope.setDeclaration(newClass);
 		newClass.setType(newClassType);
 	}
-	protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newTemplate, String name, StaticScope newScope, ClassType baseType) {
+	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name, final StaticScope newScope, final ClassType baseType) {
 		// Pass1 only
 		final TemplateType newTemplateType = new TemplateType(name, newScope, baseType);
 		currentScope_.declareType(newTemplateType);
 		newScope.setDeclaration(newTemplate);
 		newTemplate.setType(newTemplateType);
 	}
-	protected void createNewInterfaceTypeSuitableToPass(InterfaceDeclaration newInterface, String name, StaticScope newScope) {
+	protected void createNewInterfaceTypeSuitableToPass(final InterfaceDeclaration newInterface, final String name, final StaticScope newScope) {
 		// Pass1 only
 		final InterfaceType newInterfaceType = new InterfaceType(name, newScope);
 		currentScope_.declareType(newInterfaceType);
@@ -2794,13 +2794,13 @@ public class Pass1Listener extends KantBaseListener {
 		// caller may reset currentScope Ñ NOT us
 	}
 	
-	protected Type lookupOrCreateTemplateInstantiation(String templateName, List<String> parameterTypeNames, int lineNumber) {
+	protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {
 		// This varies by pass. On the last pass we first remove the instantiation, so that the
 		// new one picks up the body created in Pass 3.
 		return lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, lineNumber);
 	}
 	
-	protected Type lookupOrCreateTemplateInstantiationCommon(String templateName, List<String> parameterTypeNames, int lineNumber) {
+	protected Type lookupOrCreateTemplateInstantiationCommon(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {
 		Type retval = null;
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);
 		if (null == templateDeclaration) {
@@ -2870,6 +2870,7 @@ public class Pass1Listener extends KantBaseListener {
 		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
 		currentScope_.declareInterface(currentInterface_);
 		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);
+		
 		// currentScope_ is set by caller after return
 		return currentInterface_;
 	}
@@ -2996,7 +2997,7 @@ public class Pass1Listener extends KantBaseListener {
 				objectDecls.add(objDecl);
 				
 				final IdentifierExpression lhs = new IdentifierExpression(objDecl.name(), declarationType, currentScope_);
-				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression);
+				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression, identifier_list.getStart().getLine(), this);
 				intializationExpressionsToReturn.add(initialization);
 			} else {
 				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "«.", "");
@@ -3834,7 +3835,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 		
 		rhs.setResultIsConsumed(true);
-		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs);
+		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs, ctx.getStart().getLine(), this);
 		checkForAssignmentViolatingConstness(retval, ctx.getStart());
 		
 		return retval;

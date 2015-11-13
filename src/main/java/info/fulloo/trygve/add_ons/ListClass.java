@@ -14,6 +14,7 @@ import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
@@ -159,7 +160,7 @@ public final class ListClass {
 	public static class RTListCommon extends RTMessage {
 		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), returnType, false);
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {

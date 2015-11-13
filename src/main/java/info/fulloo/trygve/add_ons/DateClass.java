@@ -10,6 +10,7 @@ import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDateObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
@@ -138,7 +139,7 @@ public final class DateClass {
 	public static class RTDateCommon extends RTMessage {
 		public RTDateCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterTypeName, enclosingMethodScope), returnType, false);
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {
@@ -171,7 +172,7 @@ public final class DateClass {
 		protected String parameterName_;
 	}
 	public static class RTDateSimpleCtorCode extends RTDateCommon {
-		public RTDateSimpleCtorCode(StaticScope enclosingMethodScope) {
+		public RTDateSimpleCtorCode(final StaticScope enclosingMethodScope) {
 			super("Date", "Date", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {

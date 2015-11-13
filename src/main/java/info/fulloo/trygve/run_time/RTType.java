@@ -37,6 +37,7 @@ public interface RTType {
 	public void addRole(String objectName, RTRole roleType);
 	public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl);
 	public RTMethod lookupMethodIgnoringParameterInSignature(String methodName, ActualOrFormalParameterList pl, String paramToIgnore);
+	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName, final ActualOrFormalParameterList pl, final String paramToIgnore);
 	public Map<String, RTType> objectDeclarations();
 	public void setObject(String objectName, RTObject object);
 	public RTObject getObject(String objectName);

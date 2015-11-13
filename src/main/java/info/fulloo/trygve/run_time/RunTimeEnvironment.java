@@ -45,6 +45,7 @@ public class RunTimeEnvironment {
 		super();
 		stringToRTContextMap_ = new HashMap<String, RTContext>();
 		stringToRTClassMap_ = new HashMap<String, RTClass>();
+		stringToRTInterfaceMap_ = new HashMap<String, RTInterface>();
 		pathToTypeMap_ = new HashMap<String, RTType>();
 		reboot();
 		runTimeEnvironment_ = this;
@@ -93,27 +94,37 @@ public class RunTimeEnvironment {
 		this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
 		this.addTopLevelClass("boolean", new RTBooleanClass(booleanClassDecl));
 	}
-	public void addTopLevelContext(String contextName, RTContext context) {
+	public void addTopLevelContext(final String contextName, final RTContext context) {
 		stringToRTContextMap_.put(contextName, context);
 	}
-	public void addTopLevelClass(String className, RTClass aClass) {
+	public void addTopLevelClass(final String className, final RTClass aClass) {
 		stringToRTClassMap_.put(className, aClass);
 	}
-	public RTContext topLevelContextNamed(String contextName) {
+	public void addTopLevelInterface(final String interfaceName, final RTInterface anInterface) {
+		stringToRTInterfaceMap_.put(interfaceName, anInterface);
+	}
+	public RTContext topLevelContextNamed(final String contextName) {
 		return stringToRTContextMap_.get(contextName);
 	}
-	public RTClass topLevelClassNamed(String className) {
+	public RTClass topLevelClassNamed(final String className) {
 		final RTClass retval =  stringToRTClassMap_.get(className);
 		return retval;
 	}
-	public RTType topLevelTypeNamed(String name) {
+	public RTInterface topLevelInterfaceNamed(final String interfaceName) {
+		final RTInterface retval =  stringToRTInterfaceMap_.get(interfaceName);
+		return retval;
+	}
+	public RTType topLevelTypeNamed(final String name) {
 		RTType retval = this.topLevelContextNamed(name);
 		if (null == retval) {
 			retval = this.topLevelClassNamed(name);
+			if (null == retval) {
+				retval = this.topLevelInterfaceNamed(name);
+			}
 		}
 		return retval;
 	}
-	public void run(RTExpression mainExpr) {
+	public void run(final RTExpression mainExpr) {
 		// Set up an activation record. We even need one for
 		// main so it can declare t$his, if there's an
 		// argument to the constructor
@@ -186,7 +197,7 @@ public class RunTimeEnvironment {
 			aRunTimeClass.metaInit();
 		}
 	}
-	public void addToListOfAllClasses(RTClass aClass) {
+	public void addToListOfAllClasses(final RTClass aClass) {
 		if (allClassList_.contains(aClass)) {
 			assert false;
 		} else {
@@ -194,7 +205,7 @@ public class RunTimeEnvironment {
 		}
 	}
 	
-	public void pushStack(RTStackable stackable) {
+	public void pushStack(final RTStackable stackable) {
 		if (null != stackable) {
 			// Can be null (e.g., the nextCode for end-of-evaluation at the end of the program)
 			stackable.incrementReferenceCount();
@@ -208,7 +219,7 @@ public class RunTimeEnvironment {
 	public int stackIndex() {
 		return stack.size();
 	}
-	public RTStackable stackValueAtIndex(int index) {
+	public RTStackable stackValueAtIndex(final int index) {
 		return stack.get(index);
 	}
 	public RTStackable peekStack() { return stack.peek(); }
@@ -237,10 +248,10 @@ public class RunTimeEnvironment {
 			retval.decrementReferenceCount();
 		}
 	}
-	public void registerTypeByPath(String path, RTType rTType) {
+	public void registerTypeByPath(final String path, final RTType rTType) {
 		pathToTypeMap_.put(path, rTType);
 	}
-	public RTType typeFromPath(String path) {
+	public RTType typeFromPath(final String path) {
 		RTType retval;
 		if (pathToTypeMap_.containsKey(path)) {
 			retval = pathToTypeMap_.get(path);
@@ -253,6 +264,7 @@ public class RunTimeEnvironment {
 	
 	private Map<String, RTContext> stringToRTContextMap_;
 	private Map<String, RTClass> stringToRTClassMap_;
+	private Map<String, RTInterface> stringToRTInterfaceMap_;
 	private Map<String, RTType> pathToTypeMap_;
 	private Stack<RTStackable> stack;
 	private Stack<IntWrapper> framePointers_;

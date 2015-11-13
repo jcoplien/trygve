@@ -486,7 +486,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		return expression;
     }
-	@Override public void ctorCheck(Type type, Message message, int lineNumber) {
+	@Override public void ctorCheck(final Type type, final Message message, final int lineNumber) {
 		// Is there a constructor?
 		// We're not ready for this until here in Pass 2
 		final String className = message.selectorName();
@@ -498,7 +498,7 @@ public class Pass2Listener extends Pass1Listener {
 			// Can be null in error condition
 			if (null != declarationScope) {
 				final String typeName = type.name();
-				final MethodDeclaration constructor = declarationScope.lookupMethodDeclaration(typeName, actualArgumentList, false);
+				final MethodDeclaration constructor = declarationScope.lookupMethodDeclarationWithConversion(typeName, actualArgumentList, false);
 				if (null != actualArgumentList && 1 < actualArgumentList.count()) {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor

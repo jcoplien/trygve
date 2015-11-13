@@ -187,13 +187,13 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class ClassDeclaration extends TypeDeclarationCommon implements TypeDeclaration
 	{
-		public ClassDeclaration(String name, StaticScope myEnclosedScope, ClassDeclaration baseClass, int lineNumber) {
+		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			baseClass_ = baseClass;
 			templateDeclaration_ = null;
 			methodsHaveBodyParts_ = false;
 		}
-		public void setType(Type t) {
+		public void setType(final Type t) {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
 		}
@@ -218,7 +218,7 @@ public abstract class Declaration implements BodyPart {
 		public boolean methodsHaveBodyParts() {
 			return methodsHaveBodyParts_;
 		}
-		public void setMethodsHaveBodyParts(boolean tf) {
+		public void setMethodsHaveBodyParts(final boolean tf) {
 			methodsHaveBodyParts_ = tf;
 		}
 		public void doIImplementImplementsList(final Pass1Listener parser, final int lineNumber) {
@@ -284,7 +284,7 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class TemplateDeclaration extends TypeDeclarationCommon implements TypeDeclaration
 	{
-		public TemplateDeclaration(String name, StaticScope myEnclosedScope, TypeDeclaration baseClass, int lineNumber) {
+		public TemplateDeclaration(final String name, final StaticScope myEnclosedScope, final TypeDeclaration baseClass, final int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			baseClass_ = baseClass;
 			argumentPositionCounter_ = 0;
@@ -310,7 +310,7 @@ public abstract class Declaration implements BodyPart {
 			}
 			return retval;
 		}
-		public void addTypeParameter(IdentifierExpression rawTypeParameter, int numberOfTypeParameters) {
+		public void addTypeParameter(final IdentifierExpression rawTypeParameter, final int numberOfTypeParameters) {
 			final TemplateParameterType parameterType = (TemplateParameterType)rawTypeParameter.type();
 			if (null == myEnclosedScope_.lookupTypeDeclaration(parameterType.name())) {
 				final ClassType baseClassType = parameterType.baseClassType();
@@ -335,11 +335,11 @@ public abstract class Declaration implements BodyPart {
 	}
 	
 	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
-		public InterfaceDeclaration(final String name, StaticScope enclosedScope, int lineNumber) {
+		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final int lineNumber) {
 			super(name, lineNumber, enclosedScope);
 			signatures_ = new HashMap<String, MethodSignature>();
 		}
-		public void setType(Type t) {
+		public void setType(final Type t) {
 			assert t instanceof InterfaceType;
 			type_ = t;
 		}
@@ -358,7 +358,7 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class RoleDeclaration extends TypeDeclarationCommon implements TypeDeclaration
 	{
-		public RoleDeclaration(String name, StaticScope myEnclosedScope, ContextDeclaration context, int lineNumber) {
+		public RoleDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			context_ = context;
 			requiredSelfSignatures_ = new Hashtable<String, MethodSignature>();
@@ -375,18 +375,18 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
 		}
-		public void addRequiredSignatureOnSelf(MethodSignature signature) {
+		public void addRequiredSignatureOnSelf(final MethodSignature signature) {
 			requiredSelfSignatures_.put(signature.name(), signature);
 		}
 		public Map<String, MethodSignature> requiredSelfSignatures() {
 			return requiredSelfSignatures_;
 		}
-		public void processRequiredDeclarations(int lineno) {
+		public void processRequiredDeclarations(final int lineno) {
 			// Declare requiredSelfSignatures_ in my scope
 			final StaticRoleScope myEnclosedScope = (StaticRoleScope)this.enclosedScope();
 			assert myEnclosedScope instanceof StaticRoleScope;
 			
-			for (Map.Entry<String, MethodSignature> signature : requiredSelfSignatures_.entrySet()) {
+			for (final Map.Entry<String, MethodSignature> signature : requiredSelfSignatures_.entrySet()) {
 				final MethodSignature methodSignature = signature.getValue();
 				final MethodDeclaration methodDecl = new MethodDeclaration(methodSignature, myEnclosedScope, lineno);
 				myEnclosedScope.declareRequiredMethod(methodDecl);
@@ -396,8 +396,8 @@ public abstract class Declaration implements BodyPart {
 			return false;
 		}
 		
-		protected ContextDeclaration context_;
-		protected Map<String, MethodSignature> requiredSelfSignatures_;
+		protected final ContextDeclaration context_;
+		protected final Map<String, MethodSignature> requiredSelfSignatures_;
 	}
 	
 	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {
@@ -485,7 +485,7 @@ public abstract class Declaration implements BodyPart {
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;
 		}
-		private void ctorCheck(StaticScope methodScope, StaticScope parentScope, int lineNumber) {
+		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final int lineNumber) {
 			// Am I a constructor?
 			boolean isCtor = false;
 			final String className = parentScope.name();
@@ -536,10 +536,10 @@ public abstract class Declaration implements BodyPart {
 				}
 			}
 		}
-		public void setMyEnclosingScope(StaticScope scope) {
+		public void setMyEnclosingScope(final StaticScope scope) {
 			myEnclosedScope_.setParentScope(scope);
 		}
-		public void addParameterList(FormalParameterList formalParameterList) {
+		public void addParameterList(final FormalParameterList formalParameterList) {
 			assert null != signature_;
 			signature_.addParameterList(formalParameterList);
 		}
@@ -550,10 +550,10 @@ public abstract class Declaration implements BodyPart {
 			// Hmmm.
 			return this.returnType();
 		}
-		public void setReturnType(Type returnType) {
+		public void setReturnType(final Type returnType) {
 			returnType_ = returnType;
 		}
-		public void setBody(ExprAndDeclList body) {
+		public void setBody(final ExprAndDeclList body) {
 			body_ = body;
 		}
 		public StaticScope enclosedScope() {
@@ -593,8 +593,8 @@ public abstract class Declaration implements BodyPart {
 		}
 		
 		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(
-				StaticScope newEnclosingScope,
-				TemplateInstantiationInfo newTypes
+				final StaticScope newEnclosingScope,
+				final TemplateInstantiationInfo newTypes
 		) {
 			final StaticScope enclosedScope = new StaticScope(myEnclosedScope_, "copy",
 					newEnclosingScope, null, newTypes);

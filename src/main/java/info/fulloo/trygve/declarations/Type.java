@@ -46,7 +46,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public abstract class Type implements ExpressionStackAPI
 {
 	enum HierarchySelector { ThisClassOnly, AlsoSearchBaseClass };
-	public Type(StaticScope enclosedScope) {
+	public Type(final StaticScope enclosedScope) {
 		super();
 		enclosedScope_ = enclosedScope;
 		staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
@@ -55,10 +55,10 @@ public abstract class Type implements ExpressionStackAPI
 	public StaticScope enclosedScope() {
 		return enclosedScope_;
 	}
-	public void addDeclaration(Declaration declaration) {
+	public void addDeclaration(final Declaration declaration) {
 		enclosedScope_.declare(declaration);
 	}
-	public void declareStaticObject(ObjectDeclaration declaration) {
+	public void declareStaticObject(final ObjectDeclaration declaration) {
 		final String objectName = declaration.name();
 		if (staticObjectDeclarationDictionary_.containsKey(objectName)) {
 			ErrorLogger.error(ErrorType.Internal, declaration.lineNumber(), "Multiple definitions of static member ",
@@ -68,7 +68,7 @@ public abstract class Type implements ExpressionStackAPI
 			staticObjects_.put(objectName, new RTNullExpression());
 		}
 	}
-	public ObjectDeclaration lookupStaticObjectDeclaration(String objectName) {
+	public ObjectDeclaration lookupStaticObjectDeclaration(final String objectName) {
 		return staticObjectDeclarationDictionary_.get(objectName);
 	}
 	public Map<String,ObjectDeclaration> staticObjects() {
@@ -81,7 +81,7 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		return retval;
 	}
-	public boolean isBaseClassOf(Type aDerived) {
+	public boolean isBaseClassOf(final Type aDerived) {
 		// false for all but class types
 		return false;
 	}
@@ -93,14 +93,20 @@ public abstract class Type implements ExpressionStackAPI
 		String retval = "";
 		StaticScope scope = this.enclosedScope();
 		while (scope != globalScope) {
-			final Declaration associatedDeclaration = scope.associatedDeclaration();
-			retval = associatedDeclaration.name() + "." + retval;
-			scope = scope.parentScope();
+			if (null == scope) {
+				// might be a template. return something.
+				retval = this.name();
+				break;
+			} else {
+				final Declaration associatedDeclaration = scope.associatedDeclaration();
+				retval = associatedDeclaration.name() + "." + retval;
+				scope = scope.parentScope();
+			}
 		}
 		return retval;
 	}
 	public static class ClassType extends Type {
-		public ClassType(String name, StaticScope enclosedScope, ClassType baseClass) {
+		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(enclosedScope);
 			baseClass_ = baseClass;
 			name_ = name;
@@ -112,13 +118,13 @@ public abstract class Type implements ExpressionStackAPI
 		public ClassType baseClass() {
 			return baseClass_;
 		}
-		public void updateBaseType(ClassType baseType) {
+		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = t.name().equals(name_);
 			if (!retval) {
 				if (t.name().equals("Null")) {
@@ -138,7 +144,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public Type type() {
 			return this;
 		}
-		@Override public boolean isBaseClassOf(Type aDerived) {
+		@Override public boolean isBaseClassOf(final Type aDerived) {
 			// IMPROPER base class!!
 			boolean retval = false;
 			if (aDerived instanceof ClassType) {
@@ -152,8 +158,8 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		public void elaborateFromTemplate(TemplateDeclaration templateDeclaration, ClassType baseClass,
-				StaticScope newEnclosedScope, Declaration newAssociatedDeclaration) {
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final ClassType baseClass,
+				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration) {
 			baseClass_ = baseClass;
 			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
 			assert null != newEnclosedScope.parentScope();
@@ -181,7 +187,7 @@ public abstract class Type implements ExpressionStackAPI
 		public final TemplateInstantiationInfo templateInstantiationInfo() {
 			return enclosedScope_.templateInstantiationInfo();
 		}
-		public void addInterfaceType(InterfaceType it) {
+		public void addInterfaceType(final InterfaceType it) {
 			interfaceTypes_.add(it);
 		}
 		public final List<InterfaceType> interfaceTypes() {
@@ -193,7 +199,7 @@ public abstract class Type implements ExpressionStackAPI
 		private List<InterfaceType> interfaceTypes_;
 	}
 	public static class TemplateType extends Type {
-		public TemplateType(String name, StaticScope scope, ClassType baseClass) {
+		public TemplateType(final String name, final StaticScope scope, final ClassType baseClass) {
 			super(scope);
 			baseClass_ = baseClass;
 			name_ = name;
@@ -224,7 +230,7 @@ public abstract class Type implements ExpressionStackAPI
 		private ClassType baseClass_;
 	}
 	public static class ContextType extends Type {
-		public ContextType(String name, StaticScope scope) {
+		public ContextType(final String name, final StaticScope scope) {
 			super(scope);
 			name_ = name;
 		}
@@ -248,7 +254,7 @@ public abstract class Type implements ExpressionStackAPI
 		private String name_;
 	}
 	public static class InterfaceType extends Type {
-		public InterfaceType(String name, StaticScope enclosedScope) {
+		public InterfaceType(final String name, final StaticScope enclosedScope) {
 			super(enclosedScope);
 			name_ = name;
 			selectorSignatureMap_ = new HashMap<String, List<MethodSignature>>();
@@ -256,10 +262,10 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public String name() {
 			return name_;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = t.name().equals(name_);
 			if (!retval) {
 				if (t.name().equals("Null")) {
@@ -279,8 +285,8 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public Type type() {
 			return this;
 		}
-		@Override public MethodSignature signatureForMethodSelectorCommon(String methodSelector, MethodSignature methodSignature,
-				String paramToIgnore, HierarchySelector baseClassSearch) {
+		@Override public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
+				final String paramToIgnore, final HierarchySelector baseClassSearch) {
 			MethodSignature retval = null;
 			assert null == paramToIgnore;
 			
@@ -304,7 +310,7 @@ public abstract class Type implements ExpressionStackAPI
 			return retval;
 		}
 		
-		public MethodSignature lookupMethodSignature(final String selectorName, ActualOrFormalParameterList argumentList) {
+		public MethodSignature lookupMethodSignature(final String selectorName, final ActualOrFormalParameterList argumentList) {
 			MethodSignature retval = null;
 			List<MethodSignature> signatures = null;
 			if (selectorSignatureMap_.containsKey(selectorName)) {
@@ -341,7 +347,7 @@ public abstract class Type implements ExpressionStackAPI
 		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
 	}
 	public static class BuiltInType extends Type {
-		public BuiltInType(String name) {
+		public BuiltInType(final String name) {
 			super(new StaticScope(StaticScope.globalScope()));
 			name_ = name;
 		}
@@ -436,7 +442,7 @@ public abstract class Type implements ExpressionStackAPI
 		private String name_;
 	}
 	public static class RoleType extends Type {
-		public RoleType(String name, StaticScope scope) {
+		public RoleType(final String name, final StaticScope scope) {
 			super(scope);
 			name_ = name;
 		}
@@ -460,10 +466,10 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			boolean retval = true;
@@ -487,7 +493,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public String name() {
 			return name_;
 		}
-		public void setBacklinkToRoleDecl(RoleDeclaration roleDecl) {
+		public void setBacklinkToRoleDecl(final RoleDeclaration roleDecl) {
 			associatedDeclaration_ = roleDecl;
 		}
 		public RoleDeclaration associatedDeclaration() {
@@ -519,7 +525,7 @@ public abstract class Type implements ExpressionStackAPI
 		public StagePropType(String name, StaticScope scope) {
 			super(name, scope);
 		}
-		public void reportMismatchesWith(int lineNumber, Type t) {
+		public void reportMismatchesWith(final int lineNumber, final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -542,7 +548,7 @@ public abstract class Type implements ExpressionStackAPI
 		public Map<String, MethodSignature> requiredSelfSignatures() {
 			return associatedDeclaration_.requiredSelfSignatures();
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			boolean retval = true;
@@ -571,7 +577,7 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			boolean retval = true;
@@ -601,7 +607,7 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	
 	public static class ArrayType extends Type implements IndexableType {
-		public ArrayType(String name, Type baseType) {
+		public ArrayType(final String name, final Type baseType) {
 			super(null);
 			name_ = name;
 			baseType_ = baseType;
@@ -636,7 +642,7 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	
 	public static class TemplateParameterType extends Type {
-		public TemplateParameterType(String name, ClassType baseClassType) {
+		public TemplateParameterType(final String name, final ClassType baseClassType) {
 			super(null);
 			name_ = name;
 			baseClassType_ = baseClassType;
@@ -677,11 +683,11 @@ public abstract class Type implements ExpressionStackAPI
 	public String getText() {
 		return this.name();
 	}
-	public RTCode getStaticObject(String name) {
+	public RTCode getStaticObject(final String name) {
 		assert staticObjects_.containsKey(name);
 		return staticObjects_.get(name);
 	}
-	public MethodSignature signatureForMethodSelectorCommon(String methodSelector, MethodSignature methodSignature,
+	public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
 			String paramToIgnore, HierarchySelector baseClassSearch) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 		if (null == enclosedScope_) {

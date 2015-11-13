@@ -725,6 +725,32 @@ public class StaticScope {
 		}
 		return retval;
 	}
+	public MethodDeclaration lookupMethodDeclarationWithConversion(final String methodSelector, final ActualOrFormalParameterList parameterList,
+			boolean ignoreSignature) {
+		MethodDeclaration retval = null;
+		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
+			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
+			for (final MethodDeclaration aDecl : oldEntry) {
+				final FormalParameterList loggedSignature = aDecl.formalParameterList();
+				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
+				if (ignoreSignature) {
+					retval = aDecl; break;
+				} else if (null == mappedLoggedSignature && null == mappedParameterList) {
+					retval = aDecl; break;
+				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWith(mappedParameterList)) {
+					// exact matches get preference
+					retval = aDecl; break;
+				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWithUsingConversion(mappedParameterList)) {
+					// no exact match; try with conversion
+					retval = aDecl; break;
+				}
+			}
+		}
+		return retval;
+	}
 	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
 			final String paramToIgnore) {
 		MethodDeclaration retval = null;
@@ -738,7 +764,7 @@ public class StaticScope {
 					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
 				if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, mappedParameterList, paramToIgnore)) {
+				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, mappedParameterList, paramToIgnore, false)) {
 					retval = aDecl; break;
 				}
 			}
@@ -972,7 +998,7 @@ public class StaticScope {
 						final FormalParameterList loggedSignature = aDecl.formalParameterList();
 						if (null == loggedSignature && null == parameterList) {
 							retval = aDecl; break;
-						} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(loggedSignature, parameterList, paramToIgnore)) {
+						} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(loggedSignature, parameterList, paramToIgnore, false)) {
 							retval = aDecl; break;
 						}
 					}

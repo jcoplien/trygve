@@ -81,7 +81,10 @@ public class TestRunner {
 	public static String urlForTestCase(final int i) {
 		return urlPrefix_ + fileNames_[i];
 	}
-	public TestRunner(TextEditorGUI gui) {
+	public static String fileNameForTestCase(final int i) {
+		return fileNames_[i];
+	}
+	public TestRunner(final TextEditorGUI gui) {
 		gui_ = gui;
 		underscores_ = "___________________________________________________________";
 		plusses_ = " +  +  +  ";

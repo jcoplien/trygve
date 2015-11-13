@@ -34,10 +34,13 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -112,10 +115,10 @@ public abstract class RTExpression extends RTCode {
 		resultIsConsumed_ = false;
 		nextCode_ = null;
 	}
-	public static RTExpressionList bodyPartsToRTExpressionList(List<BodyPart> bodyParts, RTType enclosingMegaType) {
+	public static RTExpressionList bodyPartsToRTExpressionList(final List<BodyPart> bodyParts, final RTType enclosingMegaType) {
 		final RTExpressionList retval = new RTExpressionList();
 		RTExpression last = null;
-		for (BodyPart statement : bodyParts) {
+		for (final BodyPart statement : bodyParts) {
 			RTExpression rTStatement = null;
 			if (statement instanceof Expression) {
 				rTStatement = RTExpression.makeExpressionFrom((Expression)statement, enclosingMegaType);
@@ -134,7 +137,7 @@ public abstract class RTExpression extends RTCode {
 		return retval;
 	}
 
-	public static RTExpression makeExpressionFrom(Expression expr, RTType nearestEnclosingType) {
+	public static RTExpression makeExpressionFrom(final Expression expr, final RTType nearestEnclosingType) {
 		RTExpression retval = null;
 
 		if (expr instanceof QualifiedIdentifierExpression) {
@@ -251,7 +254,7 @@ public abstract class RTExpression extends RTCode {
 		}
 	}
 	public static class RTQualifiedIdentifier extends RTExpression {
-		public RTQualifiedIdentifier(String name, Expression expr, RTType nearestEnclosingType) {
+		public RTQualifiedIdentifier(final String name, final Expression expr, final RTType nearestEnclosingType) {
 			super();
 			part2_ = new RTQualifiedIdentifierPart2(name);
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
@@ -271,12 +274,12 @@ public abstract class RTExpression extends RTCode {
 		public String name() {
 			return part2_.idName_;
 		}
-		public void setNextCode(RTCode code) {
+		public void setNextCode(final RTCode code) {
 			part2_.setNextCode(code);
 		}
 		
 		public static class RTQualifiedIdentifierPart2 extends RTExpression {
-			public RTQualifiedIdentifierPart2(String name) {
+			public RTQualifiedIdentifierPart2(final String name) {
 				super();
 				idName_ = name;
 				dynamicScope_ = null;
@@ -305,7 +308,7 @@ public abstract class RTExpression extends RTCode {
 		private final RTQualifiedIdentifierPart2 part2_;
 	}
 	public static class RTQualifiedIdentifierUnaryOp extends RTExpression {
-		public RTQualifiedIdentifierUnaryOp(String name, Expression expr, RTType nearestEnclosingType) {
+		public RTQualifiedIdentifierUnaryOp(final String name, final Expression expr, final RTType nearestEnclosingType) {
 			super();
 			idName_ = name;
 			dynamicScope_ = null;
@@ -344,7 +347,7 @@ public abstract class RTExpression extends RTCode {
 		private final PreOrPost preOrPost_;
 	}
 	public static class RTClassMemberIdentifier extends RTExpression {
-		public RTClassMemberIdentifier(String name, Expression expr) {
+		public RTClassMemberIdentifier(final String name, final Expression expr) {
 			super();
 			idName_ = name;
 			dynamicScope_ = null;
@@ -373,13 +376,13 @@ public abstract class RTExpression extends RTCode {
 			return idName_;
 		}
 
-		private String idName_;
-		private RTDynamicScope dynamicScope_;
-		private ClassType theClassItself_;
+		private final String idName_;
+		private final RTDynamicScope dynamicScope_;
+		private final ClassType theClassItself_;
 		private RTClass rTClass_;
 	}
 	public static class RTClassMemberIdentifierUnaryOp extends RTExpression {
-		public RTClassMemberIdentifierUnaryOp(String name, Expression expr) {
+		public RTClassMemberIdentifierUnaryOp(final String name, final Expression expr) {
 			super();
 			idName_ = name;
 			dynamicScope_ = null;
@@ -437,7 +440,12 @@ public abstract class RTExpression extends RTCode {
 			actualParameters_ = message.argumentList();
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			lineNumber_ = messageExpr.lineNumber();
-			argPush_ = this.buildArgumentPushList();
+			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
+			
+			if (null != methodDecl) {
+				// "if" test is error stumble insurance
+				argPush_ = this.buildArgumentPushList(methodDecl.formalParameterList(), messageExpr.name(), messageExpr.lineNumber());
+			}
 			final Type returnType = messageExpr.returnType();
 			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
 					(returnType.name().equals("void") == false);
@@ -447,7 +455,8 @@ public abstract class RTExpression extends RTCode {
 			setResultIsConsumed(!resultNeedsToBePopped);
 		}
 		
-		public RTMessage(final String name, final ActualArgumentList actualParameters, final Type returnType, final boolean isStatic) {
+		public RTMessage(final String name, final ActualArgumentList actualParameters, final Type returnType,
+				final Type enclosingMegaType, final boolean isStatic) {
 			super();
 			methodSelectorName_ = name;
 			
@@ -456,7 +465,33 @@ public abstract class RTExpression extends RTCode {
 			lineNumber_ = 0;		// used by built-ins like println
 			isStatic_ = isStatic;
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
-			argPush_ = this.buildArgumentPushList();
+			
+			final int thisIndex = actualParameters_.count() - 1;
+			Expression fakeSelfExpression = null;
+			final Message fakeMessage = new Message(name, actualParameters, lineNumber_, enclosingMegaType);
+			fakeMessage.setReturnType(returnType);
+			MessageExpression fakeMessageExpression = null;
+			
+			if (false == isStatic) {
+				fakeSelfExpression = actualParameters.parameterAtPosition(thisIndex);
+				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
+					returnType, lineNumber_, isStatic_);
+			} else {
+				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope());
+				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
+						returnType, lineNumber_, isStatic_);
+			}
+			
+			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
+			FormalParameterList fakeParameterList = null;
+			if (null != methodDecl) {
+				fakeParameterList = methodDecl.formalParameterList();
+			} else {
+				// error stumbling catch
+				fakeParameterList = new FormalParameterList();
+			}
+			
+			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
 			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
 			final boolean resultNeedsToBePopped = (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);
@@ -464,7 +499,46 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(postReturnProcessing_);
 		}
 		
+		private MethodDeclaration staticLookupMethodDecl(final MessageExpression messageExpr) {
+			final Expression objectExpression = messageExpr.objectExpression();
+			
+			Type typeOfReceiver = null;
+			if (messageExpr.isStatic()) {
+				assert objectExpression instanceof IdentifierExpression;
+				final String className = objectExpression.name();
+				typeOfReceiver = StaticScope.globalScope().lookupTypeDeclaration(className);
+			} else {
+				typeOfReceiver = null != objectExpression? objectExpression.type(): StaticScope.globalScope().lookupTypeDeclaration("void");;
+			}
+			
+			final StaticScope receiverScope = typeOfReceiver.enclosedScope();
+			String methodSelectorName = methodSelectorName_;
+			if (methodSelectorName.matches("[a-zA-Z]<.*>") || methodSelectorName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+				final int indexOfDelimeter = methodSelectorName.indexOf('<');
+				methodSelectorName = methodSelectorName.substring(0, indexOfDelimeter);
+			}
+			
+			// Need template conversion
+			ActualOrFormalParameterList parameterList = actualParameters_;
+			parameterList = parameterList.mapTemplateParameters(templateInstantiationInfo_);
+
+			MethodDeclaration retval = null;
+			if (typeOfReceiver instanceof InterfaceType) {
+				final StaticScope enclosedScope = typeOfReceiver.enclosedScope();
+				final InterfaceDeclaration associatedDeclaration = (InterfaceDeclaration)enclosedScope.associatedDeclaration();
+				final MethodSignature methodSignature = associatedDeclaration.lookupMethodSignatureDeclaration(methodSelectorName_, actualParameters_);
+				retval = new MethodDeclaration(methodSignature, enclosedScope, methodSignature.lineNumber());
+			} else {
+				retval = receiverScope.lookupMethodDeclaration(methodSelectorName, parameterList, false);
+				if (null == retval) {
+					retval = receiverScope.lookupMethodDeclarationWithConversion(methodSelectorName, parameterList, false);
+				}
+			}
+			return retval;
+		}
+		
 		private RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
+			// Should look up method in the receiver's scope
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTMethod methodDecl = null;
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
@@ -561,9 +635,14 @@ public abstract class RTExpression extends RTCode {
 					}
 				}
 				
+				// Give a direct match the first chance
 				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName, actualParameters, "this");
 				if (null == methodDecl) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName, actualParameters, "this");
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversion(methodSelectorName, actualParameters, "this");
+					if (null == methodDecl) {
+						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversion(methodSelectorName, actualParameters, "this");
+						assert null != methodDecl;
+					}
 					assert null != methodDecl;
 				}
 			}
@@ -572,7 +651,8 @@ public abstract class RTExpression extends RTCode {
 			return methodDecl;
 		}
 		
-		private RTObject pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction, final int indexForThisExtraction) {
+		private RTObject pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
+				final int indexForThisExtraction) {
 			RTCode pc = start;
 			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 			RTObject self = null;
@@ -596,6 +676,10 @@ public abstract class RTExpression extends RTCode {
 				oldPc.decrementReferenceCount();
 			}
 			
+			if (false == isStatic() && RunTimeEnvironment.runTimeEnvironment_.stackIndex() <= startingStackIndex + indexForThisExtraction) {
+				assert RunTimeEnvironment.runTimeEnvironment_.stackIndex() > startingStackIndex + indexForThisExtraction;
+			}
+			
 			self = isStatic()? null:
 				(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
 
@@ -605,7 +689,7 @@ public abstract class RTExpression extends RTCode {
 			return self;
 		}
 		
-		private void pushContextPointerIfNecessary(Type typeOfThisParameterToMethod, int indexForThisExtraction) {
+		private void pushContextPointerIfNecessary(final Type typeOfThisParameterToMethod, final int indexForThisExtraction) {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// If we're a non-Role method *and* we're calling a Role method
@@ -631,7 +715,7 @@ public abstract class RTExpression extends RTCode {
 			}
 		}
 		
-		private void populateActivationRecord(RTMethod methodDecl, RTDynamicScope activationRecord) {
+		private void populateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
 			final FormalParameterList formalParameters = methodDecl.formalParameters();
 			for (int i = formalParameters.count() - 1; 0 <= i; --i) {
 				final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
@@ -648,7 +732,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			RTCode start = argPush_;
 			RTObject self = null;
-			
+
 			// Push the return address onto the stack
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(postReturnProcessing_);
 			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
@@ -672,7 +756,6 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			assert indexForThisExtraction < actualParameters_.count();
-			
 			
 			final ActualArgumentList argList = actualParameters_;
 			Expression thisDeclaration = null;
@@ -700,6 +783,7 @@ public abstract class RTExpression extends RTCode {
 			
 			// Get the method declaration by looking it up in the receiver's scope
 			// Null return on error (e.g., attempting to invoke a method on a null object)
+						
 			final RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToMethod, indexForThisExtraction, self);
 			
 			if (null != methodDecl) {
@@ -720,7 +804,7 @@ public abstract class RTExpression extends RTCode {
 			return methodDecl;
 		}
 		
-		@Override public void setNextCode(RTCode nextCode) {
+		@Override public void setNextCode(final RTCode nextCode) {
 			// This becomes the public version of setNextCode. The value
 			// it sets reflects the static sequence, e.g. from the method
 			// send to the following statement. It does NOT reflect the
@@ -730,7 +814,7 @@ public abstract class RTExpression extends RTCode {
 			postReturnProcessing_.setNextCode(nextCode);
 		}
 		
-		private int expressionsInExpression(RTCode rtCodePointer) {
+		private int expressionsInExpression(final RTCode rtCodePointer) {
 			if (null == rtCodePointer) {
 				assert null != rtCodePointer;
 			}
@@ -743,16 +827,48 @@ public abstract class RTExpression extends RTCode {
 			return retval;
 		}
 		
-		private RTCode buildArgumentPushList() {
+		private Expression promoteArgToType(final Expression anArgument, final Type formalParameterType, final String methodName, final int lineNumber) {
+			Expression retval = anArgument;
+			final Type sourceType = anArgument.type();
+			final String sourceTypePathName = sourceType.pathName();
+			if (formalParameterType.pathName().equals("double.")) {
+				if (sourceTypePathName.equals("int.")) {
+					ErrorLogger.error(ErrorType.Warning, lineNumber,
+							"WARNING: Substituting double object for `", anArgument.getText(),
+							"« for call to method `", methodName, "« at line ",
+							String.valueOf(anArgument.lineNumber()));
+					retval = new DoubleCasterExpression(anArgument);
+				}
+			}
+			return retval;
+		}
+		
+		private RTCode buildArgumentPushList(final FormalParameterList actualMethodFormals, final String methodName, final int lineNumber) {
 			// Arrange an arguments data structure in preparation
 			// for pushing them onto the stack.
 			// This returns a code block (just a linked list)
 			// with no ties to any method body.
+			
 			final RTCode myNextCode = nextCode();
 			RTCode retval = myNextCode, previous = null;
 			for (int i = 0; i < actualParameters_.count(); i++) {
-				final Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
+				Expression anArgument = (Expression)actualParameters_.argumentAtPosition(i);
 				assert null != anArgument && anArgument instanceof Expression;
+				
+				final ObjectDeclaration formalParameter = actualMethodFormals.parameterAtPosition(i);
+				final Type formalParameterType = null == formalParameter
+						? StaticScope.globalScope().lookupTypeDeclaration("void")
+						: formalParameter.type();
+				final Type anArgumentType = anArgument.type();
+				
+				// null check is for error stumbling.  should be pathName check. FIXME.
+				if (null != anArgumentType && false == formalParameterType.name().equals(anArgumentType.name()) && 0 != i) {
+					if (false == formalParameterType.isBaseClassOf(anArgumentType)) {
+						if (formalParameterType.canBeConvertedFrom(anArgument.type())) {
+							anArgument = this.promoteArgToType(anArgument, formalParameterType, methodName, lineNumber);
+						}
+					}
+				}
 				
 				// Can be null on error conditions
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
@@ -801,7 +917,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private static class RTPostReturnProcessing extends RTExpression {
-			public RTPostReturnProcessing(RTCode nextCode, String name) {
+			public RTPostReturnProcessing(final RTCode nextCode, final String name) {
 				super();
 				super.setNextCode(nextCode);
 				name_ = name;
@@ -817,7 +933,7 @@ public abstract class RTExpression extends RTCode {
 			private final String name_;		// for debugging only
 		}
 		
-		@Override public void setResultIsConsumed(boolean tf) {
+		@Override public void setResultIsConsumed(final boolean tf) {
 			super.setResultIsConsumed(tf);
 			postReturnProcessing_.setResultIsConsumed(tf);
 			if (null != messageExpr_) {
@@ -828,17 +944,21 @@ public abstract class RTExpression extends RTCode {
 			return templateInstantiationInfo_;
 		}
 		protected static ActualArgumentList buildArguments(final String className, final String methodName,
-				final String parameterTypeName, final StaticScope enclosedMethodScope) {
+				final String parameterName, final String parameterTypeName, final StaticScope enclosedMethodScope,
+				final boolean isStatic) {
+			
 			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
 			final ActualArgumentList argList = new ActualArgumentList();
 			final Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
 			
 			assert null != enclosedMethodScope;
 			
-			final IdentifierExpression toprint = new IdentifierExpression(methodName, stringType, enclosedMethodScope);
-			argList.addActualArgument(toprint);
-			final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
-			argList.addActualArgument(self);
+			final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType, enclosedMethodScope);
+			argList.addActualArgument(theArgument);
+			if (false == isStatic) {
+				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
+				argList.addActualArgument(self);
+			}
 			return argList;
 		}
 		public boolean isStatic() {
@@ -858,7 +978,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTDupMessage extends RTExpression {
-		public RTDupMessage(String name, DupMessageExpression expr, RTType enclosingMegaType) {
+		public RTDupMessage(final String name, final DupMessageExpression expr, final RTType enclosingMegaType) {
 			super();
 			final Expression objectToClone = expr.objectToClone();
 			final List<BodyPart> intermediate = objectToClone.bodyParts();
@@ -911,7 +1031,7 @@ public abstract class RTExpression extends RTCode {
 	};
 	
 	public static class RTIdentifier extends RTExpression {
-		static RTIdentifier makeIdentifier(String name, IdentifierExpression expression) {
+		static RTIdentifier makeIdentifier(final String name, final IdentifierExpression expression) {
 			RTIdentifier retval = null;
 			final StaticScope declaringScope = expression.scopeWhereDeclared();
 			if (null != declaringScope) {		// mainly in user program error situations
@@ -933,7 +1053,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			return retval;
 		}
-		public RTIdentifier(String name, IdentifierExpression expression) {
+		public RTIdentifier(final String name, final IdentifierExpression expression) {
 			super();
 				
 			declaringScope_ = expression.scopeWhereDeclared();
@@ -1017,9 +1137,9 @@ public abstract class RTExpression extends RTCode {
 			return declaringScope_;
 		}
 
-		protected String idName_;
+		protected final String idName_;
 		protected StaticScope declaringScope_;
-		protected boolean isLocal_;
+		protected final boolean isLocal_;
 	}
 	
 	public static class RTArrayIdentifier extends RTIdentifier {
@@ -1043,7 +1163,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTRoleIdentifier extends RTIdentifier {
-		public RTRoleIdentifier(String name, IdentifierExpression expression) {
+		public RTRoleIdentifier(final String name, final IdentifierExpression expression) {
 			super(name, expression);
 			setResultIsConsumed(expression.resultIsConsumed());
 		}
@@ -1085,7 +1205,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTRelop extends RTExpression {
-		public RTRelop(RelopExpression expr, RTType nearestEnclosingType) {
+		public RTRelop(final RelopExpression expr, final RTType nearestEnclosingType) {
 			super();
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
@@ -1105,12 +1225,12 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			return lhs_.run();
 		}
-		@Override public void setNextCode(RTCode code) {
+		@Override public void setNextCode(final RTCode code) {
 			part2_.setNextCode(code);
 		}
 		
 		public static class RTRelopPart2 extends RTExpression {
-			public RTRelopPart2(RelopExpression expr) {
+			public RTRelopPart2(final RelopExpression expr) {
 				super();
 				operator_ = expr.operator();
 				setResultIsConsumed(expr.resultIsConsumed());
@@ -1156,7 +1276,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTBoolean extends RTExpression {
-		public RTBoolean(BooleanExpression expr, RTType nearestEnclosingType) {
+		public RTBoolean(final BooleanExpression expr, final RTType nearestEnclosingType) {
 			super();
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
@@ -1195,11 +1315,11 @@ public abstract class RTExpression extends RTCode {
 			return nextCode_;
 		}
 
-		private RTExpression lhs_, rhs_;
-		private String operator_;
+		private final RTExpression lhs_, rhs_;
+		private final String operator_;
 	}
 	public static class RTBinop extends RTExpression {
-		public RTBinop(BinopExpression expr, RTType nearestEnclosingType) {
+		public RTBinop(final BinopExpression expr, final RTType nearestEnclosingType) {
 			super();
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
@@ -1214,12 +1334,12 @@ public abstract class RTExpression extends RTCode {
 			return lhs_;
 		}
 		
-		@Override public void setNextCode(RTCode code) {
+		@Override public void setNextCode(final RTCode code) {
 			part2_.setNextCode(code);
 		}
 		
 		public static class RTBinopPart2 extends RTExpression {
-			public RTBinopPart2(BinopExpression expr) {
+			public RTBinopPart2(final BinopExpression expr) {
 				super();
 				operator_ = expr.operator();
 			}
@@ -1259,7 +1379,7 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression lhs_, rhs_;
 	}
 	public static class RTUnaryopWithSideEffect extends RTExpression {
-		public RTUnaryopWithSideEffect(UnaryopExpressionWithSideEffect expr, RTType nearestEnclosingType) {
+		public RTUnaryopWithSideEffect(final UnaryopExpressionWithSideEffect expr, final RTType nearestEnclosingType) {
 			super();
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			part2_ = new RTUnaryopWithSideEffectPart2(expr);
@@ -1271,12 +1391,12 @@ public abstract class RTExpression extends RTCode {
 			return lhs_.run();
 		}
 		
-		@Override public void setNextCode(RTCode next) {
+		@Override public void setNextCode(final RTCode next) {
 			part2_.setNextCode(next);
 		}
 		
 		public static class RTUnaryopWithSideEffectPart2 extends RTExpression {
-			public RTUnaryopWithSideEffectPart2(UnaryopExpressionWithSideEffect expr) {
+			public RTUnaryopWithSideEffectPart2(final UnaryopExpressionWithSideEffect expr) {
 				super();
 				operator_ = expr.operator();
 				preOrPost_ = expr.preOrPost();
@@ -1400,6 +1520,7 @@ public abstract class RTExpression extends RTCode {
 		
 		public static class RTDoubleCasterPart2 extends RTExpression {
 			public RTDoubleCasterPart2() {
+				super();
 			}
 			@Override public RTCode run() {
 				final RTObject value = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -1744,7 +1865,7 @@ public abstract class RTExpression extends RTCode {
 			
 			rtNewCommon(expr, classScope);
 		}
-		private void rtNewCommon(NewExpression expr, StaticScope classScope) {
+		private void rtNewCommon(final NewExpression expr, final StaticScope classScope) {
 			final ActualArgumentList actualArguments = expr.argumentList();
 			final Message message = expr.message();
 			
@@ -1760,9 +1881,14 @@ public abstract class RTExpression extends RTCode {
 				constructorSelectorName = templateInstantiationInfo.templateName();
 			}
 
-			final MethodDeclaration constructor = classScope.lookupMethodDeclaration(
+			MethodDeclaration constructor = classScope.lookupMethodDeclaration(
 					constructorSelectorName,
 					actualArguments, false);
+			if (null == constructor) {
+				constructor = classScope.lookupMethodDeclarationWithConversion(
+						constructorSelectorName,
+						actualArguments, false);
+			}
 			
 			if (null == constructor) {
 				rTConstructor_ = null;
@@ -1774,7 +1900,7 @@ public abstract class RTExpression extends RTCode {
 				
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
-				RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
+				final RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
 				rTConstructor_ = new RTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
 				
 				// In the past, there was code in RTContext::run that checked to see if
