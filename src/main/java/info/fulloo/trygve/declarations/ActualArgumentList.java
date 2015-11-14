@@ -40,10 +40,10 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	public ActualArgumentList() {
 		super(new SimpleList());
 	}
-	public void addActualArgument(Expression argument) {
+	public void addActualArgument(final Expression argument) {
 		addArgument(argument);
 	}
-	public Expression parameterAtPosition(int i) {
+	public Expression parameterAtPosition(final int i) {
 		return (Expression)this.parameterAtIndex(i);
 	}
 	public String getText() {
@@ -65,7 +65,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	@Override public String nameOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).name();
 	}
-	private Type typeMap(TemplateInstantiationInfo templateTypes, int i) {
+	private Type typeMap(final TemplateInstantiationInfo templateTypes, final int i) {
 		// This method's scope has been been given a templateTypes
 		// list only if that scope corresponds to an instantiated
 		// class. We can get here for the lookup in the initial template,
@@ -82,7 +82,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		}
 		return retval;
 	}
-	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
 		// templateTypes can be null if we're processing a lookup in an actual template
 		ActualArgumentList retval = null;
 		if (null == templateTypes) {

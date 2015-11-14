@@ -485,8 +485,12 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	char [] menuBreaks = { 'g', 'n', 'u', 'z' }; int j = 0;
 		JMenu submenu = new JMenu("a-f");
     	for (int i = 0; i < numberOfTestCases; i++) {
+    		assert 'a' > 'A';
     		final String fileName = allFileNames[i];
-    		final char firstChar = fileName.charAt(0);
+    		char firstChar = fileName.charAt(0);
+    		if (firstChar > 'z') {
+    			firstChar += 'a' - 'A';
+    		}
     		if (firstChar >= menuBreaks[j]) {
     			jMenu3.add(submenu);
     			if (menuBreaks[j] != 'z') {

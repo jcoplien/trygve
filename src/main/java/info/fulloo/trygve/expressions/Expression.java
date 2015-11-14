@@ -489,7 +489,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class NewExpression extends Expression
 	{
-		public NewExpression(Type classType, Message message, int lineNumber, Type enclosingMegaType) {
+		public NewExpression(final Type classType, final Message message, final int lineNumber, final Type enclosingMegaType) {
 			super("new", classType, enclosingMegaType);
 			message_ = message;
 
@@ -508,7 +508,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return "[new " + classOrContextType_.name() + "]";
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileNewExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public int lineNumber() {
@@ -523,7 +523,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class NewArrayExpression extends Expression
 	{
 		// | 'new' type_name '[' expr ']'
-		public NewArrayExpression(Type classType, Expression sizeExpression, Type enclosingMegaType) {
+		public NewArrayExpression(final Type classType, final Expression sizeExpression, final Type enclosingMegaType) {
 			super("new", new ArrayType(classType.name() + "[" + "]", classType), enclosingMegaType);
 			classOrContextType_ = classType;
 			sizeExpression_ = sizeExpression;
@@ -538,7 +538,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return "[new " + classOrContextType_.name() + "[" + "] ]";
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileNewArrayExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
@@ -548,7 +548,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ArrayIndexExpression extends Expression {
 		// expr '[' expr ']'
-		public ArrayIndexExpression(ArrayExpression array, Expression index) {
+		public ArrayIndexExpression(final ArrayExpression array, final Expression index) {
 			super(array.getText() + " [ " + index.getText() + " ]", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
@@ -559,7 +559,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileArrayIndexExpression(this, scope, rtTypeDeclaration);
 		}
 		public Expression indexExpr() {
@@ -575,7 +575,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ArrayIndexExpressionUnaryOp extends Expression {
 		// expr '[' expr ']'
-		public ArrayIndexExpressionUnaryOp(ArrayExpression array, Expression index, String operation, PreOrPost preOrPost) {
+		public ArrayIndexExpressionUnaryOp(final ArrayExpression array, final Expression index, final String operation, final PreOrPost preOrPost) {
 			super(array.getText() + " [ " + index.getText() + " ] ++", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
@@ -588,7 +588,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileArrayIndexExpressionUnaryOp(this, scope, rtTypeDeclaration);
 		}
 		public Expression indexExpr() {
@@ -611,13 +611,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class RoleArrayIndexExpression extends Expression {
-		public RoleArrayIndexExpression(final String roleName, Expression roleNameInvocation, Expression indexExpr) {
+		public RoleArrayIndexExpression(final String roleName, final Expression roleNameInvocation, final Expression indexExpr) {
 			super(roleName, roleNameInvocation.type(), roleNameInvocation.enclosingMegaType());
 			indexExpr_ = indexExpr;
 			roleNameInvocation_ = roleNameInvocation;
 			roleName_ = roleName;
 		}
-		public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDecl, RTType rTType, StaticScope staticScope) {
+		public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDecl, final RTType rTType, final StaticScope staticScope) {
 			return codeGenerator.compileRoleArrayIndexExpression(this, rTType, staticScope);
 		}
 		public Expression indexExpression() {
@@ -637,7 +637,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ArrayExpression extends Expression {
 		// array_expr : expr
-		public ArrayExpression(Expression expr, Type baseType) {
+		public ArrayExpression(final Expression expr, final Type baseType) {
 			super("array", null, expr.enclosingMegaType());
 			expr_ = expr;
 			baseType_ = baseType;
@@ -645,7 +645,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String getText() {
 			return expr_.getText();
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileArrayExpression(this, scope);
 		}
 		@Override public Type baseType() {
@@ -661,7 +661,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class IfExpression extends Expression
 	{
-		public IfExpression(Expression conditional, Expression thenPart, Expression elsePart) {
+		public IfExpression(final Expression conditional, final Expression thenPart, final Expression elsePart) {
 			super("if (" + conditional.getText() + ")", null != elsePart? thenPart.type(): StaticScope.globalScope().lookupTypeDeclaration("void"),
 					conditional.enclosingMegaType());
 			conditional_ = conditional;
@@ -702,7 +702,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression elsePart() {
 			return elsePart_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileIfExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public void setResultIsConsumed(boolean tf) {
@@ -717,8 +717,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class ForExpression extends Expression implements BreakableExpression {
-		public ForExpression(List <ObjectDeclaration> initDecl, Expression test, Expression increment, Expression body,
-				StaticScope scope, int lineNumber, ParsingData parsingData) {
+		public ForExpression(final List <ObjectDeclaration> initDecl, final Expression test, final Expression increment, final Expression body,
+				final StaticScope scope, int lineNumber, final ParsingData parsingData) {
 			super("for", StaticScope.globalScope().lookupTypeDeclaration("void"),
 					Expression.nearestEnclosingMegaTypeOf(scope));
 			initDecl_ = initDecl;
@@ -744,7 +744,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				parsingData.addBreakableExpression(label_, this);
 			}
 		}
-		public void reInit(Expression initializer, Expression test, Expression increment, Expression body) {
+		public void reInit(final Expression initializer, final Expression test, final Expression increment, final Expression body) {
 			initializationExpression_ = initializer; 	// may be null
 			test_ = test;
 			if (null != test_) {
@@ -753,7 +753,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			increment_ = increment;
 			body_ = body;
 		}
-		public void reInitIterativeFor(ObjectDeclaration JAVA_ID, Expression thingToIterateOver, Expression body) {
+		public void reInitIterativeFor(final ObjectDeclaration JAVA_ID, final Expression thingToIterateOver, final Expression body) {
 			thingToIterateOver_ = thingToIterateOver;
 			iterationVariable_ = JAVA_ID;
 			body_ = body;
@@ -764,7 +764,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression thingToIterateOver() {
 			return thingToIterateOver_;
 		}
-		public void addObjectDeclForBlock(List<ObjectDeclaration> declarations) {
+		public void addObjectDeclForBlock(final List<ObjectDeclaration> declarations) {
 			initDecl_.addAll(declarations);
 		}
 		@Override public String getText() {
@@ -795,7 +795,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public StaticScope scope() {
 			return scope_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			if (null == thingToIterateOver_) {
 				return codeGenerator.compileForExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 			} else {
@@ -824,7 +824,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class WhileExpression extends Expression implements BreakableExpression {
-		public WhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData, Type nearestEnclosingMegaType) {
+		public WhileExpression(final Expression test, final Expression body, final int lineNumber, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
 			super("while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
 			body_ = body;		
@@ -834,7 +834,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				parsingData.addBreakableExpression(label_, this);
 			}
 		}
-		public void reInit(Expression test, Expression body) {
+		public void reInit(final Expression test, final Expression body) {
 			test_ = test;
 			if (null != test_) {
 				test_.setResultIsConsumed(true);
@@ -856,7 +856,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression body() {
 			return body_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileWhileExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
@@ -872,7 +872,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class DoWhileExpression extends Expression implements BreakableExpression {
-		public DoWhileExpression(Expression test, Expression body, int lineNumber, ParsingData parsingData, Type nearestEnclosingMegaType) {
+		public DoWhileExpression(final Expression test, final Expression body, final int lineNumber, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
 			super("do_while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
 			body_ = body;		
@@ -882,7 +882,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				parsingData.addBreakableExpression(label_, this);
 			}
 		}
-		public void reInit(Expression test, Expression body) {
+		public void reInit(final Expression test, final Expression body) {
 			test_ = test;
 			if (null != test_) {
 				test_.setResultIsConsumed(true);
@@ -906,7 +906,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression body() {
 			return body_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileDoWhileExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
@@ -922,7 +922,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class SwitchBodyElement extends Expression {
-		public SwitchBodyElement(Constant constant, boolean isDefault, ExprAndDeclList expressionAndDeclList, Type enclosingMegaType) {
+		public SwitchBodyElement(final Constant constant, final boolean isDefault, final ExprAndDeclList expressionAndDeclList, final Type enclosingMegaType) {
 			super("case", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			constant_ = constant;
 			isDefault_ = isDefault;
@@ -931,7 +931,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		
 		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) Ñ RTSwitch fetches
 		// our body parts and compiles them
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			assert(false);
 			return null;
 		}
@@ -955,7 +955,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class SwitchExpression extends Expression implements BreakableExpression {
-		public SwitchExpression(ParsingData parsingData, Type enclosingMegaType) {
+		public SwitchExpression(final ParsingData parsingData, final Type enclosingMegaType) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			indexedSwitchBodyElements_ = new HashMap<Constant, SwitchBodyElement>();
 			orderedSwitchBodyElements_ = new ArrayList<SwitchBodyElement>();
@@ -965,7 +965,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				parsingData.addBreakableExpression(label_, this);
 			}
 		}
-		public void addSwitchBodyElement(SwitchBodyElement element) {
+		public void addSwitchBodyElement(final SwitchBodyElement element) {
 			final Constant constant = element.isDefault()? null: element.constant();
 			indexedSwitchBodyElements_.put(constant, element);
 			orderedSwitchBodyElements_.add(element);
@@ -983,7 +983,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression switchExpression() {
 			return expression_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileSwitchExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public String uniqueLabel() {
@@ -995,7 +995,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public boolean hasDefault() {
 			return hasDefault_;
 		}
-		public SwitchBodyElement elementForConstant(Constant theConstant) {
+		public SwitchBodyElement elementForConstant(final Constant theConstant) {
 			SwitchBodyElement retval = null;
 			for (Map.Entry<Constant,SwitchBodyElement> iter : indexedSwitchBodyElements_.entrySet() ) {
 				final Constant key = iter.getKey();
@@ -1016,7 +1016,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BreakExpression extends Expression
 	{
-		public BreakExpression(int lineNumber, Expression loop, long nestingLevelInsideBreakable) {
+		public BreakExpression(final int lineNumber, final Expression loop, final long nestingLevelInsideBreakable) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
 			lineNumber_ = lineNumber;
 			assert loop instanceof BreakableExpression;
@@ -1029,7 +1029,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileBreakExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public BreakableExpression loop() {
@@ -1045,7 +1045,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	public static class ContinueExpression extends Expression
 	{
-		public ContinueExpression(int lineNumber, Expression loop, long nestingLevelInsideBreakable) {
+		public ContinueExpression(final int lineNumber, final Expression loop, final long nestingLevelInsideBreakable) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
 			lineNumber_ = lineNumber;
 			assert loop instanceof BreakableExpression;
@@ -1059,7 +1059,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileContinueExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public BreakableExpression loop() {
@@ -1077,12 +1077,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ExpressionList extends Expression
 	{
-		public ExpressionList(Expression seedExpression, Type enclosingMegaType) {
+		public ExpressionList(final Expression seedExpression, final Type enclosingMegaType) {
 			super("<expression list>", seedExpression.type(), enclosingMegaType);
 			expressions_ = new ArrayList<Expression>();
 			this.addExpression(seedExpression);
 		}
-		public void addExpression(Expression e) {
+		public void addExpression(final Expression e) {
 			expressions_.add(e);
 		}
 		@Override public String getText() {
@@ -1095,7 +1095,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public List<Expression> expressions() {
 			return expressions_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileExpressionList(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
@@ -1122,7 +1122,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public Type type() {
 			return lhs_.type();
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileSumExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
@@ -1175,7 +1175,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			retval += rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileProductExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
@@ -1226,7 +1226,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			retval += rhs_.getText() + "]";
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compilePowerExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Expression lhs() {
@@ -1248,7 +1248,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public TopOfStackExpression() {
 			super("", null, null);
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			assert false;
 			return null;
 		}
@@ -1256,7 +1256,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ReturnExpression extends Expression
 	{
-		public ReturnExpression(Expression returnExpression, int lineNumber, Type nearestEnclosingMegaType) {
+		public ReturnExpression(final Expression returnExpression, final int lineNumber, final Type nearestEnclosingMegaType) {
 			super(null != returnExpression? returnExpression.getText(): "return",
 					null != returnExpression? returnExpression.type():
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
@@ -1278,7 +1278,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileReturnExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
@@ -1288,7 +1288,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BlockExpression extends Expression
 	{
-		public BlockExpression(int lineNumber, ExprAndDeclList exprAndDeclList, StaticScope scope, Type enclosingMegaType) {
+		public BlockExpression(final int lineNumber, final ExprAndDeclList exprAndDeclList, final StaticScope scope, final Type enclosingMegaType) {
 			super("<block>", null != exprAndDeclList? exprAndDeclList.type():
 				StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			exprAndDeclList_ = exprAndDeclList;
@@ -1311,7 +1311,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileBlockExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public List<BodyPart> bodyParts() {
@@ -1321,14 +1321,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public StaticScope scope() {
 			return scope_;
 		}
-		public void addObjectDeclForBlock(List<ObjectDeclaration> declarations) {
+		public void addObjectDeclForBlock(final List<ObjectDeclaration> declarations) {
 			initDecl_.addAll(declarations);
 		}
 		public List<ObjectDeclaration> initDecl() {
 			return initDecl_;
 		}
 		
-		public List<BodyPart> linearize(BodyPart bodyPart) {
+		public List<BodyPart> linearize(final BodyPart bodyPart) {
 			List<BodyPart> retval = new ArrayList<BodyPart>();
 			if (bodyPart instanceof DeclarationList) {
 				final DeclarationList bodyPartAsDeclList = (DeclarationList) bodyPart;
@@ -1386,7 +1386,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class PromoteToDoubleExpr extends Expression {
-		public PromoteToDoubleExpr(Expression promotee) {
+		public PromoteToDoubleExpr(final Expression promotee) {
 			super("(double)", StaticScope.globalScope().lookupTypeDeclaration("double"), promotee.enclosingMegaType());
 			promotee_ = promotee;
 			promotee_.setResultIsConsumed(true);
@@ -1406,7 +1406,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		// be used only inside a Role method where the Role is declared
 		// as a Role vector. The resulting type is an integer reflecting
 		// the position (0-indexed) of the Role in the vector
-		public IndexExpression(RoleDeclaration currentRole, ContextDeclaration currentContext) {
+		public IndexExpression(final RoleDeclaration currentRole, final ContextDeclaration currentContext) {
 			super("index", StaticScope.globalScope().lookupTypeDeclaration("int"), currentRole.type());
 			enclosingRole_ = currentRole;
 			enclosingContext_ = currentContext;
@@ -1454,7 +1454,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return retval;
 	}
 	
-	public static Type nearestEnclosingMegaTypeOf(StaticScope scope) {
+	public static Type nearestEnclosingMegaTypeOf(StaticScope scope) {	// FIXME? not final
 		Type retval = null;
 		if (null != scope) {
 			while (scope != StaticScope.globalScope()) {
@@ -1476,7 +1476,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return retval;
 	}
 	
-	public static StaticScope nearestEnclosingMethodScopeOf(StaticScope scope) {
+	public static StaticScope nearestEnclosingMethodScopeOf(StaticScope scope) {	// FIXME? Not static.
 		while (scope != StaticScope.globalScope()) {
 			final Declaration associatedDeclaration = scope.associatedDeclaration();
 			if (associatedDeclaration instanceof MethodDeclaration) {
@@ -1496,7 +1496,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public void setResultIsConsumed(boolean tf) {
 		resultIsConsumed_ = tf;
 	}
-	public Expression promoteTo(Type t) {
+	public Expression promoteTo(final Type t) {
 		Expression retval = this;
 		if (this.type() == StaticScope.globalScope().lookupTypeDeclaration("int")) {
 			if (t.type() == StaticScope.globalScope().lookupTypeDeclaration("double")) {
@@ -1505,7 +1505,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		return retval;
 	}
-	protected void setType(Type t) {
+	protected void setType(final Type t) {
 		type_ = t;
 	}
 	
@@ -1517,5 +1517,3 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	private boolean resultIsConsumed_;
 	final Type enclosingMegaType_;
 }
-
-

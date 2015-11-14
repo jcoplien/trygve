@@ -941,10 +941,10 @@ public class StaticScope {
 				for (MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method ", methodName, " in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", lookupExistingEntry.signature().getText(), "« in ", name());
 						break;
 					} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method ", methodName, " in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", lookupExistingEntry.signature().getText(), "« in ", name());
 						break;
 					}
 				}

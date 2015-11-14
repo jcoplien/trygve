@@ -34,7 +34,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
 public abstract class Constant extends Expression {
-	private static boolean isDouble(String s) {
+	private static boolean isDouble(final String s) {
 		boolean retval = true;
 		try {
 			@SuppressWarnings("unused")
@@ -46,7 +46,7 @@ public abstract class Constant extends Expression {
 		}
 		return retval;
 	}
-	private static boolean isInteger(String s) {
+	private static boolean isInteger(final String s) {
 		boolean retval = true;
 		try {
 			@SuppressWarnings("unused")
@@ -61,7 +61,7 @@ public abstract class Constant extends Expression {
 	
 	public abstract boolean isEqualTo(Constant constant);
 	
-	public static Expression makeConstantExpressionFrom(String s) {
+	public static Expression makeConstantExpressionFrom(final String s) {
 		final int l = s.length();
 		Expression expression = null;
 		if (s.equals("true")) {
@@ -83,7 +83,7 @@ public abstract class Constant extends Expression {
 		return expression;
 	}
 	public static class StringConstant extends Constant {
-		public StringConstant(String s) {
+		public StringConstant(String s) {	// FIXME ? not final
 			super(s, StaticScope.globalScope().lookupTypeDeclaration("String"));
 			
 			// Need to convert all \" to "
@@ -111,7 +111,7 @@ public abstract class Constant extends Expression {
 		private String string_;
 	}
 	public static class IntegerConstant extends Constant {
-		public IntegerConstant(String s) {
+		public IntegerConstant(final String s) {
 			super(s, StaticScope.globalScope().lookupTypeDeclaration("int"));
 			l_ = Integer.parseInt(s);
 		}
@@ -139,11 +139,11 @@ public abstract class Constant extends Expression {
 		private long l_;
 	}
 	public static class DoubleConstant extends Constant {
-		public DoubleConstant(String s) {
+		public DoubleConstant(final String s) {
 			super(s, StaticScope.globalScope().lookupTypeDeclaration("double"));
 			l_ = Double.parseDouble(s);
 		}
-		public DoubleConstant(double l) {
+		public DoubleConstant(final double l) {
 			super(String.valueOf(l), StaticScope.globalScope().lookupTypeDeclaration("double"));
 			l_ = l;
 		}
@@ -153,7 +153,7 @@ public abstract class Constant extends Expression {
 		@Override public String getText() {
 			return String.valueOf(l_);
 		}
-		public boolean isEqualTo(Constant constant) {
+		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
 			if (constant instanceof DoubleConstant == false) {
 				retval = false;
@@ -167,7 +167,7 @@ public abstract class Constant extends Expression {
 		private double l_;
 	}
 	public static class CharacterConstant extends Constant {
-		public CharacterConstant(char c) {
+		public CharacterConstant(final char c) {
 			super(String.valueOf(c), StaticScope.globalScope().lookupTypeDeclaration("char"));
 			c_ = c;
 		}
@@ -177,7 +177,7 @@ public abstract class Constant extends Expression {
 		@Override public String getText() {
 			return "«" + String.valueOf(c_) + "«";
 		}
-		public boolean isEqualTo(Constant constant) {
+		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
 			if (constant instanceof CharacterConstant == false) {
 				retval = false;
@@ -191,7 +191,7 @@ public abstract class Constant extends Expression {
 		private char c_;
 	}
 	public static class BooleanConstant extends Constant {
-		public BooleanConstant(boolean tf) {
+		public BooleanConstant(final boolean tf) {
 			super(tf? "true": "false", StaticScope.globalScope().lookupTypeDeclaration("boolean"));
 			tf_ = tf;
 		}
@@ -201,7 +201,7 @@ public abstract class Constant extends Expression {
 		@Override public String getText() {
 			return tf_? "true": "false";
 		}
-		public boolean isEqualTo(Constant constant) {
+		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
 			if (constant instanceof BooleanConstant == false) {
 				retval = false;
@@ -215,11 +215,11 @@ public abstract class Constant extends Expression {
 		private boolean tf_;
 	}
 	
-	@Override public List<RTCode> compileCodeForInScope(CodeGenerator cg, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	@Override public List<RTCode> compileCodeForInScope(final CodeGenerator cg, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		return cg.compileConstant(this, methodDeclaration, rtTypeDeclaration, scope);
 	}
 	
-	private Constant(String name, Type type) {
+	private Constant(final String name, final Type type) {
 		super(name, type, null);
 	}
 }

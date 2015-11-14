@@ -25,7 +25,7 @@ package info.fulloo.trygve.declarations;
 
 public interface ActualOrFormalParameterList {
 	public int count();
-	public Type typeOfParameterAtPosition(int i);
-	public String nameOfParameterAtPosition(int i);
-	public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo lt);
+	public Type typeOfParameterAtPosition(final int i);
+	public String nameOfParameterAtPosition(final int i);
+	public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo lt);
 }

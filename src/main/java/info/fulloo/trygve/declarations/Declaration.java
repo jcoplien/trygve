@@ -46,7 +46,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 public abstract class Declaration implements BodyPart {
-	public Declaration(String name) {
+	public Declaration(final String name) {
 		name_ = name;
 	}
 	public String name() {
@@ -60,7 +60,7 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class ObjectDeclaration extends Declaration
 	{
-		public ObjectDeclaration(String name, Type type, int lineNumber) {
+		public ObjectDeclaration(final String name, final Type type, final int lineNumber) {
 			super(name);
 			lineNumber_ = lineNumber;
 			type_ = type;
@@ -86,7 +86,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
-		public void setAccess(AccessQualifier accessLevel, StaticScope currentScope, int lineNumber) {
+		public void setAccess(final AccessQualifier accessLevel, final StaticScope currentScope, final int lineNumber) {
 			// This method sets the corresponding access level for this declaration, yes,
 			// makes sense at all
 			if (accessLevel != AccessQualifier.DefaultAccess) {
@@ -110,7 +110,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
-		public void setEnclosingScope(StaticScope scope) {
+		public void setEnclosingScope(final StaticScope scope) {
 			containingScope_ = scope;
 		}
 		public StaticScope enclosingScope() {
@@ -118,14 +118,14 @@ public abstract class Declaration implements BodyPart {
 		}
 
 		private Type type_;
-		private int lineNumber_;
+		private final int lineNumber_;
 		private StaticScope containingScope_;
 		public AccessQualifier accessQualifier_;
 	}
 	
 	public static class TypeDeclarationCommon extends Declaration implements TypeDeclaration
 	{
-		public TypeDeclarationCommon(String name, int lineNumber, StaticScope myEnclosedScope) {
+		public TypeDeclarationCommon(final String name, final int lineNumber, final StaticScope myEnclosedScope) {
 			super(name);
 			lineNumber_ = lineNumber;
 			myEnclosedScope_ = myEnclosedScope;
@@ -143,14 +143,14 @@ public abstract class Declaration implements BodyPart {
 		@Override public Type type() {
 			return type_;
 		}
-		@Override public void declareStaticObject(ObjectDeclaration declaration) {
+		@Override public void declareStaticObject(final ObjectDeclaration declaration) {
 			if (stringToStaticObjectMap_.containsKey(declaration.name())) {
 				ErrorLogger.error(ErrorType.Fatal, lineNumber_, "Duplicate declaration of static object ", declaration.name(), "", "");
 			} else {
 				stringToStaticObjectMap_.put(declaration.name(), declaration);
 			}
 		}
-		@Override public ObjectDeclaration lookupStaticObjectDeclaration(String name) {
+		@Override public ObjectDeclaration lookupStaticObjectDeclaration(final String name) {
 			ObjectDeclaration retval = null;
 			if (stringToStaticObjectMap_.containsKey(name)) {
 				retval = stringToStaticObjectMap_.get(name);
@@ -163,26 +163,26 @@ public abstract class Declaration implements BodyPart {
 			return name();
 		}
 
-		private int lineNumber_;
+		private final int lineNumber_;
 		protected StaticScope myEnclosedScope_;
 		protected Type type_;
-		private Map<String, ObjectDeclaration> stringToStaticObjectMap_;
+		private final Map<String, ObjectDeclaration> stringToStaticObjectMap_;
 	}
 	
 	public static class ContextDeclaration extends TypeDeclarationCommon implements TypeDeclaration
 	{
-		public ContextDeclaration(String name, StaticScope myEnclosedScope, ContextDeclaration currentContext, int lineNumber) {
+		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			parentContext_ = currentContext;
 		}
-		public void setType(ContextType type) {
+		public void setType(final ContextType type) {
 			type_ = type;
 		}
 		public ContextDeclaration parentContext() {
 			return parentContext_;
 		}
 		
-		private ContextDeclaration parentContext_;
+		private final ContextDeclaration parentContext_;
 	}
 	
 	public static class ClassDeclaration extends TypeDeclarationCommon implements TypeDeclaration
@@ -200,7 +200,7 @@ public abstract class Declaration implements BodyPart {
 		public ClassDeclaration baseClassDeclaration() {
 			return baseClass_;
 		}
-		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, TemplateInstantiationInfo newTypes) {
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final TemplateInstantiationInfo newTypes) {
 			templateDeclaration_ = templateDeclaration;
 			// This turns a TemplateDeclaration into a class
 			final ClassType baseClassType = null == baseClass_? null: (ClassType)baseClass_.type();
@@ -254,13 +254,13 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 
-		private ClassDeclaration baseClass_;
+		private final ClassDeclaration baseClass_;
 		private TemplateDeclaration templateDeclaration_;
 		private boolean methodsHaveBodyParts_;
 	}
 	
 	public static class TypeParameter extends Object {
-		public TypeParameter(String name, ClassType baseClassType) {
+		public TypeParameter(final String name, final ClassType baseClassType) {
 			name_ = name;
 			baseClassType_ = baseClassType;
 		}
@@ -270,7 +270,7 @@ public abstract class Declaration implements BodyPart {
 		public String name() {
 			return name_;
 		}
-		public void setArgumentPosition(int i) {
+		public void setArgumentPosition(final int i) {
 			argumentPosition_ = i;
 		}
 		public int argumentPosition() {
@@ -290,7 +290,7 @@ public abstract class Declaration implements BodyPart {
 			argumentPositionCounter_ = 0;
 			typeParameters_ = new ArrayList<TypeParameter>();
 		}
-		public void setType(Type t) {
+		public void setType(final Type t) {
 			assert t instanceof TemplateType;
 			type_ = t;
 		}
@@ -329,8 +329,8 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 		
-		private TypeDeclaration baseClass_;
-		private List<TypeParameter> typeParameters_;
+		private final TypeDeclaration baseClass_;
+		private final List<TypeParameter> typeParameters_;
 		private int argumentPositionCounter_;
 	}
 	
@@ -346,7 +346,7 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
 			return signatures_.get(name);
 		}
-		public MethodSignature lookupMethodSignatureDeclaration(final String methodSelectorName, ActualOrFormalParameterList argumentList) {
+		public MethodSignature lookupMethodSignatureDeclaration(final String methodSelectorName, final ActualOrFormalParameterList argumentList) {
 			return ((InterfaceType)type_).lookupMethodSignature(methodSelectorName, argumentList);
 		}
 		public void addSignature(final MethodSignature signature) {
@@ -638,7 +638,7 @@ public abstract class Declaration implements BodyPart {
 			hasConstModifier_ = false;
 			isStatic_ = isStatic;
 		}
-		public void addParameterList(FormalParameterList formalParameterList) {
+		public void addParameterList(final FormalParameterList formalParameterList) {
 			formalParameterList_ = formalParameterList;
 		}
 		public Type returnType() {
@@ -648,7 +648,7 @@ public abstract class Declaration implements BodyPart {
 			// Hmmm.
 			return this.returnType();
 		}
-		public void setReturnType(Type returnType) {
+		public void setReturnType(final Type returnType) {
 			returnType_ = returnType;
 		}
 		public FormalParameterList formalParameterList() {
@@ -661,9 +661,24 @@ public abstract class Declaration implements BodyPart {
 			return lineNumber_;
 		}
 		@Override public String getText() {
-			return name();
+			String retval = name() + "(";
+			final int numberOfParameters = formalParameterList().count();
+						
+			// Skip current$context if it's there
+			final int startingIndex = numberOfParameters > 0?
+											(formalParameterList().parameterAtPosition(0).name().equals("current$context")? 2: 1):
+											(isStatic_? 0: 1);
+			
+			for (int i = startingIndex; i < numberOfParameters; i++) {
+				retval += formalParameterList().parameterAtPosition(i).type().getText();
+				if (i != numberOfParameters - 1) {
+					retval += ",";
+				}
+			}
+			retval += ")";
+			return retval;
 		}
-		public void setHasConstModifier(boolean tf) {
+		public void setHasConstModifier(final boolean tf) {
 			hasConstModifier_ = tf;
 		}
 		public boolean hasConstModifier() {
@@ -683,7 +698,7 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class ExprAndDeclList extends Declaration
 	{
-		public ExprAndDeclList(int lineNumber) {
+		public ExprAndDeclList(final int lineNumber) {
 			super("");
 			lineNumber_ = lineNumber;
 			bodyParts_ = new ArrayList<BodyPart>();
@@ -691,7 +706,7 @@ public abstract class Declaration implements BodyPart {
 		public void addAssociatedDeclaration(MethodDeclaration associatedDeclaration) {
 			associatedDeclaration_ = associatedDeclaration;
 		}
-		public void addBodyPart(BodyPart bp) {
+		public void addBodyPart(final BodyPart bp) {
 			bodyParts_.add(bp);
 		}
 		@Override public List<BodyPart> bodyParts() {
@@ -715,18 +730,18 @@ public abstract class Declaration implements BodyPart {
 		}
 		
 		private MethodDeclaration associatedDeclaration_;
-		private int lineNumber_;
-		private List<BodyPart> bodyParts_;
+		private final int lineNumber_;
+		private final List<BodyPart> bodyParts_;
 	}
 	
 	public static class DeclarationList extends Declaration
 	{
-		public DeclarationList(int lineNumber) {
+		public DeclarationList(final int lineNumber) {
 			super("");
 			lineNumber_ = lineNumber;
 			declarations_ = new ArrayList<Declaration>();
 		}
-		public void addDeclaration(Declaration d) {
+		public void addDeclaration(final Declaration d) {
 			declarations_.add(d);
 		}
 		@Override public int lineNumber() {
@@ -744,21 +759,21 @@ public abstract class Declaration implements BodyPart {
 			return retval;
 		}
 		
-		private int lineNumber_;
-		private List<Declaration> declarations_;
+		private final int lineNumber_;
+		private final List<Declaration> declarations_;
 	}
 	
 	public static class TypeDeclarationList extends Declaration
 	{
-		public TypeDeclarationList(int lineNumber) {
+		public TypeDeclarationList(final int lineNumber) {
 			super("");
 			lineNumber_ = lineNumber;
 			declarations_ = new ArrayList<TypeDeclaration>();
 		}
-		public void addDeclaration(TypeDeclaration d) {
+		public void addDeclaration(final TypeDeclaration d) {
 			declarations_.add(d);
 		}
-		public void removeDeclaration(TypeDeclaration d) {
+		public void removeDeclaration(final TypeDeclaration d) {
 			declarations_.remove(d);
 		}
 		@Override public int lineNumber() {
@@ -774,14 +789,14 @@ public abstract class Declaration implements BodyPart {
 			return declarations_;
 		}
 		
-		private int lineNumber_;
-		private List<TypeDeclaration> declarations_;
+		private final int lineNumber_;
+		private final List<TypeDeclaration> declarations_;
 	}
 	
 	public static class ArrayDecl extends Declaration
 	{
 		// type_name '[' ']' JAVA_ID
-		public ArrayDecl(String name, Type baseType, int lineNumber) {
+		public ArrayDecl(final String name, final Type baseType, final int lineNumber) {
 			super(baseType.getText() + " [" + "]");
 			baseType_ = baseType;
 			

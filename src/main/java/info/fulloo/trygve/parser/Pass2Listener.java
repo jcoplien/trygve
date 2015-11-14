@@ -256,7 +256,7 @@ public class Pass2Listener extends Pass1Listener {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
 						errorHook6p2(ErrorType.Fatal, lineNumber,
-								"Derived class declaration of `", currentMethod.name(),
+								"Derived class declaration of `", currentMethod.signature().getText(),
 								"« must have same access qualifier as that of declaration in base class `",
 								baseClass.name(), "«.", "");
 						break;	// don't cascade errors
@@ -412,8 +412,8 @@ public class Pass2Listener extends Pass1Listener {
 	}
 
 	
-	@Override public void binopTypeCheck(final Expression leftExpr, String operationAsString,
-			final Expression rightExpr, Token ctxGetStart) {
+	@Override public void binopTypeCheck(final Expression leftExpr, final String operationAsString,
+			final Expression rightExpr, final Token ctxGetStart) {
 		// Certified Pass 2 version ;-)
 		final Type leftExprType = leftExpr.type(), rightExprType = rightExpr.type();
 		final Type resultType = leftExprType;
@@ -631,8 +631,7 @@ public class Pass2Listener extends Pass1Listener {
 							null;
 				if (null == methodDeclaration) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					final String methodSelectorName = message.selectorName();
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", classObjectType.name());
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "« not declared in class ", classObjectType.name());
 					return null;		// punt
 				} else {
 					methodSignature = methodDeclaration.signature();

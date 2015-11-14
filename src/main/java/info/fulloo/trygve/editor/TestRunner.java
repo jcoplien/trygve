@@ -124,7 +124,7 @@ public class TestRunner {
 			gui_.setFileNameField(saveFileNameField);
 		}
 	}
-	private void runATest(String filename) {
+	private void runATest(final String filename) {
 		final String url = urlPrefix_ + filename;
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 		System.err.println(underscores_);
@@ -139,7 +139,7 @@ public class TestRunner {
 			gui_.runButtonActionPerformed(null);
 		}
 	}
-	private void checkTestResults(String lastTestResults, String rawTestResults) {
+	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
 		final String testResults = thisTestResults(lastTestResults, rawTestResults);
 		final String goldContents = thisRunGoldContents();
 		testResults.replaceAll("\r", "\n");
@@ -157,7 +157,7 @@ public class TestRunner {
 		}
 	}
 
-	private String thisTestResults(String lastTestResults, String rawTestResults) {
+	private String thisTestResults(final String lastTestResults, final String rawTestResults) {
 		final int lastTestResultsLength = lastTestResults.length();
 		String testResults = rawTestResults.substring(lastTestResultsLength + underscores_.length() + 1);
 		if (testResults.substring(0,1).equals("\n")) {

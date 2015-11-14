@@ -32,6 +32,6 @@ public interface TypeDeclaration {
 	public StaticScope enclosingScope();
 	public StaticScope enclosedScope();
 	public Type type();
-	public ObjectDeclaration lookupStaticObjectDeclaration(String name);
-	public void declareStaticObject(ObjectDeclaration decl);
+	public ObjectDeclaration lookupStaticObjectDeclaration(final String name);
+	public void declareStaticObject(final ObjectDeclaration decl);
 }

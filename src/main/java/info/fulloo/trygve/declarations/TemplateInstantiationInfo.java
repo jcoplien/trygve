@@ -31,26 +31,26 @@ import info.fulloo.trygve.declarations.Declaration.TypeParameter;
 import info.fulloo.trygve.declarations.Type.ClassType;
 
 public class TemplateInstantiationInfo {
-	public TemplateInstantiationInfo(TemplateDeclaration templateDecl, String typeName) {
+	public TemplateInstantiationInfo(final TemplateDeclaration templateDecl, final String typeName) {
 		super();
 		actualParameters_ = new ArrayList<Type>();
 		templateDeclaration_ = templateDecl;
 		typeName_ = typeName;
 	}
-	public void addTypeParameter(Type typeParameter) {
+	public void addTypeParameter(final Type typeParameter) {
 		actualParameters_.add(typeParameter);
 	}
-	public void add(Type typeParameter) {
+	public void add(final Type typeParameter) {
 		this.addTypeParameter(typeParameter);
 	}
-	public void setClassType(ClassType classType) {
+	public void setClassType(final ClassType classType) {
 		classType_ = classType;
 	}
-	public Type parameterAtIndex(int i) {
+	public Type parameterAtIndex(final int i) {
 		assert i < actualParameters_.size();
 		return actualParameters_.get(i);
 	}
-	public Type get(int i) {
+	public Type get(final int i) {
 		return parameterAtIndex(i);
 	}
 	public ClassType classType() {
@@ -71,7 +71,7 @@ public class TemplateInstantiationInfo {
 		return typeName_;
 	}
 	
-	private List<Type> actualParameters_;
+	private final List<Type> actualParameters_;
 	private ClassType classType_;
 	private final TemplateDeclaration templateDeclaration_;
 	private final String typeName_;

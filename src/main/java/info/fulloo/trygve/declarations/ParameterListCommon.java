@@ -59,5 +59,5 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 		return this;
 	}
 	
-	private SimpleList parameters_;
+	private final SimpleList parameters_;
 }

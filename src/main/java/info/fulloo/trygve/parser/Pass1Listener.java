@@ -1828,7 +1828,7 @@ public class Pass1Listener extends KantBaseListener {
 				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), ctx.getStart().getLine());
 				if (isAccessible == false) {
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
-							"Cannot access consturcotr `", constructor.name(),
+							"Cannot access constructor `", constructor.signature().getText(),
 							"л with `", constructor.accessQualifier().asString(), "л access qualifier.","");
 				}
 			}
@@ -3472,7 +3472,7 @@ public class Pass1Listener extends KantBaseListener {
 				assert object instanceof IdentifierExpression;
 				if (false == mdecl.signature().isStatic()) {
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-							"Attempt to call instance method `" + methodSelectorName,
+							"Attempt to call instance method `" + mdecl.signature().getText(),
 							"лл as though it were a static method of class `", objectType.name(), "л");
 				}
 			}				
@@ -3527,7 +3527,7 @@ public class Pass1Listener extends KantBaseListener {
 					// Ingore parameters as in Pass 1. We may not find a match with a template type...
 					mdecl = classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, true);
 					if (null == mdecl) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", mdecl.signature().getText(),
 								"л not declared in class ", classDecl.name());
 					}
 				} else {
@@ -3558,7 +3558,7 @@ public class Pass1Listener extends KantBaseListener {
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + mdecl.signature().getText(),
 							"л of class `", object.name(), "л");
 				}
 			}
@@ -3854,8 +3854,8 @@ public class Pass1Listener extends KantBaseListener {
 				if (null != correspondingRoleMethod) {
 					errorHook6p2(ErrorType.Warning, lineNumber,
 							"WARNING: Both class `" + baseType.name(), "л and Role `" + lhsType.name(),
-							"л contain the same method signature for `", correspondingRoleMethod.name(),
-							"л. This results in several methods of the same name in the same object ",
+							"л contain the same method signature `", correspondingRoleMethod.signature().getText(),
+							"л. This results in several methods of the same name in the same object",
 							" and may not behave as you expected.");
 				}
 			}

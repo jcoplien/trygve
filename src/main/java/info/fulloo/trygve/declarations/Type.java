@@ -210,19 +210,19 @@ public abstract class Type implements ExpressionStackAPI
 		public ClassType baseClass() {
 			return baseClass_;
 		}
-		public void updateBaseType(ClassType baseType) {
+		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return true;
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			return true;
 		}
 		@Override public Type type() {
 			return this;
 		}
-		@Override public boolean isBaseClassOf(Type aDerived) {
+		@Override public boolean isBaseClassOf(final Type aDerived) {
 			return false;
 		}
 		
@@ -237,10 +237,10 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public String name() {
 			return name_;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = t.name().equals(name_);
 			if (!retval) {
 				retval = t.name().equals("Null");
@@ -415,7 +415,7 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -446,7 +446,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(scope);
 			name_ = name;
 		}
-		public void reportMismatchesWith(int lineNumber, Type t) {
+		public void reportMismatchesWith(final int lineNumber, final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -612,10 +612,10 @@ public abstract class Type implements ExpressionStackAPI
 			name_ = name;
 			baseType_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = true;
 			if (t.name().equals("Null")) {
 				// redundant but clear
@@ -647,10 +647,10 @@ public abstract class Type implements ExpressionStackAPI
 			name_ = name;
 			baseClassType_ = baseClassType;
 		}
-		@Override public boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return true;
 		}
-		@Override public boolean canBeConvertedFrom(Type t) {
+		@Override public boolean canBeConvertedFrom(final Type t) {
 			return true;
 		}
 		@Override public String name() {
@@ -668,8 +668,8 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	
 	
-	public abstract boolean canBeConvertedFrom(Type t);
-	public abstract boolean canBeConvertedFrom(Type t, int lineNumber, Pass1Listener parserPass);
+	public abstract boolean canBeConvertedFrom(final Type t);
+	public abstract boolean canBeConvertedFrom(final Type t, int lineNumber, Pass1Listener parserPass);
 	
 	public boolean hasUnaryOperator(final String operator) {
 		return false;
@@ -718,15 +718,15 @@ public abstract class Type implements ExpressionStackAPI
 		
 		return retval;
 	}
-	public MethodSignature signatureForMethodSelectorInHierarchyIgnoringThis(String methodSelector, MethodSignature methodSignature) {
+	public MethodSignature signatureForMethodSelectorInHierarchyIgnoringThis(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, "this",
 				HierarchySelector.AlsoSearchBaseClass);
 	}
-	public MethodSignature signatureForMethodSelectorIgnoringThis(String methodSelector, MethodSignature methodSignature) {
+	public MethodSignature signatureForMethodSelectorIgnoringThis(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, "this",
 				HierarchySelector.ThisClassOnly);
 	}
-	public MethodSignature signatureForMethodSelector(String methodSelector, MethodSignature methodSignature) {
+	public MethodSignature signatureForMethodSelector(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, null,
 				HierarchySelector.ThisClassOnly);
 	}

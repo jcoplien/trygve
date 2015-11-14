@@ -27,21 +27,21 @@ public class ErrorLogger {
 	public ErrorLogger() {
 		resetCounts();
 	}
-	public static void error(ErrorType errorType, String s1, String s2, String s3, String s4) {
+	public static void error(final ErrorType errorType, final String s1, final String s2, final String s3, final String s4) {
 		updateCounts(errorType);
 		System.err.print(s1);
 		System.err.print(s2);
 		System.err.print(s3);
 		System.err.println(s4);
 	}
-	public static void error(ErrorType errorType, long lineNumber, String s1, String s2, String s3, String s4) {
+	public static void error(final ErrorType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4) {
 		updateCounts(errorType);
 		System.err.print("line ");
 		System.err.print(lineNumber);
 		System.err.print(": ");
 		ErrorLogger.error(errorType, s1, s2, s3, s4);
 	}
-	public static void error(ErrorType errorType, long lineNumber, String s1, String s2, String s3, String s4, String s5, String s6) {
+	public static void error(final ErrorType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		updateCounts(errorType);
 		System.err.print("line ");
 		System.err.print(lineNumber);
