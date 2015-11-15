@@ -95,9 +95,11 @@ public abstract class Declaration implements BodyPart {
 					final ErrorType errorType = accessLevel == AccessQualifier.PrivateAccess?
 															ErrorType.Warning:
 															ErrorType.Fatal;
-					ErrorLogger.error(errorType, lineNumber, "Identifier `", name(),
-							"« has a gratuitous access qualifier: ",
-							errorType.toString());
+					ErrorLogger.error(errorType, lineNumber,
+							errorType.toString(),
+							": Identifier `", name(),
+							"« has a gratuitous access qualifier."
+							);
 				}
 			} else {
 				;	// Default access (no explicit field) is always O.K.

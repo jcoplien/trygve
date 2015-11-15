@@ -491,8 +491,8 @@ public class Pass1Listener extends KantBaseListener {
 		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "Gratuitous access qualifier `",
-					ctx.access_qualifier().getText(), "« ignored", " (warning).");
+			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+					ctx.access_qualifier().getText(), "« ignored", ".");
 		}
 		
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
@@ -662,8 +662,8 @@ public class Pass1Listener extends KantBaseListener {
 		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "Gratuitous access qualifier `",
-					ctx.access_qualifier().getText(), "« ignored", " (warning).");
+			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+					ctx.access_qualifier().getText(), "« ignored", ".");
 		}
 		
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
@@ -713,7 +713,7 @@ public class Pass1Listener extends KantBaseListener {
 					final MethodSignature signature = iter.getValue();
 					if (signature.hasConstModifier() == false) {
 						errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(),
-								"Signatures for functions required by stageprops like ", currentRole_.name(),
+								"WARNING: Signatures for functions required by stageprops like ", currentRole_.name(),
 								" should have a const modifier: method ", methodName, " does not.", "");
 					}
 				}
@@ -3137,7 +3137,10 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	private Expression jAVA_IDAtomUtility(final String id, int lineNumber) {
+	/*
+	 * Unused
+	 *
+	private Expression jAVA_IDAtomUtility(final String id, final int lineNumber) {
 		Expression expression = null;
 		Type type = null;
 		assert null != id && 0 < id.length();
@@ -3186,6 +3189,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 		return expression;
 	}
+	*/
 	
 	private Expression processIndexedArrayElement(final ParseTree arrayExprCtx, final KantParser.ExprContext sexpCtx,
 			final TerminalNode ABELIAN_INCREMENT_OPCtx) {
@@ -3527,12 +3531,12 @@ public class Pass1Listener extends KantBaseListener {
 					// Ingore parameters as in Pass 1. We may not find a match with a template type...
 					mdecl = classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, true);
 					if (null == mdecl) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", mdecl.signature().getText(),
-								"« not declared in class ", classDecl.name());
+						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
+								"« not declared in class `", classDecl.name(), "«", "");
 					}
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-							"« not declared in class ", classDecl.name());
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
+							"« not declared in class `", classDecl.name(), "«", "");
 				}
 			}
 		} else if (null != roleDecl) {
@@ -3558,7 +3562,7 @@ public class Pass1Listener extends KantBaseListener {
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + mdecl.signature().getText(),
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
 							"« of class `", object.name(), "«");
 				}
 			}

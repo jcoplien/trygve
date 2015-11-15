@@ -205,7 +205,6 @@ public final class DateClass {
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
-			final RTObject rawElement = activationRecord.getObject("element");
 			final RTObject year = theDateObject.getYear();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(year);
 			return super.nextCode();

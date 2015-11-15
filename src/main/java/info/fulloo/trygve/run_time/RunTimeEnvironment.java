@@ -59,40 +59,57 @@ public class RunTimeEnvironment {
 	}
 	private void preDeclareTypes() {
 		final StaticScope intScope = new StaticScope(StaticScope.globalScope());
-		final ClassDeclaration intClassDecl = new ClassDeclaration("int", intScope, /*Base Class*/ null, 0);
+		
+		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
+		assert null != intClassDecl;
+		// final ClassDeclaration intClassDecl = new ClassDeclaration("int", intScope, /*Base Class*/ null, 0);
 		intScope.setDeclaration(intClassDecl);
 		final Type intType = new ClassType("int", intScope, null);
 		intClassDecl.setType(intType);
 		
 		final StaticScope int2Scope = new StaticScope(StaticScope.globalScope());
-		final ClassDeclaration int2ClassDecl = new ClassDeclaration("Integer", intScope, /*Base Class*/ null, 0);
+		final ClassDeclaration int2ClassDecl = StaticScope.globalScope().lookupClassDeclaration("Integer");
+		assert null != int2ClassDecl;
+		// final ClassDeclaration int2ClassDecl = new ClassDeclaration("Integer", intScope, /*Base Class*/ null, 0);
 		intScope.setDeclaration(int2ClassDecl);
 		final Type int2Type = new ClassType("Integer", int2Scope, null);
 		intClassDecl.setType(int2Type);
 		
 		final StaticScope doubleScope = new StaticScope(StaticScope.globalScope());
-		final ClassDeclaration doubleClassDecl = new ClassDeclaration("double", doubleScope, /*Base Class*/ null, 0);
+		final ClassDeclaration doubleClassDecl = StaticScope.globalScope().lookupClassDeclaration("double");
+		assert null != doubleClassDecl;
+		// final ClassDeclaration doubleClassDecl = new ClassDeclaration("double", doubleScope, /*Base Class*/ null, 0);
 		doubleScope.setDeclaration(intClassDecl);
 		final Type doubleType = new ClassType("double", doubleScope, null);
-		intClassDecl.setType(doubleType);
+		doubleClassDecl.setType(doubleType);
 		
+		/*
 		final StaticScope stringScope = new StaticScope(StaticScope.globalScope());
-		final ClassDeclaration stringClassDecl = new ClassDeclaration("String", stringScope, /*Base Class*/ null, 0);
-		doubleScope.setDeclaration(stringClassDecl);
+		final ClassDeclaration stringClassDecl = new ClassDeclaration("String", stringScope, /*Base Class* / null, 0);
+		stringScope.setDeclaration(stringClassDecl);
 		final Type stringType = new ClassType("String", stringScope, null);
-		intClassDecl.setType(stringType);
+		stringClassDecl.setType(stringType);
+		*/
 		
 		final StaticScope booleanScope = new StaticScope(StaticScope.globalScope());
+		// boolean is different Ñ we create the class here. For now.
 		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, /*Base Class*/ null, 0);
-		doubleScope.setDeclaration(booleanClassDecl);
+		booleanScope.setDeclaration(booleanClassDecl);
 		final Type booleanType = new ClassType("boolean", booleanScope, null);
-		intClassDecl.setType(booleanType);
+		booleanClassDecl.setType(booleanType);
 
 		this.addTopLevelClass("int", new RTIntegerClass(intClassDecl));
 		this.addTopLevelClass("Integer", new RTIntegerClass(int2ClassDecl));
 		this.addTopLevelClass("double", new RTDoubleClass(doubleClassDecl));
-		this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
 		this.addTopLevelClass("boolean", new RTBooleanClass(booleanClassDecl));
+		
+		// this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
+		
+		final ClassDeclaration stringClassDecl = StaticScope.globalScope().lookupClassDeclaration("String");
+		assert null != stringClassDecl;
+		this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
+		
+		// Big FIXME...
 	}
 	public void addTopLevelContext(final String contextName, final RTContext context) {
 		stringToRTContextMap_.put(contextName, context);

@@ -385,9 +385,68 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 	}
+	private void processStringCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		if (formalParameterList.count() == 2) {
+			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(0);
+			final Type argumentType = argumentDeclaration.type();
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> setSomethingInDateCode = new ArrayList<RTCode>();
+			if (argumentType.name().equals("int") || argumentType.name().equals("Integer")) {
+				if (methodDeclaration.name().equals("setYear")) {
+					setSomethingInDateCode.add(new DateClass.RTSetYearCode(methodDeclaration.enclosedScope()));
+				} else if (methodDeclaration.name().equals("setMonth")) {
+					setSomethingInDateCode.add(new DateClass.RTSetMonthCode(methodDeclaration.enclosedScope()));
+				} else if (methodDeclaration.name().equals("setDay")) {
+					setSomethingInDateCode.add(new DateClass.RTSetDayCode(methodDeclaration.enclosedScope()));
+				} else if (methodDeclaration.name().equals("setDate")) {
+					setSomethingInDateCode.add(new DateClass.RTSetDateCode(methodDeclaration.enclosedScope()));
+				} else {
+					assert false;
+				}
+			} else {
+				assert false;
+			}
+			
+			assert setSomethingInDateCode.size() > 0;
+			
+			rtMethod.addCode(setSomethingInDateCode);
+		} else if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> getSomethingInDateCode = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("getYear")) {
+				getSomethingInDateCode.add(new DateClass.RTGetYearCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getMonth")) {
+				getSomethingInDateCode.add(new DateClass.RTGetMonthCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getDay")) {
+				getSomethingInDateCode.add(new DateClass.RTGetDayCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getDate")) {
+				getSomethingInDateCode.add(new DateClass.RTGetDateCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("toString")) {
+				getSomethingInDateCode.add(new DateClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("Date")) {
+				// Simple constructor
+				getSomethingInDateCode.add(new DateClass.RTDateSimpleCtorCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+			
+			assert getSomethingInDateCode.size() > 0;
+			
+			rtMethod.addCode(getSomethingInDateCode);
+		} else {
+			assert false;
+		}
+	}
 	private void compileMethodInScope(final MethodDeclaration methodDeclaration, final StaticScope scope) {
 		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
-		// Duck: Null body parts here for "add" declaration in simpletemplate.k
+		// Null body parts here for "add" declaration in simpletemplate.k
 		// Called by compileScope for List<int,String> scope, from compileClass,
 		// from compileDeclarations, from original compile
 		
@@ -413,6 +472,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("Date")) {
 				processDateCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("String")) {
+				processStringCall(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {

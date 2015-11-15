@@ -37,6 +37,7 @@ import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -615,6 +616,32 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		} else if (objectType instanceof ClassType) {
 			final ClassType classObjectType = (ClassType) objectType;
+			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
+			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
+			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
+						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
+						null;
+			methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
+						null;
+			if (null == methodDeclaration) {
+				// If we're inside of a template, many argument types won't match.
+				// Try anyhow and see if we can find something.
+				methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
+							null;
+				if (null == methodDeclaration) {
+					// Mainly for error recovery (bad argument to method / method not declared)
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "« not declared in class ", classObjectType.name());
+					return null;		// punt
+				} else {
+					methodSignature = methodDeclaration.signature();
+				}
+			} else {
+				methodSignature = methodDeclaration.signature();
+			}
+		} else if (objectType instanceof BuiltInType) {	// we were late in adding this... how did we miss it?
+			final BuiltInType classObjectType = (BuiltInType) objectType;
 			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
 			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?

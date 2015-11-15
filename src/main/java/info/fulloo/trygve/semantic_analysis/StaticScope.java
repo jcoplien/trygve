@@ -55,6 +55,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.mylibrary.SimpleList;
+import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 public class StaticScope {
 	public StaticScope(final StaticScope parentScope) {
@@ -200,6 +201,7 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(intType);
+		globalScope_.declareClass(intDeclaration);	// missing for other types? FIXME
 		
 		intType.enclosedScope().setDeclaration(intDeclaration);
 		intDeclaration.setType(intType);
@@ -248,6 +250,7 @@ public class StaticScope {
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
 		globalScope_.declareType(doubleType);
+		globalScope_.declareClass(doubleDeclaration);	// missing for other types? FIXME
 
 		doubleType.enclosedScope().setDeclaration(doubleDeclaration);
 		doubleDeclaration.setType(doubleType);
@@ -255,24 +258,29 @@ public class StaticScope {
 	
 	private static void reinitializeString(final Type intType) {
 		final Type stringType = new BuiltInType("String");
-		
 		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", stringType, 0);
-		final ObjectDeclaration self = new ObjectDeclaration("t$his", stringType, 0);
+		ObjectDeclaration self = new ObjectDeclaration("t$his", stringType, 0);
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		MethodDeclaration methodDecl = new MethodDeclaration("+", stringType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
+		
 		methodDecl = new MethodDeclaration("length", stringType.enclosedScope(), intType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", stringType, 0);
+		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
+		
 		globalScope_.declareType(stringType);
+		stringDeclaration.setType(stringType);
+		globalScope_.declareClass(stringDeclaration);	// missing for other types? FIXME
 		
 		stringType.enclosedScope().setDeclaration(stringDeclaration);
 		stringDeclaration.setType(stringType);
@@ -327,7 +335,7 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Warning, decl.lineNumber(), "Declaration hides ", name, " declaration at line ",
+					ErrorLogger.error(ErrorType.Warning, decl.lineNumber(), "WARNING: Declaration hides ", name, " declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
 			}

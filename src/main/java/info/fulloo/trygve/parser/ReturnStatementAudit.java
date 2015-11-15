@@ -96,7 +96,7 @@ public class ReturnStatementAudit {
 			}
 		}
 		if (somethingFollowedReturn_ && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "Possible missing return statement", "", "", "");
+			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement", "", "", "");
 		}
 		if (0 == returnExpressions_.size() && null != returnType_ && (false == returnType_.name().equals("void"))) {
 			pass_.errorHook5p2(ErrorType.Fatal, lineNumber_, "Missing return statement", "", "", "");

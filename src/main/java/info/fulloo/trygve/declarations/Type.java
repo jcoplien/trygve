@@ -99,7 +99,12 @@ public abstract class Type implements ExpressionStackAPI
 				break;
 			} else {
 				final Declaration associatedDeclaration = scope.associatedDeclaration();
-				retval = associatedDeclaration.name() + "." + retval;
+				if (null == associatedDeclaration) {
+					// e.g. at global scope
+					retval = this.name();
+				} else {
+					retval = associatedDeclaration.name() + "." + retval;
+				}
 				scope = scope.parentScope();
 			}
 		}
@@ -108,6 +113,12 @@ public abstract class Type implements ExpressionStackAPI
 	public static class ClassType extends Type {
 		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(enclosedScope);
+			
+			if (name.equals("String")) {
+				int k = 0;
+				k++;
+			}
+			
 			baseClass_ = baseClass;
 			name_ = name;
 			interfaceTypes_ =  new ArrayList<InterfaceType>();
@@ -569,7 +580,7 @@ public abstract class Type implements ExpressionStackAPI
 								" does not match the contract at line " +
 								Integer.toString(rolesSignature.lineNumber());
 						parserPass.errorHook5p2(ErrorType.Warning, lineNumber,
-								"Required methods for stage props should be const. The declaration of method ",
+								"WARNING: Required methods for stage props should be const. The declaration of method ",
 								signatureForMethodSelector.name(), " at line ",
 								roleSignatureLineNumber);
 					}

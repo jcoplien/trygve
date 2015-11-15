@@ -24,11 +24,14 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -48,9 +51,14 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		
 		final Type rawClassType = decl.type();
 		if (null != rawClassType) {
-			assert rawClassType instanceof ClassType;
-			final ClassType classType = (ClassType)rawClassType;
-			this.doBaseClassProcessing(classType);
+			if (rawClassType instanceof BuiltInType) {
+				;
+			} else if (rawClassType instanceof ClassType) {
+				final ClassType classType = (ClassType)rawClassType;
+				this.doBaseClassProcessing(classType);
+			} else {
+				assert false;
+			}
 		}
 		
 		super.populateNameToTypeObjectMap();
@@ -119,6 +127,14 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		assert false;
 		return null;
 	}
+	protected void populateNameToMethodMap() {
+		final List<MethodDeclaration> methodDeclarations = typeDeclaration_.enclosedScope().methodDeclarations();
+		for (final MethodDeclaration methodDecl : methodDeclarations) {
+			final String methodName = methodDecl.name();
+			final RTMethod rTMethodDecl = new RTMethod(methodName, methodDecl);
+			super.addMethod(methodName, rTMethodDecl);
+		}
+	}
 	
 	// ---------------------
 	
@@ -182,6 +198,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	public static class RTStringClass extends RTClass {
 		public RTStringClass(final TypeDeclaration associatedType) {
 			super(associatedType);
+			super.populateNameToMethodMap();
 		}
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }

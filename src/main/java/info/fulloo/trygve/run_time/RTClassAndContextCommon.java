@@ -43,7 +43,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public abstract class RTClassAndContextCommon implements RTType {
-	public RTClassAndContextCommon(TypeDeclaration typeDeclaration) {
+	public RTClassAndContextCommon(final TypeDeclaration typeDeclaration) {
 		super();
 		if (null == typeDeclaration) {
 			assert null != typeDeclaration;
@@ -102,7 +102,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 	}
 	public void metaInit() {
 		// This method sets up static members
-		for (Map.Entry<String, RTObject> iter : nameToStaticObjectMap_.entrySet()) {
+		for (final Map.Entry<String, RTObject> iter : nameToStaticObjectMap_.entrySet()) {
 			// Get a default value. TODO: Check for static initializer and use that instead
 			final Type typeOfStatic = nameToStaticObjectTypeMap_.get(iter.getKey());
 			final TypeDeclaration typeDeclaration = (TypeDeclaration) typeOfStatic.enclosedScope().associatedDeclaration();
@@ -136,10 +136,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
 				final FormalParameterList loggedSignature = aPair.getKey();
 				if (methodDecl.formalParameters().alignsWith(loggedSignature)) {
+					String toPrint = methodName;
 					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
 					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
-					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of ",
-							methodName + " in scope ", name(), ".");
+					if (null != originalMethodDecl) {
+						toPrint = originalMethodDecl.signature().getText();
+					}
+					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of `",
+							toPrint + "« in scope `", name(), "«.");
 				}
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);

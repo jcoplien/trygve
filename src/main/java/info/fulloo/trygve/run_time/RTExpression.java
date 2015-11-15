@@ -606,8 +606,8 @@ public abstract class RTExpression extends RTCode {
 					// Halt the machine
 					return null;
 				} else if (null == rTTypeOfSelf) {
-					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method ",
-							methodSelectorName_, " on a null Java object", "");
+					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+							methodSelectorName_, "« on a null Java object", "");
 					return null;
 					//assert null != rTTypeOfSelf;
 				}
@@ -3595,7 +3595,7 @@ public abstract class RTExpression extends RTCode {
 				final long rawInt = ((RTIntegerObject)object).intValue();
 				object = new RTDoubleObject((double)rawInt);
 			} else {
-				// ???
+				assert false;
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(object);
 			setLastExpressionResult(object);

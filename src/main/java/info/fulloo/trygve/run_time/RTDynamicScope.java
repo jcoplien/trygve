@@ -39,7 +39,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		methodSelector_ = methodSelector;
 		parentScope_ = parentScope;
 	}
-	public RTDynamicScope(String methodSelector, RTDynamicScope parentScope) {
+	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope) {
 		super((RTType)null);
 		nameToRoleBindingMap_ = new HashMap<String, RTObject>();
 		
@@ -48,7 +48,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		
 		parentScope_ = parentScope;
 	}
-	public void setNamedSlotToValue(String name, RTObject value) {
+	public void setNamedSlotToValue(final String name, final RTObject value) {
 		if (objectMembers_.containsKey(name)) {
 			final RTObject oldValue = objectMembers_.get(name);
 			objectMembers_.put(name,  value);
