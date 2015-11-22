@@ -37,22 +37,21 @@ import java.io.*;
 */
 public class URLGet {
 
-   public String getSite(String url) {
+   public String getSite(final String url) {
 
        StringBuilder sb = new StringBuilder();
 
        try {
-           URLConnection connection = (new URL(url)).openConnection();
-           BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+           final URLConnection connection = (new URL(url)).openConnection();
+           final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
            while (reader.ready()) {
                sb.append(reader.readLine() + "\n");
            }
 
            reader.close();
-
        }
-       catch (MalformedURLException me) {
+       catch (final MalformedURLException me) {
            sb.append("malformed url");
        }
        catch (IOException ioe) {
@@ -63,7 +62,7 @@ public class URLGet {
    }
 
    public static void main(String[] args) throws UnsupportedEncodingException, IOException {
-
+	   assert false;
        URLGet test = new URLGet();
        BufferedWriter writer = 
            new BufferedWriter(

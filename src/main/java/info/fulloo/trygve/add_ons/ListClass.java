@@ -26,6 +26,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import static java.util.Arrays.asList;
 
 /*
  * Trygve IDE
@@ -160,7 +161,7 @@ public final class ListClass {
 	public static class RTListCommon extends RTMessage {
 		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {

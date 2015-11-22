@@ -90,6 +90,9 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTClass.RTStringClass;
+import info.fulloo.trygve.run_time.RTClass.RTDoubleClass;
+import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
@@ -122,6 +125,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// WARNING: Order of compilations may be important!
 		
 		List<TypeDeclaration> typeDeclarationList = SystemClass.typeDeclarationList();
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = StaticScope.typeDeclarationList();	// "String", others
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = ListClass.typeDeclarationList();	// "List"
@@ -387,63 +393,127 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void processStringCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
-		if (formalParameterList.count() == 2) {
-			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(0);
-			final Type argumentType = argumentDeclaration.type();
+		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> setSomethingInDateCode = new ArrayList<RTCode>();
-			if (argumentType.name().equals("int") || argumentType.name().equals("Integer")) {
-				if (methodDeclaration.name().equals("setYear")) {
-					setSomethingInDateCode.add(new DateClass.RTSetYearCode(methodDeclaration.enclosedScope()));
-				} else if (methodDeclaration.name().equals("setMonth")) {
-					setSomethingInDateCode.add(new DateClass.RTSetMonthCode(methodDeclaration.enclosedScope()));
-				} else if (methodDeclaration.name().equals("setDay")) {
-					setSomethingInDateCode.add(new DateClass.RTSetDayCode(methodDeclaration.enclosedScope()));
-				} else if (methodDeclaration.name().equals("setDate")) {
-					setSomethingInDateCode.add(new DateClass.RTSetDateCode(methodDeclaration.enclosedScope()));
-				} else {
-					assert false;
-				}
-			} else {
-				assert false;
-			}
-			
-			assert setSomethingInDateCode.size() > 0;
-			
-			rtMethod.addCode(setSomethingInDateCode);
-		} else if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> getSomethingInDateCode = new ArrayList<RTCode>();
-			if (methodDeclaration.name().equals("getYear")) {
-				getSomethingInDateCode.add(new DateClass.RTGetYearCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("getMonth")) {
-				getSomethingInDateCode.add(new DateClass.RTGetMonthCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("getDay")) {
-				getSomethingInDateCode.add(new DateClass.RTGetDayCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("getDate")) {
-				getSomethingInDateCode.add(new DateClass.RTGetDateCode(methodDeclaration.enclosedScope()));
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("length")) {
+				code.add(new RTStringClass.RTLengthCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("toString")) {
-				getSomethingInDateCode.add(new DateClass.RTToStringCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("Date")) {
-				// Simple constructor
-				getSomethingInDateCode.add(new DateClass.RTDateSimpleCtorCode(methodDeclaration.enclosedScope()));
+				code.add(new RTStringClass.RTToStringCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
 			
-			assert getSomethingInDateCode.size() > 0;
+			assert code.size() > 0;
 			
-			rtMethod.addCode(getSomethingInDateCode);
+			rtMethod.addCode(code);
+		} else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("+")) {
+				code.add(new RTStringClass.RTPlusCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("indexOf")) {
+				code.add(new RTStringClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+			
+			assert code.size() > 0;
+			
+			rtMethod.addCode(code);
+		} else if (formalParameterList.count() == 3) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("substring")) {
+				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+
+			assert code.size() > 0;
+			
+			rtMethod.addCode(code);
 		} else {
 			assert false;
 		}
 	}
+	private void processDoubleCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("toString")) {
+				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+			
+			assert code.size() > 0;
+			
+			rtMethod.addCode(code);
+			
+		} else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("*")) {
+				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else {
+				// assert false;
+			}
+		} else {
+			assert false;
+		}
+	}
+	
+	private void processIntegerCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("toString")) {
+				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+			
+			assert code.size() > 0;
+			
+			rtMethod.addCode(code);
+			
+		} else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("*")) {
+				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else {
+				// assert false;
+			}
+		} else {
+			assert false;
+		}
+	}
+	
 	private void compileMethodInScope(final MethodDeclaration methodDeclaration, final StaticScope scope) {
 		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
 		// Null body parts here for "add" declaration in simpletemplate.k
@@ -476,6 +546,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (typeDeclaration.name().equals("String")) {
 				processStringCall(methodDeclaration, typeDeclaration);
 				return;
+			} else if (typeDeclaration.name().equals("double")) {
+				processDoubleCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("int")) {
+				processIntegerCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Integer")) {
+				processIntegerCall(methodDeclaration, typeDeclaration);
+				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
 			typeDeclaration = (ContextDeclaration)roleOrContextOrClass;
@@ -491,8 +570,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
 	}
 	
-	private List<RTCode> compileDeclarationForMethodOfTypeInScope(Declaration declaration, MethodDeclaration methodDeclaration,
-			RTType runtimeType, StaticScope scope) {
+	private List<RTCode> compileDeclarationForMethodOfTypeInScope(final Declaration declaration, final MethodDeclaration methodDeclaration,
+			final RTType runtimeType, final StaticScope scope) {
 		List<RTCode> retval = null;
 		if (declaration instanceof DeclarationList) {
 			// This code right here is the reason for all the returns
@@ -563,23 +642,23 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		return retval;
 	}
-	private void compileExprAndDeclListForMethodOfTypeInScope(ExprAndDeclList declaration, RTMethod runTimeMethodDecl,
-			RTType declarationType, StaticScope scope) {
+	private void compileExprAndDeclListForMethodOfTypeInScope(final ExprAndDeclList declaration, final RTMethod runTimeMethodDecl,
+			final RTType declarationType, final StaticScope scope) {
 		final List<BodyPart> bodyParts = declaration.bodyParts();
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, runTimeMethodDecl, declarationType, scope);
 	}
-	private void compileBodyPartsForMethodOfTypeInScope(List<BodyPart> bodyParts, RTMethod rtMethod, RTType rtTypeDeclaration, StaticScope scope) {
-		for (BodyPart bodyPart : bodyParts) {
+	private void compileBodyPartsForMethodOfTypeInScope(final List<BodyPart> bodyParts, final RTMethod rtMethod, final RTType rtTypeDeclaration, final StaticScope scope) {
+		for (final BodyPart bodyPart : bodyParts) {
 			final List<RTCode> code = this.compileBodyPartForMethodOfTypeInScope(bodyPart, rtMethod, rtTypeDeclaration, scope);
 			rtMethod.addCode(code);
 		}
 	}
-	public List<RTCode> compileExpressionForMethodOfTypeInScope(Expression expression, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileExpressionForMethodOfTypeInScope(final Expression expression, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		// This boomerangs and comes back to the methods defined below
 		// We use Expression as the dispatcher
 		return expression.compileCodeForInScope(this, methodDeclaration, rtTypeDeclaration, scope);
 	}
-	public List<RTCode> compileQualifiedIdentifierExpression(QualifiedIdentifierExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileQualifiedIdentifierExpression(final QualifiedIdentifierExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTQualifiedIdentifier(expr.name(), expr, rtTypeDeclaration));
 		return retval;
@@ -802,30 +881,30 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// Declarations are a side effect on setting up ...
 		return new ArrayList<RTCode>();
 	}
-	private void compileScope(StaticScope scope) {
+	private void compileScope(final StaticScope scope) {
 		for (ClassDeclaration cd : scope.classDeclarations()) {
 			this.compileClass(cd);
 		}
-		for (MethodDeclaration md : scope.methodDeclarations()) {
+		for (final MethodDeclaration md : scope.methodDeclarations()) {
 			this.compileMethodInScope(md, scope);
 		}
-		for (ObjectDeclaration od : scope.objectDeclarations()) {
+		for (final ObjectDeclaration od : scope.objectDeclarations()) {
 			this.compileObjectDecl(od);
 		}
 		
 		// There's some kind of problem that we need to do this.
 		// FIXME.
-		for (RoleDeclaration rd : scope.roleDeclarations()) {
+		for (final RoleDeclaration rd : scope.roleDeclarations()) {
 			if (rd instanceof StagePropDeclaration == false) {
 				this.compileRole(rd);
 			}
 		}
-		for (StagePropDeclaration spd : scope.stagePropDeclarations()) {
+		for (final StagePropDeclaration spd : scope.stagePropDeclarations()) {
 			if (spd instanceof StagePropDeclaration == true) {
 				this.compileStageProp(spd);
 			}
 		}
-		for (ContextDeclaration cd : scope.contextDeclarations()) {
+		for (final ContextDeclaration cd : scope.contextDeclarations()) {
 			this.compileContext(cd);
 		}
 	}
@@ -834,7 +913,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final StaticScope enclosedScope = typeDeclaration.enclosedScope();
 		return InterpretiveCodeGenerator.scopeToRTTypeDeclaration(enclosedScope);
 	}
-	private static RTType lookInGlobalScopeForRTTypeDeclaration(StaticScope enclosedScope) {
+	private static RTType lookInGlobalScopeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 		final Stack<StaticScope> scopeStack = new Stack<StaticScope>();
 		StaticScope scope = enclosedScope;

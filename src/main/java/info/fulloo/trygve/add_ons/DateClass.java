@@ -1,5 +1,6 @@
 package info.fulloo.trygve.add_ons;
 
+import static java.util.Arrays.asList;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -139,7 +140,7 @@ public final class DateClass {
 	public static class RTDateCommon extends RTMessage {
 		public RTDateCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {

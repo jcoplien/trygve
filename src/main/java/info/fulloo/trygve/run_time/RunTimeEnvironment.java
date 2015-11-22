@@ -29,9 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
-import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
@@ -58,58 +56,22 @@ public class RunTimeEnvironment {
 		framePointers_ = new Stack<IntWrapper>();
 	}
 	private void preDeclareTypes() {
-		final StaticScope intScope = new StaticScope(StaticScope.globalScope());
-		
 		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
 		assert null != intClassDecl;
-		// final ClassDeclaration intClassDecl = new ClassDeclaration("int", intScope, /*Base Class*/ null, 0);
-		intScope.setDeclaration(intClassDecl);
-		final Type intType = new ClassType("int", intScope, null);
-		intClassDecl.setType(intType);
-		
-		final StaticScope int2Scope = new StaticScope(StaticScope.globalScope());
 		final ClassDeclaration int2ClassDecl = StaticScope.globalScope().lookupClassDeclaration("Integer");
 		assert null != int2ClassDecl;
-		// final ClassDeclaration int2ClassDecl = new ClassDeclaration("Integer", intScope, /*Base Class*/ null, 0);
-		intScope.setDeclaration(int2ClassDecl);
-		final Type int2Type = new ClassType("Integer", int2Scope, null);
-		intClassDecl.setType(int2Type);
-		
-		final StaticScope doubleScope = new StaticScope(StaticScope.globalScope());
 		final ClassDeclaration doubleClassDecl = StaticScope.globalScope().lookupClassDeclaration("double");
 		assert null != doubleClassDecl;
-		// final ClassDeclaration doubleClassDecl = new ClassDeclaration("double", doubleScope, /*Base Class*/ null, 0);
-		doubleScope.setDeclaration(intClassDecl);
-		final Type doubleType = new ClassType("double", doubleScope, null);
-		doubleClassDecl.setType(doubleType);
-		
-		/*
-		final StaticScope stringScope = new StaticScope(StaticScope.globalScope());
-		final ClassDeclaration stringClassDecl = new ClassDeclaration("String", stringScope, /*Base Class* / null, 0);
-		stringScope.setDeclaration(stringClassDecl);
-		final Type stringType = new ClassType("String", stringScope, null);
-		stringClassDecl.setType(stringType);
-		*/
-		
-		final StaticScope booleanScope = new StaticScope(StaticScope.globalScope());
-		// boolean is different Ñ we create the class here. For now.
-		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, /*Base Class*/ null, 0);
-		booleanScope.setDeclaration(booleanClassDecl);
-		final Type booleanType = new ClassType("boolean", booleanScope, null);
-		booleanClassDecl.setType(booleanType);
-
-		this.addTopLevelClass("int", new RTIntegerClass(intClassDecl));
-		this.addTopLevelClass("Integer", new RTIntegerClass(int2ClassDecl));
-		this.addTopLevelClass("double", new RTDoubleClass(doubleClassDecl));
-		this.addTopLevelClass("boolean", new RTBooleanClass(booleanClassDecl));
-		
-		// this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
-		
 		final ClassDeclaration stringClassDecl = StaticScope.globalScope().lookupClassDeclaration("String");
 		assert null != stringClassDecl;
-		this.addTopLevelClass("String", new RTStringClass(stringClassDecl));
+		final ClassDeclaration booleanClassDecl = StaticScope.globalScope().lookupClassDeclaration("boolean");
+		assert null != booleanClassDecl;
 		
-		// Big FIXME...
+		this.addTopLevelClass("int",     new RTIntegerClass(intClassDecl));
+		this.addTopLevelClass("Integer", new RTIntegerClass(int2ClassDecl));
+		this.addTopLevelClass("double",  new RTDoubleClass(doubleClassDecl));
+		this.addTopLevelClass("boolean", new RTBooleanClass(booleanClassDecl));
+		this.addTopLevelClass("String",  new RTStringClass(stringClassDecl));
 	}
 	public void addTopLevelContext(final String contextName, final RTContext context) {
 		stringToRTContextMap_.put(contextName, context);
@@ -170,7 +132,7 @@ public class RunTimeEnvironment {
 		framePointers_.push(new IntWrapper(stackSize));
 	}
 	private static class IntWrapper {
-		public IntWrapper(int value) {
+		public IntWrapper(final int value) {
 			value_ = value;
 		}
 		public int value() {
@@ -210,7 +172,7 @@ public class RunTimeEnvironment {
 	}
 	
 	private void handleMetaInits() {
-		for (RTClass aRunTimeClass : allClassList_) {
+		for (final RTClass aRunTimeClass : allClassList_) {
 			aRunTimeClass.metaInit();
 		}
 	}
@@ -242,7 +204,7 @@ public class RunTimeEnvironment {
 	public RTStackable peekStack() { return stack.peek(); }
 	public int stackSize() { return stack.size(); }
 	
-	public void pushDynamicScope(RTDynamicScope element) {
+	public void pushDynamicScope(final RTDynamicScope element) {
 		// Subtle. Reference count was initialized to one and this is
 		// its first use, so we don't increment
 		// element.incrementReferenceCount();
@@ -287,5 +249,5 @@ public class RunTimeEnvironment {
 	private Stack<IntWrapper> framePointers_;
 	private Stack<RTDynamicScope> dynamicScopes;
 	private List<RTClass> allClassList_;
-	public RTDynamicScope globalDynamicScope;
+	public  RTDynamicScope globalDynamicScope;
 }

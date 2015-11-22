@@ -571,7 +571,12 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
 		} else {
-			message.addActualThisParameter(object);
+			if (null != object.type()) {
+				message.addActualThisParameter(object);
+			} else {
+				// error stumbling hook
+				new NullExpression();
+			}
 		}
 		
 		MethodSignature methodSignature = null;
@@ -583,6 +588,11 @@ public class Pass2Listener extends Pass1Listener {
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(object.name());
 			methodDeclaration = type.enclosedScope().lookupMethodDeclaration(
 					message.selectorName(), message.argumentList(), false);
+			if (null == methodDeclaration) {
+				methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversion(
+					message.selectorName(), message.argumentList(), false);
+			}
+			assert null != methodDeclaration;
 			methodSignature = methodDeclaration.signature();
 			isOKMethodSignature = null != methodSignature;
 		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {

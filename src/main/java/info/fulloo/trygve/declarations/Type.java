@@ -113,12 +113,6 @@ public abstract class Type implements ExpressionStackAPI
 	public static class ClassType extends Type {
 		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(enclosedScope);
-			
-			if (name.equals("String")) {
-				int k = 0;
-				k++;
-			}
-			
 			baseClass_ = baseClass;
 			name_ = name;
 			interfaceTypes_ =  new ArrayList<InterfaceType>();

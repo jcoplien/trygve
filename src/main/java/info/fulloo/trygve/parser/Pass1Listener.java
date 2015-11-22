@@ -3078,7 +3078,7 @@ public class Pass1Listener extends KantBaseListener {
 	public ObjectDeclaration pass1InitialDeclarationCheck(final String name, int lineNumber) {
 		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
 		if (null != objDecl) {
-			final String addedMessage = " (earlier declaration at line " +
+			final String addedMessage = "(earlier declaration at line " +
 								Integer.toString(objDecl.lineNumber()) + ").";
 			errorHook5p1(ErrorType.Fatal, lineNumber, "Identifier `",
 					name, "« declared multiple times ", addedMessage);
@@ -3275,8 +3275,8 @@ public class Pass1Listener extends KantBaseListener {
 		final String objectIdentifier = objDecl.name();
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
-			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of ",
-					objectIdentifier, "", "");
+			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
+					objectIdentifier, "«", "");
 		} else {
 			scope.declareObject(objDecl);
 		}
@@ -3347,7 +3347,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			if (null == odecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
-						"««not found as member of ", object.type().name());
+						"« not found as member of ", object.type().name());
 			}
 		}
 		
@@ -3463,7 +3463,7 @@ public class Pass1Listener extends KantBaseListener {
 					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
 		} else {
 			final Type objectType = object.type();
-			assert null != objectType;
+			if (null == objectType) return new NullExpression();	// error stumbling avoidance
 				
 			final String methodSelectorName = message.selectorName();
 			final ClassDeclaration classdecl = currentScope_.lookupClassDeclarationRecursive(objectType.name());
@@ -3562,8 +3562,11 @@ public class Pass1Listener extends KantBaseListener {
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
+					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversion(methodSelectorName, actualArgumentList, false);
+					if (null == mdecl) {
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
 							"« of class `", object.name(), "«");
+					}
 				}
 			}
 		} else {

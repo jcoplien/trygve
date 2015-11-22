@@ -24,7 +24,10 @@ package info.fulloo.trygve.editor;
  */
 
 public class TestRunner {
+	private enum TestSource { UseUrl, UseLocalFile };
+	TestSource testSource_;
 	private final static String urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
+	private final static String localTestDir_ = "file:///Users/cope/Programs/Trygve/";
 	private final static String localPrefix_ = "/Users/cope/Programs/Trygve/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
@@ -74,7 +77,7 @@ public class TestRunner {
 		"quadratic1.k",
 		"rightAssociativeSum2.k",
 		"thisqualbug1.k",
-		// "simplestring1.k",
+		"simplestring1.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -90,6 +93,7 @@ public class TestRunner {
 		underscores_ = "___________________________________________________________";
 		plusses_ = " +  +  +  ";
 		passCounter_ = failCounter_ = 0;
+		testSource_ = TestSource.UseLocalFile;
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
@@ -126,7 +130,14 @@ public class TestRunner {
 		}
 	}
 	private void runATest(final String filename) {
-		final String url = urlPrefix_ + filename;
+		String url = null;
+		switch (testSource_) {
+		case UseUrl:
+			url = urlPrefix_ + filename; break;
+		case UseLocalFile:
+			url = localTestDir_ + filename; break;
+		}
+		
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 		System.err.println(underscores_);
 		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);

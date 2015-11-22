@@ -29,14 +29,23 @@ import java.util.Map;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
-import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTBigIntegerObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import static java.util.Arrays.asList;
 
 
 public class RTClass extends RTClassAndContextCommon implements RTType {
@@ -127,6 +136,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		assert false;
 		return null;
 	}
+	/*
 	protected void populateNameToMethodMap() {
 		final List<MethodDeclaration> methodDeclarations = typeDeclaration_.enclosedScope().methodDeclarations();
 		for (final MethodDeclaration methodDecl : methodDeclarations) {
@@ -135,6 +145,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			super.addMethod(methodName, rTMethodDecl);
 		}
 	}
+	*/
 	
 	// ---------------------
 	
@@ -172,8 +183,60 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 
 	
 	public static class RTIntegerClass extends RTClass {
-		public RTIntegerClass(TypeDeclaration associatedType) {
+		public RTIntegerClass(final TypeDeclaration associatedType) {
 			super(associatedType);
+		}
+		public static class RTIntegerCommon extends RTMessage {
+			public RTIntegerCommon(final String className, final String methodName, final String parameterName,
+					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						true);
+				parameterName_ = parameterName;
+			}
+			public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+
+			}
+			
+			protected final String parameterName_;
+		}
+		public static class RTToStringCode extends RTIntegerCommon {
+			public RTToStringCode(final StaticScope methodEnclosedScope) {
+				super("int", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTIntegerObject;
+				final RTIntegerObject intObject = (RTIntegerObject)self;
+				final long iRetval = intObject.intValue();
+				final RTStringObject retval = new RTStringObject(String.valueOf(iRetval));
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
 		}
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
@@ -183,6 +246,58 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTBigIntegerClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
+		public static class RTBigIntegerCommon extends RTMessage {
+			public RTBigIntegerCommon(final String className, final String methodName, final String parameterName,
+					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						true);
+				parameterName_ = parameterName;
+			}
+			public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+
+			}
+			
+			protected final String parameterName_;
+		}
+		public static class RTToStringCode extends RTBigIntegerCommon {
+			public RTToStringCode(final StaticScope methodEnclosedScope) {
+				super("Integer", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTBigIntegerObject;
+				final RTBigIntegerObject intObject = (RTBigIntegerObject)self;
+				final long iRetval = intObject.intValue();
+				final RTStringObject retval = new RTStringObject(String.valueOf(iRetval));
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("Integer"); }
@@ -191,6 +306,58 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTDoubleClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
+		public static class RTDoubleCommon extends RTMessage {
+			public RTDoubleCommon(final String className, final String methodName, final String parameterName,
+					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						true);
+				parameterName_ = parameterName;
+			}
+			public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+
+			}
+			
+			protected final String parameterName_;
+		}
+		public static class RTToStringCode extends RTDoubleCommon {
+			public RTToStringCode(final StaticScope methodEnclosedScope) {
+				super("double", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTDoubleObject;
+				final RTDoubleObject intObject = (RTDoubleObject)self;
+				final double dRetval = intObject.doubleValue();
+				final RTStringObject retval = new RTStringObject(String.valueOf(dRetval));
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("double"); }
@@ -198,8 +365,134 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	public static class RTStringClass extends RTClass {
 		public RTStringClass(final TypeDeclaration associatedType) {
 			super(associatedType);
-			super.populateNameToMethodMap();
+			// super.populateNameToMethodMap();
 		}
+		public static class RTStringCommon extends RTMessage {
+			public RTStringCommon(final String className, final String methodName, final List<String> parameterNames,
+					final List<String> parameterTypeNames, final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						false);
+			}
+			public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+
+			}
+		}
+		public static class RTLengthCode extends RTStringCommon {
+			public RTLengthCode(final StaticScope methodEnclosedScope) {
+				super("String", "length", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject stringObject = (RTStringObject)self;
+				final long iRetval = stringObject.stringValue().length();
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		public static class RTSubstringCode extends RTStringCommon {
+			public RTSubstringCode(final StaticScope methodEnclosedScope) {
+				super("String", "substring", asList("end", "start"), asList("int", "int"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject stringObject = (RTStringObject)self;
+				final RTStackable rTFrom = dynamicScope.getObject("start");
+				final RTStackable rTTo = dynamicScope.getObject("end");
+				assert rTFrom instanceof RTObject;
+				assert rTTo instanceof RTObject;
+				final RTObject from = (RTObject)rTFrom;
+				final RTObject to = (RTObject) rTTo;
+				final RTStringObject retval = stringObject.substring(from, to);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		public static class RTToStringCode extends RTStringCommon {
+			public RTToStringCode(final StaticScope methodEnclosedScope) {
+				super("String", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject retval = (RTStringObject)self;
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		public static class RTPlusCode extends RTStringCommon {
+			public RTPlusCode(final StaticScope methodEnclosedScope) {
+				super("String", "+", asList("rhs"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject firstStringObject = (RTStringObject)self;
+				final String sRetval1 = firstStringObject.stringValue();
+				final RTStackable secondStringObject = dynamicScope.getObject("rhs");
+				assert secondStringObject instanceof RTStringObject;
+				final RTStringObject rhs = (RTStringObject)secondStringObject;
+				final String sRetval2 = rhs.stringValue();
+				final RTStringObject retval = new RTStringObject(sRetval1 + sRetval2);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		public static class RTIndexOfCode extends RTStringCommon {
+			public RTIndexOfCode(final StaticScope methodEnclosedScope) {
+				super("String", "indexOf", asList("searchString"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject thisStringObject = (RTStringObject)self;
+				final String thisString = thisStringObject.stringValue();
+				final RTStackable searchStringObject = dynamicScope.getObject("searchString");
+				assert searchStringObject instanceof RTStringObject;
+				final RTStringObject searchString = (RTStringObject)searchStringObject;
+				final String sstring = searchString.stringValue();
+				final long lRetval = thisString.indexOf(sstring);
+				final RTIntegerObject retval = new RTIntegerObject(lRetval);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("String"); }
@@ -208,6 +501,56 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTBooleanClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
+		public static class RTBooleanCommon extends RTMessage {
+			public RTBooleanCommon(final String className, final String methodName, final String parameterName,
+					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						true);
+			}
+			public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+
+			}
+		}
+		public static class RTToStringCode extends RTBooleanCommon {
+			public RTToStringCode(final StaticScope methodEnclosedScope) {
+				super("boolean", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTBooleanObject;
+				RTBooleanObject bo = (RTBooleanObject)self;
+				final boolean bRetval = bo.value();
+				final RTStringObject retval = new RTStringObject(bRetval? "true": "false");
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("boolean"); }

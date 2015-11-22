@@ -22,6 +22,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 import java.util.ArrayList;
 import java.util.List;
+import static java.util.Arrays.asList;
 
 /*
  * Trygve IDE
@@ -91,7 +92,7 @@ public final class MathClass {
 	public static class RTMathCommon extends RTMessage {
 		public RTMathCommon(final String className, final String methodName, final String parameterName,
 				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 					true);
 			parameterName_ = parameterName;
 		}

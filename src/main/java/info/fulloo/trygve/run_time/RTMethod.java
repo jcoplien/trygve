@@ -43,7 +43,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RTMethod extends RTCode {
-	public RTMethod(String name, MethodDeclaration methodDeclaration) {
+	public RTMethod(final String name, final MethodDeclaration methodDeclaration) {
 		super();
 		
 		// Get ClassType as a handle to template information
@@ -97,7 +97,7 @@ public class RTMethod extends RTCode {
 		initializationList_ = new HashMap<String, RTExpression>();
 	}
 
-	public void addCode(List<RTCode> code) {
+	public void addCode(final List<RTCode> code) {
 		for (RTCode aCode : code) {
 			this.addCode(aCode);
 		}
@@ -115,7 +115,7 @@ public class RTMethod extends RTCode {
 		}
 	}
 
-	public void addCode(RTCode code) {
+	public void addCode(final RTCode code) {
 		this.growListIfNecessary();
 		// We're adding code into the middle of a list.
 		// The constructor added the return statement as the
@@ -210,7 +210,7 @@ public class RTMethod extends RTCode {
 		return retval;
 	}
 
-	@Override public void setNextCode(RTCode next) {
+	@Override public void setNextCode(final RTCode next) {
 		if (0 < nextCodeIndex_) {
 			code_[nextCodeIndex_].setNextCode(next);
 		}

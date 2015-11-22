@@ -25,6 +25,7 @@ package info.fulloo.trygve.run_time;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -616,7 +617,7 @@ public abstract class RTExpression extends RTCode {
 				TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.templateInstantiationInfo();
 				
 				if (null == templateInstantiationInfo) {
-					RTClass rTclassType = nearestEnclosingType_ instanceof RTClass? (RTClass)nearestEnclosingType_: null;
+					final RTClass rTclassType = nearestEnclosingType_ instanceof RTClass? (RTClass)nearestEnclosingType_: null;
 					templateInstantiationInfo = null == rTclassType? null: rTclassType.templateInstantiationInfo();
 				}
 				
@@ -944,21 +945,30 @@ public abstract class RTExpression extends RTCode {
 			return templateInstantiationInfo_;
 		}
 		protected static ActualArgumentList buildArguments(final String className, final String methodName,
-				final String parameterName, final String parameterTypeName, final StaticScope enclosedMethodScope,
+				final List<String> parameterNames, final List<String> parameterTypeNames, final StaticScope enclosedMethodScope,
 				final boolean isStatic) {
 			
-			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
 			final ActualArgumentList argList = new ActualArgumentList();
 			final Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
-			
 			assert null != enclosedMethodScope;
 			
-			final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType, enclosedMethodScope);
-			argList.addActualArgument(theArgument);
+			if (null != parameterNames) {
+				final Iterator<String> typeNameIter = parameterTypeNames.iterator();
+				for (final String parameterName : parameterNames) {
+					assert typeNameIter.hasNext();
+					final String parameterTypeName = typeNameIter.next();
+					final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
+
+					final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType, enclosedMethodScope);
+					argList.addActualArgument(theArgument);
+				}
+			}
+			
 			if (false == isStatic) {
 				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
 				argList.addActualArgument(self);
 			}
+			
 			return argList;
 		}
 		public boolean isStatic() {

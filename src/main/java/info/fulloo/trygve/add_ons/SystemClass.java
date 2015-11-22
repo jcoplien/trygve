@@ -45,9 +45,10 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import static java.util.Arrays.asList;
 
 public final class SystemClass {
-	private static void addTypedPrintStreamPrintDeclaration(String methodName, Type argumentType) {
+	private static void addTypedPrintStreamPrintDeclaration(final String methodName, final Type argumentType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
 		final FormalParameterList formals = new FormalParameterList();
@@ -137,7 +138,7 @@ public final class SystemClass {
 	
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName, final StaticScope enclosingMethodScope) {
-			super("println", RTPrintCommon.buildArguments(className, methodName, parameterName, parameterTypeName, enclosingMethodScope, false), printStreamType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super("println", RTPrintCommon.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), printStreamType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {

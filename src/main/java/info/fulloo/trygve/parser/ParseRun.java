@@ -43,7 +43,7 @@ import info.fulloo.trygve.semantic_analysis.Program;
 public class ParseRun {
 	final String grammarName = "Kant";
 	final String startRuleName = "program";
-	public ParseRun(final String input, TextEditorGUI gui)
+	public ParseRun(final String input, final TextEditorGUI gui)
 	{
         final ParsingData parsingData = new ParsingData();
         Class<? extends Parser> parserClass = null;
@@ -69,13 +69,13 @@ public class ParseRun {
         		
         		this.generateCode(parsingData);
         	}
-        	catch (NoSuchMethodException nsme) {
+        	catch (final NoSuchMethodException nsme) {
         		System.err.println("No method for rule "+startRuleName+" or it has arguments");
         	}
-        	catch (InvocationTargetException ite) {
+        	catch (final InvocationTargetException ite) {
         		System.err.println("InvocationTargetException");
         	}
-        	catch (IllegalAccessException iae) {
+        	catch (final IllegalAccessException iae) {
         		System.err.println("IllegalAccessException");
         	}
         }
@@ -86,23 +86,23 @@ public class ParseRun {
 	    }
 	}
 	
-	private void pass1(ParsingData parsingData, ParserRuleContext tree) {
+	private void pass1(final ParsingData parsingData, final ParserRuleContext tree) {
         ParseTreeWalker.DEFAULT.walk(new Pass1Listener(parsingData), tree);
 	}
 
-	private void pass2(ParsingData parsingData, ParserRuleContext tree) {
+	private void pass2(final ParsingData parsingData, final ParserRuleContext tree) {
         ParseTreeWalker.DEFAULT.walk(new Pass2Listener(parsingData), tree);
 	}
 
-	private void pass3(ParsingData parsingData, ParserRuleContext tree) {
+	private void pass3(final ParsingData parsingData, final ParserRuleContext tree) {
         ParseTreeWalker.DEFAULT.walk(new Pass3Listener(parsingData), tree);
 	}
 	
-	private void pass4(ParsingData parsingData, ParserRuleContext tree) {
+	private void pass4(final ParsingData parsingData, final ParserRuleContext tree) {
         ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
-	private void generateCode(ParsingData parsingData) {
+	private void generateCode(final ParsingData parsingData) {
 		final Program program = Program.program();
 		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData);
 		codeGenerator.compile();

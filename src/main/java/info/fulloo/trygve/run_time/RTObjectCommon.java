@@ -585,6 +585,23 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public RTStringObject dup() {
 			return new RTStringObject(foobar_);
 		}
+		RTStringObject substring(final RTObject rTStart, final RTObject rTEnd) {
+			RTStringObject retval = null;
+			final RTIntegerObject start = (RTIntegerObject)rTStart;
+			final RTIntegerObject end = (RTIntegerObject)rTEnd;
+			final long iStart = start.intValue();
+			final long iEnd = end.intValue();
+			final String sRetval = foobar_.substring((int)iStart, (int)iEnd);
+			retval = new RTStringObject(sRetval);
+			return retval;
+		}
+		RTIntegerObject indexOf(final RTObject arg) {
+			final RTStringObject rTSearchString = (RTStringObject)arg;
+			final String searchString = rTSearchString.stringValue();
+			final long lRetval = foobar_.indexOf(searchString);
+			final RTIntegerObject retval = new RTIntegerObject(lRetval);
+			return retval;
+		}
 
 		private String foobar_;
 	}

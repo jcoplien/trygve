@@ -55,7 +55,6 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.mylibrary.SimpleList;
-import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 public class StaticScope {
 	public StaticScope(final StaticScope parentScope) {
@@ -137,6 +136,8 @@ public class StaticScope {
 
 	private static void reinitializeBuiltIns() {
 		if (null == globalScope_.lookupTypeDeclaration("int")) {
+			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
+			
 			final Type intType = reinitializeInt("int");
 			
 			reinitializeInt("Integer");
@@ -144,12 +145,13 @@ public class StaticScope {
 			reinitializeDouble(intType);
 		
 			reinitializeString(intType);
+			
+			reinitializeCombos(intType);
+			
+			reinitializeBoolean();
 		
 			final Type voidType = new BuiltInType("void");
 			globalScope_.declareType(voidType);
-			
-			final Type booleanType = new BuiltInType("boolean");
-			globalScope_.declareType(booleanType);
 			
 			final Type objectType = new BuiltInType("Object");
 			globalScope_.declareType(objectType);
@@ -201,10 +203,11 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
 		globalScope_.declareType(intType);
-		globalScope_.declareClass(intDeclaration);	// missing for other types? FIXME
-		
+		globalScope_.declareClass(intDeclaration);
 		intType.enclosedScope().setDeclaration(intDeclaration);
 		intDeclaration.setType(intType);
+		
+		typeDeclarationList_.add(intDeclaration);
 		
 		return intType;
 	}
@@ -216,8 +219,8 @@ public class StaticScope {
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, 0);
-		final ObjectDeclaration self = new ObjectDeclaration("t$his", doubleType, 0);
-		final FormalParameterList formals = new FormalParameterList();
+		ObjectDeclaration self = new ObjectDeclaration("t$his", doubleType, 0);
+		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		MethodDeclaration methodDecl = new MethodDeclaration("+", doubleType.enclosedScope(), doubleType, Public, 0, false);
@@ -250,10 +253,12 @@ public class StaticScope {
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
 		globalScope_.declareType(doubleType);
-		globalScope_.declareClass(doubleDeclaration);	// missing for other types? FIXME
+		globalScope_.declareClass(doubleDeclaration);
 
 		doubleType.enclosedScope().setDeclaration(doubleDeclaration);
 		doubleDeclaration.setType(doubleType);
+		
+		typeDeclarationList_.add(doubleDeclaration);
 	}
 	
 	private static void reinitializeString(final Type intType) {
@@ -278,12 +283,97 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
 		
+		methodDecl = new MethodDeclaration("substring", stringType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", stringType, 0);
+		final ObjectDeclaration start = new ObjectDeclaration("start", intType, 0),
+				                end = new ObjectDeclaration("end", intType, 0);
+		formals.addFormalParameter(end);
+		formals.addFormalParameter(start);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		stringType.enclosedScope().declareMethod(methodDecl);
+		
+		methodDecl = new MethodDeclaration("indexOf", stringType.enclosedScope(), intType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", stringType, 0);
+		final ObjectDeclaration searchString = new ObjectDeclaration("searchString", stringType, 0);
+		formals.addFormalParameter(searchString);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		stringType.enclosedScope().declareMethod(methodDecl);
+		
+		methodDecl = new MethodDeclaration("toString", stringType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", stringType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		stringType.enclosedScope().declareMethod(methodDecl);
+		
 		globalScope_.declareType(stringType);
 		stringDeclaration.setType(stringType);
-		globalScope_.declareClass(stringDeclaration);	// missing for other types? FIXME
+		globalScope_.declareClass(stringDeclaration);
 		
 		stringType.enclosedScope().setDeclaration(stringDeclaration);
 		stringDeclaration.setType(stringType);
+		
+		typeDeclarationList_.add(stringDeclaration);
+	}
+	
+	private static void reinitializeBoolean() {
+		final Type booleanType = new BuiltInType("boolean");
+		
+		final StaticScope booleanScope = new StaticScope(StaticScope.globalScope());
+		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, /*Base Class*/ null, 0);
+		booleanScope.setDeclaration(booleanClassDecl);
+		
+		globalScope_.declareType(booleanType);
+		booleanClassDecl.setType(booleanType);
+		globalScope_.declareClass(booleanClassDecl);
+		
+		typeDeclarationList_.add(booleanClassDecl);
+	}
+	
+	private static void reinitializeCombos(final Type intType) {
+		MethodDeclaration methodDecl = null;
+		FormalParameterList formals = null;
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		ObjectDeclaration self = null;
+		
+		// Anticlimatic...
+		final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+		assert null != stringType;
+		final Type doubleType = StaticScope.globalScope().lookupTypeDeclaration("double");
+		assert null != doubleType;
+		
+		methodDecl = new MethodDeclaration("toString", doubleType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", doubleType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		doubleType.enclosedScope().declareMethod(methodDecl);
+		
+		methodDecl = new MethodDeclaration("toString", intType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", intType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		intType.enclosedScope().declareMethod(methodDecl);
+		
+		final Type bigIntegerType = StaticScope.globalScope().lookupTypeDeclaration("Integer");
+		assert null != bigIntegerType;
+		methodDecl = new MethodDeclaration("toString", bigIntegerType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", bigIntegerType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		bigIntegerType.enclosedScope().declareMethod(methodDecl);
 	}
 	
 	public static StaticScope globalScope() { return globalScope_; }
@@ -949,10 +1039,10 @@ public class StaticScope {
 				for (MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", lookupExistingEntry.signature().getText(), "« in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
 						break;
 					} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", lookupExistingEntry.signature().getText(), "« in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
 						break;
 					}
 				}
@@ -1096,6 +1186,10 @@ public class StaticScope {
 		return retval;
 	}
 	
+	public static ArrayList<TypeDeclaration> typeDeclarationList() {
+		return typeDeclarationList_;
+	}
+	
 	private StaticScope parentScope_;
 	private SimpleList subScopes_;
 	protected Declaration associatedDeclaration_;
@@ -1110,6 +1204,7 @@ public class StaticScope {
 	private Map<String,RoleDeclaration> roleDeclarationDictionary_;
 	private boolean hasDeclarationsThatAreLostBetweenPasses_;
 	private TemplateInstantiationInfo templateInstantiationInfo_;
+	private static ArrayList<TypeDeclaration> typeDeclarationList_;
 	
 	private static StaticScope globalScope_ = new StaticScope(null);
 }
