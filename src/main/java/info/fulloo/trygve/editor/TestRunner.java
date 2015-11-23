@@ -27,7 +27,7 @@ public class TestRunner {
 	private enum TestSource { UseUrl, UseLocalFile };
 	TestSource testSource_;
 	private final static String urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
-	private final static String localTestDir_ = "file:///Users/cope/Programs/Trygve/";
+	private final static String localTestDir_ = "file:tests/";
 	private final static String localPrefix_ = "/Users/cope/Programs/Trygve/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
