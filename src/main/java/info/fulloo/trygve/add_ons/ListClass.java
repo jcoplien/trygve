@@ -51,6 +51,25 @@ import static java.util.Arrays.asList;
  */
 
 public final class ListClass {
+	private static void declareListMethod(final String methodSelector, final Type returnType,
+			final String paramName,
+			final Type paramType) {
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		
+		final FormalParameterList formals = new FormalParameterList();
+		if (null != paramName) {
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			formals.addFormalParameter(formalParameter);
+		}
+		ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
+		formals.addFormalParameter(self);
+		StaticScope methodScope = new StaticScope(listType_.enclosedScope());
+		MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		methodDecl.setReturnType(returnType);
+		methodDecl.signature().setHasConstModifier(false);
+		listType_.enclosedScope().declareMethod(methodDecl);
+	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -72,85 +91,21 @@ public final class ListClass {
 			templateDecl.setType(listType_);
 			typeDeclarationList_.add(templateDecl);
 			
-			final AccessQualifier Public = AccessQualifier.PublicAccess;
+			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			FormalParameterList formals = new FormalParameterList();
-			ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-			MethodDeclaration methodDecl = new MethodDeclaration("List", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(listType_);
-			methodDecl.signature().setHasConstModifier(false);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("List", listType_, null, null);
 			
-			formals = new FormalParameterList();
-			ObjectDeclaration formalParameter = new ObjectDeclaration("element", T, 0);
-			formals.addFormalParameter(formalParameter);
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("add", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(voidType);
-			methodDecl.signature().setHasConstModifier(false);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("add", voidType, "element", T);
 			
-			formalParameter = new ObjectDeclaration("theIndex", integerType, 0);
-			formals = new FormalParameterList();
-			formals.addFormalParameter(formalParameter);
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("get", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(T);
-			methodDecl.signature().setHasConstModifier(true);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("get", T, "theIndex", integerType);
 			
-			formalParameter = new ObjectDeclaration("element", T, 0);
-			formals = new FormalParameterList();
-			formals.addFormalParameter(formalParameter);
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("indexOf", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(integerType);
-			methodDecl.signature().setHasConstModifier(true);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("indexOf", intType, "element", T);
 			
-			formalParameter = new ObjectDeclaration("element", T, 0);
-			formals = new FormalParameterList();
-			formals.addFormalParameter(formalParameter);
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("contains", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(booleanType);
-			methodDecl.signature().setHasConstModifier(true);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("contains", booleanType, "element", T);
 			
-			formals = new FormalParameterList();
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("size", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(integerType);
-			methodDecl.signature().setHasConstModifier(true);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("size", intType, null, null);
 			
-			formals = new FormalParameterList();
-			self = new ObjectDeclaration("this", listType_, 0);
-			formals.addFormalParameter(self);
-			methodScope = new StaticScope(listType_.enclosedScope());
-			methodDecl = new MethodDeclaration("isEmpty", methodScope, listType_, Public, 0, false);
-			methodDecl.addParameterList(formals);
-			methodDecl.setReturnType(booleanType);
-			methodDecl.signature().setHasConstModifier(true);
-			listType_.enclosedScope().declareMethod(methodDecl);
+			declareListMethod("isEmpty", booleanType, null, null);
 			
 			// Declare the type
 			globalScope.declareType(listType_);

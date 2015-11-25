@@ -493,6 +493,28 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 		}
 		
+		public static class RTContainsCode extends RTStringCommon {
+			public RTContainsCode(final StaticScope methodEnclosedScope) {
+				super("String", "contains", asList("searchString"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("t$his");
+				assert self instanceof RTStringObject;
+				final RTStringObject thisStringObject = (RTStringObject)self;
+				final String thisString = thisStringObject.stringValue();
+				final RTStackable searchStringObject = dynamicScope.getObject("searchString");
+				assert searchStringObject instanceof RTStringObject;
+				final RTStringObject searchString = (RTStringObject)searchStringObject;
+				final String sstring = searchString.stringValue();
+				final boolean bRetval = thisString.contains(sstring);
+				final RTBooleanObject retval = new RTBooleanObject(bRetval);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("String"); }

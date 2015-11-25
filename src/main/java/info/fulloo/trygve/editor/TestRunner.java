@@ -100,7 +100,7 @@ public class TestRunner {
 		String testResults = gui_.errorPanelContents();
 		String lastTestResults = testResults;
 		passCounter_ = failCounter_ = 0;
-		for (String filename : fileNames_) {
+		for (final String filename : fileNames_) {
 			runATest(filename);
 			if (gui_.compiledWithoutError() == false) {
 				// break;
@@ -151,6 +151,28 @@ public class TestRunner {
 			gui_.runButtonActionPerformed(null);
 		}
 	}
+	private void printHelper(String s1, String s2, int i) {
+		System.err.print(i);
+		System.err.print(": (\\0");
+		System.err.print(Integer.toOctalString(s1.charAt(i)));
+		System.err.print("), (\\0");
+		System.err.print(Integer.toOctalString(s2.charAt(i)));
+		System.err.println(").");
+	}
+	private void specialErrorAnalysis(String s1, String s2) {
+		for (int i = 0; i < s1.length() && i < s2.length(); i++) {
+			if (s1.charAt(i) != s2.charAt(i)) {
+				System.err.print("Difference in test results at byte offset: ");
+				printHelper(s1, s2, i);
+				i++;
+				if (i < s1.length() && i < s2.length()) {
+					System.err.print("Next byte: ");
+					printHelper(s1, s2, i);
+				}
+				break;
+			}
+		}
+	}
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
 		final String testResults = thisTestResults(lastTestResults, rawTestResults);
 		final String goldContents = thisRunGoldContents();
@@ -162,6 +184,7 @@ public class TestRunner {
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
 			passCounter_++;
 		} else {
+			specialErrorAnalysis(testResults, goldContents);
 			gui_.console().redirectErr(java.awt.Color.RED, null);
 			System.err.println("Test failed");
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);

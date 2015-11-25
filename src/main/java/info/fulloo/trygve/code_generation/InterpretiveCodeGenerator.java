@@ -93,6 +93,7 @@ import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.RTStringClass;
 import info.fulloo.trygve.run_time.RTClass.RTDoubleClass;
 import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
+import info.fulloo.trygve.run_time.RTClass.RTBooleanClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
@@ -420,6 +421,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				code.add(new RTStringClass.RTPlusCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("indexOf")) {
 				code.add(new RTStringClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("contains")) {
+				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -514,6 +517,28 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
+	private void processBooleanCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("toString")) {
+				code.add(new RTBooleanClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+			
+			assert code.size() > 0;
+			
+			rtMethod.addCode(code);
+		} else {
+			assert false;
+		}
+	}
+	
 	private void compileMethodInScope(final MethodDeclaration methodDeclaration, final StaticScope scope) {
 		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
 		// Null body parts here for "add" declaration in simpletemplate.k
@@ -554,6 +579,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("Integer")) {
 				processIntegerCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("boolean")) {
+				processBooleanCall(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {

@@ -24,10 +24,12 @@ package info.fulloo.trygve.semantic_analysis;
  */
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MathClass;
@@ -146,9 +148,9 @@ public class StaticScope {
 		
 			reinitializeString(intType);
 			
-			reinitializeCombos(intType);
-			
 			reinitializeBoolean();
+			
+			reinitializeCombos(intType);
 		
 			final Type voidType = new BuiltInType("void");
 			globalScope_.declareType(voidType);
@@ -261,57 +263,41 @@ public class StaticScope {
 		typeDeclarationList_.add(doubleDeclaration);
 	}
 	
-	private static void reinitializeString(final Type intType) {
-		final Type stringType = new BuiltInType("String");
-		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
-		
+	private static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
+			final List<String> paramNames, final List<Type> paramTypes) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", stringType, 0);
 		ObjectDeclaration self = new ObjectDeclaration("t$his", stringType, 0);
 		FormalParameterList formals = new FormalParameterList();
-		formals.addFormalParameter(formalParameter);
+		if (null != paramNames) {
+			final Iterator<Type> typeIter = paramTypes.iterator();
+			for (final String paramName : paramNames) {
+				final Type paramType = typeIter.next();
+			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			    formals.addFormalParameter(formalParameter);
+			}
+		}
 		formals.addFormalParameter(self);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", stringType.enclosedScope(), stringType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, stringType.enclosedScope(), returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
+	}
+	
+	private static void reinitializeString(final Type intType) {
+		final Type stringType = new BuiltInType("String");
+		final Type booleanType = new BuiltInType("boolean");
+		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
 		
-		methodDecl = new MethodDeclaration("length", stringType.enclosedScope(), intType, Public, 0, false);
-		methodDecl.signature().setHasConstModifier(true);
-		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", stringType, 0);
-		formals.addFormalParameter(self);
-		methodDecl.addParameterList(formals);
-		stringType.enclosedScope().declareMethod(methodDecl);
+		addStringMethod(stringType, "+", stringType, asList("rhs"), asList(stringType));
 		
-		methodDecl = new MethodDeclaration("substring", stringType.enclosedScope(), stringType, Public, 0, false);
-		methodDecl.signature().setHasConstModifier(true);
-		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", stringType, 0);
-		final ObjectDeclaration start = new ObjectDeclaration("start", intType, 0),
-				                end = new ObjectDeclaration("end", intType, 0);
-		formals.addFormalParameter(end);
-		formals.addFormalParameter(start);
-		formals.addFormalParameter(self);
-		methodDecl.addParameterList(formals);
-		stringType.enclosedScope().declareMethod(methodDecl);
+		addStringMethod(stringType, "length", intType, null, null);
 		
-		methodDecl = new MethodDeclaration("indexOf", stringType.enclosedScope(), intType, Public, 0, false);
-		methodDecl.signature().setHasConstModifier(true);
-		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", stringType, 0);
-		final ObjectDeclaration searchString = new ObjectDeclaration("searchString", stringType, 0);
-		formals.addFormalParameter(searchString);
-		formals.addFormalParameter(self);
-		methodDecl.addParameterList(formals);
-		stringType.enclosedScope().declareMethod(methodDecl);
+		addStringMethod(stringType, "substring", stringType, asList("end", "start"), asList(intType, intType));
 		
-		methodDecl = new MethodDeclaration("toString", stringType.enclosedScope(), stringType, Public, 0, false);
-		methodDecl.signature().setHasConstModifier(true);
-		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", stringType, 0);
-		formals.addFormalParameter(self);
-		methodDecl.addParameterList(formals);
-		stringType.enclosedScope().declareMethod(methodDecl);
+		addStringMethod(stringType, "indexOf", intType, asList("searchString"), asList(stringType));
+		
+		addStringMethod(stringType, "contains", booleanType, asList("searchString"), asList(stringType));
+		
+		addStringMethod(stringType, "toString", stringType, null, null);
 		
 		globalScope_.declareType(stringType);
 		stringDeclaration.setType(stringType);
@@ -326,7 +312,7 @@ public class StaticScope {
 	private static void reinitializeBoolean() {
 		final Type booleanType = new BuiltInType("boolean");
 		
-		final StaticScope booleanScope = new StaticScope(StaticScope.globalScope());
+		final StaticScope booleanScope = booleanType.enclosedScope();
 		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, /*Base Class*/ null, 0);
 		booleanScope.setDeclaration(booleanClassDecl);
 		
@@ -364,6 +350,15 @@ public class StaticScope {
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
+		
+		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
+		methodDecl = new MethodDeclaration("toString", booleanType.enclosedScope(), stringType, Public, 0, false);
+		methodDecl.signature().setHasConstModifier(true);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("t$his", booleanType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		booleanType.enclosedScope().declareMethod(methodDecl);
 		
 		final Type bigIntegerType = StaticScope.globalScope().lookupTypeDeclaration("Integer");
 		assert null != bigIntegerType;
@@ -940,28 +935,28 @@ public class StaticScope {
 	}
 	
 	public List<ObjectDeclaration> objectDeclarations() {
-		List<ObjectDeclaration> retval = new ArrayList<ObjectDeclaration>();
+		final List<ObjectDeclaration> retval = new ArrayList<ObjectDeclaration>();
 		for (Map.Entry<String, ObjectDeclaration> objectDecl : objectDeclarationDictionary_.entrySet()) {
 			retval.add(objectDecl.getValue());
 		}
 		return retval;
 	}
 	public List<ClassDeclaration> classDeclarations() {
-		List<ClassDeclaration> retval = new ArrayList<ClassDeclaration>();
+		final List<ClassDeclaration> retval = new ArrayList<ClassDeclaration>();
 		for (Map.Entry<String, ClassDeclaration> classDecl : classDeclarationDictionary_.entrySet()) {
 			retval.add(classDecl.getValue());
 		}
 		return retval;
 	}
 	public List<ContextDeclaration> contextDeclarations() {
-		List<ContextDeclaration> retval = new ArrayList<ContextDeclaration>();
+		final List<ContextDeclaration> retval = new ArrayList<ContextDeclaration>();
 		for (Map.Entry<String, ContextDeclaration> contextDecl : contextDeclarationDictionary_.entrySet()) {
 			retval.add(contextDecl.getValue());
 		}
 		return retval;
 	}
 	public List<MethodDeclaration> methodDeclarations() {
-		List<MethodDeclaration> retval = new ArrayList<MethodDeclaration>();
+		final List<MethodDeclaration> retval = new ArrayList<MethodDeclaration>();
 		for (Map.Entry<String, ArrayList<MethodDeclaration>> iter : methodDeclarationDictionary_.entrySet()) {
 			for (MethodDeclaration mDecl : iter.getValue()) {
 				retval.add(mDecl);
@@ -970,7 +965,7 @@ public class StaticScope {
 		return retval;
 	}
 	public List<StagePropDeclaration> stagePropDeclarations() {
-		List<StagePropDeclaration> retval = new ArrayList<StagePropDeclaration>();
+		final List<StagePropDeclaration> retval = new ArrayList<StagePropDeclaration>();
 		for (Map.Entry<String, RoleDeclaration> stagePropDecl : roleDeclarationDictionary_.entrySet()) {
 			final Declaration d = stagePropDecl.getValue();
 			if (d instanceof StagePropDeclaration) {
@@ -980,7 +975,7 @@ public class StaticScope {
 		return retval;
 	}
 	public List<RoleDeclaration> roleDeclarations() {
-		List<RoleDeclaration> retval = new ArrayList<RoleDeclaration>();
+		final List<RoleDeclaration> retval = new ArrayList<RoleDeclaration>();
 		for (Map.Entry<String, RoleDeclaration> roleDecl : roleDeclarationDictionary_.entrySet()) {
 			retval.add(roleDecl.getValue());
 		}
@@ -997,7 +992,7 @@ public class StaticScope {
 	}
 	
 	public static class StaticRoleScope extends StaticScope {
-		public StaticRoleScope(StaticScope parentScope) {
+		public StaticRoleScope(final StaticScope parentScope) {
 			super(parentScope);
 			requiredMethodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
 		}
@@ -1026,7 +1021,7 @@ public class StaticScope {
 				super.declareMethod(decl);
 			}
 		}
-		public void declareRequiredMethod(MethodDeclaration decl) {
+		public void declareRequiredMethod(final MethodDeclaration decl) {
 			final String methodName = decl.name();
 			
 			final MethodDeclaration lookupExistingEntry = this.lookupMethodDeclaration(methodName,
@@ -1055,7 +1050,7 @@ public class StaticScope {
 			if (null != parentScope()) parentScope().checkMethodShadowing(decl);
 		}
 		public List<MethodDeclaration> methodDeclarations() {
-			List<MethodDeclaration> retval = super.methodDeclarations();
+			final List<MethodDeclaration> retval = super.methodDeclarations();
 
 			for (Map.Entry<String, ArrayList<MethodDeclaration>> iter : requiredMethodDeclarationDictionary_.entrySet()) {
 				for (MethodDeclaration mDecl : iter.getValue()) {
@@ -1064,8 +1059,8 @@ public class StaticScope {
 			}
 			return retval;
 		}
-		public MethodDeclaration lookupMethodDeclaration(String methodSelector, ActualOrFormalParameterList parameterList,
-				boolean ignoreSignature) {
+		public MethodDeclaration lookupMethodDeclaration(final String methodSelector, final ActualOrFormalParameterList parameterList,
+				final boolean ignoreSignature) {
 			MethodDeclaration retval = super.lookupMethodDeclaration(methodSelector, parameterList,
 					 ignoreSignature);
 			if (null == retval) {
@@ -1085,7 +1080,7 @@ public class StaticScope {
 			}
 			return retval;
 		}
-		public MethodDeclaration lookupMethodDeclarationIgnoringParameter(String methodSelector, ActualOrFormalParameterList parameterList,
+		public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
 				String paramToIgnore) {
 			MethodDeclaration retval = super.lookupMethodDeclarationIgnoringParameter(methodSelector, parameterList,
 					 paramToIgnore);
@@ -1116,7 +1111,7 @@ public class StaticScope {
 		final boolean retval = b.type().isBaseClassOf(a.type());
 		return retval;
 	}
-	public boolean canAccessDeclarationWithAccessibility(Declaration decl, AccessQualifier accessQualifier, int lineNumber) {
+	public boolean canAccessDeclarationWithAccessibility(final Declaration decl, final AccessQualifier accessQualifier, final int lineNumber) {
 		// Can this scope access the given declaration?
 		boolean retval = false;
 		StaticScope myEnclosingMethodScope = null, declsEnclosingMethodScope = null;
