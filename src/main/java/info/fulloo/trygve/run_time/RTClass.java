@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,9 +53,9 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		super(decl);
 		assert decl instanceof ClassDeclaration;
 		
-		stringToContextDeclMap_ = new HashMap<String, RTContext>();
-		stringToClassDeclMap_ = new HashMap<String, RTClass>();
-		nameToObjectDeclMap_ = new HashMap<String, RTObject>();
+		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
+		stringToClassDeclMap_ = new LinkedHashMap<String, RTClass>();
+		nameToObjectDeclMap_ = new LinkedHashMap<String, RTObject>();
 		RunTimeEnvironment.runTimeEnvironment_.addToListOfAllClasses(this);
 		
 		final Type rawClassType = decl.type();

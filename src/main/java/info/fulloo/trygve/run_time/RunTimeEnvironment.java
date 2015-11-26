@@ -24,7 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -41,10 +41,10 @@ public class RunTimeEnvironment {
 	public static RunTimeEnvironment runTimeEnvironment_;
 	public RunTimeEnvironment() {
 		super();
-		stringToRTContextMap_ = new HashMap<String, RTContext>();
-		stringToRTClassMap_ = new HashMap<String, RTClass>();
-		stringToRTInterfaceMap_ = new HashMap<String, RTInterface>();
-		pathToTypeMap_ = new HashMap<String, RTType>();
+		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
+		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
+		stringToRTInterfaceMap_ = new LinkedHashMap<String, RTInterface>();
+		pathToTypeMap_ = new LinkedHashMap<String, RTType>();
 		reboot();
 		runTimeEnvironment_ = this;
 		allClassList_ = new ArrayList<RTClass>();

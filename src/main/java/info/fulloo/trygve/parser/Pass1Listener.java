@@ -24,7 +24,7 @@ package info.fulloo.trygve.parser;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -386,7 +386,7 @@ public class Pass1Listener extends KantBaseListener {
 		// : '<' type_parameter (',' type_parameter)* '>'
 		// Pop from the expression stack and add to current template declaration
 		final TemplateDeclaration currentTemplateDecl = parsingData_.currentTemplateDeclaration();
-		Map<String,String> dupMap = new HashMap<String,String>();
+		Map<String,String> dupMap = new LinkedHashMap<String,String>();
 		final int numberOfActualParameters = ctx.type_parameter().size();
 		for (int i = 0; i < numberOfActualParameters; i++) {
 			final IdentifierExpression type_name = (IdentifierExpression)parsingData_.popExpression();

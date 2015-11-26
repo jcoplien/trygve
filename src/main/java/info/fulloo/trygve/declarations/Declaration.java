@@ -24,7 +24,7 @@ package info.fulloo.trygve.declarations;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Hashtable;
@@ -131,7 +131,7 @@ public abstract class Declaration implements BodyPart {
 			super(name);
 			lineNumber_ = lineNumber;
 			myEnclosedScope_ = myEnclosedScope;
-			stringToStaticObjectMap_ = new HashMap<String, ObjectDeclaration>();
+			stringToStaticObjectMap_ = new LinkedHashMap<String, ObjectDeclaration>();
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
@@ -339,7 +339,7 @@ public abstract class Declaration implements BodyPart {
 	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
 		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final int lineNumber) {
 			super(name, lineNumber, enclosedScope);
-			signatures_ = new HashMap<String, MethodSignature>();
+			signatures_ = new LinkedHashMap<String, MethodSignature>();
 		}
 		public void setType(final Type t) {
 			assert t instanceof InterfaceType;

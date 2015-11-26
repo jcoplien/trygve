@@ -24,7 +24,7 @@ package info.fulloo.trygve.parser;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Stack;
 
@@ -67,14 +67,14 @@ public class ParsingData {
 		forExpressionStack_ = new Stack<ForExpression>();
 		loopExpressionStack_ = new Stack<Expression>();
 		templateDeclarations_ = new Stack<TemplateDeclaration>();
-		breakableExpressions_ = new HashMap<String, BreakableExpression>();
+		breakableExpressions_ = new LinkedHashMap<String, BreakableExpression>();
 		whileExpressionStack_ = new Stack<WhileExpression>();
 		methodSignatureStack_ = new Stack<MethodSignature>();
 		exprAndDeclListStack_ = new Stack<ExprAndDeclList>();
 		blockExpressionStack_ = new Stack<BlockExpression>();
 		formalParameterLists_ = new Stack<FormalParameterList>();
 		switchExpressionStack_ = new Stack<SwitchExpression>();
-		breakableRTExpressions_ = new HashMap<String, RTBreakableExpression>();
+		breakableRTExpressions_ = new LinkedHashMap<String, RTBreakableExpression>();
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
 		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber

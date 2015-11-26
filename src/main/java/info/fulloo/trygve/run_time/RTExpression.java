@@ -24,7 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -2407,7 +2407,7 @@ public abstract class RTExpression extends RTCode {
 		public RTForCommon(ForExpression expr, RTType nearestEnclosingType) {
 			super();
 			
-			objectDeclarations_ = new HashMap<String, RTType>();
+			objectDeclarations_ = new LinkedHashMap<String, RTType>();
 			
 			// Copy from the compiler data, the local variable names
 			// declared in the FOR scope
@@ -2950,7 +2950,7 @@ public abstract class RTExpression extends RTCode {
 			
 			RTCode lastAdded = null;
 			last_ = new RTNullExpression();
-			cases_ = new HashMap<RTObject, RTExpressionList>();
+			cases_ = new LinkedHashMap<RTObject, RTExpressionList>();
 			defaultCase_ = null;
 			switchStack_.push(this);
 			switchExpression_ = RTExpression.makeExpressionFrom(expr.switchExpression(), enclosingType);
@@ -3507,7 +3507,7 @@ public abstract class RTExpression extends RTCode {
 			ctorCommon(expr);
 		}
 		private void ctorCommon(BlockExpression expr) {
-			objectDeclarations_ = new HashMap<String, RTType>();
+			objectDeclarations_ = new LinkedHashMap<String, RTType>();
 			
 			// Copy from the compiler data, the local variable names
 			// declared in the Block scope

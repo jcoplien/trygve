@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,12 +48,12 @@ public abstract class RTClassAndContextCommon implements RTType {
 		if (null == typeDeclaration) {
 			assert null != typeDeclaration;
 		}
-		stringToMethodDeclMap_ = new HashMap<String, Map<FormalParameterList, RTMethod>>();
-		nameToStaticObjectMap_ = new HashMap<String, RTObject>();
-		nameToStaticObjectTypeMap_ = new HashMap<String, Type>();
-		nameToRoleDeclMap_ = new HashMap<String, RTRole>();
-		nameToRoleBindingMap_ = new HashMap<String, RTObject>();
-		nameToTypeObjectMap_ = new HashMap<String, RTType>();
+		stringToMethodDeclMap_ = new LinkedHashMap<String, Map<FormalParameterList, RTMethod>>();
+		nameToStaticObjectMap_ = new LinkedHashMap<String, RTObject>();
+		nameToStaticObjectTypeMap_ = new LinkedHashMap<String, Type>();
+		nameToRoleDeclMap_ = new LinkedHashMap<String, RTRole>();
+		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+		nameToTypeObjectMap_ = new LinkedHashMap<String, RTType>();
 		typeDeclaration_ = typeDeclaration;
 		
 		// Get TemplateInstantiationInfo, if any
@@ -148,7 +148,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);
 		} else {
-			final Map<FormalParameterList, RTMethod> newVector = new HashMap<FormalParameterList, RTMethod>();
+			final Map<FormalParameterList, RTMethod> newVector = new LinkedHashMap<FormalParameterList, RTMethod>();
 			newVector.put(methodDecl.formalParameters(), methodDecl);
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}

@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 
@@ -32,7 +32,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		super(object);
 		// An object IS a scope
 		
-		nameToRoleBindingMap_ = new HashMap<String, RTObject>();
+		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
 		object.incrementReferenceCount();
 		
 		// So far this is used only for debugging
@@ -41,7 +41,7 @@ public class RTDynamicScope extends RTObjectCommon {
 	}
 	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope) {
 		super((RTType)null);
-		nameToRoleBindingMap_ = new HashMap<String, RTObject>();
+		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
 		
 		// So far this is used only for debugging
 		methodSelector_ = methodSelector;

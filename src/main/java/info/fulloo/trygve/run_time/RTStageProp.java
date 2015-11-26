@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
@@ -35,7 +35,7 @@ public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 		super(associatedDeclaration);
 		assert associatedDeclaration instanceof StagePropDeclaration;
 		associatedDeclaration_ = associatedDeclaration;
-		stringToContextDeclMap_ = new HashMap<String, RTContext>();
+		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 	}
 	public StagePropDeclaration associatedDeclaration() {
 		return associatedDeclaration_;
@@ -75,7 +75,7 @@ public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 		return null;
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
-		return new HashMap<String, RTRole>();
+		return new LinkedHashMap<String, RTRole>();
 	}
 	public boolean isArray() {
 		return associatedDeclaration_ instanceof StagePropArrayDeclaration;

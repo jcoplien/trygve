@@ -24,7 +24,7 @@ package info.fulloo.trygve.declarations;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +49,8 @@ public abstract class Type implements ExpressionStackAPI
 	public Type(final StaticScope enclosedScope) {
 		super();
 		enclosedScope_ = enclosedScope;
-		staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
-		staticObjects_ = new HashMap<String, RTCode>();
+		staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
+		staticObjects_ = new LinkedHashMap<String, RTCode>();
 	}
 	public StaticScope enclosedScope() {
 		return enclosedScope_;
@@ -169,7 +169,7 @@ public abstract class Type implements ExpressionStackAPI
 			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
 			assert null != newEnclosedScope.parentScope();
 			enclosedScope_ = newEnclosedScope;
-			staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
+			staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
 			for (Map.Entry<String,ObjectDeclaration> iter : nominalType.staticObjectDeclarationDictionary_.entrySet()) {
 				final String name = iter.getKey();
 				final ObjectDeclaration decl = iter.getValue();
@@ -177,7 +177,7 @@ public abstract class Type implements ExpressionStackAPI
 				staticObjectDeclarationDictionary_.put(new String(name), declCopy);
 			}
 			
-			staticObjects_ = new HashMap<String, RTCode>();
+			staticObjects_ = new LinkedHashMap<String, RTCode>();
 			for (final Map.Entry<String,RTCode> iter : nominalType.staticObjects_.entrySet()) {
 				final String name = iter.getKey();
 				final RTCode programElement = iter.getValue();
@@ -262,7 +262,7 @@ public abstract class Type implements ExpressionStackAPI
 		public InterfaceType(final String name, final StaticScope enclosedScope) {
 			super(enclosedScope);
 			name_ = name;
-			selectorSignatureMap_ = new HashMap<String, List<MethodSignature>>();
+			selectorSignatureMap_ = new LinkedHashMap<String, List<MethodSignature>>();
 		}
 		@Override public String name() {
 			return name_;

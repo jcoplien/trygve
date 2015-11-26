@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,13 +36,13 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public class RTContext extends RTClassAndContextCommon implements RTType, RTContextInstance {
 	public RTContext(final TypeDeclaration decl) {
 		super(decl);
-		stringToContextDeclMap_ = new HashMap<String, RTContext>();
-		stringToClassDeclMap_ = new HashMap<String, RTClass>();
-		nameToTypeObjectMap_ = new HashMap<String, RTType>();
-		nameToRoleObjectMap_ = new HashMap<String, RTRole>();
-		nameToStagePropObjectMap_ = new HashMap<String, RTStageProp>();
-		nameToObjectDeclMap_ = new HashMap<String, RTObject>();
-		isRoleArrayMap_ = new HashMap<String, String>();
+		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
+		stringToClassDeclMap_ = new LinkedHashMap<String, RTClass>();
+		nameToTypeObjectMap_ = new LinkedHashMap<String, RTType>();
+		nameToRoleObjectMap_ = new LinkedHashMap<String, RTRole>();
+		nameToStagePropObjectMap_ = new LinkedHashMap<String, RTStageProp>();
+		nameToObjectDeclMap_ = new LinkedHashMap<String, RTObject>();
+		isRoleArrayMap_ = new LinkedHashMap<String, String>();
 		
 		// Contexts have a special administrative tag-along, used
 		// initially for tracking its Role-players
@@ -143,9 +143,9 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 	public static class RTContextInfo extends RTObjectCommon {
 		public RTContextInfo(final RTContextObject theContext) {
 			super((RTType)null);	// we don't use the type info
-			rolePlayers_ = new HashMap<String, RTObject>();
-			roleArrayPlayers_ = new HashMap<String, Map<Integer,RTObject>>();
-			isRoleArrayMap_ = new HashMap<String, String>();
+			rolePlayers_ = new LinkedHashMap<String, RTObject>();
+			roleArrayPlayers_ = new LinkedHashMap<String, Map<Integer,RTObject>>();
+			isRoleArrayMap_ = new LinkedHashMap<String, String>();
 			rTContext_ = theContext;
 		}
 		void addRolePlayer(final String roleName, final RTObject rolePlayer) {
@@ -154,7 +154,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		}
 		void addRoleArrayPlayer(final String roleArrayName, final int theIndex, final RTObject rolePlayer) {
 			if (roleArrayPlayers_.containsKey(roleArrayName) == false) {
-				roleArrayPlayers_.put(roleArrayName, new HashMap<Integer,RTObject>());
+				roleArrayPlayers_.put(roleArrayName, new LinkedHashMap<Integer,RTObject>());
 			}
 			roleArrayPlayers_.get(roleArrayName).put(Integer.valueOf(theIndex), rolePlayer);
 			rolePlayer.enlistAsRolePlayerForContext(roleArrayName, rTContext_);
@@ -163,7 +163,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			final Integer theIndex = Integer.valueOf((int)indexObject.intValue());
 			Map<Integer,RTObject> intToObjectMap = roleArrayPlayers_.get(roleArrayName);
 			if (null == intToObjectMap) {
-				intToObjectMap = new HashMap<Integer,RTObject>();
+				intToObjectMap = new LinkedHashMap<Integer,RTObject>();
 				roleArrayPlayers_.put(roleArrayName, intToObjectMap);
 			} else if (intToObjectMap.containsKey(theIndex)) {
 				this.removeRoleArrayPlayer(roleArrayName, theIndex.intValue());

@@ -28,7 +28,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,7 +36,7 @@ public class RTDateObject extends RTObjectCommon {
 	public RTDateObject(final RTType dateType) {
 		super(dateType);	// 
 		dateType_ = dateType;	// e.g. an instance of RTClass
-		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 
 	// I'm a little unhappy that these are copy-pasted. FIXME.
@@ -79,7 +79,7 @@ public class RTDateObject extends RTObjectCommon {
 		super(dateType);
 		theDate_ = (Calendar)theDate.clone();
 		dateType_ = dateType;
-		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	@Override public RTObject dup() {
 		final RTDateObject retval = new RTDateObject(theDate_, dateType_);

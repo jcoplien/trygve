@@ -25,6 +25,7 @@ package info.fulloo.trygve.run_time;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		baseType_ = arrayType.baseType();
 		referenceCount_ = 1;
 		theArray_ = new RTObject[size_];
-		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
 	public Type baseType() {
@@ -246,7 +247,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		for (int k = 0; k < size_; k++) {
 			theArray_[k] = theArray_[k].dup();
 		}
-		rolesIAmPlayingInContext_ = new HashMap<RTContextObject, List<String>>();
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	public RTIterator makeIterator() {
 		final RTIterator retval = new RTArrayIterator(this);

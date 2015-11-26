@@ -23,7 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +94,7 @@ public class RTMethod extends RTCode {
 		// unnerving but we can keep it all within this class.
 		nextCodeIndex_ = 0;
 
-		initializationList_ = new HashMap<String, RTExpression>();
+		initializationList_ = new LinkedHashMap<String, RTExpression>();
 	}
 
 	public void addCode(final List<RTCode> code) {

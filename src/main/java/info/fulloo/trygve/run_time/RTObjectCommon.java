@@ -41,8 +41,8 @@ import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
 public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
 	public RTObjectCommon(final RTType classs) {
 		classOrContext_ = classs;
-		objectMembers_ = new HashMap<String, RTObject>();
-		rTTypeMap_ = new HashMap<String, RTType>();
+		objectMembers_ = new LinkedHashMap<String, RTObject>();
+		rTTypeMap_ = new LinkedHashMap<String, RTType>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 		referenceCount_ = 1;
 	}
@@ -146,9 +146,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	public static class RTContextObject extends RTObjectCommon implements RTObject {
 		public RTContextObject(final RTType classs) {
 			super(classs);
-			nameToRoleMap_ = new HashMap<String, RTRole>();
-			nameToRoleBindingMap_ = new HashMap<String, RTObject>();
-			isRoleArrayMap_ = new HashMap<String, String>();
+			nameToRoleMap_ = new LinkedHashMap<String, RTRole>();
+			nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+			isRoleArrayMap_ = new LinkedHashMap<String, String>();
 			
 			// context$info is used to track things like
 			// who our roleplayers are. It kind of seemed like this
@@ -684,8 +684,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		classOrContext_ = classOrContext;
 		
 		// WARNING - These are only shallow copies
-		objectMembers_ = new HashMap<String, RTObject>();
-		rTTypeMap_ = new HashMap<String, RTType>(rTTypeMap);
+		objectMembers_ = new LinkedHashMap<String, RTObject>();
+		rTTypeMap_ = new LinkedHashMap<String, RTType>(rTTypeMap);
 		
 		// Values should be unique
 		for (Map.Entry<String, RTObject> iter : objectMembers.entrySet()) {

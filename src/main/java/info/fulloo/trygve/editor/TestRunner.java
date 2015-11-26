@@ -214,11 +214,21 @@ public class TestRunner {
 	private String thisTestResults(final String lastTestResults, final String rawTestResults) {
 		final int lastTestResultsLength = lastTestResults.length();
 		String testResults = rawTestResults.substring(lastTestResultsLength + underscores_.length() + 1);
-		if (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
+		while (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
 			testResults = testResults.substring(1);
 		}
+		System.err.print("beginning of testResults in thisTestResults: ");
+		for (int i = 0; i < 10; i++) {
+			System.err.print("(\0");
+			System.err.print(Integer.toOctalString(testResults.charAt(i)));
+			System.err.print(" / ");
+			System.err.print(testResults.charAt(i));
+			System.err.print(")");
+		}
+		System.err.println();
 
 		if (testResults.length() > 10 && testResults.substring(0, plusses_.length()).equals(plusses_)) {
+			System.err.println("  'if' succeeded");
 			testResults = testResults.substring(plusses_.length());
 			final int indexOfDelimitingSpace = testResults.indexOf(' ');
 			final String fileName = testResults.substring(0, indexOfDelimitingSpace);
@@ -227,6 +237,8 @@ public class TestRunner {
 				// +1 for newline after plusses, +1 for newline after underscores
 				testResults = testResults.substring(plusses_.length() + 1);
 			}
+		} else {
+			System.err.println("  'if' failed");
 		}
 		return testResults;
 	}

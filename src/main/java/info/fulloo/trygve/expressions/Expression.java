@@ -23,7 +23,7 @@ package info.fulloo.trygve.expressions;
  * 
  */
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -47,7 +47,6 @@ import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
-import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
@@ -957,7 +956,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class SwitchExpression extends Expression implements BreakableExpression {
 		public SwitchExpression(final ParsingData parsingData, final Type enclosingMegaType) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
-			indexedSwitchBodyElements_ = new HashMap<Constant, SwitchBodyElement>();
+			indexedSwitchBodyElements_ = new LinkedHashMap<Constant, SwitchBodyElement>();
 			orderedSwitchBodyElements_ = new ArrayList<SwitchBodyElement>();
 			expression_ = null;
 			label_ = this.forgeLabel();

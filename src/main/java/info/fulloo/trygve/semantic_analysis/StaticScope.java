@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
@@ -66,15 +66,15 @@ public class StaticScope {
 		if (parentScope_ != null) {
 			parentScope_.addSubScope(this);
 		}
-		objectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
-		staticObjectDeclarationDictionary_ = new HashMap<String, ObjectDeclaration>();
-		typeDeclarationDictionary_ = new HashMap<String, Type>();
-		methodDeclarationDictionary_ = new HashMap<String, ArrayList<MethodDeclaration>>();
-		contextDeclarationDictionary_ = new HashMap<String, ContextDeclaration>();
-		roleDeclarationDictionary_ = new HashMap<String, RoleDeclaration>();
-		classDeclarationDictionary_ = new HashMap<String, ClassDeclaration>();
-		templateDeclarationDictionary_ = new HashMap<String, TemplateDeclaration>();
-		interfaceDeclarationDictionary_ =  new HashMap<String,InterfaceDeclaration>();
+		objectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
+		staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
+		typeDeclarationDictionary_ = new LinkedHashMap<String, Type>();
+		methodDeclarationDictionary_ = new LinkedHashMap<String, ArrayList<MethodDeclaration>>();
+		contextDeclarationDictionary_ = new LinkedHashMap<String, ContextDeclaration>();
+		roleDeclarationDictionary_ = new LinkedHashMap<String, RoleDeclaration>();
+		classDeclarationDictionary_ = new LinkedHashMap<String, ClassDeclaration>();
+		templateDeclarationDictionary_ = new LinkedHashMap<String, TemplateDeclaration>();
+		interfaceDeclarationDictionary_ =  new LinkedHashMap<String,InterfaceDeclaration>();
 		hasDeclarationsThatAreLostBetweenPasses_ = false;
 		templateInstantiationInfo_ = null;
 	}
@@ -111,7 +111,7 @@ public class StaticScope {
 		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
 		templateInstantiationInfo_ = newTypes;
 		
-		methodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
+		methodDeclarationDictionary_ = new LinkedHashMap<String,ArrayList<MethodDeclaration>>();
 		for (Map.Entry<String,ArrayList<MethodDeclaration>> iter : scope.methodDeclarationDictionary_.entrySet()) {
 			final String methodSelector = iter.getKey();
 			final ArrayList<MethodDeclaration> decls = new ArrayList<MethodDeclaration>();
@@ -994,7 +994,7 @@ public class StaticScope {
 	public static class StaticRoleScope extends StaticScope {
 		public StaticRoleScope(final StaticScope parentScope) {
 			super(parentScope);
-			requiredMethodDeclarationDictionary_ = new HashMap<String,ArrayList<MethodDeclaration>>();
+			requiredMethodDeclarationDictionary_ = new LinkedHashMap<String,ArrayList<MethodDeclaration>>();
 		}
 		public void declareMethod(final MethodDeclaration decl) {
 			boolean dup = false;
