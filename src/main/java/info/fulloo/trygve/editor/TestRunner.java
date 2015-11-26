@@ -188,14 +188,14 @@ public class TestRunner {
 		}
 	}
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
-		final String testResults = thisTestResults(lastTestResults, rawTestResults);
-		final String goldContents = thisRunGoldContents();
-		testResults.replaceAll("\012", "");
-		goldContents.replaceAll("\012", "");
-		testResults.replaceAll("\014", "");
-		goldContents.replaceAll("\014", "");
-		testResults.replaceAll("\015", "");
-		goldContents.replaceAll("\015", "");
+		String testResults = thisTestResults(lastTestResults, rawTestResults);
+		String goldContents = thisRunGoldContents();
+		testResults = testResults.replaceAll("\012", "");
+		goldContents = goldContents.replaceAll("\012", "");
+		testResults = testResults.replaceAll("\014", "");
+		goldContents = goldContents.replaceAll("\014", "");
+		testResults = testResults.replaceAll("\015", "");
+		goldContents = goldContents.replaceAll("\015", "");
 
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
@@ -214,7 +214,7 @@ public class TestRunner {
 	private String thisTestResults(final String lastTestResults, final String rawTestResults) {
 		final int lastTestResultsLength = lastTestResults.length();
 		String testResults = rawTestResults.substring(lastTestResultsLength + underscores_.length() + 1);
-		if (testResults.substring(0,1).equals("\n")) {
+		if (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
 			testResults = testResults.substring(1);
 		}
 
