@@ -28,7 +28,7 @@ public class TestRunner {
 	TestSource testSource_;
 	private final static String urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
 	private final static String localTestDir_ = "file:tests/";
-	private final static String localPrefix_ = "/Users/cope/Programs/Trygve/";
+	private final static String localPrefix_ = "tests/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
 		"exprtest.k",
@@ -157,18 +157,32 @@ public class TestRunner {
 		System.err.print(Integer.toOctalString(s1.charAt(i)));
 		System.err.print("), (\\0");
 		System.err.print(Integer.toOctalString(s2.charAt(i)));
-		System.err.println(").");
+		System.err.print(").");
 	}
 	private void specialErrorAnalysis(String s1, String s2) {
 		for (int i = 0; i < s1.length() && i < s2.length(); i++) {
 			if (s1.charAt(i) != s2.charAt(i)) {
 				System.err.print("Difference in test results at byte offset: ");
 				printHelper(s1, s2, i);
+				System.err.println();
 				i++;
 				if (i < s1.length() && i < s2.length()) {
-					System.err.print("Next byte: ");
-					printHelper(s1, s2, i);
+					for (int j = 0; j < 40; j++) {
+						if (j >= s1.length()) break;
+						System.err.print("(\\0");
+						System.err.print(Integer.toOctalString(s1.charAt(j)));
+						System.err.print(")");
+					}
+					System.err.println();
+					for (int j = 0; j < 40; j++) {
+						if (j >= s2.length()) break;
+						System.err.print("(\\0");
+						System.err.print(Integer.toOctalString(s2.charAt(j)));
+						System.err.print(")");
+					}
+					System.err.println();
 				}
+				
 				break;
 			}
 		}
@@ -176,8 +190,13 @@ public class TestRunner {
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
 		final String testResults = thisTestResults(lastTestResults, rawTestResults);
 		final String goldContents = thisRunGoldContents();
-		testResults.replaceAll("\r", "\n");
-		goldContents.replaceAll("\r", "\n");
+		testResults.replaceAll("\012", "");
+		goldContents.replaceAll("\012", "");
+		testResults.replaceAll("\014", "");
+		goldContents.replaceAll("\014", "");
+		testResults.replaceAll("\015", "");
+		goldContents.replaceAll("\015", "");
+
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
 			System.err.println("Test passed");
