@@ -219,7 +219,7 @@ public class TestRunner {
 		}
 		System.err.print("beginning of testResults in thisTestResults: ");
 		for (int i = 0; i < 10; i++) {
-			System.err.print("(\0");
+			System.err.print("(\\0");
 			System.err.print(Integer.toOctalString(testResults.charAt(i)));
 			System.err.print(" / ");
 			System.err.print(testResults.charAt(i));
