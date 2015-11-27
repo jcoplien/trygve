@@ -151,6 +151,7 @@ public class TestRunner {
 			gui_.runButtonActionPerformed(null);
 		}
 	}
+	/*
 	private void printHelper(String s1, String s2, int i) {
 		System.err.print(i);
 		System.err.print(": (\\0");
@@ -187,15 +188,18 @@ public class TestRunner {
 			}
 		}
 	}
+	*/
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
 		String testResults = thisTestResults(lastTestResults, rawTestResults);
 		String goldContents = thisRunGoldContents();
+		/*
 		testResults = testResults.replaceAll("\012", "");
 		goldContents = goldContents.replaceAll("\012", "");
 		testResults = testResults.replaceAll("\014", "");
 		goldContents = goldContents.replaceAll("\014", "");
 		testResults = testResults.replaceAll("\015", "");
 		goldContents = goldContents.replaceAll("\015", "");
+		*/
 
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
@@ -203,7 +207,9 @@ public class TestRunner {
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
 			passCounter_++;
 		} else {
+			/*
 			specialErrorAnalysis(testResults, goldContents);
+			*/
 			gui_.console().redirectErr(java.awt.Color.RED, null);
 			System.err.println("Test failed");
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
@@ -217,6 +223,7 @@ public class TestRunner {
 		while (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
 			testResults = testResults.substring(1);
 		}
+		/*
 		System.err.print("beginning of testResults in thisTestResults: ");
 		for (int i = 0; i < 10; i++) {
 			System.err.print("(\\0");
@@ -226,9 +233,9 @@ public class TestRunner {
 			System.err.print(")");
 		}
 		System.err.println();
+		*/
 
 		if (testResults.length() > 10 && testResults.substring(0, plusses_.length()).equals(plusses_)) {
-			System.err.println("  'if' succeeded");
 			testResults = testResults.substring(plusses_.length());
 			final int indexOfDelimitingSpace = testResults.indexOf(' ');
 			final String fileName = testResults.substring(0, indexOfDelimitingSpace);
@@ -238,7 +245,7 @@ public class TestRunner {
 				testResults = testResults.substring(plusses_.length() + 1);
 			}
 		} else {
-			System.err.println("  'if' failed");
+			;
 		}
 		return testResults;
 	}

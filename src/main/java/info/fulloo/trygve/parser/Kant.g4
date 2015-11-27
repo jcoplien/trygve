@@ -34,7 +34,7 @@ program
 
 main
 		: expr
-		;
+		; // just a comment to force compilation
 
 type_declaration_list
    	    : type_declaration

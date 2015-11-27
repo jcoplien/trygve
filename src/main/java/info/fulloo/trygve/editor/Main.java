@@ -26,6 +26,10 @@ package info.fulloo.trygve.editor;
 public class Main {
 
 	public static void main(String[] args) {
+		// We adopt a Windows-like line formatting, uniformly, as a way
+		// to get platform independence in the output. Many thanks to
+		// Egon Elbre!
+		System.setProperty("line.separator", "\n");
 		java.awt.EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				new TextEditorGUI().setVisible(true);
