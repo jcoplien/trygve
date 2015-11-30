@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ public abstract class RTIterator implements RTObject {
 	@Override public void setObject(String objectName, RTObject object) { assert false; }
 	@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
 	@Override public RTType rTType() { assert false; return null; }
-	@Override public boolean equals(Object another) { assert false; return false; }
+	@Override public boolean isEqualTo(Object another) { assert false; return false; }
 	@Override public boolean gt(RTObject another) { assert false; return false; }
 	@Override public RTObject plus(RTObject other) { assert false; return null; }
 	@Override public RTObject minus(RTObject other) { assert false; return null; }

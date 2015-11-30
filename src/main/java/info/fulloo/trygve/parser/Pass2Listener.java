@@ -238,8 +238,8 @@ public class Pass2Listener extends Pass1Listener {
 		
 		final int lastLineNumber = ctx.getStop().getLine();
 		
-		@SuppressWarnings("unused")
 		final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
+		assert null != audit;	// just so it's used...
 		this.setMethodBodyAccordingToPass(currentMethod);
 	}
 	
@@ -562,20 +562,21 @@ public class Pass2Listener extends Pass1Listener {
 			object = new NullExpression();
 		}
 		object.setResultIsConsumed(true);
-						
-		Type objectType = object.type();
-		if (null == objectType) {
-			objectType = parsingData_.globalScope().lookupTypeDeclaration("Object");
-		}
-		assert null != objectType;
 									
 		final Message message = parsingData_.popMessage();
+		assert null != message;
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
 		} else {
 			message.addActualThisParameter(object);
 		}
+		
+		Type objectType = object.type();
+		if (null == objectType) {
+			objectType = parsingData_.globalScope().lookupTypeDeclaration("Object");
+		}
+		assert null != objectType;
 		
 		MethodSignature methodSignature = null;
 		boolean isOKMethodSignature = false;

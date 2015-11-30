@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -607,7 +607,7 @@ public abstract class RTExpression extends RTCode {
 					return null;
 				} else if (null == rTTypeOfSelf) {
 					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
-							methodSelectorName_, "« on a null Java object", "");
+							methodSelectorName_, "ï¿½ on a null Java object", "");
 					return null;
 					//assert null != rTTypeOfSelf;
 				}
@@ -657,13 +657,13 @@ public abstract class RTExpression extends RTCode {
 			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 			RTObject self = null;
 			while (null != pc) {
-				// This evaluation leaves a result on the stack Ñ
+				// This evaluation leaves a result on the stack ï¿½
 				// a result which will be a parameter to the method
 				
-				// Woops Ñ this gets short-circuited if it's a method invocation?
+				// Woops ï¿½ this gets short-circuited if it's a method invocation?
 				// It goes off to evaluate the method (as a "this" argument) and
 				// then, just below, expects to pull "this" (e.g. PrintStream)
-				// off the stack Ñ but what's sitting on the stack is the return
+				// off the stack ï¿½ but what's sitting on the stack is the return
 				// address for the method (RTPostReturnProcessing) and "nextInstruction"
 				// points to a method
 				final RTCode nextInstruction = pc.run();
@@ -692,7 +692,7 @@ public abstract class RTExpression extends RTCode {
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// If we're a non-Role method *and* we're calling a Role method
 				// (we got to this line in this code), we need
-				// to push an extra argument Ñ current$context. If we're calling
+				// to push an extra argument ï¿½ current$context. If we're calling
 				// a Role method it can be only from within a Context.
 				
 				if (null == currentScope.getObject("current$context")) {
@@ -776,7 +776,7 @@ public abstract class RTExpression extends RTCode {
 			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod, indexForThisExtraction);
 			
 			// This loop just processes the pushing of the arguments
-			// The value of "pc" will eventually return null Ñ there
+			// The value of "pc" will eventually return null ï¿½ there
 			// is no link to subsequent code
 			self = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
 			
@@ -807,7 +807,7 @@ public abstract class RTExpression extends RTCode {
 			// This becomes the public version of setNextCode. The value
 			// it sets reflects the static sequence, e.g. from the method
 			// send to the following statement. It does NOT reflect the
-			// dynamic branch to the RTMethod Ñ which is what nextCode()
+			// dynamic branch to the RTMethod ï¿½ which is what nextCode()
 			// (in the base class) must return.
 			super.setNextCode(nextCode);
 			postReturnProcessing_.setNextCode(nextCode);
@@ -832,7 +832,7 @@ public abstract class RTExpression extends RTCode {
 				if (sourceTypePathName.equals("int.")) {
 					ErrorLogger.error(ErrorType.Warning, lineNumber,
 							"WARNING: Substituting double object for `", anArgument.getText(),
-							"« for call to method `", methodName, "« at line ",
+							"ï¿½ for call to method `", methodName, "ï¿½ at line ",
 							String.valueOf(anArgument.lineNumber()));
 					retval = new DoubleCasterExpression(anArgument);
 				}
@@ -895,7 +895,7 @@ public abstract class RTExpression extends RTCode {
 				// a loop inside RTMessage.run() rather than running on the
 				// standard instruction-fetch loop in RunTimeEnvironment.
 				// So it's terminated in a "halt". On reaching it, RTMessage
-				// yields control to RunTimeEnvironment Ñ with its own
+				// yields control to RunTimeEnvironment ï¿½ with its own
 				// nextCode value.
 				previous.setNextCode(null);
 			} else {
@@ -1096,7 +1096,7 @@ public abstract class RTExpression extends RTCode {
 						// for the current context, and if it's not in the current
 						// method activation record, then this must not be a
 						// Role method from which we're making the invocation.
-						// But it must be a Context method Ñ only Context methods
+						// But it must be a Context method ï¿½ only Context methods
 						// can call Role methods.
 						//
 						// Probably worth adding some assertions around this, if
@@ -1247,17 +1247,17 @@ public abstract class RTExpression extends RTCode {
 
 				boolean value = false;
 				if (operator_.equals("==")) {
-					value = lhs.equals(rhs);
+					value = lhs.isEqualTo(rhs);
 				} else if (operator_.equals(">=")) {
-					value = lhs.equals(rhs) || lhs.gt(rhs);
+					value = lhs.isEqualTo(rhs) || lhs.gt(rhs);
 				} else if (operator_.equals("<=")) {
 					value = !lhs.gt(rhs);
 				} else if (operator_.equals("<")) {
-					value = (!lhs.equals(rhs)) && (!lhs.gt(rhs));
+					value = (!lhs.isEqualTo(rhs)) && (!lhs.gt(rhs));
 				} else if (operator_.equals(">")) {
 					value = lhs.gt(rhs);
 				} else if (operator_.equals("!=")) {
-					value = !lhs.equals(rhs);
+					value = !lhs.isEqualTo(rhs);
 				} else {
 					assert false;
 				}
@@ -1564,7 +1564,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			// I found I needed to add this loop to a new ArrayType [expr]
 			// expression. Invoking rhs_.run() alone just sets up the object
-			// and does null initialization Ñ it does not call the constructor.
+			// and does null initialization ï¿½ it does not call the constructor.
 			//
 			// So I broke out the real assignment processing into RTAssignmentPart2.
 			return rhs_.run();
@@ -1654,7 +1654,7 @@ public abstract class RTExpression extends RTCode {
 					assert null == haltInstruction;
 					// ... I think this will always return null
 					
-					// We don't need the rest of the processing below Ñ
+					// We don't need the rest of the processing below ï¿½
 					// it's all done within the "assign" method called above
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTArrayIndexExpressionUnaryOp) {
@@ -1956,7 +1956,7 @@ public abstract class RTExpression extends RTCode {
 			// new expression will return. The return address for the call
 			// to the constructor will be pushed on top of the actual object
 			// pointer value, and then the value can be retrieved as the result
-			// of the expression Ñ after returning from the constructor.
+			// of the expression ï¿½ after returning from the constructor.
 			
 			// If it is a Role method, we push an extra argument, which is
 			// current$context. We never need to do that for a Constructor, since
@@ -2376,7 +2376,7 @@ public abstract class RTExpression extends RTCode {
 				if (booleanExpression.value()) {
 					retval = body_;
 				} else {
-					// We're closing a scope Ñ going out of the FOR.
+					// We're closing a scope ï¿½ going out of the FOR.
 					retval = popScope_;
 				}
 				
@@ -3038,7 +3038,7 @@ public abstract class RTExpression extends RTCode {
 					assert selector instanceof RTConstant;
 					final RTConstant caseValueAsRTConstant = (RTConstant)selector;
 					
-					if (caseValueAsRTConstant.equals(expression)) {
+					if (caseValueAsRTConstant.isEqualTo(expression)) {
 						final RTExpressionList caseLogic = iter.getValue();
 						retval = caseLogic;
 						break;
@@ -3134,7 +3134,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public void setObject(final String objectName, final RTObject object) { assert false; }
 		@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
-		@Override public boolean equals(final Object another) { return rTExpr_.equals(another); }
+		@Override public boolean isEqualTo(final Object another) { return rTExpr_.isEqualTo(another); }
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }
 		@Override public RTObject plus(final RTObject other) { return rTExpr_.plus(other); }
 		@Override public RTObject minus(final RTObject other) { return rTExpr_.minus(other); }
@@ -3440,7 +3440,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			if (thereIsAReturnExpression) {
 				// It's already evaluated and on top of the stack.
-				// Step one: Get it Ñ if it's used
+				// Step one: Get it ï¿½ if it's used
 				RTStackable returnValue = null;
 				if (resultIsConsumed()) {
 					returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();

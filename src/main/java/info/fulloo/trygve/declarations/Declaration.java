@@ -462,10 +462,15 @@ public abstract class Declaration implements BodyPart {
 					}
 				} else if (associatedDeclaration instanceof ClassDeclaration &&
 						null != ((ClassDeclaration)associatedDeclaration).generatingTemplate()) {
-					if (name().equals(((ClassDeclaration)associatedDeclaration).generatingTemplate().name())) {
-						assert returnType == null;
+					final boolean methodNameEqualsTemplateName = name().equals(((ClassDeclaration)associatedDeclaration).generatingTemplate().name());
+					if (methodNameEqualsTemplateName) {
+						if (returnType != null) {
+							assert returnType == null;
+						}
 					} else {
-						assert returnType != null;
+						if (null == returnType) {
+							assert returnType != null;
+						}
 					}
 				} else {
 					assert returnType != null;

@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -112,7 +112,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
-	@Override public boolean equals(final Object another) {
+	@Override public boolean isEqualTo(final Object another) {
 		assert false;
 		return false;
 	}

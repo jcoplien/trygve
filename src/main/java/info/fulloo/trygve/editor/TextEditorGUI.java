@@ -7,7 +7,7 @@ package info.fulloo.trygve.editor;
  * Created on 1 wrzesieÅ„ 2008, 22:00
  * 
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(TrygveVersion);
-    	System.out.println(". Copyright ©2015 James O. Coplien.");
+    	System.out.println(". Copyright (c)2015 James O. Coplien.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");

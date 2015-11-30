@@ -33,7 +33,7 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return null;
 	}
-	@Override public boolean equals(Object another) {
+	@Override public boolean isEqualTo(Object another) {
 		assert false;
 		return false;
 	}

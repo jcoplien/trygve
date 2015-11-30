@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ public interface RTObject extends RTStackable {
 	public void setObject(String objectName, RTObject object);
 	public Map<String, RTObject> objectMembers();
 	public RTType rTType();
-	public boolean equals(Object another);
+	public boolean isEqualTo(Object another);
 	public boolean gt(RTObject another);
 	public RTObject plus(RTObject other);
 	public RTObject minus(RTObject other);

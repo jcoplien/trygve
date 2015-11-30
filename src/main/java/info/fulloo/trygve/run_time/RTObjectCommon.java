@@ -56,7 +56,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		rolesIAmPlayingInContext_ = ((RTObjectCommon)object).rolesIAmPlayingInContext_;
 		referenceCount_ = 1;
 	}
-	@Override public boolean equals(final Object other) {
+	@Override public boolean isEqualTo(final Object other) {
 		return this == other;
 	}
 	@Override public Map<String, RTObject> objectMembers() { return objectMembers_; }
@@ -323,7 +323,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			foobar_ = foobar;
 		}
 		public long intValue() { return foobar_; }
-		@Override public boolean equals(final Object another) {
+		@Override public boolean isEqualTo(final Object another) {
 			if ((another instanceof RTIntegerObject) == false) return false;
 			else return foobar_ == ((RTIntegerObject)another).intValue();
 		}
@@ -440,7 +440,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			foobar_ = foobar;
 		}
 		public double doubleValue() { return foobar_; }
-		@Override public boolean equals(final Object another) {
+		@Override public boolean isEqualTo(final Object another) {
 			boolean retval = false;
 			if (another instanceof RTIntegerObject) {
 				retval = Math.abs(foobar_ - (double)((RTIntegerObject)another).intValue()) < EPSILON;
@@ -559,7 +559,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			foobar_ = foobar;
 		}
 		public String stringValue() { return foobar_; }
-		@Override public boolean equals(Object another) {
+		@Override public boolean isEqualTo(Object another) {
 			if ((another instanceof RTStringObject) == false) return false;
 			else return foobar_.equals(((RTStringObject)another).stringValue());
 		}
@@ -618,7 +618,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			foobar_ = foobar;
 		}
 		public boolean value() { return foobar_; }
-		@Override public boolean equals(Object another) {
+		@Override public boolean isEqualTo(Object another) {
 			if ((another instanceof RTBooleanObject) == false) return false;
 			else return foobar_ == (((RTBooleanObject)another).value());
 		}
@@ -641,7 +641,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public RTObject dup() {
 			return this;
 		}
-		@Override public boolean equals(final Object another) {
+		@Override public boolean isEqualTo(final Object another) {
 			return another instanceof RTNullObject;
 		}
 	}
