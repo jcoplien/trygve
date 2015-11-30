@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -442,9 +442,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		public double doubleValue() { return foobar_; }
 		@Override public boolean equals(final Object another) {
 			boolean retval = false;
-			if ((another instanceof RTIntegerObject)) {
+			if (another instanceof RTIntegerObject) {
 				retval = Math.abs(foobar_ - (double)((RTIntegerObject)another).intValue()) < EPSILON;
-			} else if ((another instanceof RTDoubleObject)) {
+			} else if (another instanceof RTDoubleObject) {
 				retval = Math.abs(foobar_ - ((RTDoubleObject)another).doubleValue()) < EPSILON;
 			} else {
 				assert false;

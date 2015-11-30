@@ -14,9 +14,9 @@ class Derived extends Base {
 (new Derived()).test()
 
 /* GOLD:
-line 7: Object declaration `i_« appears both in class `Derived« and in base class `Base«.
+line 7: Object declaration `i_' appears both in class `Derived' and in base class `Base'.
 line 7:   (The same identifier name may not appear multiple times in the same run-time scope.)
-line 10: Object declaration `i_« appears both in class `Derived« and in base class `Base«.
+line 10: Object declaration `i_' appears both in class `Derived' and in base class `Base'.
 line 10:   (The same identifier name may not appear multiple times in the same run-time scope.)
 ___________________________________________________________
 */

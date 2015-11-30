@@ -2,7 +2,7 @@ package info.fulloo.trygve.expressions;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -292,14 +292,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BooleanExpression extends Expression
 	{
-		public BooleanExpression(Expression lhs, String operator, Expression rhs) {
+		public BooleanExpression(final Expression lhs, final String operator, final Expression rhs) {
 			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
 			assert operator.equals("&&") || operator.equals("||") || operator.equals("^")
 				|| (operator.equals("!") && null == rhs);
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
-			rhs_.setResultIsConsumed(true);
+			if (null != rhs_) {
+				rhs_.setResultIsConsumed(true);
+			}
 			operator_ = operator;
 		}
 		public String operator() {
@@ -460,7 +462,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				if (rhs_.type().name().equals("int")) {
 					parser.errorHook6p2(ErrorType.Warning, lineNumber_,
 							"WARNING: Substituting double object for `", rhs_.getText(),
-							"« in assignment to `", lhs_.getText(), "«.",
+							"' in assignment to `", lhs_.getText(), "'.",
 							"");
 					rhs_ = new DoubleCasterExpression(rhs_);
 					rhs_.setResultIsConsumed(true);
@@ -931,7 +933,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			expressionAndDeclList_ = expressionAndDeclList;	// seems to work
 		}
 		
-		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) Ñ RTSwitch fetches
+		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) ï¿½ RTSwitch fetches
 		// our body parts and compiles them
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			assert(false);
@@ -1252,7 +1254,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class TopOfStackExpression extends Expression {
-		// Kind of a dummy Ñ used in RTMethod.java. Never used on the parser side.
+		// Kind of a dummy ï¿½ used in RTMethod.java. Never used on the parser side.
 		public TopOfStackExpression() {
 			super("", null, null);
 		}

@@ -232,7 +232,7 @@ public abstract class Type implements ExpressionStackAPI
 			return false;
 		}
 		
-		private String name_;
+		private final String name_;
 		private ClassType baseClass_;
 	}
 	public static class ContextType extends Type {
@@ -257,7 +257,7 @@ public abstract class Type implements ExpressionStackAPI
 			return this;
 		}
 		
-		private String name_;
+		private final String name_;
 	}
 	public static class InterfaceType extends Type {
 		public InterfaceType(final String name, final StaticScope enclosedScope) {
@@ -444,7 +444,7 @@ public abstract class Type implements ExpressionStackAPI
 			return this;
 		}
 		
-		private String name_;
+		private final String name_;
 	}
 	public static class RoleType extends Type {
 		public RoleType(final String name, final StaticScope scope) {
@@ -486,9 +486,6 @@ public abstract class Type implements ExpressionStackAPI
 				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
 					final String methodName = entry.getKey();
 					final MethodSignature rolesSignature = entry.getValue();
-				
-				//for (final String methodName : requiredSelfSignatures.keySet()) {
-				//	final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
 					final MethodSignature signatureForMethodSelector =
 							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
@@ -678,7 +675,7 @@ public abstract class Type implements ExpressionStackAPI
 	
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
-	public abstract boolean canBeConvertedFrom(final Type t, int lineNumber, Pass1Listener parserPass);
+	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
 	
 	public boolean hasUnaryOperator(final String operator) {
 		return false;

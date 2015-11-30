@@ -20,9 +20,9 @@ System.out.println((-b + (Math.sqrt(b **2 - (4.0 * a * c))) ) / (a + a))
 }
 
 /* GOLD:
-line 6: WARNING: Substituting double object for `1« in assignment to `a«.
-line 7: WARNING: Substituting double object for `[ -1 ]« in assignment to `b«.
-line 8: WARNING: Substituting double object for `[ -6 ]« in assignment to `c«.
+line 6: WARNING: Substituting double object for `1' in assignment to `a'.
+line 7: WARNING: Substituting double object for `[ -1 ]' in assignment to `b'.
+line 8: WARNING: Substituting double object for `[ -6 ]' in assignment to `c'.
 ___________________________________________________________
 3.0
 */

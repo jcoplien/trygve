@@ -18,6 +18,6 @@ context Context {
 (new Context(new Class1()))
 
 /* GOLD:
-line 3: Multiple declarations of `roleMethod1(boolean)« in scope `Class1«.
+line 3: Multiple declarations of `roleMethod1(boolean)' in scope `Class1'.
 ___________________________________________________________
 */

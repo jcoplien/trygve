@@ -22,6 +22,6 @@ class SeaPlane extends Vehicle implements Plane, Submarine {
 }
 
 /* GOLD:
-line 14: Class `SeaPlane« does not implement interface `Submarine« because definition of `submerge()« is missing in the class.
+line 14: Class `SeaPlane' does not implement interface `Submarine' because definition of `submerge()' is missing in the class.
 ___________________________________________________________
 */

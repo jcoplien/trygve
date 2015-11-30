@@ -64,9 +64,9 @@ class TestDriver {
   .test()
 
 /* GOLD:
-line 3: WARNING: Both class `AnObject« and Role `C1R1« contain the same method signature `print()«. This results in several methods of the same name in the same object and may not behave as you expected.
-line 4: WARNING: Both class `AnObject« and Role `C1R2« contain the same method signature `print()«. This results in several methods of the same name in the same object and may not behave as you expected.
-line 21: WARNING: Both class `AnObject« and Role `C2R1« contain the same method signature `print()«. This results in several methods of the same name in the same object and may not behave as you expected.
+line 3: WARNING: Both class `AnObject' and Role `C1R1' contain the same method signature `print()'. This results in several methods of the same name in the same object and may not behave as you expected.
+line 4: WARNING: Both class `AnObject' and Role `C1R2' contain the same method signature `print()'. This results in several methods of the same name in the same object and may not behave as you expected.
+line 21: WARNING: Both class `AnObject' and Role `C2R1' contain the same method signature `print()'. This results in several methods of the same name in the same object and may not behave as you expected.
 ___________________________________________________________
 AnObject::AnObject(123)
 TestDriver.test

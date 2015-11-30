@@ -35,8 +35,8 @@ class Class1 {
 }
 
 /* GOLD:
-line 11: WARNING: Both class `Class1« and Role `Role1« contain the same method signature `foo()«. This results in several methods of the same name in the same object and may not behave as you expected.
-line 11: WARNING: Both class `Class1« and Role `Role1« contain the same method signature `bar()«. This results in several methods of the same name in the same object and may not behave as you expected.
+line 11: WARNING: Both class `Class1' and Role `Role1' contain the same method signature `foo()'. This results in several methods of the same name in the same object and may not behave as you expected.
+line 11: WARNING: Both class `Class1' and Role `Role1' contain the same method signature `bar()'. This results in several methods of the same name in the same object and may not behave as you expected.
 ___________________________________________________________
 Class.foo()
 Class.bar()

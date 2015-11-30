@@ -2,7 +2,7 @@ package info.fulloo.trygve.expressions;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ public abstract class Constant extends Expression {
 			return c_;
 		}
 		@Override public String getText() {
-			return "«" + String.valueOf(c_) + "«";
+			return "ï¿½" + String.valueOf(c_) + "ï¿½";
 		}
 		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
@@ -217,6 +217,9 @@ public abstract class Constant extends Expression {
 	
 	@Override public List<RTCode> compileCodeForInScope(final CodeGenerator cg, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		return cg.compileConstant(this, methodDeclaration, rtTypeDeclaration, scope);
+	}
+	@Override public int hashCode() {
+		return super.hashCode();
 	}
 	
 	private Constant(final String name, final Type type) {

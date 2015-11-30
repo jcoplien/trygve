@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 						toPrint = originalMethodDecl.signature().getText();
 					}
 					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of `",
-							toPrint + "« in scope `", name(), "«.");
+							toPrint + "' in scope `", name(), "'.");
 				}
 			}
 			possibilities.put(methodDecl.formalParameters(), methodDecl);

@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -266,7 +266,7 @@ public class Pass1Listener extends KantBaseListener {
 				if ((rawBaseType instanceof ClassType) == false) {
 					// Leave to pass 2
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
-							"« is not a declared class type as base of `", name, "«.", "");
+							"' is not a declared class type as base of `", name, "'.", "");
 				} else {
 					baseType = (ClassType)rawBaseType;
 					if (baseType.name().equals(name)) {
@@ -492,14 +492,14 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (null != ctx.access_qualifier()) {
 			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
-					ctx.access_qualifier().getText(), "« ignored", ".");
+					ctx.access_qualifier().getText(), "' ignored", ".");
 		}
 		
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
 		
 		if (null != JAVA_ID) {
 			// It *can* be null. Once had an object declaration inside
-			// a role Ñ resulting grammar error got here with that
+			// a role ï¿½ resulting grammar error got here with that
 			// null condition. Not much to do but to punt
 
 			final String roleName = JAVA_ID.getText();
@@ -511,7 +511,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope Ñ not ", currentScope_.name());
+				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRole_.enclosedScope();
 		} else {
@@ -579,7 +579,7 @@ public class Pass1Listener extends KantBaseListener {
 	    //	: method_decl
 	    //	| role_body method_decl
 	    //	| object_decl				// illegal
-	    //	| role_body object_decl		// illegal Ñ for better error messages only
+	    //	| role_body object_decl		// illegal ï¿½ for better error messages only
 		
 		/* nothing */
 	}
@@ -589,7 +589,7 @@ public class Pass1Listener extends KantBaseListener {
 		// : method_decl
         // | role_body method_decl
         // | object_decl				// illegal
-        // | role_body object_decl		// illegal Ñ for better error messages only
+        // | role_body object_decl		// illegal ï¿½ for better error messages only
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
@@ -664,13 +664,13 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (null != ctx.access_qualifier()) {
 			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
-					ctx.access_qualifier().getText(), "« ignored", ".");
+					ctx.access_qualifier().getText(), "' ignored", ".");
 		}
 		
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
 		if (null != JAVA_ID) {
 			// It *can* be null. Once had an object declaration inside
-			// a role Ñ resulting grammar error got here with that
+			// a role ï¿½ resulting grammar error got here with that
 			// null condition. Not much to do but to punt
 			
 			final String stagePropName = JAVA_ID.getText();
@@ -678,7 +678,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Stageprop ", stagePropName, " can be declared only in a Context scope Ñ not ", currentScope_.name());
+				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Stageprop ", stagePropName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRole_.enclosedScope();
 		} else {
@@ -979,7 +979,7 @@ public class Pass1Listener extends KantBaseListener {
 		final AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
 		
 		Type returnType = null;
-		// There may not be any return type at all Ñ as for a constructor
+		// There may not be any return type at all ï¿½ as for a constructor
 		final KantParser.Return_typeContext returnTypeContext = ctx.return_type();
 		if (null != returnTypeContext) {
 			final String returnTypeName = returnTypeContext.getText();
@@ -1061,7 +1061,7 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctx.expr_and_decl_list() && null == ctx.expr() && null == ctx.object_decl()) {
 			// just a gratuitous null statement that we can ignore
 		} else {
-			// null list Ñ it's O.K.
+			// null list ï¿½ it's O.K.
 		}
 		
 		if (printProductionsDebug) {
@@ -1240,7 +1240,7 @@ public class Pass1Listener extends KantBaseListener {
 						}
 					}
 				} else {
-					return;	// punt Ñ error return
+					return;	// punt ï¿½ error return
 				}
 			}
 			
@@ -1564,7 +1564,7 @@ public class Pass1Listener extends KantBaseListener {
 				for (int i = 0; i < ctx.ABELIAN_SUMOP().size(); i++) {
 					System.err.print("`");
 					System.err.print(ctx.ABELIAN_SUMOP(i).getText());
-					System.err.print("« abelian_expr ");
+					System.err.print("ï¿½ abelian_expr ");
 				}
 				System.err.println();
 			}
@@ -1662,7 +1662,7 @@ public class Pass1Listener extends KantBaseListener {
 				for (int i = 0; i < ctx.ABELIAN_MULOP().size(); i++) {
 					System.err.print("`");
 					System.err.print(ctx.ABELIAN_MULOP(i).getText());
-					System.err.print("« abelian_unary_op ");
+					System.err.print("ï¿½ abelian_unary_op ");
 				}
 				System.err.println();
 			}
@@ -1723,7 +1723,7 @@ public class Pass1Listener extends KantBaseListener {
 				;	// is O.K.
 			} else {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Expression `", expression.getText(), "« is not of type boolean.", "");
+						"Expression `", expression.getText(), "' is not of type boolean.", "");
 			}
 			expression = new UnaryAbelianopExpression(expression, "!");
 			
@@ -1832,7 +1832,7 @@ public class Pass1Listener extends KantBaseListener {
 				if (isAccessible == false) {
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
 							"Cannot access constructor `", constructor.signature().getText(),
-							"« with `", constructor.accessQualifier().asString(), "« access qualifier.","");
+							"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 				}
 			}
 
@@ -2237,7 +2237,7 @@ public class Pass1Listener extends KantBaseListener {
 		final Type conditionalType = conditional.type();
 		if (conditionalType.name().equals("boolean") == false) {
 			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
-					"« is not of type boolean", "");
+					"' is not of type boolean", "");
 		}
 		
 		final Expression ifExpression = new IfExpression(conditional, thenPart, elsePart);
@@ -2282,7 +2282,7 @@ public class Pass1Listener extends KantBaseListener {
 		Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 		if (null == type) {
 			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Type `", typeName,
-					"« seems not to be declared in any enclosing scope", "");
+					"' seems not to be declared in any enclosing scope", "");
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 		}
 		
@@ -2336,7 +2336,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			if (conditionalType.name().equals("boolean") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
-						"« is not of type boolean", "");
+						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(initializer, falseExpr, increment, body);
 			} else {
@@ -2358,7 +2358,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			if (conditionalType.name().equals("boolean") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
-						"« is not of type boolean", "");
+						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(null, falseExpr, increment, body);
 			} else {
@@ -2373,7 +2373,7 @@ public class Pass1Listener extends KantBaseListener {
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Loop identifier `", JAVA_IDasString,
-						"« is not declared", "");
+						"' is not declared", "");
 			}
 			expression = parsingData_.popForExpression();
 			
@@ -2384,7 +2384,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (typeIncrementingOver instanceof ArrayType == false &&
 					typeIncrementingOver.name().startsWith("List<") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
-						"« is not iterable", "");
+						"' is not iterable", "");
 			}
 			
 			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);
@@ -2404,7 +2404,7 @@ public class Pass1Listener extends KantBaseListener {
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclaration(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Loop identifier `", JAVA_IDasString,
-						"« is not declared", " (strange error)");
+						"' is not declared", " (strange error)");
 			}
 			
 			body.setResultIsConsumed(false);
@@ -2414,7 +2414,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (typeIncrementingOver instanceof ArrayType == false &&
 					typeIncrementingOver.name().startsWith("List<") == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
-						"« is not iterable", "");
+						"' is not iterable", "");
 			}
 					
 			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);
@@ -2473,7 +2473,7 @@ public class Pass1Listener extends KantBaseListener {
 		conditional.setResultIsConsumed(true);
 		
 		if (conditional.type() != StaticScope.globalScope().lookupTypeDeclaration("boolean")) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in ``while«« statement is not of type boolean", conditional.getText(),
+			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in `while' statement is not of type boolean", conditional.getText(),
 					" of type ", conditional.type().name());
 		}
 		
@@ -2520,7 +2520,7 @@ public class Pass1Listener extends KantBaseListener {
 		conditional.setResultIsConsumed(true);
 		
 		if (conditional.type() != StaticScope.globalScope().lookupTypeDeclaration("boolean")) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in ``do / while«« statement is not of type boolean", conditional.getText(),
+			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in `do / while' statement is not of type boolean", conditional.getText(),
 					" of type ", conditional.type().name());
 		}
 		
@@ -2564,8 +2564,8 @@ public class Pass1Listener extends KantBaseListener {
 				if (aCase.isDefault()) continue;
 				if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Case statement with expression of type `",
-							aCase.type().name(), "« is incompatible with switch expression of type `",
-							switchExpressionType.name(), "«.", "");
+							aCase.type().name(), "' is incompatible with switch expression of type `",
+							switchExpressionType.name(), "'.", "");
 				}
 			}
 		}
@@ -2595,7 +2595,7 @@ public class Pass1Listener extends KantBaseListener {
 			final Expression temp = parsingData_.popExpression();
 			if (temp instanceof Constant == false) {
 				ErrorLogger.error(ErrorType.Internal, ctx.getStart().getLine(), "Case statement has non-const expression: `",
-					temp.getText(), "«", "");
+					temp.getText(), "ï¿½", "");
 				constant = new Constant.IntegerConstant(0);
 			} else {
 				constant = (Constant)temp;
@@ -2678,7 +2678,7 @@ public class Pass1Listener extends KantBaseListener {
 			expr.setResultIsConsumed(true);
 			parsingData_.currentArgumentList().addActualArgument(expr);
 		} else {
-			// no actual argument Ñ OK
+			// no actual argument ï¿½ OK
 		}
 		
 		if (printProductionsDebug) {
@@ -2755,7 +2755,7 @@ public class Pass1Listener extends KantBaseListener {
 			assert null != currentRole_;
 			currentRole_.setType(roleType);
 		}
-		// caller may reset currentScope Ñ NOT us
+		// caller may reset currentScope ï¿½ NOT us
 	}
 	
 	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
@@ -2785,7 +2785,7 @@ public class Pass1Listener extends KantBaseListener {
 			assert null != currentRole_;
 			currentRole_.setType(stagePropType);
 		}
-		// caller may reset currentScope Ñ NOT us
+		// caller may reset currentScope ï¿½ NOT us
 	}
 	
 	protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {
@@ -2998,7 +2998,7 @@ public class Pass1Listener extends KantBaseListener {
 				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression, identifier_list.getStart().getLine(), this);
 				intializationExpressionsToReturn.add(initialization);
 			} else {
-				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "«.", "");
+				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "'.", "");
 			}
 		}
 		
@@ -3079,7 +3079,7 @@ public class Pass1Listener extends KantBaseListener {
 			final String addedMessage = "(earlier declaration at line " +
 								Integer.toString(objDecl.lineNumber()) + ").";
 			errorHook5p1(ErrorType.Fatal, lineNumber, "Identifier `",
-					name, "« declared multiple times ", addedMessage);
+					name, "' declared multiple times ", addedMessage);
 		}
 		return objDecl;
 	}
@@ -3115,7 +3115,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (null == paramType) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
 				paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this«.", "", "", "");
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
 			} else if (isArray) {
 				// A derived type
 				final String aName = paramType.getText() + "_array";
@@ -3131,7 +3131,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 			parsingData_.currentFormalParameterList().addFormalParameter(newFormalParameter);
 		} else {
-			// empty parameter list Ñ it's OK. For now.
+			// empty parameter list ï¿½ it's OK. For now.
 		}
 	}
 	
@@ -3158,7 +3158,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (isAccessible == false) {
 				errorHook6p2(ErrorType.Fatal, lineNumber,
 						"Cannot access identifier `", id,
-						"« with `", objdecl.accessQualifier_.asString(), "« access qualifier.", "");
+						"' with `", objdecl.accessQualifier_.asString(), "' access qualifier.", "");
 			}
 			
 			if (associatedDeclaration instanceof MethodDeclaration) {
@@ -3166,7 +3166,7 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new IdentifierExpression(id, type, scopeWhereDeclared);
 			} else if (associatedDeclaration instanceof TypeDeclaration) {
 				// Class or Context (Roles don't have local identifiers)
-				// The qualifier must be "this" Ñ otherwise, the QualifiedIdentifierExpression
+				// The qualifier must be "this" - otherwise, the QualifiedIdentifierExpression
 				// production will have caught it, and it's illegal to access more than
 				// a single enclosing type scope away (lookup simply won't find it)
 				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
@@ -3179,7 +3179,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else {
 			// What the hell?
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Identifier ", id, " is not declared.", "");
+			errorHook5p2(ErrorType.Fatal, lineNumber, "Identifier ", id, "`' is not declared.", "");
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			final StaticScope scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 			expression = new IdentifierExpression(id, type, scope);
@@ -3275,7 +3275,7 @@ public class Pass1Listener extends KantBaseListener {
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
 			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
-					objectIdentifier, "«", "");
+					objectIdentifier, "'", "");
 		} else {
 			scope.declareObject(objDecl);
 		}
@@ -3342,13 +3342,13 @@ public class Pass1Listener extends KantBaseListener {
 				if (isAccessible == false) {
 					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
 							"Cannot access expression `", expression.getText(),
-							"« with `", odecl.accessQualifier_.asString(), "« access qualifier.", "");
+							"' with `", odecl.accessQualifier_.asString(), "' access qualifier.", "");
 				}
 			}
 			
 			if (null == odecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
-						"« not found as member of ", object.type().name());
+						"' not found as member of ", object.type().name());
 			}
 		}
 		
@@ -3367,7 +3367,7 @@ public class Pass1Listener extends KantBaseListener {
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null == ctxExpr && null != ctxMessage){
 			// : 'new' message
-			final String className = message.selectorName(); // I know ÑÊkludge ...
+			final String className = message.selectorName(); // I know ï¿½ï¿½kludge ...
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(className);
 			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false) {
 				if (type instanceof TemplateParameterType) {
@@ -3375,7 +3375,7 @@ public class Pass1Listener extends KantBaseListener {
 					expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 					addSelfAccordingToPass(type, message, currentScope_);
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", className, "«: can apply `new« only to a class or Context type", "");
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", className, "': can apply `new' only to a class or Context type", "");
 					expression = new NullExpression();
 				}
 			} else {
@@ -3383,7 +3383,7 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 				
 				// This adds a hokey argument to the message that
-				// is used mainly for signature checking Ñ to see
+				// is used mainly for signature checking ï¿½ to see
 				// if there is a constructor that matches the
 				// arguments of the "new" message.
 				addSelfAccordingToPass(type, message, currentScope_);
@@ -3460,7 +3460,7 @@ public class Pass1Listener extends KantBaseListener {
 			// Because this here is Pass 1 code this really does nothing.
 			// We'll catch it again on Pass 2
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
+					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
 		} else {
 			final Type objectType = object.type();
 			if (null == objectType) return new NullExpression();	// error stumbling avoidance
@@ -3477,14 +3477,14 @@ public class Pass1Listener extends KantBaseListener {
 				if (false == mdecl.signature().isStatic()) {
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 							"Attempt to call instance method `" + mdecl.signature().getText(),
-							"«« as though it were a static method of class `", objectType.name(), "«");
+							"' as though it were a static method of class `", objectType.name(), "'.");
 				}
 			}				
 											
 			if (null == mdecl) {
 				// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
-				// skip it Ñ we'll barked at the user in pass 2
-				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in class ", className);
+				// skip it - we'll barked at the user in pass 2
+				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in class ", className);
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			} else {
 				type = mdecl.returnType();
@@ -3532,46 +3532,46 @@ public class Pass1Listener extends KantBaseListener {
 					mdecl = classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, true);
 					if (null == mdecl) {
 						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-								"« not declared in class `", classDecl.name(), "«", "");
+								"' not declared in class `", classDecl.name(), "'", "");
 					}
 				} else {
 					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-							"« not declared in class `", classDecl.name(), "«", "");
+							"' not declared in class `", classDecl.name(), "'", "");
 				}
 			}
 		} else if (null != roleDecl) {
 			// Calling a role method
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in Role ", roleDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role ", roleDecl.name());
 			}
 		} else if (null != contextDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationIn(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in Context ", contextDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Context ", contextDecl.name());
 			}
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "« not declared in interface ", interfaceDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in interface ", interfaceDecl.name());
 			}
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
 			if (null == classDeclaration) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "«", "");
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "'", "");
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
 					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversion(methodSelectorName, actualArgumentList, false);
 					if (null == mdecl) {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
-							"« of class `", object.name(), "«");
+							"' of class `", object.name(), "'.");
 					}
 				}
 			}
 		} else {
 			if (object.name().length() > 0) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "«", "");
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
 			} else {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 			}
@@ -3670,7 +3670,7 @@ public class Pass1Listener extends KantBaseListener {
 			expression = new NullExpression();
 			if (null == currentRole_) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-						"Symbol index may be used only within certain Role methods", "", "", "");
+						"Symbol index may be used only within certain Role methods.", "", "", "");
 			} else {
 				if (currentRole_.isArray()) {
 					expression = new IndexExpression(currentRole_, currentContext_);
@@ -3707,7 +3707,7 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
 			} else {
 				errorHook5p2(ErrorType.Unimplemented, ctxGetStart.getLine(),
-						"Static initializers for Roles are unimplemented", "", "", "");
+						"Static initializers for Roles are unimplemented.", "", "", "");
 			}
 		} else {
 			final ClassDeclaration cdecl = currentScope_.lookupClassDeclarationRecursive(idName);
@@ -3797,7 +3797,7 @@ public class Pass1Listener extends KantBaseListener {
 				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), ctx.getStart().getLine(), this);
 			} else {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
-						"« is incompatible with expression type `", rhsType.name(), "«.", "");
+						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
 		} else {
 			tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
@@ -3810,7 +3810,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (lhs.name().equals("index")) {
 			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-					"`“ndex« is a reserved word which is a read-only property of a Role vector element,",
+					"`index' is a reserved word which is a read-only property of a Role vector element,",
 					" and may not be assigned.", "", "");
 		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
@@ -3821,22 +3821,22 @@ public class Pass1Listener extends KantBaseListener {
 			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
 		} else if (lhsType instanceof RoleType && null != rhsType) {
 			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "« cannot be played by object of type `", rhsType.name(), "«:", "");
+				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhsType.name(), "« is incompatible with expression type `", rhsType.name(), "«.", "");
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhsType.name(), "' is incompatible with expression type `", rhsType.name(), "'.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType && anotherLhsType.canBeConvertedFrom(rhsType) == false) {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
-						"« is incompatible with expression type `", rhsType.name(), "«.", "");
+						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
 		} else if (lhs instanceof RoleArrayIndexExpression) {
 			if (lhsType.canBeConvertedFrom(rhsType) == false) {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(),
-						"« cannot be played by object of type `", rhsType.name(), "«:", "");
+						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
@@ -3863,9 +3863,9 @@ public class Pass1Listener extends KantBaseListener {
 				final MethodDeclaration correspondingRoleMethod = lhsType.enclosedScope().lookupMethodDeclarationIgnoringRoleStuff(methodSelector, parameterList);
 				if (null != correspondingRoleMethod) {
 					errorHook6p2(ErrorType.Warning, lineNumber,
-							"WARNING: Both class `" + baseType.name(), "« and Role `" + lhsType.name(),
-							"« contain the same method signature `", correspondingRoleMethod.signature().getText(),
-							"«. This results in several methods of the same name in the same object",
+							"WARNING: Both class `" + baseType.name(), "' and Role `" + lhsType.name(),
+							"' contain the same method signature `", correspondingRoleMethod.signature().getText(),
+							"'. This results in several methods of the same name in the same object",
 							" and may not behave as you expected.");
 				}
 			}
@@ -3905,7 +3905,7 @@ public class Pass1Listener extends KantBaseListener {
 	
 	public void nameCheck(final String name, int lineNumber) {
 		if (name.equals("this") || name.equals("Ralph") || name.equals("Sue") || name.equals("index")) {
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Please avoid the use of the names `this«, `Sue«, `index«and `Ralph«for identifiers.", "", "", "");
+			errorHook5p2(ErrorType.Fatal, lineNumber, "Please avoid the use of the names `this', `Sue', `index' and `Ralph' for identifiers.", "", "", "");
 		}
 	}
 	

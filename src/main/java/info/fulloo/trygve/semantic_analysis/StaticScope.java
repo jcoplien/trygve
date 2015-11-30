@@ -2,7 +2,7 @@ package info.fulloo.trygve.semantic_analysis;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -461,7 +461,7 @@ public class StaticScope {
 		if (null == retval) {
 			// Stop searching at Context boundary. If there are nested
 			// Contexts we don't want to go wandering into THAT Context
-			// and pick up a role. Also stop at Class boundaries Ñ it
+			// and pick up a role. Also stop at Class boundaries ï¿½ it
 			// doesn't make sense to refer to a role inside of a class
 			final Declaration associatedDeclaration = this.associatedDeclaration();
 			final Type myType = null != associatedDeclaration? associatedDeclaration.type(): null;
@@ -1019,7 +1019,7 @@ public class StaticScope {
 			}
 			
 			if (dup) {
-				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "« in ",
+				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
 					name(), " would create multiple methods of the same name in the same object.", "");
 			} else {
 				super.declareMethod(decl);
@@ -1031,17 +1031,17 @@ public class StaticScope {
 			final MethodDeclaration lookupExistingEntry = this.lookupMethodDeclaration(methodName,
 					decl.formalParameterList(), true);
 			if (null != lookupExistingEntry) {
-				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "« in ",
+				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
 						name(), " would create multiple methods of the same name in the same object.", "");
 			} else if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
 				for (final MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
 						break;
 					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
+						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
 						break;
 					}
 				}

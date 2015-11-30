@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -96,10 +96,10 @@ public class ReturnStatementAudit {
 			}
 		}
 		if (somethingFollowedReturn_ && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement", "", "", "");
+			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement.", "", "", "");
 		}
 		if (0 == returnExpressions_.size() && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Fatal, lineNumber_, "Missing return statement", "", "", "");
+			pass_.errorHook5p2(ErrorType.Fatal, lineNumber_, "Missing return statement.", "", "", "");
 		}
 	}
 	

@@ -2,7 +2,7 @@ package info.fulloo.trygve.declarations;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ public abstract class Declaration implements BodyPart {
 					ErrorLogger.error(errorType, lineNumber,
 							errorType.toString(),
 							": Identifier `", name(),
-							"« has a gratuitous access qualifier."
+							"' has a gratuitous access qualifier."
 							);
 				}
 			} else {
@@ -235,7 +235,7 @@ public abstract class Declaration implements BodyPart {
 				anInterfaceType = theInterfaceTypes.get(i);
 				if (null == anInterfaceType) {
 					parser.errorHook5p2(ErrorType.Fatal, lineNumber,
-							"Class `", name(), "« is using an undeclared interface: see other error messages", "");
+							"Class `", name(), "' is using an undeclared interface: see other error messages", "");
 				} else {
 					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
 					
@@ -248,8 +248,8 @@ public abstract class Declaration implements BodyPart {
 							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this");
 							if (null == methodDecl) {
 								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
-										"Class `", name(), "« does not implement interface `", anInterfaceType.name(),
-										"« because definition of `" + anInterfaceSignature.getText(), "« is missing in the class.");
+										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
+										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
 							}
 						}
 					}

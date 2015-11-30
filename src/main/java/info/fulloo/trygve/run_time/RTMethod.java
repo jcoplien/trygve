@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright ï¿½2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -84,10 +84,12 @@ public class RTMethod extends RTCode {
 		this.addCode(returnInstruction_);
 		
 		// All dogs go to heaven and all procedures that have something to return
-		// will return it Ñ we deal with consumption in the message. (However,
+		// will return it ï¿½ we deal with consumption in the message. (However,
 		// some are typed void and we should not signal that those will be
 		// consumed.)
-		((RTExpression)returnInstruction_).setResultIsConsumed(returnExpression.resultIsConsumed());
+		assert null != returnInstruction_ && returnInstruction_ instanceof RTExpression;
+		final RTExpression returnInstruction = (RTExpression)returnInstruction_;
+		returnInstruction.setResultIsConsumed(returnExpression.resultIsConsumed());
 		
 		// WARNING: Fake-out. We continue to insert at the beginning
 		// even though the return statement is at the end. It's a bit
@@ -144,7 +146,7 @@ public class RTMethod extends RTCode {
 			// is a kludge, but we can separate non-argument locals from parameters
 			// to be able to do this more efficiently. Right now the formal
 			// parameters are in this loop along with the other local
-			// variables in the method Ñ we just snake around the former parameters
+			// variables in the method ï¿½ we just snake around the former parameters
 			// by seeing that they previously have been added.
 			if (null == activationRecord.getObject(od.name())) {
 				activationRecord.addObjectDeclaration(od.name(), null);
