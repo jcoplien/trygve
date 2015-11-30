@@ -54,6 +54,7 @@ public class RTMethod extends RTCode {
 		}
 		
 		ReturnExpression returnExpression = null;
+		Expression dummyReturnExpression = null;
 		name_ = name;
 		codeSize_ = 10;
 		nextCodeIndex_ = 0;
@@ -64,15 +65,20 @@ public class RTMethod extends RTCode {
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 			assert null != templateInstantiationInfo;
 			returnType_ = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType_.name());
+			
+			// Put one in anyhow, even though there is no return value...
+			returnExpression = new ReturnExpression(dummyReturnExpression,
+								methodDeclaration.lineNumber(), rawClassType);
+			returnExpression.setResultIsConsumed(false);
 		} else if (null != returnType_
 				&& returnType_ != StaticScope.globalScope().lookupTypeDeclaration("void")) {
-			final Expression dummyReturnExpression = new TopOfStackExpression();
+			dummyReturnExpression = new TopOfStackExpression();
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber(), rawClassType);
 			returnExpression.setResultIsConsumed(true);
 		} else {
 			// Put one in anyhow, even though there is no return value...
-			final Expression dummyReturnExpression = null;
+			dummyReturnExpression = null;
 			returnExpression = new ReturnExpression(dummyReturnExpression,
 					methodDeclaration.lineNumber(), rawClassType);
 			returnExpression.setResultIsConsumed(false);
@@ -84,7 +90,7 @@ public class RTMethod extends RTCode {
 		this.addCode(returnInstruction_);
 		
 		// All dogs go to heaven and all procedures that have something to return
-		// will return it � we deal with consumption in the message. (However,
+		// will return it - we deal with consumption in the message. (However,
 		// some are typed void and we should not signal that those will be
 		// consumed.)
 		assert null != returnInstruction_ && returnInstruction_ instanceof RTExpression;
