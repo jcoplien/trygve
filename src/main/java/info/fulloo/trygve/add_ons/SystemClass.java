@@ -187,8 +187,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTStringObject;
 				final RTStringObject toPrint = (RTStringObject) rawToPrint;
-				assert toPrint instanceof RTStringObject;
 				final String foobar = toPrint.stringValue();
 				System.out.println(foobar);
 			}
@@ -207,10 +207,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTIntegerObject;
 				final RTIntegerObject toPrint = (RTIntegerObject) rawToPrint;
-				if (toPrint instanceof RTIntegerObject == false) {
-					assert toPrint instanceof RTIntegerObject;
-				}
 				final long foobar = toPrint.intValue();
 				System.out.println(foobar);
 			}
@@ -231,8 +229,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTBooleanObject;
 				final RTBooleanObject toPrint = (RTBooleanObject) rawToPrint;
-				assert toPrint instanceof RTBooleanObject;
 				final boolean foobar = toPrint.value();
 				System.out.println(foobar);
 			}
@@ -248,8 +246,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTDoubleObject;
 				final RTDoubleObject toPrint = (RTDoubleObject) rawToPrint;
-				assert toPrint instanceof RTDoubleObject;
 				final double foobar = toPrint.doubleValue();
 				System.out.println(foobar);
 			}
@@ -266,8 +264,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTStringObject;
 				final RTStringObject toPrint = (RTStringObject) rawToPrint;
-				assert toPrint instanceof RTStringObject;
 				final String foobar = toPrint.stringValue();
 				System.out.print(foobar);
 			}
@@ -308,8 +306,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTBooleanObject;
 				final RTBooleanObject toPrint = (RTBooleanObject)rawToPrint;
-				assert toPrint instanceof RTBooleanObject;
 				final boolean foobar = toPrint.value();
 				System.out.print(foobar);
 			}
@@ -325,8 +323,8 @@ public final class SystemClass {
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
 			} else {
+				assert rawToPrint instanceof RTDoubleObject;
 				final RTDoubleObject toPrint = (RTDoubleObject) rawToPrint;
-				assert toPrint instanceof RTDoubleObject;
 				final double foobar = toPrint.doubleValue();
 				System.out.print(foobar);
 			}

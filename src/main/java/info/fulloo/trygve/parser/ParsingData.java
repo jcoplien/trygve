@@ -152,14 +152,7 @@ public class ParsingData {
 	public Expression               peekExpression() { return (Expression)expressions_.peek(); }
 	public boolean               currentExpressionExists() { return expressions_.size() > 0; }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
-	public Expression                popExpression() {
-		if (expressions_.size() <= 0) {
-			assert false;
-		}
-		if (null == expressions_.peek()) {
-			assert false;
-		}
-		assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
+	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
 	public ForExpression  			 popForExpression() { popBreakableExpression();  return forExpressionStack_.pop(); }
 	public void 					pushForExpression(ForExpression expr) { forExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public ForExpression 		 currentForExpression() { return forExpressionStack_.peek(); }

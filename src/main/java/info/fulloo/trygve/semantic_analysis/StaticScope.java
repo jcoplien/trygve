@@ -85,7 +85,7 @@ public class StaticScope {
 	}
 	
 	public StaticScope(final StaticScope scope, final String copy, final StaticScope newEnclosingScope,
-			Declaration newAssociatedDeclaration, TemplateInstantiationInfo newTypes) {
+			final Declaration newAssociatedDeclaration, final TemplateInstantiationInfo newTypes) {
 		// Special copy constructor, mainly for instantiating templates
 		super();
 		assert null != newTypes;
@@ -575,12 +575,12 @@ public class StaticScope {
 
 		if (methodDeclarationDictionary_.containsKey(methodName)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodName);
-			for (MethodDeclaration aDecl : oldEntry) {
+			for (final MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
 				if (null == loggedSignature && null == decl.formalParameterList()) {
 					ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
 					break;
-				} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
+				} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
 					ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
 					break;
 				}
@@ -603,16 +603,18 @@ public class StaticScope {
 				boolean collision = false;
 				if (methodDeclarationDictionary_.containsKey(name)) {
 					final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(name);
-					for (MethodDeclaration aDecl : oldEntry) {
+					for (final MethodDeclaration aDecl : oldEntry) {
 						final FormalParameterList loggedSignature = aDecl.formalParameterList();
 						if (null == loggedSignature && null == decl.formalParameterList()) {
 							collidingDeclaration = aDecl;
 							collision = true;
 							break;
-						} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
+						} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
 							collidingDeclaration = aDecl;
 							collision = true;
 							break;
+						} else {
+							assert false;	// not sure what's going on here
 						}
 					}
 				}
@@ -690,14 +692,15 @@ public class StaticScope {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object: static ", objectName, " in ", name());
 		} else {
 			// Make sure that this is a class scope
-			final TypeDeclaration associatedDeclaration = (TypeDeclaration)this.associatedDeclaration();
+			final Declaration associatedDeclaration = this.associatedDeclaration();
 			assert null != associatedDeclaration;
 			
 			if (!(associatedDeclaration instanceof TypeDeclaration)) {
 				ErrorLogger.error(ErrorType.Fatal, 0, "Static member ", objectName, " in ", name(),
 						" may be declared only in a class, Context or Role", "");
 			} else {
-				associatedDeclaration.declareStaticObject(decl);
+				final TypeDeclaration typeDeclaration = (TypeDeclaration)associatedDeclaration;
+				typeDeclaration.declareStaticObject(decl);
 				staticObjectDeclarationDictionary_.put(objectName, decl);
 			}
 		}
@@ -775,8 +778,8 @@ public class StaticScope {
 	}
 	
 	public MethodDeclaration lookupMethodDeclarationRecursive(final String methodSelector,
-			ActualOrFormalParameterList parameterList,
-			boolean ignoreSignature) {
+			final ActualOrFormalParameterList parameterList,
+			final boolean ignoreSignature) {
 		MethodDeclaration retval = this.lookupMethodDeclaration(methodSelector, parameterList, ignoreSignature);
 		if (null == retval) {
 			// If this is a class, see if the base class has it
@@ -796,8 +799,9 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public MethodDeclaration lookupMethodDeclaration(final String methodSelector, final ActualOrFormalParameterList parameterList,
-			boolean ignoreSignature) {
+	public MethodDeclaration lookupMethodDeclaration(final String methodSelector,
+			final ActualOrFormalParameterList parameterList,
+			final boolean ignoreSignature) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
@@ -1002,12 +1006,12 @@ public class StaticScope {
 		
 			if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
-				for (MethodDeclaration aDecl : oldEntry) {
+				for (final MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
 						dup = true;
 						break;
-					} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
+					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
 						dup = true;
 						break;
 					}
@@ -1031,12 +1035,12 @@ public class StaticScope {
 						name(), " would create multiple methods of the same name in the same object.", "");
 			} else if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
-				for (MethodDeclaration aDecl : oldEntry) {
+				for (final MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
 						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
 						break;
-					} else if (loggedSignature.alignsWith(decl.formalParameterList())) {
+					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
 						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required« method `", methodName, "« in ", name());
 						break;
 					}

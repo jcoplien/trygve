@@ -138,7 +138,7 @@ public class Pass1Listener extends KantBaseListener {
 	private boolean printProductionsDebug;
 	private boolean stackSnapshotDebug;
 	
-	public Pass1Listener(ParsingData parsingData) {
+	public Pass1Listener(final ParsingData parsingData) {
 		parsingData_ = parsingData;
 		
 		currentScope_ = parsingData_.globalScope();
@@ -153,7 +153,7 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	private static class DeclarationsAndInitializers {
-		public DeclarationsAndInitializers(List<ObjectDeclaration> objectDecls, List<BodyPart> initializations) {
+		public DeclarationsAndInitializers(final List<ObjectDeclaration> objectDecls, final List<BodyPart> initializations) {
 			objectDecls_ = objectDecls;
 			initializations_ = initializations;
 		}
@@ -306,15 +306,14 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'interface' JAVA_ID '{' interface_body '}'
 		
 		// One version serves all three passes
-
-		final TypeDeclaration newDeclaration = (TypeDeclaration)currentScope_.associatedDeclaration();
-		assert newDeclaration instanceof TypeDeclaration;
+		assert null != currentScope_;
+		final Declaration rawNewDeclaration = currentScope_.associatedDeclaration();
+		assert rawNewDeclaration instanceof TypeDeclaration;	
+		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
 		parsingData_.currentTypeDeclarationList().addDeclaration(newDeclaration);
 		
-		if (null != currentScope_) {
-			final StaticScope parentScope = currentScope_.parentScope();
-			currentScope_ = parentScope;
-		}
+		final StaticScope parentScope = currentScope_.parentScope();
+		currentScope_ = parentScope;
 		if (null != currentContext_) {
 			currentContext_ = currentContext_.parentContext();
 		}
@@ -386,7 +385,7 @@ public class Pass1Listener extends KantBaseListener {
 		// : '<' type_parameter (',' type_parameter)* '>'
 		// Pop from the expression stack and add to current template declaration
 		final TemplateDeclaration currentTemplateDecl = parsingData_.currentTemplateDeclaration();
-		Map<String,String> dupMap = new LinkedHashMap<String,String>();
+		final Map<String,String> dupMap = new LinkedHashMap<String,String>();
 		final int numberOfActualParameters = ctx.type_parameter().size();
 		for (int i = 0; i < numberOfActualParameters; i++) {
 			final IdentifierExpression type_name = (IdentifierExpression)parsingData_.popExpression();
@@ -421,8 +420,9 @@ public class Pass1Listener extends KantBaseListener {
 		ClassType baseClassType = null;
 		if (ctx.type_name().size() > 1) {
 			final String baseClassName = ctx.type_name(1).getText();
-			baseClassType = (ClassType)scope.lookupTypeDeclarationRecursive(baseClassName); // may be null
-			assert null == baseClassType || baseClassType instanceof ClassType;
+			final Type rawBaseClassType = scope.lookupTypeDeclarationRecursive(baseClassName);
+			assert null == rawBaseClassType || rawBaseClassType instanceof ClassType;
+			baseClassType = (ClassType)rawBaseClassType; // may be null
 		}
 		final Type type = new TemplateParameterType(ctx.type_name(0).getText(), baseClassType);
 		final Expression type_name = new IdentifierExpression(ctx.type_name(0).getText(), type, scope);
@@ -542,8 +542,9 @@ public class Pass1Listener extends KantBaseListener {
 			// behaviour elicited by syntax errors. See
 			// the comment above on entry to the production.
 
-			final RoleType type = (RoleType)currentRole_.type();
-			assert type instanceof RoleType;
+			final Type rawRoleType = currentRole_.type();
+			assert rawRoleType instanceof RoleType;
+			final RoleType type = (RoleType)rawRoleType;
 			type.setBacklinkToRoleDecl(currentRole_);
 
 			currentRole_ = null;
@@ -700,9 +701,9 @@ public class Pass1Listener extends KantBaseListener {
 			// The IF statement is just to recover from bad
 			// behaviour elicited by syntax errors. See comment
 			// elsewhere (in exitRole_decl?)
-
-			final StagePropType type = (StagePropType)currentRole_.type();
-			assert type instanceof StagePropType;
+			final Type rawType = currentRole_.type();
+			assert rawType instanceof StagePropType;
+			final StagePropType type = (StagePropType)rawType;
 			type.setBacklinkToRoleDecl(currentRole_);
 			
 			// Make sure self_methods are const
@@ -1144,9 +1145,7 @@ public class Pass1Listener extends KantBaseListener {
 		final KantParser.Access_qualifierContext accessQualifierContext = ctx.access_qualifier();
 		final String accessQualifierString = accessQualifierContext != null? accessQualifierContext.getText(): "";
 		AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
-		if (null != accessQualifier) {
-			assert accessQualifier instanceof AccessQualifier;
-		} else {
+		if (null == accessQualifier) {
 			accessQualifier = AccessQualifier.accessQualifierFromString(" default");
 		}
 		List<ObjectDeclaration> declaredObjectDeclarations = null;
@@ -1162,7 +1161,7 @@ public class Pass1Listener extends KantBaseListener {
 		final int numberOfChildren = children.size();
 		final String typeName = children.get(0).getText();
 		boolean isArray = false;
-		if (numberOfChildren == 3) {
+		if (3 == numberOfChildren) {
 			final String firstModifier = children.get(1).getText();
 			final String secondModifier = children.get(2).getText();
 			if (firstModifier.equals("[") && secondModifier.equals("]")) {
@@ -1199,7 +1198,6 @@ public class Pass1Listener extends KantBaseListener {
 			final Identifier_listContext identifier_list = ctx.identifier_list();
 			final DeclarationsAndInitializers idInfo = this.processIdentifierList(identifier_list, type, lineNumber, accessQualifier);
 			declaredObjectDeclarations = idInfo.objectDecls();
-			
 			
 			final RuleContext myParent = ctx.parent;
 			ForExpression currentForExpression = null;
@@ -1330,15 +1328,18 @@ public class Pass1Listener extends KantBaseListener {
 			// Has to be in the context of a template instantiation in progress
 			final List<String> typeNameList = parsingData_.popTypeNameList();
 			final String templateName = ctx.JAVA_ID().getText();
-			String parameterListString = "";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append(templateName);
+			stringBuffer.append("<");
 			for (int i = 0; i < typeNameList.size(); i++) {
 				final String parameterName = typeNameList.get(i);
-				parameterListString = parameterListString + parameterName;
+				stringBuffer.append(parameterName);
 				if (i < typeNameList.size() - 1) {
-					parameterListString = parameterListString + ",";
+					stringBuffer.append(",");
 				}
 			}
-			typeName = templateName + "<" + parameterListString + ">";
+			stringBuffer.append(">");
+			typeName = stringBuffer.toString();
 			
 			// Create a new class!
 			type = this.lookupOrCreateTemplateInstantiation(templateName, typeNameList, ctx.getStart().getLine());
@@ -1797,14 +1798,16 @@ public class Pass1Listener extends KantBaseListener {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 				expression = new NullExpression();
 			} else {
-				String compoundTypeName = JAVA_ID + "<";
+				final StringBuffer typeNameBuffer = new StringBuffer();
+				typeNameBuffer.append(JAVA_ID); typeNameBuffer.append("<");
 				for (int i = 0; i < typeParameterNameList.size(); i++) {
-					compoundTypeName = compoundTypeName + typeParameterNameList.get(i);
+					typeNameBuffer.append(typeParameterNameList.get(i));
 					if (i < typeParameterNameList.size() - 1) {
-						compoundTypeName = compoundTypeName + ",";
+						typeNameBuffer.append(",");
 					}
 				}
-				compoundTypeName = compoundTypeName + ">";
+				typeNameBuffer.append(">");
+				final String compoundTypeName = typeNameBuffer.toString();
 				type = currentScope_.lookupTypeDeclarationRecursive(compoundTypeName);
 				if (null == type) {
 					type = this.lookupOrCreateTemplateInstantiation(JAVA_ID, typeParameterNameList, ctx.getStart().getLine());
@@ -1838,10 +1841,10 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else if (null != ctx.abelian_atom() && null != ctx.JAVA_ID()) {
 			//	| abelian_atom '.' JAVA_ID
+			final ExpressionStackAPI rawExpression = this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
+			assert rawExpression instanceof Expression;
 			// The following line DOES pop the expression stack
-			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
-			assert expression instanceof Expression;
-			
+			expression = (Expression)rawExpression;
 			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
 		} else if (null != ctx.abelian_atom() && null != ctx.message()) {
 			//	| abelian_atom '.' message
@@ -1864,13 +1867,10 @@ public class Pass1Listener extends KantBaseListener {
 			final KantParser.ExprContext sizeExprCtx = (null == ctx.expr())? null:
 														((ctx.expr().size() == 0)? null: ctx.expr(0));
 			expression = this.newExpr(ctx.children, ctx.getStart(), sizeExprCtx, ctx.message());
-			if (null == expression) {
-				expression = new NullExpression();
-			}
 			
 			if (printProductionsDebug) {
 				System.err.print("expr : ");
-				if (null != expression && expression instanceof NewExpression) {
+				if (expression instanceof NewExpression) {
 					System.err.print(((NewExpression)expression).getText());
 				} else {
 					System.err.print("<unknown class>");
@@ -1930,9 +1930,9 @@ public class Pass1Listener extends KantBaseListener {
 			checkForIncrementOpViolatingIdentifierConstness((UnaryopExpressionWithSideEffect)expression, ctx.getStart());
 		} else if (null != ctx.ABELIAN_INCREMENT_OP() && null != ctx.abelian_atom() && null != ctx.JAVA_ID()) {
 			//	| ABELIAN_INCREMENT_OP abelian_atom '.' JAVA_ID
-			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), ctx.ABELIAN_INCREMENT_OP());
-			assert expression instanceof Expression;
-
+			final ExpressionStackAPI rawExpression = this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), ctx.ABELIAN_INCREMENT_OP());
+			assert rawExpression instanceof Expression;
+			expression = (Expression)rawExpression;
 			if (printProductionsDebug) { System.err.print("abelian_atom : '++' expr '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
 		} else if (null != ctx.constant()) {
 			//	| constant
@@ -1981,10 +1981,9 @@ public class Pass1Listener extends KantBaseListener {
 				arrayBase = ctx.abelian_atom();
 				theIndex = ctx.expr(0);
 			}
-			
-			expression = (Expression)processIndexedArrayElement(arrayBase, theIndex, ctx.ABELIAN_INCREMENT_OP());
-			assert expression instanceof Expression;
-			
+			final ExpressionStackAPI rawExpression = processIndexedArrayElement(arrayBase, theIndex, ctx.ABELIAN_INCREMENT_OP());
+			assert rawExpression instanceof Expression;
+			expression = (Expression)rawExpression;
 			checkForIncrementOpViolatingConstness((ArrayIndexExpressionUnaryOp)expression, ctx.getStart());
 			if (printProductionsDebug) {
 				if (null != ctx.abelian_expr()) {
@@ -1996,9 +1995,9 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctx.abelian_atom() && null != ctx.JAVA_ID() && null == ctx.CLONE()
 				&& null == ctx.message() && (null == ctx.expr() || (ctx.expr().size() == 0)) && null != ctx.ABELIAN_INCREMENT_OP()) {
 			//	| abelian_atom '.' JAVA_ID ABELIAN_INCREMENT_OP
-			expression = (Expression)this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), ctx.ABELIAN_INCREMENT_OP());
-			assert expression instanceof Expression;
-			
+			final ExpressionStackAPI rawExpression = this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), ctx.ABELIAN_INCREMENT_OP());
+			assert rawExpression instanceof Expression;
+			expression = (Expression)rawExpression;
 			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(") ++");}
 		} else if ((null == ctx.abelian_atom()) && (null == ctx.abelian_expr()) && null != ctx.message()) {
 			//	| /* this. */ message
@@ -2035,14 +2034,10 @@ public class Pass1Listener extends KantBaseListener {
 		final Type arrayBaseType = rawArrayBase.type();
 		if (arrayBaseType instanceof ArrayType) {
 			final ArrayType arrayType = (ArrayType)arrayBaseType;	// instance of ArrayType
-			assert arrayType instanceof ArrayType;
 			final Type baseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
 			arrayBase.setResultIsConsumed(true);
 			expression = new ArrayIndexExpression(arrayBase, indexExpr);
-		} else if (arrayBaseType instanceof RoleType) {
-			// Just the Pass 1 Blues
-			expression = new NullExpression();
 		} else {
 			expression = new NullExpression();
 		}
@@ -2554,9 +2549,7 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void exitSwitch_expr(@NotNull KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
-		
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
-		assert switchExpression instanceof SwitchExpression;
 		
 		// Set all the goodies. The body is already taken care of.
 		final Expression expr = parsingData_.popExpression();
@@ -2659,9 +2652,9 @@ public class Pass1Listener extends KantBaseListener {
 	    //	| INTEGER
 	    //	| FLOAT
 	    //	| BOOLEAN
-
-		final Constant constant = (Constant)Expression.makeConstantExpressionFrom(ctx.getText());
-		assert constant instanceof Constant;
+		final Expression rawConstant = Expression.makeConstantExpressionFrom(ctx.getText());
+		assert rawConstant instanceof Constant;
+		final Constant constant = (Constant)rawConstant;
 		parsingData_.pushExpression(constant);
 		
 		if (printProductionsDebug) { System.err.print("constant : "); System.err.println(ctx.getText());}
@@ -2766,9 +2759,10 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
-		final StagePropDeclaration requestedStageProp = (StagePropDeclaration)currentScope_.lookupRoleDeclaration(roleName);
+		final Declaration rawDeclaration = currentScope_.lookupRoleDeclaration(roleName);
+		assert null == rawDeclaration || rawDeclaration instanceof StagePropDeclaration;
+		final StagePropDeclaration requestedStageProp = (StagePropDeclaration)rawDeclaration;
 		if (null != requestedStageProp) {
-			assert requestedStageProp instanceof StagePropDeclaration;
 			currentRole_ = requestedStageProp;
 			
 			// The way parsing is designed, these things should
@@ -2806,16 +2800,19 @@ public class Pass1Listener extends KantBaseListener {
 		if (null == templateDeclaration) {
 			errorHook5p2(ErrorType.Fatal, lineNumber, "Template ", templateName, " is not defined. ", "");
 		} else {
-			String typeName = templateName + "<";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append(templateName);
+			stringBuffer.append("<");
 			int i = 0;
-			for (String parameterTypeName : parameterTypeNames) {
-				typeName = typeName + parameterTypeName;
+			for (final String parameterTypeName : parameterTypeNames) {
+				stringBuffer.append(parameterTypeName);
 				i++;
 				if (i < parameterTypeNames.size()) {
-					typeName = typeName + ",";
+					stringBuffer.append(",");
 				}
 			}
-			typeName = typeName + ">";
+			stringBuffer.append(">");
+			final String typeName = stringBuffer.toString();
 			
 			final StaticScope templateScope = templateDeclaration.enclosingScope();
 			final StaticScope templateEnclosedScope = templateDeclaration.enclosedScope();
@@ -2844,8 +2841,9 @@ public class Pass1Listener extends KantBaseListener {
 				classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
 						baseClassDecl, lineNumber);
 				classDeclaration.elaborateFromTemplate(templateDeclaration, newTypes);
-				final ClassType newType = (ClassType)classDeclaration.type();
-				assert newType instanceof ClassType;
+				final Type rawNewType = classDeclaration.type();
+				assert rawNewType instanceof ClassType;
+				final ClassType newType = (ClassType)rawNewType;
 				newTypes.setClassType(newType);
 
 				templateScope.declareType(newType);
@@ -3201,8 +3199,9 @@ public class Pass1Listener extends KantBaseListener {
 		indexExpr.setResultIsConsumed(true);
 		
 		final Expression rawArrayBase = parsingData_.popExpression();
-		final ArrayType arrayType = (ArrayType)rawArrayBase.type();
-		assert arrayType instanceof ArrayType;
+		final Type rawArrayBaseType = rawArrayBase.type();
+		assert rawArrayBaseType instanceof ArrayType;
+		final ArrayType arrayType = (ArrayType)rawArrayBaseType;
 		final Type baseType = arrayType.baseType();
 		final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
 		arrayBase.setResultIsConsumed(true);
@@ -3302,11 +3301,13 @@ public class Pass1Listener extends KantBaseListener {
 					UnaryopExpressionWithSideEffect.PreOrPost.Pre: UnaryopExpressionWithSideEffect.PreOrPost.Post;
 		}
 		
-		if (null != qualifier && null != qualifier.type() && qualifier.type().name().equals("Class")) {
+		assert null != qualifier;
+		if (null != qualifier.type() && qualifier.type().name().equals("Class")) {
 			// This is where we handle types like "System" for System.out.print*
 			// Now we need to get the actual class of that name
-			final ClassType theClass = (ClassType)currentScope_.lookupTypeDeclarationRecursive(qualifier.name());
-			assert theClass instanceof ClassType;
+			final Type rawClass = currentScope_.lookupTypeDeclarationRecursive(qualifier.name());
+			assert rawClass instanceof ClassType;
+			final ClassType theClass = (ClassType)rawClass;
 			
 			final ObjectDeclaration odecl = theClass.type().enclosedScope().lookupObjectDeclaration(javaIdString);
 			if (null != odecl) {
@@ -3351,9 +3352,7 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		
-		if (null == expression) {
-			assert null != expression;
-		}
+		assert null != expression;
 		
 		return expression;
 	}
@@ -3363,7 +3362,7 @@ public class Pass1Listener extends KantBaseListener {
 		// : 'new' message
 		// | 'new' type_name '[' expr ']'
 		// Called in all passes.
-		Expression expression = null;
+		Expression expression = null;	// guaranteed non-null return
 		final Message message = parsingData_.popMessage();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null == ctxExpr && null != ctxMessage){
@@ -3396,8 +3395,9 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctxExpr && null == ctxMessage) {
 			// | 'new' type_name '[' abelian_expr ']'
 			final Expression expr = parsingData_.popExpression();
-			final Type type_name_expression = (Type)parsingData_.popRawExpression();
-			assert type_name_expression instanceof Type;
+			final ExpressionStackAPI raw_type_expression = parsingData_.popRawExpression();
+			assert raw_type_expression instanceof Type;
+			final Type type_name_expression = (Type)raw_type_expression;
 			final String typeName = type_name_expression.name();
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			if (null == type) {
@@ -3605,8 +3605,9 @@ public class Pass1Listener extends KantBaseListener {
 			scope = scope.parentScope();
 		}
 		if (null != scope && scope != StaticScope.globalScope()) {
-			retval = (MethodDeclaration)scope.associatedDeclaration();
-			assert null == retval || retval instanceof MethodDeclaration;
+			final Declaration rawRetval = scope.associatedDeclaration();
+			assert null == rawRetval || rawRetval instanceof MethodDeclaration;
+			retval = (MethodDeclaration)rawRetval;
 		}
 		return retval;
 	}
@@ -3632,8 +3633,9 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		if (null != scope && scope != StaticScope.globalScope()) {
-			retval = (MethodDeclaration)scope.associatedDeclaration();
-			assert null == retval || retval instanceof MethodDeclaration;
+			final Declaration rawDeclaration = scope.associatedDeclaration();
+			assert null == rawDeclaration || rawDeclaration instanceof MethodDeclaration;
+			retval = (MethodDeclaration)rawDeclaration;
 		}
 		return retval;
 	}
@@ -3696,8 +3698,9 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != roleDecl) {
 			// Someone is invoking a role. Cool.
 			declaringScope = roleDecl.enclosingScope();
-			final RoleType roleType = (RoleType)declaringScope.lookupTypeDeclaration(idName);	// Type$RoleType
-			assert roleType instanceof RoleType;
+			final Type rawRoleType = declaringScope.lookupTypeDeclaration(idName);	// Type$RoleType
+			assert rawRoleType instanceof RoleType;
+			final RoleType roleType = (RoleType)rawRoleType;
 			if (this.isInsideMethodDeclaration(ctxJAVA_ID)) {
 				final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope);
 				qualifier.setResultIsConsumed(true);
@@ -3889,14 +3892,14 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing on pass 1 */
 	}
 	
-	protected <ExprType> Expression expressionFromReturnStatement(ExprType ctxExpr, RuleContext unused, Token ctxGetStart) {
-		Expression returnExpression = null;
+	protected <ExprType> Expression expressionFromReturnStatement(final ExprType ctxExpr, final RuleContext unused, final Token ctxGetStart) {
+		Expression returnExpression = null, retval = null;
 		if (null != ctxExpr) {
 			returnExpression = parsingData_.popExpression();
+			returnExpression.setResultIsConsumed(true);
+			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
 		}
-		returnExpression.setResultIsConsumed(true);
-		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		final Expression retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
 		return retval;
 	}
 	

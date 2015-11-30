@@ -87,7 +87,7 @@ public abstract class Constant extends Expression {
 			super(s, StaticScope.globalScope().lookupTypeDeclaration("String"));
 			
 			// Need to convert all \" to "
-			final CharSequence from = new String("\\\""), to = new String("\"");
+			final CharSequence from = "\\\"", to = "\"";
 			s = s.replace(from, to);
 			string_ = s;
 		}

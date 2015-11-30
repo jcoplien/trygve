@@ -41,8 +41,8 @@ import info.fulloo.trygve.semantic_analysis.Program;
 
 
 public class ParseRun {
-	final String grammarName = "Kant";
-	final String startRuleName = "program";
+	final static String grammarName = "Kant";
+	final static String startRuleName = "program";
 	public ParseRun(final String input, final TextEditorGUI gui)
 	{
         final ParsingData parsingData = new ParsingData();

@@ -42,16 +42,19 @@ public class Pass4Listener extends Pass3Listener {
 		Type retval = null;
 		
 		if (null != templateDeclaration) {
-			String typeName = templateName + "<";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append(templateName);
+			stringBuffer.append("<");
 			int i = 0;
-			for (String parameterTypeName : parameterTypeNames) {
-				typeName = typeName + parameterTypeName;
+			for (final String parameterTypeName : parameterTypeNames) {
+				stringBuffer.append(parameterTypeName);
 				i++;
 				if (i < parameterTypeNames.size()) {
-					typeName = typeName + ",";
+					stringBuffer.append(",");
 				}
 			}
-			typeName = typeName + ">";
+			stringBuffer.append(">");
+			final String typeName = stringBuffer.toString();
 			
 			final StaticScope templateScope = templateDeclaration.enclosingScope();
 			ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);

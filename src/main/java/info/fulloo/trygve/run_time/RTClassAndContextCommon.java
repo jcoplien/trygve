@@ -29,6 +29,7 @@ import java.util.Map;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
+import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -45,9 +46,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public abstract class RTClassAndContextCommon implements RTType {
 	public RTClassAndContextCommon(final TypeDeclaration typeDeclaration) {
 		super();
-		if (null == typeDeclaration) {
-			assert null != typeDeclaration;
-		}
+		assert null != typeDeclaration;
 		stringToMethodDeclMap_ = new LinkedHashMap<String, Map<FormalParameterList, RTMethod>>();
 		nameToStaticObjectMap_ = new LinkedHashMap<String, RTObject>();
 		nameToStaticObjectTypeMap_ = new LinkedHashMap<String, Type>();
@@ -60,7 +59,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		final Type rawClassType = typeDeclaration.type();
 		if (rawClassType instanceof ClassType) {
 			final ClassType classType = (ClassType)rawClassType;
-			templateInstantiationInfo_ = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
+			templateInstantiationInfo_ = classType.enclosedScope().templateInstantiationInfo();
 		} else {
 			templateInstantiationInfo_ = null;
 		}
@@ -105,9 +104,10 @@ public abstract class RTClassAndContextCommon implements RTType {
 		for (final Map.Entry<String, RTObject> iter : nameToStaticObjectMap_.entrySet()) {
 			// Get a default value. TODO: Check for static initializer and use that instead
 			final Type typeOfStatic = nameToStaticObjectTypeMap_.get(iter.getKey());
-			final TypeDeclaration typeDeclaration = (TypeDeclaration) typeOfStatic.enclosedScope().associatedDeclaration();
-			assert typeDeclaration instanceof TypeDeclaration;
-			final RTType rTTypeOfStatic = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final Declaration rawDecl = typeOfStatic.enclosedScope().associatedDeclaration();
+			assert rawDecl instanceof TypeDeclaration;
+			final TypeDeclaration typeDeclaration = (TypeDeclaration)rawDecl;
+			final RTType rTTypeOfStatic = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			final RTObject initializingObject = new RTObjectCommon(rTTypeOfStatic);
 			
 			// Bind the static identifier to a value
@@ -183,7 +183,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 			}
 		} else if (null != this.baseClassDeclaration()) {
 			// We inherit base class methods. Recur.
-			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
+			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
 			assert (runTimeBaseClassType instanceof RTClass);
 			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignature(methodName, suppliedParameters, ignoreName);
 		} else {

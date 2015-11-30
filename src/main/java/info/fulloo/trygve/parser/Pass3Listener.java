@@ -110,12 +110,12 @@ public class Pass3Listener extends Pass2Listener {
 			returnExpression = parsingData_.popExpression();
 		}
 		final MethodDeclaration methodDecl = (MethodDeclaration)findProperMethodScopeAround(ctxExpr, ctxParent, ctxGetStart);
+		assert null == methodDecl || methodDecl instanceof MethodDeclaration;
 		if (null == methodDecl) {
 			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			returnExpression = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
 			ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
 		} else {
-			assert methodDecl instanceof MethodDeclaration;
 			if (methodDecl.returnType() == null || methodDecl.returnType().name().equals("void")) {
 				if (null == returnExpression || returnExpression.type().name().equals("void")) {
 					;

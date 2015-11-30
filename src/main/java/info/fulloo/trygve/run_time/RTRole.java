@@ -34,7 +34,6 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 public class RTRole extends RTClassAndContextCommon implements RTType  {
 	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
-		assert associatedDeclaration instanceof RoleDeclaration;
 		associatedDeclaration_ = associatedDeclaration;
 		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 		populateNameToStaticObjectMap();

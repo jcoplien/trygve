@@ -24,7 +24,6 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,9 +61,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	@Override public Map<String, RTObject> objectMembers() { return objectMembers_; }
 	@Override public void setObject(String name, RTObject object) {
-		if (null == object) {
-			assert null != object;
-		}
+		assert null != object;
 		if (objectMembers_.containsKey(name)) {
 			final RTObject oldObject = objectMembers_.get(name);
 			objectMembers_.put(name, object);
@@ -119,21 +116,25 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 			for (Map.Entry<RTContextObject, List<String>> iter : rolesIAmPlayingInContext_.entrySet()) {
+				final StringBuffer stringBuffer = new StringBuffer();
 				final String contextName = iter.getKey().rTType().name();
 				final List<String> roleNames = iter.getValue();
-				String message = "\tIn Context " + contextName +":";
-				for (String aRoleName : roleNames) {
-					message = message + " " + aRoleName;
+				stringBuffer.append("\tIn Context ");
+				stringBuffer.append(contextName);
+				stringBuffer.append(":");
+				for (final String aRoleName : roleNames) {
+					stringBuffer.append(" ");
+					stringBuffer.append(aRoleName);
 				}
+				final String message = stringBuffer.toString();
 				ErrorLogger.error(ErrorType.Fatal, message, ".", "", "");
 			}
 		}
 	}
 	
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
-		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
-			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+			final List<String> rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
 			rolesIAmPlayingHere.remove(roleName);
 			if (0 == rolesIAmPlayingHere.size()) {
 				rolesIAmPlayingInContext_.remove(contextInstance);
@@ -210,7 +211,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				final RTContextInfo contextInfo = this.contextInfo();
 				
 				assert null != contextInfo;
-				assert contextInfo instanceof RTContextInfo;
 				
 				if (null != oldValue) {
 					oldValue.decrementReferenceCount();
@@ -235,7 +235,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			
 			final RTContextInfo contextInfo = this.contextInfo();
 			assert null != contextInfo;
-			assert contextInfo instanceof RTContextInfo;
 			
 			if (null != oldValue) {
 				for (int i = 0; i < oldValue.size(); i++) {
@@ -442,8 +441,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		public double doubleValue() { return foobar_; }
 		@Override public boolean equals(final Object another) {
-			if ((another instanceof RTIntegerObject) == false) return false;
-			else return foobar_ == ((RTIntegerObject)another).intValue();
+			boolean retval = false;
+			if ((another instanceof RTIntegerObject)) {
+				retval = Math.abs(foobar_ - (double)((RTIntegerObject)another).intValue()) < EPSILON;
+			} else if ((another instanceof RTDoubleObject)) {
+				retval = Math.abs(foobar_ - ((RTDoubleObject)another).doubleValue()) < EPSILON;
+			} else {
+				assert false;
+			}
+			return retval;
 		}
 		@Override public boolean gt(final RTObject another) {
 			if ((another instanceof RTDoubleObject) == false) return false;
@@ -544,6 +550,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			return new RTDoubleObject(result);
 		}
 		
+		final double EPSILON = 0.00001;
 		private double foobar_;
 	}
 	public static class RTStringObject extends RTObjectCommon implements RTObject {
@@ -578,7 +585,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public RTObjectCommon modulus(final RTObject other) {
 			assert other instanceof RTStringObject;
-			final CharSequence nothing = new String(""), cut = ((RTStringObject)other).stringValue();
+			final CharSequence nothing = "", cut = ((RTStringObject)other).stringValue();
 			final String rawRetval = foobar_.replace(cut, nothing);
 			return new RTStringObject(rawRetval);
 		}
@@ -698,6 +705,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	public RTObject dup() {
 		RTObject retval = new RTObjectCommon(classOrContext_, objectMembers_, rTTypeMap_);
 		return retval;
+	}
+	@Override public int hashCode() {
+		return super.hashCode();
 	}
 	
 	private final RTType classOrContext_;

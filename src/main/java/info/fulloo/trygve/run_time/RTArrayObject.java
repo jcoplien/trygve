@@ -24,7 +24,6 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,11 +50,11 @@ public class RTArrayObject implements RTObject, RTIterable {
 		return baseType_;
 	}
 	
-	@Override public RTObject getObject(String name) {
+	@Override public RTObject getObject(final String name) {
 		assert false;
 		return null;
 	}
-	private int calculateIndexFrom(RTObject theIndexObject) {
+	private int calculateIndexFrom(final RTObject theIndexObject) {
 		int theIndex = -1;
 		if (theIndexObject instanceof RTIntegerObject) {
 			theIndex = (int)((RTIntegerObject)theIndexObject).intValue();
@@ -83,19 +82,19 @@ public class RTArrayObject implements RTObject, RTIterable {
 	public int size() {
 		return size_;
 	}
-	@Override public void addObjectDeclaration(String objectName, RTType type) {
+	@Override public void addObjectDeclaration(final String objectName, final RTType type) {
 		assert false;
 	}
 	@Override public Map<String, RTType> objectDeclarations() {
 		assert false;
 		return null;
 	}
-	@Override public void setObject(String objectName, RTObject object) {
-		// Mapbe someday we upgrade arrays to have Map semantics
+	@Override public void setObject(final String objectName, final RTObject object) {
+		// Maybe someday we upgrade arrays to have Map semantics
 		// and do everything with String selectors
 		assert false;
 	}
-	public void setObject(RTObject theIndexObject, RTObject rhs) {			
+	public void setObject(final RTObject theIndexObject,final  RTObject rhs) {			
 		final int theIndex = calculateIndexFrom(theIndexObject);
 		
 		final RTObject oldValue = theArray_[theIndex];
@@ -113,31 +112,31 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
-	@Override public boolean equals(Object another) {
+	@Override public boolean equals(final Object another) {
 		assert false;
 		return false;
 	}
-	@Override public boolean gt(RTObject another) {
+	@Override public boolean gt(final RTObject another) {
 		assert false;
 		return false;
 	}
-	@Override public RTObject plus(RTObject other) {
+	@Override public RTObject plus(final RTObject other) {
 		assert false;
 		return null;
 	}
-	@Override public RTObject minus(RTObject other) {
+	@Override public RTObject minus(final RTObject other) {
 		assert false;
 		return null;
 	}
-	@Override public RTObject times(RTObject other) {
+	@Override public RTObject times(final RTObject other) {
 		assert false;
 		return null;
 	}
-	@Override public RTObject divideBy(RTObject other) {
+	@Override public RTObject divideBy(final RTObject other) {
 		assert false;
 		return null;
 	}
-	@Override public RTObject modulus(RTObject other) {
+	@Override public RTObject modulus(final RTObject other) {
 		assert false;
 		return null;
 	}
@@ -169,22 +168,22 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
-	@Override public RTObject toThePowerOf(RTObject other) {
+	@Override public RTObject toThePowerOf(final RTObject other) {
 		assert false;
 		return null;
 	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.
-	@Override public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
-			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+			;  // rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
 		} else {
 			rolesIAmPlayingHere = new ArrayList<String>();
 			rolesIAmPlayingInContext_.put(contextInstance, rolesIAmPlayingHere);
 		}
 		int count = 0;
-		for (Map.Entry<RTContextObject, List<String>> iter : rolesIAmPlayingInContext_.entrySet()) {
+		for (final Map.Entry<RTContextObject, List<String>> iter : rolesIAmPlayingInContext_.entrySet()) {
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
@@ -192,7 +191,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 					" playing too many roles, including ", roleName);
 		}
 	}
-	@Override public void unenlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -239,7 +238,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;	 // meaningless for arrays
 		return null;
 	}
-	private RTArrayObject(RTObject [] theArray, Type baseType, int size) {
+	private RTArrayObject(final RTObject [] theArray, final Type baseType, final int size) {
 		super();
 		theArray_ = theArray.clone();
 		baseType_ = baseType;

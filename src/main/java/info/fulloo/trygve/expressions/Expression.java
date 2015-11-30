@@ -325,9 +325,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BinopExpression extends Expression
 	{
-		public BinopExpression(Expression lhs, String operator, Expression rhs) {
+		public BinopExpression(final Expression lhs, final String operator, final Expression rhs) {
 			// For unary operators, one or the other of lhs or rhs could be null
-			super(operator, null != lhs? lhs.type(): rhs.type(), lhs.enclosingMegaType());
+			super(operator, null != lhs? lhs.type(): rhs.type(), null != lhs? lhs.enclosingMegaType(): rhs.enclosingMegaType());
 			assert operator.equals("*") || operator.equals("/") || operator.equals("+") || operator.equals("-")
 									    || operator.equals("%");
 			lhs_ = lhs;
@@ -804,6 +804,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String uniqueLabel() {
 			return label_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
 		public void addInitExprs(List<BodyPart> bodyPart) {
 			initExprs_.addAll(bodyPart);
 		}
@@ -1085,10 +1088,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			expressions_.add(e);
 		}
 		@Override public String getText() {
-			String retval = new String();
-			for (Expression a : expressions_) {
-				retval += a.getText() + "$ ";
+			final StringBuffer stringBuffer = new StringBuffer();
+			for (final Expression a : expressions_) {
+				stringBuffer.append(a.getText());
+				stringBuffer.append("$ ");
 			}
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		public List<Expression> expressions() {
@@ -1112,10 +1117,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			operator_ = operator;
 		}
 		@Override public String getText() {
-			String retval = new String();
-			retval += "[" + lhs_.getText() + " ";
-			retval += operator_ + " ";
-			retval += rhs_.getText() + "]";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append("["); stringBuffer.append(lhs_.getText()); stringBuffer.append(" ");
+			stringBuffer.append(operator_);  stringBuffer.append(" ");
+			stringBuffer.append(rhs_.getText()); stringBuffer.append("]");
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		@Override public Type type() {
@@ -1168,10 +1174,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			}
 		}
 		@Override public String getText() {
-			String retval = new String();
-			retval += "[" + lhs_.getText() + " ";
-			retval += operator_ + " ";
-			retval += rhs_.getText() + "]";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append("["); stringBuffer.append(lhs_.getText()); stringBuffer.append(" ");
+			stringBuffer.append(operator_); stringBuffer.append(" ");
+			stringBuffer.append(rhs_.getText()); stringBuffer.append("]");
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
@@ -1219,10 +1226,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			}
 		}
 		@Override public String getText() {
-			String retval = new String();
-			retval += "[" + lhs_.getText() + " ";
-			retval += operator_ + " ";
-			retval += rhs_.getText() + "]";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append("["); stringBuffer.append(lhs_.getText()); stringBuffer.append(" ");
+			stringBuffer.append(operator_); stringBuffer.append(" ");
+			stringBuffer.append(rhs_.getText()); stringBuffer.append("]");
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
@@ -1238,7 +1246,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return operator_;
 		}
 		
-		private Expression lhs_, rhs_;
+		private Expression lhs_;
+		private final Expression rhs_;
 		private final String operator_;
 	}
 	
@@ -1264,11 +1273,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			lineNumber_ = lineNumber;
 		}
 		@Override public String getText() {
-			String retval = new String();
-			retval += "return";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append("return");
 			if (null != returnExpression_) {
-				retval += " " + returnExpression_.getText();
+				stringBuffer.append(" ");
+				stringBuffer.append(returnExpression_.getText());
 			}
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		public Expression returnExpression() {

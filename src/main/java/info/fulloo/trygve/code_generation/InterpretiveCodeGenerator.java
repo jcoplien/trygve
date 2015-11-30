@@ -109,12 +109,15 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class InterpretiveCodeGenerator implements CodeGenerator {
 	public static InterpretiveCodeGenerator interpretiveCodeGenerator = null;
+	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
+		interpretiveCodeGenerator = justThis;
+	}
 	public InterpretiveCodeGenerator(final Program program, final ParsingData parsingData) {
 		super();
 		program_ = program;
 		parsingData_ = parsingData;
 		virtualMachine_ = new RunTimeEnvironment();
-		interpretiveCodeGenerator = this;
+		setStaticHandle(this);
 	}
 	@Override public RunTimeEnvironment virtualMachine() {
 		return virtualMachine_;
@@ -158,10 +161,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				this.compileClass((ClassDeclaration)a);
 			} else if (a instanceof StagePropDeclaration) {
 				assert false;	// ever get here?
-				this.compileStageProp((StagePropDeclaration)a);
+				// this.compileStageProp((StagePropDeclaration)a);
 			} else if (a instanceof RoleDeclaration) {
 				assert false;	// ever get here?
-				this.compileRole((RoleDeclaration)a);
+				// this.compileRole((RoleDeclaration)a);
 			} else if (a instanceof TemplateDeclaration) {
 				this.compileTemplate((TemplateDeclaration)a);
 			} else if (a instanceof InterfaceDeclaration) {
@@ -215,7 +218,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// We compile instantiations (classes), not the templates themselves.
 	}
 	private void processListCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
-		final RTType rtListTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtListTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
@@ -240,7 +243,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		rtMethod.addCode(listCode);
 	}
 	private void processMathCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
-		final RTType rtMathTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		final RTType rtMathTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtMathTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 		rtMathTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
@@ -261,7 +264,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (formalParameterList.count() == 2) {
 			final ObjectDeclaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
 			final Type printableArgumentType = printableArgumentDeclaration.type();
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -323,7 +326,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			// probably the constructor
 			if (methodDeclaration.name().equals("Date")) {
 				final List<RTCode> ctorCode = new ArrayList<RTCode>();
-				final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+				final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 				assert null != rtTypeDeclaration;
 				final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 				rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -338,7 +341,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (formalParameterList.count() == 2) {
 			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(0);
 			final Type argumentType = argumentDeclaration.type();
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -363,7 +366,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			rtMethod.addCode(setSomethingInDateCode);
 		} else if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -395,7 +398,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void processStringCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -412,7 +415,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			rtMethod.addCode(code);
 		} else if (formalParameterList.count() == 2) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -431,7 +434,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			rtMethod.addCode(code);
 		} else if (formalParameterList.count() == 3) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -452,7 +455,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void processDoubleCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -468,13 +471,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtMethod.addCode(code);
 			
 		} else if (formalParameterList.count() == 2) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("*")) {
 				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				rtMethod.addCode(code);
 			} else {
 				// assert false;
 			}
@@ -486,7 +491,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void processIntegerCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
@@ -500,15 +505,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert code.size() > 0;
 			
 			rtMethod.addCode(code);
-			
 		} else if (formalParameterList.count() == 2) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("*")) {
 				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				rtMethod.addCode(code);
 			} else {
 				// assert false;
 			}
@@ -520,20 +526,18 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void processBooleanCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("toString")) {
 				code.add(new RTBooleanClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				rtMethod.addCode(code);
 			} else {
 				assert false;
 			}
-			
-			assert code.size() > 0;
-			
-			rtMethod.addCode(code);
 		} else {
 			assert false;
 		}
@@ -590,9 +594,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;	// unanticipated...
 		}
 		
-		// As a side-effect, TypeDeclarationToRTTypeDeclaration will add the
+		// As a side-effect, convertTypeDeclarationToRTTypeDeclaration will add the
 		// necessary types to the run-time environment
-		final RTType rtTypeDeclaration = TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
@@ -625,8 +629,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		return retval;
 	}
-	private List<RTCode> compileDeclarationForMethodOfTypeHelper(Declaration declaration, MethodDeclaration methodDeclaration,
-			RTType runtimeType, StaticScope scope) {
+	private List<RTCode> compileDeclarationForMethodOfTypeHelper(final Declaration declaration, final MethodDeclaration methodDeclaration,
+			final RTType runtimeType, final StaticScope scope) {
 		List<RTCode> retval = new ArrayList<RTCode>();
 	
 		final RTType declarationType = scopeToRTTypeDeclaration(declaration.type().enclosedScope());
@@ -698,15 +702,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileQualifiedClassMemberExpression(QualifiedClassMemberExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		assert false; 	// unreachable?
-		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTClassMemberIdentifier(expr.name(), expr));
-		return retval;
+		return null;
 	}
 	public List<RTCode> compileQualifiedClassMemberExpressionUnaryOp(QualifiedClassMemberExpressionUnaryOp expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		assert false; 	// never executed?
-		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTClassMemberIdentifierUnaryOp(expr.name(), expr));
-		return retval;
+		return null;
 	}
 	public List<RTCode> compileMessageExpression(final MessageExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
@@ -760,9 +760,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		assert false;
-		// final List<RTCode> retval = new ArrayList<RTCode>();
-		// retval.add(new RTNew(expr));
-		// return retval;
 		return null;
 	}
 	public List<RTCode> compileNewArrayExpression(NewArrayExpression expr, MethodDeclaration methodDeclaration,
@@ -773,9 +770,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileArrayExpression(ArrayExpression expr, StaticScope scope) {
 		assert false;
-		final List<RTCode> retval = new ArrayList<RTCode>();
-		// retval.add(new RTArrayExpression(expr, rtTypeDeclaration));
-		return retval;
+		return null;
 	}
 	public List<RTCode> compileArrayIndexExpression(ArrayIndexExpression expr, StaticScope scope, RTType rtTypeDeclaration) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
@@ -831,16 +826,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		return retval;
 	}
 	public List<RTCode> compileBreakExpression(BreakExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
-		final List<RTCode> retval = new ArrayList<RTCode>();
 		assert false;	// ever reached? just curious
-		retval.add(new RTBreak(expr));
-		return retval;
+		return null;
 	}
 	public List<RTCode> compileContinueExpression(ContinueExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
-		final List<RTCode> retval = new ArrayList<RTCode>();
 		assert false;	// ever reached? just curious
-		retval.add(new RTContinue(expr));
-		return retval;
+		return null;
 	}
 	public List<RTCode> compileExpressionList(ExpressionList expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
@@ -905,19 +896,20 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		return retval;
 	}
-	private List<RTCode> compileObjectDecl(ObjectDeclaration objectDeclaration) {
+	private List<RTCode> compileObjectDecl(final ObjectDeclaration objectDeclaration) {
 		// Declarations are a side effect on setting up ...
 		return new ArrayList<RTCode>();
 	}
 	private void compileScope(final StaticScope scope) {
-		for (ClassDeclaration cd : scope.classDeclarations()) {
+		for (final ClassDeclaration cd : scope.classDeclarations()) {
 			this.compileClass(cd);
 		}
 		for (final MethodDeclaration md : scope.methodDeclarations()) {
 			this.compileMethodInScope(md, scope);
 		}
 		for (final ObjectDeclaration od : scope.objectDeclarations()) {
-			this.compileObjectDecl(od);
+			final List<RTCode> ignored = this.compileObjectDecl(od);
+			assert ignored.size() == 0;
 		}
 		
 		// There's some kind of problem that we need to do this.
@@ -937,7 +929,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
-	public static RTType TypeDeclarationToRTTypeDeclaration(final TypeDeclaration typeDeclaration) {
+	public static RTType convertTypeDeclarationToRTTypeDeclaration(final TypeDeclaration typeDeclaration) {
 		final StaticScope enclosedScope = typeDeclaration.enclosedScope();
 		return InterpretiveCodeGenerator.scopeToRTTypeDeclaration(enclosedScope);
 	}
@@ -1005,8 +997,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private static RTType lookInTopLevelTypeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 
+		assert enclosedScope.associatedDeclaration() instanceof TypeDeclaration;
 		final TypeDeclaration typeDeclaration = (TypeDeclaration)enclosedScope.associatedDeclaration();
-		assert typeDeclaration instanceof TypeDeclaration;
 		
 		retval = RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(typeDeclaration.name());
 		if (null == retval) {
@@ -1023,7 +1015,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 			
-			retval = InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			retval = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			
 			assert null != retval;
 		}
@@ -1031,14 +1023,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public static RTType scopeToRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
-		if (null == enclosedScope) {
-			assert null != enclosedScope;
-		}
+		assert null != enclosedScope;
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();
-		RTType aType = null;
-		if (null != (aType = RunTimeEnvironment.runTimeEnvironment_.typeFromPath(scopePathName))) {
+		final RTType aType = RunTimeEnvironment.runTimeEnvironment_.typeFromPath(scopePathName);
+		if (null != aType) {
 			retval = aType;
 		} else if (enclosingScope != StaticScope.globalScope()) {
 			retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);

@@ -27,11 +27,14 @@ import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.expressions.Expression;
 
 public class Program {
-	public Program(Expression main, TypeDeclarationList theRest, TypeDeclarationList templateInstantationList_) {
+	public Program(final Expression main, final TypeDeclarationList theRest, final TypeDeclarationList templateInstantationList) {
 		main_ = main;
 		theRest_ = theRest;
-		templateInstantiations_ = templateInstantationList_;
-		program_ = this;
+		templateInstantiations_ = templateInstantationList;
+		setProgram(this);
+	}
+	private static void setProgram(final Program theThis) {
+		program_ = theThis;
 	}
 	public static Program program() {
 		return program_;

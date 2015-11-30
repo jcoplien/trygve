@@ -204,9 +204,10 @@ public abstract class Declaration implements BodyPart {
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final TemplateInstantiationInfo newTypes) {
 			templateDeclaration_ = templateDeclaration;
+			
 			// This turns a TemplateDeclaration into a class
+			assert null == baseClass_ || baseClass_.type() instanceof ClassType;
 			final ClassType baseClassType = null == baseClass_? null: (ClassType)baseClass_.type();
-			assert null == baseClassType || baseClassType instanceof ClassType;
 			
 			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
 					this, newTypes);
@@ -385,8 +386,8 @@ public abstract class Declaration implements BodyPart {
 		}
 		public void processRequiredDeclarations(final int lineno) {
 			// Declare requiredSelfSignatures_ in my scope
+			assert enclosedScope() instanceof StaticRoleScope;
 			final StaticRoleScope myEnclosedScope = (StaticRoleScope)this.enclosedScope();
-			assert myEnclosedScope instanceof StaticRoleScope;
 			
 			for (final Map.Entry<String, MethodSignature> signature : requiredSelfSignatures_.entrySet()) {
 				final MethodSignature methodSignature = signature.getValue();
@@ -462,24 +463,16 @@ public abstract class Declaration implements BodyPart {
 				} else if (associatedDeclaration instanceof ClassDeclaration &&
 						null != ((ClassDeclaration)associatedDeclaration).generatingTemplate()) {
 					if (name().equals(((ClassDeclaration)associatedDeclaration).generatingTemplate().name())) {
-						if (null != returnType) {
-							assert returnType == null;
-						}
+						assert returnType == null;
 					} else {
-						if (null == returnType) {
-							assert returnType != null;
-						}
-					}
-				} else {
-					if (null == returnType) {
 						assert returnType != null;
 					}
+				} else {
+					assert returnType != null;
 				}
 				ctorCheck(myEnclosedScope, parentScope, lineNumber);
 			} else {
-				if (null == returnType) {
-					assert returnType != null;
-				}
+				assert returnType != null;
 			}
 			
 			returnType_ = returnType;
@@ -490,6 +483,7 @@ public abstract class Declaration implements BodyPart {
 		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final int lineNumber) {
 			// Am I a constructor?
 			boolean isCtor = false;
+			assert null != parentScope;
 			final String className = parentScope.name();
 			final String methodSelectorName = signature_.name();
 			
@@ -508,10 +502,10 @@ public abstract class Declaration implements BodyPart {
 			
 			if (isCtor) {
 				// Do we have a base class?
-				final Declaration associatedDeclaration = null == parentScope? null: parentScope.associatedDeclaration();
+				final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 				final Type megaType = null == associatedDeclaration? null: associatedDeclaration.type();
 				if (null != megaType && megaType instanceof ClassType) {
-					ClassType theClass = (ClassType)megaType;
+					final ClassType theClass = (ClassType)megaType;
 					
 					// It's a class. Does the class have a base class?
 					final ClassType baseClass = theClass.baseClass();
@@ -663,7 +657,9 @@ public abstract class Declaration implements BodyPart {
 			return lineNumber_;
 		}
 		@Override public String getText() {
-			String retval = name() + "(";
+			final StringBuffer stringBuffer = new StringBuffer();
+			stringBuffer.append(name());
+			stringBuffer.append("(");
 			final int numberOfParameters = formalParameterList().count();
 						
 			// Skip current$context if it's there
@@ -672,12 +668,13 @@ public abstract class Declaration implements BodyPart {
 											(isStatic_? 0: 1);
 			
 			for (int i = startingIndex; i < numberOfParameters; i++) {
-				retval += formalParameterList().parameterAtPosition(i).type().getText();
+				stringBuffer.append(formalParameterList().parameterAtPosition(i).type().getText());
 				if (i != numberOfParameters - 1) {
-					retval += ",";
+					stringBuffer.append(",");
 				}
 			}
-			retval += ")";
+			stringBuffer.append(")");
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		public void setHasConstModifier(final boolean tf) {
@@ -724,10 +721,12 @@ public abstract class Declaration implements BodyPart {
 			return StaticScope.globalScope().lookupTypeDeclaration("void");
 		}
 		@Override public String getText() {
-			String retval = "";
-			for (BodyPart bodyPart : bodyParts_) {
-				retval += bodyPart.getText() + "; ";
+			final StringBuffer stringBuffer = new StringBuffer();
+			for (final BodyPart bodyPart : bodyParts_) {
+				stringBuffer.append(bodyPart.getText());
+				stringBuffer.append("; ");
 			}
+			final String retval = stringBuffer.toString();
 			return retval;
 		}
 		

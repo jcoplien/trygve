@@ -117,7 +117,6 @@ public final class ListClass {
 		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
-			parameterName_ = parameterName;
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
@@ -145,8 +144,6 @@ public final class ListClass {
 			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
-		
-		protected String parameterName_;
 	}
 	public static class RTListCtorCode extends RTListCommon {
 		public RTListCtorCode(StaticScope enclosingMethodScope) {

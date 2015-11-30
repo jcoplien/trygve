@@ -335,8 +335,9 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// All arguments are evaluated and are pushed onto the stack
 		for (int i = 0; i < argumentList.count(); i++) {
-			final Expression argument = (Expression)argumentList.argumentAtPosition(i);
-			assert null != argument & argument instanceof Expression;
+			final Object rawArgument = argumentList.argumentAtPosition(i);
+			assert null != rawArgument && rawArgument instanceof Expression;
+			final Expression argument = (Expression)rawArgument;
 			argument.setResultIsConsumed(true);
 		}
 		
@@ -371,8 +372,8 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		} else if (baseType instanceof ArrayType) {
 			final Type arrayBaseType = rawArrayBase.type();
+			assert arrayBaseType instanceof ArrayType;
 			final ArrayType arrayType = (ArrayType)arrayBaseType;	// instance of ArrayType
-			assert arrayType instanceof ArrayType;
 			final Type aBaseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, aBaseType);
 			arrayBase.setResultIsConsumed(true);
@@ -454,11 +455,12 @@ public class Pass2Listener extends Pass1Listener {
 		Expression expression = null;
 		final String javaIdString = ctxJAVA_ID.getText();
 		
-		if (null != qualifier && null != qualifier.type() && qualifier.type().name().equals("Class")) {
+		if (qualifier.type().name().equals("Class")) {
 			// This is where we handle types like "System" for System.out.print*
 			// Now we need to get the actual class of that name
-			final ClassType theClass = (ClassType)currentScope_.lookupTypeDeclarationRecursive(qualifier.name());
-			assert theClass instanceof ClassType;
+			final Type rawClass = currentScope_.lookupTypeDeclarationRecursive(qualifier.name());
+			assert rawClass instanceof ClassType;
+			final ClassType theClass = (ClassType)rawClass;
 			
 			final ObjectDeclaration odecl = theClass.type().enclosedScope().lookupObjectDeclaration(javaIdString);
 			if (odecl.type() != null) type = odecl.type();
@@ -571,12 +573,7 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "« on implied object `this« in a non-object context.", "");;
 		} else {
-			if (null != object.type()) {
-				message.addActualThisParameter(object);
-			} else {
-				// error stumbling hook
-				new NullExpression();
-			}
+			message.addActualThisParameter(object);
 		}
 		
 		MethodSignature methodSignature = null;
@@ -760,8 +757,9 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 		} else {
 			for (int j = 0; j < numberOfActualParameters; j++) {
-				final Expression actualParameter = (Expression)actuals.argumentAtPosition(j);
-				assert actualParameter != null && actualParameter instanceof Expression;
+				final Object rawParameter = actuals.argumentAtPosition(j);
+				assert rawParameter != null && rawParameter instanceof Expression;
+				final Expression actualParameter = (Expression)rawParameter;
 				final Type actualParameterType = actualParameter.type();
 
 				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
@@ -954,8 +952,9 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(String name, ClassDeclaration rawBaseClass, ClassType baseType, int lineNumber) {
 		final ClassDeclaration newClass = currentScope_.lookupClassDeclarationRecursive(name);
-		final ClassType classType = (ClassType)newClass.type();
-		assert classType instanceof ClassType;
+		final Type rawClass = newClass.type();
+		assert rawClass instanceof ClassType;
+		final ClassType classType = (ClassType)rawClass;
 		classType.updateBaseType(baseType);
 		return newClass;
 	}

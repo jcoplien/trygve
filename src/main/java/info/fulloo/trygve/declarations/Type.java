@@ -186,7 +186,8 @@ public abstract class Type implements ExpressionStackAPI
 				// we'll presume that code isn't modified and cross our
 				// fingers. Adding a dup() function to that class hierarchy
 				// would be quite a chore...
-				staticObjects_.put(new String(name), programElement);
+				final String stringCopy = name.substring(0, name.length() - 1);
+				staticObjects_.put(stringCopy, programElement);
 			}
 		}
 		public final TemplateInstantiationInfo templateInstantiationInfo() {
@@ -424,9 +425,8 @@ public abstract class Type implements ExpressionStackAPI
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
-			if (null == t) {
-				assert null != t;
-			}
+			assert null != t;
+			
 			boolean retval = false;
 			if (t.name().equals(name_)) {
 				retval = true;
@@ -483,8 +483,12 @@ public abstract class Type implements ExpressionStackAPI
 				;
 			} else {
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
-				for (final String methodName : requiredSelfSignatures.keySet()) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
+				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
+					final String methodName = entry.getKey();
+					final MethodSignature rolesSignature = entry.getValue();
+				
+				//for (final String methodName : requiredSelfSignatures.keySet()) {
+				//	final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
 					final MethodSignature signatureForMethodSelector =
 							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {

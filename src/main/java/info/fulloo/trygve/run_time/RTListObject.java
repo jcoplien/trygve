@@ -81,7 +81,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
-			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+			; // rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
 		} else {
 			rolesIAmPlayingHere = new ArrayList<String>();
 			rolesIAmPlayingInContext_.put(contextInstance, rolesIAmPlayingHere);

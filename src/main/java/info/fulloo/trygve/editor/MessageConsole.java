@@ -25,6 +25,7 @@ package info.fulloo.trygve.editor;
 
 import java.io.*;
 import java.awt.*;
+
 import javax.swing.event.*;
 import javax.swing.text.*;
 

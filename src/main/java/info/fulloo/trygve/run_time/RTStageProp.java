@@ -33,7 +33,6 @@ import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 	public RTStageProp(final StagePropDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
-		assert associatedDeclaration instanceof StagePropDeclaration;
 		associatedDeclaration_ = associatedDeclaration;
 		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 	}

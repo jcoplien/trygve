@@ -49,11 +49,13 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	public String getText() {
 		String retval = "";
 		final int l = count();
+		final StringBuffer stringBuffer = new StringBuffer();
 		for (int i = 0; i < l; i++) {
 			Expression e = (Expression)parameterAtIndex(i);
-			retval += e.getText();
-			if (i < l-1) retval += ", ";
+			stringBuffer.append(e.getText());
+			if (i < l-1) stringBuffer.append(", ");
 		}
+		retval = stringBuffer.toString();
 		return retval;
 	}
 	public void addFirstActualParameter(final Expression e) {

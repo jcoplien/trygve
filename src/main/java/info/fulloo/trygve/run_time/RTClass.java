@@ -426,12 +426,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable self = dynamicScope.getObject("t$his");
 				assert self instanceof RTStringObject;
 				final RTStringObject stringObject = (RTStringObject)self;
-				final RTStackable rTFrom = dynamicScope.getObject("start");
-				final RTStackable rTTo = dynamicScope.getObject("end");
-				assert rTFrom instanceof RTObject;
-				assert rTTo instanceof RTObject;
-				final RTObject from = (RTObject)rTFrom;
-				final RTObject to = (RTObject) rTTo;
+				final RTObject from = dynamicScope.getObject("start");
+				final RTObject to = dynamicScope.getObject("end");
 				final RTStringObject retval = stringObject.substring(from, to);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
 				return super.nextCode();

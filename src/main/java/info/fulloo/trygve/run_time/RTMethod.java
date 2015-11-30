@@ -52,8 +52,6 @@ public class RTMethod extends RTCode {
 		if (false == rawClassType instanceof ClassType) {
 			rawClassType = null;
 		}
-		final ClassType classType = (null == rawClassType)? null: (ClassType)rawClassType;
-		final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 		
 		ReturnExpression returnExpression = null;
 		name_ = name;
@@ -62,6 +60,8 @@ public class RTMethod extends RTCode {
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
 		if (null != returnType_ && returnType_ instanceof TemplateType) {
+			final ClassType classType = (null == rawClassType)? null: (ClassType)rawClassType;
+			final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 			assert null != templateInstantiationInfo;
 			returnType_ = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType_.name());
 		} else if (null != returnType_
@@ -138,7 +138,7 @@ public class RTMethod extends RTCode {
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 		for (final ObjectDeclaration od : objectDeclarations) {
 			// RTType runTimeDeclaration =
-			// InterpretiveCodeGenerator.TypeDeclarationToRTTypeDeclaration(od);
+			// InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(od);
 
 			// We need to be a bit more disciplined about this. The lookup check
 			// is a kludge, but we can separate non-argument locals from parameters
@@ -172,9 +172,7 @@ public class RTMethod extends RTCode {
 			// Pop off the expression that was previously evaluated
 			// as the initialization value
 			final RTObject value = (RTObject) RunTimeEnvironment.runTimeEnvironment_.popStack();
-			if (null == value) {
-				assert null != value;
-			}
+			assert null != value;
 			activationRecord.setObject(name, value);
 
 			value.decrementReferenceCount();

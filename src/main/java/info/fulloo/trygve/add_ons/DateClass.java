@@ -141,7 +141,6 @@ public final class DateClass {
 		public RTDateCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
-			parameterName_ = parameterName;
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
@@ -169,8 +168,6 @@ public final class DateClass {
 			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails (Date domain)", "", "", "");
 			return null;	// halt the machine
 		}
-		
-		protected String parameterName_;
 	}
 	public static class RTDateSimpleCtorCode extends RTDateCommon {
 		public RTDateSimpleCtorCode(final StaticScope enclosingMethodScope) {

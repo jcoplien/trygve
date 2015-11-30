@@ -94,7 +94,6 @@ public final class MathClass {
 				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 					true);
-			parameterName_ = parameterName;
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
@@ -122,8 +121,6 @@ public final class MathClass {
 			return null;	// halt the machine
 
 		}
-		
-		protected String parameterName_;
 	}
 	public static class RTRandomCode extends RTMathCommon {
 		public RTRandomCode(StaticScope enclosingMethodScope) {

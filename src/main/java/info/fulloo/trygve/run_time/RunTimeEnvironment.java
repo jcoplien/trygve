@@ -46,9 +46,12 @@ public class RunTimeEnvironment {
 		stringToRTInterfaceMap_ = new LinkedHashMap<String, RTInterface>();
 		pathToTypeMap_ = new LinkedHashMap<String, RTType>();
 		reboot();
-		runTimeEnvironment_ = this;
+		setRunTimeEnvironment(this);
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
+	}
+	private static void setRunTimeEnvironment(final RunTimeEnvironment theThis) {
+		runTimeEnvironment_ = theThis;
 	}
 	public void reboot() {
 		stack = new Stack<RTStackable>();
@@ -241,13 +244,13 @@ public class RunTimeEnvironment {
 	}
 	
 	
-	private Map<String, RTContext> stringToRTContextMap_;
-	private Map<String, RTClass> stringToRTClassMap_;
-	private Map<String, RTInterface> stringToRTInterfaceMap_;
-	private Map<String, RTType> pathToTypeMap_;
-	private Stack<RTStackable> stack;
-	private Stack<IntWrapper> framePointers_;
-	private Stack<RTDynamicScope> dynamicScopes;
-	private List<RTClass> allClassList_;
+	private final Map<String, RTContext> stringToRTContextMap_;
+	private final Map<String, RTClass> stringToRTClassMap_;
+	private final Map<String, RTInterface> stringToRTInterfaceMap_;
+	private final Map<String, RTType> pathToTypeMap_;
+	private       Stack<RTStackable> stack;
+	private       Stack<IntWrapper> framePointers_;
+	private       Stack<RTDynamicScope> dynamicScopes;
+	private final List<RTClass> allClassList_;
 	public  RTDynamicScope globalDynamicScope;
 }
