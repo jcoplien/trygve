@@ -28,4 +28,5 @@ public interface ActualOrFormalParameterList {
 	public Type typeOfParameterAtPosition(final int i);
 	public String nameOfParameterAtPosition(final int i);
 	public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo lt);
+	public String getText();
 }

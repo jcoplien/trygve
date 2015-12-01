@@ -36,7 +36,7 @@ import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList{
+public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList {
 	public ActualArgumentList() {
 		super(new SimpleList());
 	}
@@ -51,7 +51,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		final int l = count();
 		final StringBuffer stringBuffer = new StringBuffer();
 		for (int i = 0; i < l; i++) {
-			Expression e = (Expression)parameterAtIndex(i);
+			final Expression e = (Expression)parameterAtIndex(i);
 			stringBuffer.append(e.getText());
 			if (i < l-1) stringBuffer.append(", ");
 		}

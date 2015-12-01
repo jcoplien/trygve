@@ -1100,10 +1100,12 @@ public class Pass2Listener extends Pass1Listener {
     // -------------------------------------------------------------------------------------------------------
 
 	// WARNING. Tricky code here
-	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) {
+	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) {
 		s.declareObject(objdecl);
 	}
-	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) {
+	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+		System.err.format("Pass2Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.delcareRole(%s)\n", s.associatedDeclaration().name(),
+				roledecl.name(), lineNumber, roledecl.name());	/* ROLEDEBUG */
 		s.declareRole(roledecl);	// probably redundant; done in pass 1
 	}
 	private void processDeclareRoleArrayAlias(int lineNumber) {

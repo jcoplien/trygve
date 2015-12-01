@@ -178,4 +178,14 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	@Override public String getText() {
+		final StringBuffer stringBuffer = new StringBuffer();
+		final int l = count();
+		for (int i = 0; i < l; i++) {
+			final Type type = typeOfParameterAtPosition(i);
+			stringBuffer.append(type.getText());
+			if (i < l-1) stringBuffer.append(", ");
+		}
+		return stringBuffer.toString();
+	}
 }

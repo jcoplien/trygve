@@ -3175,7 +3175,11 @@ public class Pass1Listener extends KantBaseListener {
 
 	// WARNING. Tricky code here
 	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
-	public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { s.declareRole(roledecl); }
+	public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+		System.err.format("Pass1Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.delcareRole(%s)\n", s.associatedDeclaration().name(),
+				roledecl.name(), lineNumber, roledecl.name());	/* ROLEDEBUG */
+		s.declareRole(roledecl);
+	}
 	
 	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
@@ -3456,8 +3460,10 @@ public class Pass1Listener extends KantBaseListener {
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
 		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic);
 	}
-	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
+	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version turns on signature checking
+		System.err.format("Pass1Listener.processReturnTypeLookupMethodDeclarationIn called; calling classDecl.enclosedScope().lookupMethodDeclaration(\"%s\"...)\n",
+				methodSelectorName);	/* ROLEDEBUG */
 		return classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, parameterList, true);
 	}
 	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
@@ -3492,6 +3498,9 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else if (null != roleDecl) {
 			// Calling a role method
+			System.err.format("Pass1Listener.processReturnType about to call processReturnTypeLookupMethodDeclarationIn\n");	 /* ROLEDEBUG */
+			System.err.format("\troleDecl.name()=%s, methodSelectorName=%s, actualArgumentList=%s\n",
+					roleDecl.name(), methodSelectorName, actualArgumentList.getText());	/* ROLEDEBUG */
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role ", roleDecl.name());

@@ -50,7 +50,7 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	final static String defaultFile = "tests/simplest_role.k";
+	private final static String defaultFile = "tests/simplest_role.k";
     
     private File fileName = new File("noname");
     
@@ -72,6 +72,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(TrygveVersion);
     	System.out.println(". Copyright (c)2015 James O. Coplien.");
+    	System.err.println("NOT FOR PRODUCTION. This is an instrumentation version ONLY.");  /* ROLEDEBUG */
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
