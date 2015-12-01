@@ -823,7 +823,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final StaticScope scope_;
 		private final String label_;
 		
-		@SuppressWarnings("unused")
 		private int lineNumber_;
 	}
 	

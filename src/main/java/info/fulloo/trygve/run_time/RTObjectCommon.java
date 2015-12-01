@@ -706,9 +706,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		RTObject retval = new RTObjectCommon(classOrContext_, objectMembers_, rTTypeMap_);
 		return retval;
 	}
-	@Override public int hashCode() {
-		return super.hashCode();
-	}
 	
 	private final RTType classOrContext_;
 	protected final Map<String, RTObject> objectMembers_;

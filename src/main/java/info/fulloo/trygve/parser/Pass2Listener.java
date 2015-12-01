@@ -597,7 +597,7 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
 			if (wannabeContextType instanceof RoleType) {
-				RoleType nearestEMT = (RoleType) nearestEnclosingMegaType;
+				final RoleType nearestEMT = (RoleType) nearestEnclosingMegaType;
 				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEMT.enclosingScope());
 				assert wannabeContextType instanceof ContextType;
 			}
@@ -605,6 +605,7 @@ public class Pass2Listener extends Pass1Listener {
 			// Look this thing up in the "required" interface to see
 			// if it's really a role method or just a latently bound
 			// instance method in an object bound to this role
+			assert objectType instanceof RoleType;
 			final RoleType roleType = (RoleType)objectType;
 			methodSignature = roleType.lookupMethodSignatureDeclaration(message.selectorName());
 			if (null != methodSignature) {

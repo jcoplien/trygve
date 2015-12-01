@@ -50,6 +50,7 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
+	final static String defaultFile = "tests/simplest_role.k";
     
     private File fileName = new File("noname");
     
@@ -62,6 +63,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	parseRun_ = null;
     	compiledWithoutError_ = false;
         initComponents();
+        loadFile(defaultFile);
         updateButtons();
         oslMsg();
     }
@@ -277,7 +279,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText("/Users/cope/Programs/Trygve/simplestring1.k");
+        fileSystemTextField.setText(defaultFile);
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
@@ -459,18 +461,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         }
         
     	jMenu3.setText("Load Test");
-    	
-    	/*
-        for (int i = 0; i < numberOfTestCases; i++) {
-         	 jMenu3Files[i].setText(TestRunner.urlForTestCase(i));
-         	 jMenu3Files[i].addActionListener(new java.awt.event.ActionListener() {
-                  public void actionPerformed(java.awt.event.ActionEvent evt) {
-                      loadTestCaseMenuActionPerformed(evt);
-                  }
-              });
-              jMenu3.add(jMenu3Files[i]);
-        }
-        */
     	
     	final String [] allFileNames = new String [numberOfTestCases], allURLs = new String [numberOfTestCases];
     	for (int i = 0; i < numberOfTestCases; i++) {
@@ -732,10 +722,8 @@ private void urlTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {
     this.editPane.setText(urlTest.getSite(url));
 }//GEN-LAST:event_urlTextFieldActionPerformed
 
-private void fileSystemTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_urlTextFieldActionPerformed
-	final String pathName = fileSystemTextField.getText();
-
-    final StringBuilder stringBuilder = new StringBuilder();
+private void loadFile(final String pathName) {
+	final StringBuilder stringBuilder = new StringBuilder();
     try {
         final BufferedReader reader = new BufferedReader(new FileReader(pathName));
         while (reader.ready()) {
@@ -748,6 +736,11 @@ private void fileSystemTextFieldActionPerformed(final java.awt.event.ActionEvent
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
     }
+}
+
+private void fileSystemTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_urlTextFieldActionPerformed
+	final String pathName = fileSystemTextField.getText();
+	loadFile(pathName);
 }//GEN-LAST:event_fileSystemTextFieldActionPerformed
 
 private void saveAsMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsMenuActionPerformed

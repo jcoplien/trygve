@@ -2699,13 +2699,13 @@ public class Pass1Listener extends KantBaseListener {
 	
 	
 	
-    protected ClassDeclaration lookupOrCreateNewClassDeclaration(String name, StaticScope newScope, ClassDeclaration rawBaseClass, int lineNumber) {
+    protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope, final ClassDeclaration rawBaseClass, final int lineNumber) {
 		return new ClassDeclaration(name, newScope, rawBaseClass, lineNumber);
 	}
-    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(String name, StaticScope newScope, TypeDeclaration rawBaseClass, int lineNumber) {
+    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope, final TypeDeclaration rawBaseClass, final int lineNumber) {
     	return new TemplateDeclaration(name, newScope, rawBaseClass, lineNumber);
 	}
-	protected void createNewClassTypeSuitableToPass(ClassDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
+	protected void createNewClassTypeSuitableToPass(final ClassDeclaration newClass, final String name, final StaticScope newScope, final ClassType baseType) {
 		// Pass1 only
 		final ClassType newClassType = new ClassType(name, newScope, baseType);
 		currentScope_.declareType(newClassType);
@@ -2861,7 +2861,7 @@ public class Pass1Listener extends KantBaseListener {
 		return retval;
 	}
 	
-	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, int lineNumber) {
+	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
 		assert null == currentInterface_;
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
@@ -2873,15 +2873,16 @@ public class Pass1Listener extends KantBaseListener {
 		return currentInterface_;
 	}
 	
-	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, StaticScope scope, int lineNumber) {
+	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, final StaticScope scope, final int lineNumber) {
 		return new InterfaceDeclaration(name, scope, lineNumber);
 	}
 	
-	protected void updateInitializationLists(Expression initializationExpr, ObjectDeclaration objDecl) {
+	protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
 		/* Nothing on Pass 1 */
 	}
 	
-	private boolean ifIsInABlockContext(RuleContext myParent) {
+	private boolean ifIsInABlockContext(final RuleContext myParentArg) {
+		RuleContext myParent = myParentArg;
 		boolean retval = false;
 		while (myParent instanceof ProgramContext == false) {
 			if (myParent instanceof BlockContext) {
@@ -2896,7 +2897,9 @@ public class Pass1Listener extends KantBaseListener {
 		return retval;
 	}
 	
-	public static long nestingLevelInsideBreakable(ParseTree ctx) {
+	public static long nestingLevelInsideBreakable(final ParseTree ctxArg) {
+		ParseTree ctx = ctxArg;
+		
 		// This counts the number of dynamic scopes between a given
 		// context and any enclosing "breakable" context (While, DoWhile,
 		// For, and Switch). It is used to tell "break" statements how
@@ -2940,8 +2943,10 @@ public class Pass1Listener extends KantBaseListener {
 		return retval;
 	}
 	
-	public static long nestingLevelInsideBreakableForContinue(ParseTree ctx) {
-		// Lie nestingLevelInsideBreakable, but for Continue rather than break.
+	public static long nestingLevelInsideBreakableForContinue(final ParseTree ctxArg) {
+		ParseTree ctx = ctxArg;
+		
+		// Like nestingLevelInsideBreakable, but for Continue rather than break.
 		// The main difference is that we don't count the context of the for
 		// loop itself, since it stays open across a continue execution
 		long retval = 0;
@@ -2972,7 +2977,7 @@ public class Pass1Listener extends KantBaseListener {
 	
 	protected SimpleList variablesToInitialize_, initializationExpressions_;
 	
-	private DeclarationsAndInitializers processIdentifierList(Identifier_listContext identifier_list, Type type, int lineNumber, AccessQualifier accessQualifier)
+	private DeclarationsAndInitializers processIdentifierList(final Identifier_listContext identifier_list, final Type type, final int lineNumber, final AccessQualifier accessQualifier)
 	{
 		variablesToInitialize_ = new SimpleList();
 		initializationExpressions_ = new SimpleList();
@@ -3006,7 +3011,7 @@ public class Pass1Listener extends KantBaseListener {
 		return retval;
 	}
 	
-	private void processIdentifierListRecursive(Identifier_listContext identifier_list, Type type, int lineNumber, AccessQualifier accessQualifier)
+	private void processIdentifierListRecursive(final Identifier_listContext identifier_list, final Type type, final int lineNumber, final AccessQualifier accessQualifier)
 	{
 		final List<ParseTree> children = identifier_list.children;
 		Token tok;
@@ -3073,7 +3078,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	public ObjectDeclaration pass1InitialDeclarationCheck(final String name, int lineNumber) {
+	public ObjectDeclaration pass1InitialDeclarationCheck(final String name, final int lineNumber) {
 		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
 		if (null != objDecl) {
 			final String addedMessage = "(earlier declaration at line " +
@@ -3135,59 +3140,6 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	/*
-	 * Unused
-	 *
-	private Expression jAVA_IDAtomUtility(final String id, final int lineNumber) {
-		Expression expression = null;
-		Type type = null;
-		assert null != id && 0 < id.length();
-		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(id);
-		if (null != objdecl) {
-			type = objdecl.type();
-			
-			// This ID may have been declared in a local scope, or in
-			// the enclosing type. Find out what kind of identifier it
-			// is and adjust accordingly (e.g., qualifying with "this",
-			// etc.)
-			final StaticScope scopeWhereDeclared = objdecl.enclosingScope();
-			final Declaration associatedDeclaration = scopeWhereDeclared.associatedDeclaration();
-			assert null != associatedDeclaration;
-			
-			final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(objdecl, objdecl.accessQualifier_, lineNumber);
-			if (isAccessible == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber,
-						"Cannot access identifier `", id,
-						"' with `", objdecl.accessQualifier_.asString(), "' access qualifier.", "");
-			}
-			
-			if (associatedDeclaration instanceof MethodDeclaration) {
-				// It's a local variable
-				expression = new IdentifierExpression(id, type, scopeWhereDeclared);
-			} else if (associatedDeclaration instanceof TypeDeclaration) {
-				// Class or Context (Roles don't have local identifiers)
-				// The qualifier must be "this" - otherwise, the QualifiedIdentifierExpression
-				// production will have caught it, and it's illegal to access more than
-				// a single enclosing type scope away (lookup simply won't find it)
-				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
-				
-				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope);
-				self.setResultIsConsumed(true);
-				
-				final QualifiedIdentifierExpression qie = new QualifiedIdentifierExpression(self, id, type);
-				expression = qie;
-			}
-		} else {
-			// What the hell?
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Identifier ", id, "`' is not declared.", "");
-			type = StaticScope.globalScope().lookupTypeDeclaration("void");
-			final StaticScope scope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
-			expression = new IdentifierExpression(id, type, scope);
-		}
-		
-		return expression;
-	}
-	*/
 	
 	private Expression processIndexedArrayElement(final ParseTree arrayExprCtx, final KantParser.ExprContext sexpCtx,
 			final TerminalNode ABELIAN_INCREMENT_OPCtx) {
@@ -3222,22 +3174,22 @@ public class Pass1Listener extends KantBaseListener {
 	// ----------------------------------------------------------------------------------------
 
 	// WARNING. Tricky code here
-	protected void declareObject(StaticScope s, ObjectDeclaration objdecl) { s.declareObject(objdecl); }
+	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
 	public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { s.declareRole(roledecl); }
 	
-	protected void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
+	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
 	}
-	public void errorHook5p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
+	public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* nothing */
 	}
-	protected void errorHook6p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	protected void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
-	public void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* nothing */
 	}
-	protected ContextDeclaration lookupOrCreateContextDeclaration(String name, int lineNumber) {
+	protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
 		final StaticScope newScope = new StaticScope(currentScope_);
 		final ContextDeclaration contextDecl = new ContextDeclaration(name, newScope, currentContext_, lineNumber);
 		newScope.setDeclaration(contextDecl);
@@ -3248,7 +3200,7 @@ public class Pass1Listener extends KantBaseListener {
 		currentScope_ = newScope;
 		return contextDecl;
 	}
-	protected ClassDeclaration lookupOrCreateClassDeclaration(String name, ClassDeclaration rawBaseClass, ClassType baseType, int lineNumber) {
+	protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
 		final ClassDeclaration newClass = this.lookupOrCreateNewClassDeclaration(name, newScope, rawBaseClass, lineNumber);
@@ -3257,7 +3209,7 @@ public class Pass1Listener extends KantBaseListener {
 		currentScope_ = newScope;
 		return newClass;
 	}
-	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(String name, TypeDeclaration rawBaseType, Type baseType, int lineNumber) {
+	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
 		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, lineNumber);
@@ -3267,10 +3219,10 @@ public class Pass1Listener extends KantBaseListener {
 		currentScope_ = newScope;
 		return newTemplate;
 	}
-	protected void declareTypeSuitableToPass(StaticScope scope, Type decl) {
+	protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
 		scope.declareType(decl);
 	}
-	protected void declareObjectSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
+	protected void declareObjectSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
 		final String objectIdentifier = objDecl.name();
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
@@ -3284,7 +3236,6 @@ public class Pass1Listener extends KantBaseListener {
 		scope.declareObject(objDecl);
 	}
 	
-	@SuppressWarnings("unused")
 	private ExpressionStackAPI exprFromExprDotJAVA_ID(final TerminalNode ctxJAVA_ID, final Token ctxGetStart, final TerminalNode ctxABELIAN_INCREMENT_OP) {
 		// Certified Pass 1 version ;-) There is no longer any Pass 2 version
 		UnaryopExpressionWithSideEffect.PreOrPost preOrPost;

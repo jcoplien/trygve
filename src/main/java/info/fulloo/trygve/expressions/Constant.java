@@ -218,9 +218,6 @@ public abstract class Constant extends Expression {
 	@Override public List<RTCode> compileCodeForInScope(final CodeGenerator cg, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		return cg.compileConstant(this, methodDeclaration, rtTypeDeclaration, scope);
 	}
-	@Override public int hashCode() {
-		return super.hashCode();
-	}
 	
 	private Constant(final String name, final Type type) {
 		super(name, type, null);

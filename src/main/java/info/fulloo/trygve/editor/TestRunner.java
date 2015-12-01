@@ -26,7 +26,7 @@ package info.fulloo.trygve.editor;
 public class TestRunner {
 	private enum TestSource { UseUrl, UseLocalFile };
 	TestSource testSource_;
-	private final static String urlPrefix_ = "http://fulloo.info/Examples/TrygveExamples/";
+	private final static String urlPrefix_ = "file:tests/";
 	private final static String localTestDir_ = "file:tests/";
 	private final static String localPrefix_ = "tests/";
 	private final static String fileNames_[] = {
@@ -78,6 +78,7 @@ public class TestRunner {
 		"rightAssociativeSum2.k",
 		"thisqualbug1.k",
 		"simplestring1.k",
+		"simplest_role.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

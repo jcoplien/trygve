@@ -58,7 +58,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
 public class Pass3Listener extends Pass2Listener {
-	public Pass3Listener(ParsingData parsingData) {
+	public Pass3Listener(final ParsingData parsingData) {
 		super(parsingData);
 	}
 	
@@ -77,7 +77,7 @@ public class Pass3Listener extends Pass2Listener {
 		parsingData_.pushExpression(expression);
 	}	
 	
-	private <ExprType> Declaration findProperMethodScopeAround(ExprType ctxExpr, RuleContext ctxParent, Token ctxGetStart) {
+	private <ExprType> Declaration findProperMethodScopeAround(final ExprType ctxExpr, final RuleContext ctxParent, final Token ctxGetStart) {
 		Declaration retval = null;
 		RuleContext executionContext = ctxParent;
 		while ((executionContext instanceof ProgramContext) == false) {
@@ -103,7 +103,7 @@ public class Pass3Listener extends Pass2Listener {
 		return retval;
 	}
 	
-	@Override protected <ExprType> Expression expressionFromReturnStatement(ExprType ctxExpr, RuleContext ctxParent, Token ctxGetStart)
+	@Override protected <ExprType> Expression expressionFromReturnStatement(final ExprType ctxExpr, final RuleContext ctxParent, final Token ctxGetStart)
 	{
 		Expression returnExpression = null;
 		if (null != ctxExpr) {
@@ -134,7 +134,7 @@ public class Pass3Listener extends Pass2Listener {
 		return returnExpression;
 	}
 	
-	@Override protected void setMethodBodyAccordingToPass(MethodDeclaration currentMethod)
+	@Override protected void setMethodBodyAccordingToPass(final MethodDeclaration currentMethod)
 	{
 		final ExprAndDeclList body = parsingData_.popExprAndDecl();
 		body.addAssociatedDeclaration(currentMethod);	// maybe not needed, but looks nice
@@ -144,15 +144,15 @@ public class Pass3Listener extends Pass2Listener {
 		currentMethod.setBody(body);
 	}
 	
-	@Override protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
+	@Override protected void typeCheck(final FormalParameterList formals, final ActualArgumentList actuals,
 			MethodDeclaration mdecl, TypeDeclaration classdecl, @NotNull org.antlr.v4.runtime.Token ctxGetStart)
 	{
 		/* Nothing */
 	}
-	protected void processRequiredDeclarations(int lineNumber) {
+	protected void processRequiredDeclarations(final int lineNumber) {
 		/* Nothing */
 	}
-	@Override protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType) {
+	@Override protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
 		/* Nothing */
 	}
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
@@ -161,13 +161,13 @@ public class Pass3Listener extends Pass2Listener {
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
 		// nothing in pass 3, 4
 	}
-	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, final int lineNumber) {
 		// nothing in pass 3, 4
 	}
-	@Override public void declareObject(StaticScope s, ObjectDeclaration objdecl) { }
-	@Override public void declareRole(StaticScope s, RoleDeclaration roledecl, int lineNumber) { }
-	@Override public void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) { }
-	@Override public void errorHook6p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) { }
-	@Override public void errorHook5p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4) { }
-	@Override public void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) { }
+	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { }
+	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) { }
+	@Override public void errorHook5p1(final ErrorType errorType, int i, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
+	@Override public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
 }
