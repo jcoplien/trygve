@@ -2,7 +2,7 @@ package info.fulloo.trygve.declarations;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ public class Message {
 		lineNumber_ = lineNumber;
 		enclosingMegaType_ = enclosingMegaType;
 		
-		// Just a default until it gets filled in Ñ avoid null ptr problems
+		// Just a default until it gets filled in - avoid null ptr problems
 		returnType_ = StaticScope.globalScope().lookupTypeDeclaration("void");
 	}
 	public String selectorName() {

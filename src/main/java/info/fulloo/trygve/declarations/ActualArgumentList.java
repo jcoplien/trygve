@@ -2,7 +2,7 @@ package info.fulloo.trygve.declarations;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -91,7 +91,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 			return this;
 		} else {
 			retval = new ActualArgumentList();
-			// We don't need to return an *exact* copy Ñ just one good
+			// We don't need to return an *exact* copy - just one good
 			// enough for type comparison
 			for (int i = 0; i < count(); i++) {
 				final Expression aParameter = parameterAtPosition(i);

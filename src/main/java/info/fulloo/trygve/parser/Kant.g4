@@ -2,7 +2,7 @@ grammar Kant;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ role_body
         : method_decl
         | role_body method_decl
         | object_decl				// illegal
-        | role_body object_decl		// illegal Ñ for better error messages only
+        | role_body object_decl		// illegal ï¿½ for better error messages only
         ;
 
 self_methods
@@ -118,7 +118,7 @@ stageprop_body
         : method_decl
         | stageprop_body method_decl
         | object_decl				// illegal
-        | stageprop_body object_decl		// illegal Ñ for better error messages only
+        | stageprop_body object_decl		// illegal ï¿½ for better error messages only
         ;
 
 class_body
@@ -300,7 +300,7 @@ if_expr
 
 for_expr
 		: 'for' '(' expr ';' expr ';' expr ')' expr
-        | 'for' '(' object_decl expr ';' expr ')' expr  // O.K. Ñ expr can be a block
+        | 'for' '(' object_decl expr ';' expr ')' expr  // O.K. ï¿½ expr can be a block
         | 'for' '(' JAVA_ID ':' expr ')' expr
         | 'for' '(' trivial_object_decl ':' expr ')' expr
         ;

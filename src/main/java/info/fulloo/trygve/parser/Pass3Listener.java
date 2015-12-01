@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -120,7 +120,7 @@ public class Pass3Listener extends Pass2Listener {
 				if (null == returnExpression || returnExpression.type().name().equals("void")) {
 					;
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", returnExpression.getText(), "« of type ",
+					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", returnExpression.getText(), "ï¿½ of type ",
 							returnExpression.type().getText(), " is incompatible with method that returns no value.", "");
 				}
 			} else if (methodDecl.returnType().canBeConvertedFrom(returnExpression.type())) {

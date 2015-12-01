@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE
- *   Copyright �2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ public class RTMethod extends RTCode {
 		Expression dummyReturnExpression = null;
 		name_ = name;
 		codeSize_ = 10;
-		nextCodeIndex_ = 0;
+		nextCodeIndex_ = 0; 
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
 		if (null != returnType_ && returnType_ instanceof TemplateType) {

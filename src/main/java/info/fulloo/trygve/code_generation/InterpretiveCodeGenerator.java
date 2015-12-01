@@ -2,7 +2,7 @@ package info.fulloo.trygve.code_generation;
 
 /*
  * Trygve IDE
- *   Copyright ©2015 James O. Coplien
+ *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -196,7 +196,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		this.compileScope(myScope);
 	}
 	private void compileInterface(final InterfaceDeclaration interfaceDeclaration) {
-		// Really nothing to compile Ñ all interface logic should
+		// Really nothing to compile - all interface logic should
 		// be absorbed by semantic analysis
 		if (null == RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(interfaceDeclaration.name())) {
 			if (interfaceDeclaration.enclosingScope() == StaticScope.globalScope()) {
