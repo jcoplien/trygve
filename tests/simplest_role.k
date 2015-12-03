@@ -3,7 +3,7 @@ class Class1 {
 
 context Context {
    role Role1 {
-      public void roleMethod() { }
+      public void roleMethod() { System.out.println("success") }
    }
    public Context(Class1 object) {
       Role1 = object
@@ -13,3 +13,8 @@ context Context {
 
 
 (new Context(new Class1()))
+
+/* GOLD:
+___________________________________________________________
+success
+*/

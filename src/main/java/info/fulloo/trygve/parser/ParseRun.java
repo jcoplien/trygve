@@ -26,6 +26,8 @@ package info.fulloo.trygve.parser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
+import configuration.ConfigurationOptions;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -60,6 +62,9 @@ public class ParseRun {
         		final Method startRule = parserClass.getMethod(startRuleName);
         		final ParserRuleContext tree = (ParserRuleContext)startRule.invoke(aParser, (Object[])null);
         		
+        		if (ConfigurationOptions.roleDebug2Enabled()) {
+        			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);	/* ROLEDEBUG2 */
+        		}
         		this.pass1(parsingData, tree);
         		this.pass2(parsingData, tree);
         		this.pass3(parsingData, tree);

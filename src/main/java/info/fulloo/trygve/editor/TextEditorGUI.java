@@ -41,6 +41,8 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 
+import configuration.ConfigurationOptions;
+
 /**
  *
  * @author  pawel
@@ -72,7 +74,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(TrygveVersion);
     	System.out.println(". Copyright (c)2015 James O. Coplien.");
-    	System.err.println("NOT FOR PRODUCTION. This is an instrumentation version ONLY.");  /* ROLEDEBUG */
+    	if (ConfigurationOptions.roleDebug1Enabled()) {
+    		System.err.println("NOT FOR PRODUCTION. This is an instrumentation version ONLY.");  /* ROLEDEBUG */
+    	}
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");

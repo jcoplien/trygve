@@ -23,6 +23,7 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
@@ -52,8 +53,15 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	}
 	public static boolean alignsWithParameterListIgnoringParam(final ActualOrFormalParameterList pl1,
 			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
+		if (ConfigurationOptions.parameterDebugFlagSet()) {
+			System.err.format("FormalParameterList.alignsWithParameterListIgnoringParameter: \"%s\", \"%s\", \"%s\", %b\n",
+				pl1.getText(), null != pl2? pl2.getText(): "null", paramToIgnore, conversionAllowed);
+		}
 		boolean retval = true;
 		final int myCount = pl1.count();
+		if (ConfigurationOptions.parameterDebugFlagSet()) {
+			System.err.format("\tmyCount=%d\n", myCount);
+		}
 		if (null == pl2) {
 			if (myCount != 0) {
 				retval = false;
@@ -63,6 +71,9 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			}
 		} else {
 			final int plCount = pl2.count();
+			if (ConfigurationOptions.parameterDebugFlagSet()) {
+				System.err.format("\tplCount=%d\n", plCount);
+			}
 			if (plCount != myCount) {
 				retval = false;
 			} else {
@@ -73,6 +84,9 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 						continue;
 					}
 					
+					if (ConfigurationOptions.parameterDebugFlagSet()) {
+						System.err.format("\tpl1Name=\"%s\", pl2Name=\"%s\"\n", pl1Name, pl2Name);
+					}
 					// We really should be a bit more dutiful about knowing whether it's l1 or
 					// pl2 we're checking. But it's almost always "this" and since it's a
 					// reserved word, it won't be aliased with a user variable

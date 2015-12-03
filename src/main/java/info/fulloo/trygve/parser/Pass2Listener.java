@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.Token;
 
+import configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -741,7 +742,8 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
-		return classDecl.enclosedScope().lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+		final StaticScope classScope = classDecl.enclosedScope();
+		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 	}
 	
 	@Override protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
@@ -1104,8 +1106,10 @@ public class Pass2Listener extends Pass1Listener {
 		s.declareObject(objdecl);
 	}
 	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		System.err.format("Pass2Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.delcareRole(%s)\n", s.associatedDeclaration().name(),
+		if (ConfigurationOptions.roleDebug1Enabled()) {
+			System.err.format("Pass2Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.delcareRole(%s)\n", s.associatedDeclaration().name(),
 				roledecl.name(), lineNumber, roledecl.name());	/* ROLEDEBUG */
+		}
 		s.declareRole(roledecl);	// probably redundant; done in pass 1
 	}
 	private void processDeclareRoleArrayAlias(int lineNumber) {
