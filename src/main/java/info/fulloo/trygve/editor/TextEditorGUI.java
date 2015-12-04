@@ -31,7 +31,6 @@ package info.fulloo.trygve.editor;
 import java.io.*;
 import java.util.Arrays;
 
-import info.fulloo.trygve.editor.MessageConsole;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
@@ -41,7 +40,7 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 
 /**
  *

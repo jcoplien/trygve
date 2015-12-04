@@ -9,7 +9,4 @@ Just build and execute with `gradlew run`.
 
 ## Developing
 
-For the first time run `gradlew build`, so that the IDE won't complain about
-missing Parser.
-
-Then import as a Gradle project into your IDE.
+Import as a Gradle project into your IDE. (Or as a regular project if you wish.) To rebuild ANTLR parser run `gradlew antlr`. To build a distribution `gradlew build`.

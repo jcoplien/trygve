@@ -28,7 +28,7 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.Token;
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -72,7 +72,6 @@ import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedClassMemberExpression;
 import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
-import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.parser.KantParser.Class_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;

@@ -37,7 +37,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -110,7 +110,6 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.mylibrary.SimpleList;
-import info.fulloo.trygve.parser.KantBaseListener;
 import info.fulloo.trygve.parser.KantParser.Abelian_atomContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_exprContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_productContext;

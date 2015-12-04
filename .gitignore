@@ -1,7 +1,10 @@
 build
 bin
 
-.idea
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/find.xml
+
 .gradle
 .settings
 .externalToolBuilders

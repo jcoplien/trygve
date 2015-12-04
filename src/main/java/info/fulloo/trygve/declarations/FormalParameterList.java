@@ -23,7 +23,7 @@ package info.fulloo.trygve.declarations;
  *
  */
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
