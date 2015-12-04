@@ -2,18 +2,33 @@ apply plugin: 'java'
 apply plugin: 'antlr'
 apply plugin: 'application'
 
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
 repositories {
     jcenter()
 }
 
 mainClassName = "info.fulloo.trygve.editor.Main"
 
-dependencies {
-    antlr "org.antlr:antlr4:4.5"
+applicationDefaultJvmArgs = ["-ea"]
+compileJava {
+    options.fork = true
+    options.incremental = true
 }
 
-; generateGrammarSource.arguments += ["-long-messages"]
-generateGrammarSource.outputDirectory = new File('src/main/generated')
+sourceSets.main.java.srcDirs  = [
+    'src/main/java',
+    'src/main/generated'
+]
 
-sourceSets.main.antlr.srcDirs = ['src/main/java']
-sourceSets.main.java.srcDirs  = ['src/main/java', 'src/main/generated']
+dependencies {
+    compile files('lib/antlr-runtime-4.5.1.jar')
+}
+
+task antlr(type: Exec) {
+    commandLine 'java',
+        '-jar', './lib/antlr-4.5.1-complete.jar',
+        '-o', 'src/main/generated/info/fulloo/trygve/parser',
+        'src/main/java/info/fulloo/trygve/parser/Kant.g4'
+}

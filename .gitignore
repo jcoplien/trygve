@@ -9,5 +9,4 @@ bin
 .factorypath
 .buildpath
 .target
-
-src/main/generated
+target
