@@ -1,4 +1,4 @@
-package configuration;
+package info.fulloo.trygve.configuration;
 
 public class ConfigurationOptions {
 	public static boolean roleDebug1Enabled() {	// general

@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;

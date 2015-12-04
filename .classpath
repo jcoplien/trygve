@@ -5,9 +5,14 @@
 			<attribute name="FROM_GRADLE_MODEL" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="src/main/generated"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 6 [1.6.0_65-b14-466.1]"/>
+	<classpathentry kind="src" path="src/main/generated">
+		<attributes>
+			<attribute name="FROM_GRADLE_MODEL" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry exported="true" kind="con" path="org.springsource.ide.eclipse.gradle.classpathcontainer"/>
 	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="F:/Code/github.com/egonelbre/trygve/lib/antlr-runtime-4.5.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

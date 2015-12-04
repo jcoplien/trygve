@@ -9,7 +9,10 @@ Just build and execute with `gradlew run`.
 
 ## Developing
 
-For the first time run `gradlew build`, so that the IDE won't complain about
-missing Parser.
+Import as a Gradle project into your IDE. (Or as a regular project if you wish.) Then run or debug `info.fulloo.trygve.editor.Main`.
 
-Then import as a Gradle project into your IDE.
+Also remember to enable assertions ([Eclipse](http://stackoverflow.com/questions/5509082/eclipse-enable-assertions), [IntelliJ](http://stackoverflow.com/questions/18168257/where-to-add-compiler-options-like-ea-in-intellij-idea))
+
+To rebuild ANTLR parser run `gradlew antlr`.
+
+To build a distribution `gradlew build`.

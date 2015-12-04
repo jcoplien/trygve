@@ -26,7 +26,7 @@ package info.fulloo.trygve.parser;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 
-import configuration.ConfigurationOptions;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,8 +35,6 @@ import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.parser.KantParser;
-import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.Program;
