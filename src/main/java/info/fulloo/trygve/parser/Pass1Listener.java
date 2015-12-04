@@ -926,7 +926,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			// Nothing on Pass 1
 			// Processed on Pass 2
-			// Functionality duplicated on Pass 3
+			// Functionality duplicated on Passes 3 & 4
 			declareFormalParametersSuitableToPass(currentScope_, objectDeclaration);
 		}
 		
