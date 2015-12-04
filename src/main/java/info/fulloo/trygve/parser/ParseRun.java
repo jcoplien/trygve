@@ -60,8 +60,8 @@ public class ParseRun {
         		final Method startRule = parserClass.getMethod(startRuleName);
         		final ParserRuleContext tree = (ParserRuleContext)startRule.invoke(aParser, (Object[])null);
         		
-        		if (ConfigurationOptions.roleDebug2Enabled()) {
-        			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);	/* ROLEDEBUG2 */
+        		if (ConfigurationOptions.treewalkTraceEnabled()) {
+        			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);
         		}
         		this.pass1(parsingData, tree);
         		this.pass2(parsingData, tree);

@@ -148,8 +148,8 @@ public class Pass1Listener extends KantBaseListener {
 		currentRole_ = null;
 		currentInterface_ = null;
 		
-		printProductionsDebug = false;
-		stackSnapshotDebug = false;
+		printProductionsDebug = ConfigurationOptions.tracePass1();
+		stackSnapshotDebug = ConfigurationOptions.stackSnapshotDebug();
 	}
 	
 	private static class DeclarationsAndInitializers {
@@ -3176,10 +3176,6 @@ public class Pass1Listener extends KantBaseListener {
 	// WARNING. Tricky code here
 	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
 	public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("Pass1Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.declareRole(%s)\n", s.associatedDeclaration().name(),
-				roledecl.name(), lineNumber, roledecl.name());	/* ROLEDEBUG */
-		}
 		s.declareRole(roledecl);
 	}
 	
@@ -3464,10 +3460,6 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version turns on signature checking
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("Pass1Listener.processReturnTypeLookupMethodDeclarationIn called; calling classDecl.enclosedScope().lookupMethodDeclaration(\"%s\"...)\n",
-					methodSelectorName);	/* ROLEDEBUG */
-		}
 		return classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, parameterList, true);
 	}
 	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
@@ -3502,11 +3494,6 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		} else if (null != roleDecl) {
 			// Calling a role method
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("Pass1Listener.processReturnType about to call processReturnTypeLookupMethodDeclarationIn\n");	 /* ROLEDEBUG */
-				System.err.format("\troleDecl.name()=%s, methodSelectorName=%s, actualArgumentList=%s\n",
-						roleDecl.name(), methodSelectorName, actualArgumentList.getText());	/* ROLEDEBUG */
-			}
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role ", roleDecl.name());

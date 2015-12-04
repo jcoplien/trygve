@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
-import info.fulloo.trygve.configuration.ConfigurationOptions;
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
@@ -449,22 +448,12 @@ public class StaticScope {
 	
 	public void declareRole(final RoleDeclaration decl) {
 		final String roleName = decl.name();
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.declareRole called with roleName: %s\n", roleName);	/* ROLEDEBUG */
-		}
 		if (roleDeclarationDictionary_.containsKey(roleName)) {
 			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of role ", roleName, " in ", name());
 		} else {
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("\tStaticScope.declareRole putting decl in roleDeclarationDictionary_.[%s], dictionary ID = %s\n",
-					roleName, Integer.toHexString(System.identityHashCode(roleDeclarationDictionary_)));	/* ROLEDEBUG */
-			}
-		roleDeclarationDictionary_.put(roleName, decl);
+			roleDeclarationDictionary_.put(roleName, decl);
 		}
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.declareRole returning\n");	/* ROLEDEBUG */
-		}
 	}
 	
 	public RoleDeclaration lookupRoleDeclarationRecursive(final String roleName) {
@@ -583,15 +572,8 @@ public class StaticScope {
 	
 	public void declareMethod(final MethodDeclaration decl) {
 		final String methodName = decl.name();
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.declareMethod(\"%s\" called, methodDeclarationDictionary_=%s",
-				methodName, Integer.toHexString(System.identityHashCode(methodDeclarationDictionary_)));	/* ROLEDEBUG */
-		}
 	
 		if (methodDeclarationDictionary_.containsKey(methodName)) {
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("\tmethodDeclarationDictionary_ contained key\n");	/* ROLEDEBUG */
-			}
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodName);
 			for (final MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
@@ -605,17 +587,11 @@ public class StaticScope {
 			}
 			oldEntry.add(decl);
 		} else {
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("\tmethodDeclarationDictionary_ did NOT contain key\n");	/* ROLEDEBUG */
-			}
 			final ArrayList<MethodDeclaration> newEntry = new ArrayList<MethodDeclaration>();
 			newEntry.add(decl);
 			methodDeclarationDictionary_.put(methodName, newEntry);
 		}
 		if (null != parentScope_) parentScope_.checkMethodShadowing(decl);
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.declareMethod returning\n");	/* ROLEDEBUG */
-		}
 	}
 	
 	private void checkMethodShadowing(final MethodDeclaration decl) {
@@ -827,13 +803,7 @@ public class StaticScope {
 	public MethodDeclaration lookupMethodDeclaration(final String methodSelector,
 			final ActualOrFormalParameterList parameterList,
 			final boolean ignoreSignature) {
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.lookupMethodDeclaration(\"%s\", \"%s\", %b) called\n", methodSelector, parameterList.getText(), ignoreSignature);	/* ROLEDEBUG */
-		}
 		MethodDeclaration retval = null;
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("\tobjectID of methodDeclarationDictionary_ = %s\n", Integer.toHexString(System.identityHashCode(methodDeclarationDictionary_)));	/* ROLEDEBUG */
-		}
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
 			for (final MethodDeclaration aDecl : oldEntry) {
@@ -851,13 +821,7 @@ public class StaticScope {
 				}
 			}
 		} else {
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("\tdidn't find %s in methodDeclarationDictionary_\n", methodSelector);	/* ROLEDEBUG */
-			}
 			;
-		}
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("StaticScope.lookupMethodDeclaration returns\n");	/* ROLEDEBUG */
 		}
 		return retval;
 	}
@@ -1042,9 +1006,6 @@ public class StaticScope {
 		public void declareMethod(final MethodDeclaration decl) {
 			boolean dup = false;
 			final String methodName = decl.name();
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("StaticRoleScope.declareMethod(\"%s\" called\n", methodName);	/* ROLEDEBUG */
-			}
 			
 			if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
@@ -1064,13 +1025,7 @@ public class StaticScope {
 				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
 					name(), " would create multiple methods of the same name in the same object.", "");
 			} else {
-				if (ConfigurationOptions.roleDebug1Enabled()) {
-					System.err.format("\tcalling super.declareMethod\n");	/* ROLEDEBUG */
-				}
 				super.declareMethod(decl);
-			}
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("StaticRoleScope.declareMethod returning\n");	/* ROLEDEBUG */
 			}
 		}
 		public void declareRequiredMethod(final MethodDeclaration decl) {
@@ -1113,56 +1068,26 @@ public class StaticScope {
 		}
 		public MethodDeclaration lookupMethodDeclaration(final String methodSelector, final ActualOrFormalParameterList parameterList,
 				final boolean ignoreSignature) {
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("StaticRoleScope.lookupMethodDeclaration(\"%s\", %s, %b) called\n", methodSelector, parameterList.getText(), ignoreSignature);	/* ROLEDEBUG */
-			}
 			MethodDeclaration retval = super.lookupMethodDeclaration(methodSelector, parameterList,
 					 ignoreSignature);
 			if (null == retval) {
-				if (ConfigurationOptions.roleDebug1Enabled()) {
-					System.err.format("\tchecked in super, did not find it\n");	/* ROLEDEBUG */
-				}
 				if (requiredMethodDeclarationDictionary_.containsKey(methodSelector)) {
-					if (ConfigurationOptions.roleDebug1Enabled()) {
-						System.err.format("\trequiredMethodDeclarationDictionary_ contained key\n");/* ROLEDEBUG */
-					}
 					final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodSelector);
 					for (final MethodDeclaration aDecl : oldEntry) {
 						final FormalParameterList loggedSignature = aDecl.formalParameterList();
 						if (ignoreSignature) {
-							if (ConfigurationOptions.roleDebug1Enabled()) {
-								System.err.format("\tignoreSignature break\n");	/* ROLEDEBUG */
-							}
 							retval = aDecl; break;
 						} else if (null == loggedSignature && null == parameterList) {
-							if (ConfigurationOptions.roleDebug1Enabled()) {
-								System.err.format("\tnull comparison break\n");	/* ROLEDEBUG */
-							}
 							retval = aDecl; break;
 						} else if (null != loggedSignature && loggedSignature.alignsWith(parameterList)) {
-							if (ConfigurationOptions.roleDebug1Enabled()) {
-								System.err.format("\tsignature alignment break\n");	/* ROLEDEBUG */
-							}
 							retval = aDecl; break;
 						}
 					}
 				} else {
-					if (ConfigurationOptions.roleDebug1Enabled()) {
-						System.err.format("\trequiredMethodDeclarationDictionary_ did NOT contain key\n");/* ROLEDEBUG */
-					}
 					;
 				}
-				if (ConfigurationOptions.roleDebug1Enabled()) {
-					if (null == retval) System.err.format("\tretval ended null\n");	/* ROLEDEBUG */
-				}
 			} else {
-				if (ConfigurationOptions.roleDebug1Enabled()) {
-					System.err.format("\tfound it in super\n");	/* ROLEDEBUG */
-				}
 				;
-			}
-			if (ConfigurationOptions.roleDebug1Enabled()) {
-				System.err.format("StaticRoleScope.lookupMethodDeclaration returning\n");	/* ROLEDEBUG */
 			}
 			return retval;
 		}

@@ -28,7 +28,6 @@ import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.Token;
 
-import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -1105,10 +1104,6 @@ public class Pass2Listener extends Pass1Listener {
 		s.declareObject(objdecl);
 	}
 	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		if (ConfigurationOptions.roleDebug1Enabled()) {
-			System.err.format("Pass2Listener.declareRole called; scope: %s; role: %s; line: %d\nCalling sscope.delcareRole(%s)\n", s.associatedDeclaration().name(),
-				roledecl.name(), lineNumber, roledecl.name());	/* ROLEDEBUG */
-		}
 		s.declareRole(roledecl);	// probably redundant; done in pass 1
 	}
 	private void processDeclareRoleArrayAlias(int lineNumber) {
