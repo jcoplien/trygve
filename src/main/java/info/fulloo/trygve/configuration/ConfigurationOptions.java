@@ -36,7 +36,7 @@ public class ConfigurationOptions {
 	
 	static {
 		  boolean assertsEnabled = false;
-		  assert assertsEnabled = true; // Intentional side effect!!!
+		  assert assertsEnabled = true : "The build should be configured to enable asserts."; // Intentional side effect!!!
 		  if (!assertsEnabled) {
 			  throw new RuntimeException("Asserts must be enabled!!! Re-build trygve with -ea option or equivalent.");
 		  }
