@@ -1,18 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/main/java">
-		<attributes>
-			<attribute name="FROM_GRADLE_MODEL" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="src" path="src/main/generated">
-		<attributes>
-			<attribute name="FROM_GRADLE_MODEL" value="true"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry exported="true" kind="con" path="org.springsource.ide.eclipse.gradle.classpathcontainer"/>
-	<classpathentry kind="con" path="org.eclipse.buildship.core.gradleclasspathcontainer"/>
+	<classpathentry kind="src" path="src/main/generated"/>
+	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="F:/Code/github.com/egonelbre/trygve/lib/antlr-runtime-4.5.1.jar"/>
+	<classpathentry exported="true" kind="con" path="org.springsource.ide.eclipse.gradle.classpathcontainer"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

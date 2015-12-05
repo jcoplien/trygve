@@ -33,7 +33,7 @@ public class ConfigurationOptions {
 	public static boolean stackSnapshotDebug() {
 		return false;
 	}
-
+	
 	static {
 		  boolean assertsEnabled = false;
 		  assert assertsEnabled = true; // Intentional side effect!!!
