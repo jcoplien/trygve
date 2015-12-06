@@ -39,6 +39,7 @@ import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.parser.Pass1Listener;
@@ -118,11 +119,19 @@ public abstract class Declaration implements BodyPart {
 		public StaticScope enclosingScope() {
 			return containingScope_;
 		}
+		public void setInitialization(final Expression initialization) {
+			// May be called repeatedly, once each for passes 2, 3 and 4
+			initialization_ = initialization;
+		}
+		public Expression initializationExpression() {
+			return initialization_;
+		}
 
 		private Type type_;
 		private final int lineNumber_;
 		private StaticScope containingScope_;
 		public AccessQualifier accessQualifier_;
+		private Expression initialization_;
 	}
 	
 	public static class TypeDeclarationCommon extends Declaration implements TypeDeclaration
@@ -707,7 +716,7 @@ public abstract class Declaration implements BodyPart {
 			lineNumber_ = lineNumber;
 			bodyParts_ = new ArrayList<BodyPart>();
 		}
-		public void addAssociatedDeclaration(MethodDeclaration associatedDeclaration) {
+		public void addAssociatedDeclaration(final MethodDeclaration associatedDeclaration) {
 			associatedDeclaration_ = associatedDeclaration;
 		}
 		public void addBodyPart(final BodyPart bp) {

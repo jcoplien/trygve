@@ -36,6 +36,7 @@ public class TestRunner {
 		"forloop1.k",
 		"forloop2.k",
 		"forloop3.k",
+		"forloop4.k",
 		"inheritance.k",
 		"inheritance2.k",
 		"inheritance3.k",
@@ -79,6 +80,7 @@ public class TestRunner {
 		"thisqualbug1.k",
 		"simplestring1.k",
 		"simplest_role.k",
+		"initordertest.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

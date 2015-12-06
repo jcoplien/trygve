@@ -1030,6 +1030,20 @@ public class Pass1Listener extends KantBaseListener {
 	{
 	}
 	
+	private void addInitializationsForObjectDecls(final DeclarationList object_decls) {
+		final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
+		for (final BodyPart bp : object_decls.declarations()) {
+			if (bp instanceof ObjectDeclaration) {
+				final ObjectDeclaration odecl = (ObjectDeclaration)bp;
+				final Expression initializationExpression = odecl.initializationExpression();
+				if (null != initializationExpression) {
+					assert initializationExpression instanceof AssignmentExpression;
+					currentExprAndDecl.addBodyPart(initializationExpression);
+				}
+			}
+		}
+	}
+	
 	@Override public void exitExpr_and_decl_list(@NotNull KantParser.Expr_and_decl_listContext ctx)
 	{
 		//  	: object_decl
@@ -1042,7 +1056,7 @@ public class Pass1Listener extends KantBaseListener {
 		final KantParser.Expr_and_decl_listContext expr_and_decl_list = ctx.expr_and_decl_list();
 		DeclarationList object_decl = null;
 		BodyPart expr = null;
-		final ExprAndDeclList inProcess = parsingData_.currentExprAndDecl();
+		final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
 		if (null != ctx.expr()) {
 			expr = parsingData_.popExpression();
 		}
@@ -1050,18 +1064,23 @@ public class Pass1Listener extends KantBaseListener {
 			object_decl = parsingData_.popDeclarationList();
 		}
 		if (null != expr && null != object_decl) {
-			inProcess.addBodyPart(expr);
-			inProcess.addBodyPart(object_decl);
+			currentExprAndDecl.addBodyPart(expr);
+			addInitializationsForObjectDecls(object_decl);
+			
+			// Does this really add anything?
+			currentExprAndDecl.addBodyPart(object_decl);
 		} else if (null != expr_and_decl_list && null != object_decl) {
-			inProcess.addBodyPart(object_decl);
+			addInitializationsForObjectDecls(object_decl);
+			currentExprAndDecl.addBodyPart(object_decl);
 		} else if (null != object_decl) {
-			inProcess.addBodyPart(object_decl);
+			currentExprAndDecl.addBodyPart(object_decl);
+			addInitializationsForObjectDecls(object_decl);
 		} else if (null != expr_and_decl_list && null != expr) {
-			inProcess.addBodyPart(expr);
+			currentExprAndDecl.addBodyPart(expr);
 		} else if (null != ctx.expr_and_decl_list() && null == ctx.expr() && null == ctx.object_decl()) {
 			// just a gratuitous null statement that we can ignore
 		} else {
-			// null list � it's O.K.
+			// null list - it's O.K.
 		}
 		
 		if (printProductionsDebug) {
@@ -1225,7 +1244,7 @@ public class Pass1Listener extends KantBaseListener {
 				// need to bail out accordingly
 				
 				if (parsingData_.currentExprAndDeclExists()) {
-					final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
+					// final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
 					for (int z = 0; z < intializationExprs.size(); z++) {
 						if (null != currentForExpression) {
 							// For loops are special
@@ -1234,13 +1253,21 @@ public class Pass1Listener extends KantBaseListener {
 							currentForExpression.addInitExprs(bodyParts);
 						} else if (null != currentBlockExpression) {
 							// Blocks are... kind of special...
-							currentBlockExpression.bodyParts().add(intializationExprs.get(z));
+							// Well, no. We'll handle them through the declarations as well.
+							// currentBlockExpression.bodyParts().add(intializationExprs.get(z));
 						} else {
-							currentExprAndDecl.addBodyPart(intializationExprs.get(z));
+							// We can't add to currentExprAndDecl here, as we did before,
+							// because the timing is wrong. Defer its processing to
+							// exitExpr_and_decl_list where we'll slot it in with the
+							// corresponding declaration. We effect this by tying the
+							// initialization to the individual ObjectDeclaration above
+							// in processIdentifierList.
+							
+							// No: currentExprAndDecl.addBodyPart(intializationExprs.get(z));
 						}
 					}
 				} else {
-					return;	// punt � error return
+					return;	// punt - error return
 				}
 			}
 			
@@ -3002,6 +3029,9 @@ public class Pass1Listener extends KantBaseListener {
 				final IdentifierExpression lhs = new IdentifierExpression(objDecl.name(), declarationType, currentScope_);
 				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression, identifier_list.getStart().getLine(), this);
 				intializationExpressionsToReturn.add(initialization);
+				
+				// New initialization association
+				objDecl.setInitialization(initialization);
 			} else {
 				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "'.", "");
 			}

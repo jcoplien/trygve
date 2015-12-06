@@ -191,7 +191,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			isStatic_ = isStatic;
 		}
 		@Override public String getText() {
-			return object_.getText() + message_.getText();
+			return object_.getText() + "." + message_.getText();
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileMessageExpression(this, methodDeclaration, rtTypeDeclaration, scope);

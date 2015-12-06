@@ -52,12 +52,17 @@ public class Message {
 		if (null == argumentList_) {
 			argumentListString = "<no arguments>";
 		} else {
-			argumentListString = argumentList_.getText();
+			// If we ever need self: final Expression zerothArgument = argumentList_.parameterAtPosition(0);
+			final ActualArgumentList justTheArgs = new ActualArgumentList();
+			for (int i = 1; i < argumentList_.count(); i++) {
+				justTheArgs.addActualArgument(argumentList_.parameterAtPosition(i));
+			}
+			argumentListString = justTheArgs.getText();
 		}
 		if (null == selectorName_) {
-			argumentListString = "<no selector>";
+			selectorNameString = "<no selector>";
 		} else {
-			argumentListString = selectorName_;
+			selectorNameString = selectorName_;
 		}
 		final String retval = selectorNameString + "(" + argumentListString + ")";
 		return retval;
