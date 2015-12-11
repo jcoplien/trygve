@@ -426,6 +426,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		@Override public int hashCode() {
+			return (int)foobar_;
+		}
+		@Override public boolean equals(final Object other) {
+			boolean retval = true;
+			if (other instanceof RTIntegerObject) {
+				retval = foobar_ == ((RTIntegerObject)other).foobar_;
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 		
 		private long foobar_;
 	}
@@ -549,6 +561,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return new RTDoubleObject(result);
 		}
+		@Override public int hashCode() {
+			return (int)foobar_;
+		}
+		@Override public boolean equals(final Object other) {
+			boolean retval = true;
+			if (other instanceof RTDoubleObject) {
+				retval = this.isEqualTo(other);
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 		
 		final double EPSILON = 0.00001;
 		private double foobar_;
@@ -609,6 +633,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTIntegerObject retval = new RTIntegerObject(lRetval);
 			return retval;
 		}
+		public int hashCode() {
+			return foobar_.hashCode();
+		}
+		public boolean equals(final Object other) {
+			boolean retval = true;
+			if (other instanceof RTStringObject) {
+				retval = foobar_.equals(((RTStringObject)other).foobar_);
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 
 		private String foobar_;
 	}
@@ -631,6 +667,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public RTBooleanObject dup() {
 			return new RTBooleanObject(foobar_);
 		}
+		@Override public int hashCode() {
+			return foobar_? 1: 0;
+		}
+		@Override public boolean equals(final Object other) {
+			boolean retval = true;
+			if (other instanceof RTBooleanObject) {
+				retval = foobar_ == ((RTBooleanObject)other).foobar_;
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 		
 		private boolean foobar_;
 	}
@@ -643,6 +691,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public boolean isEqualTo(final Object another) {
 			return another instanceof RTNullObject;
+		}
+		@Override public int hashCode() {
+			return 0;
+		}
+		@Override public boolean equals(final Object other) {
+			return other instanceof RTNullObject;
 		}
 	}
 	
@@ -705,6 +759,41 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	public RTObject dup() {
 		RTObject retval = new RTObjectCommon(classOrContext_, objectMembers_, rTTypeMap_);
 		return retval;
+	}
+	public boolean equals(final RTObject other) {
+		boolean retval = true;
+		if (other.hashCode() != this.hashCode()) {
+			retval = false;
+		} else {
+			if (other instanceof RTObjectCommon == false) {
+				retval = false;
+			} else {
+				final RTObjectCommon commonOther = (RTObjectCommon)other;
+				if (objectMembers_.size() != commonOther.numberOfObjectMembers()) {
+					retval = false;
+				} else {
+					for (final String aKey : objectMembers_.keySet()) {
+						final RTObject myValue = objectMembers_.get(aKey);
+						final RTObject otherValue = other.getObject(aKey);
+						if (null != myValue && myValue.equals(otherValue) == false) {
+							retval = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return retval;
+	}
+	public int hashCode() {
+		int retval = 0;
+		for (final RTObject aMember : objectMembers_.values()) {
+			retval ^= aMember.hashCode();
+		}
+		return retval;
+	}
+	private int numberOfObjectMembers() {
+		return objectMembers_.size();
 	}
 	
 	private final RTType classOrContext_;

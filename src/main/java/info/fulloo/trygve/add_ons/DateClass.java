@@ -163,7 +163,7 @@ public final class DateClass {
 			
 			return retval;
 		}
-		public RTCode runDetails(RTObject scope) {
+		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
 			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails (Date domain)", "", "", "");
 			return null;	// halt the machine
@@ -185,7 +185,7 @@ public final class DateClass {
 		public RTDateCtorCode(final StaticScope enclosingMethodScope) {
 			super("Date", "Date", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTIntegerObject year = (RTIntegerObject)activationRecord.getObject("year");
@@ -200,7 +200,7 @@ public final class DateClass {
 		public RTGetYearCode(final StaticScope enclosingMethodScope) {
 			super("Date", "getYear", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject year = theDateObject.getYear();
@@ -212,7 +212,7 @@ public final class DateClass {
 		public RTSetYearCode(final StaticScope enclosingMethodScope) {
 			super("Date", "setYear", "year", "int", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject rawDateObject = activationRecord.getObject("this");
 			assert rawDateObject instanceof RTDateObject;
@@ -226,7 +226,7 @@ public final class DateClass {
 		public RTGetMonthCode(final StaticScope enclosingMethodScope) {
 			super("Date", "getMonth", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject month = theDateObject.getMonth();
@@ -238,7 +238,7 @@ public final class DateClass {
 		public RTSetMonthCode(final StaticScope enclosingMethodScope) {
 			super("Date", "setMonth", "month", "int", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject rawMonth = activationRecord.getObject("month");
@@ -250,7 +250,7 @@ public final class DateClass {
 		public RTGetDateCode(final StaticScope enclosingMethodScope) {
 			super("Date", "getDate", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject date = theDateObject.getDate();
@@ -262,7 +262,7 @@ public final class DateClass {
 		public RTSetDateCode(final StaticScope enclosingMethodScope) {
 			super("Date", "setDate", "date", "int", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject rawDate = activationRecord.getObject("date");
@@ -274,7 +274,7 @@ public final class DateClass {
 		public RTGetDayCode(final StaticScope enclosingMethodScope) {
 			super("Date", "getDay", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject day = theDateObject.getDay();
@@ -286,7 +286,7 @@ public final class DateClass {
 		public RTSetDayCode(final StaticScope enclosingMethodScope) {
 			super("Date", "setDay", "day", "int", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject rawDay = activationRecord.getObject("day");
@@ -298,7 +298,7 @@ public final class DateClass {
 		public RTToStringCode(final StaticScope enclosingMethodScope) {
 			super("Date", "toString", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject string = theDateObject.toStringCall();

@@ -95,13 +95,13 @@ public class RTCommonRunTimeCrap implements RTObject {
 	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.
-	@Override public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void enlistAsRolePlayerForContext(final String roleName, RTContextObject contextInstance) {
 		assert false;
 	}
-	@Override public void unenlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance) {
+	@Override public void unenlistAsRolePlayerForContext(final String roleName, RTContextObject contextInstance) {
 		assert false;
 	}
-	@Override public RTObject performUnaryOpOnObjectNamed(String idName, String operator, PreOrPost preOrPost_) {
+	@Override public RTObject performUnaryOpOnObjectNamed(final String idName, String operator, PreOrPost preOrPost_) {
 		assert false;	 // meaningless for arrays
 		return null;
 	}
@@ -115,9 +115,12 @@ public class RTCommonRunTimeCrap implements RTObject {
 	@Override public void decrementReferenceCount() {
 		--referenceCount_;
 	}
-	@Override
-	public long referenceCount() {
+	@Override public long referenceCount() {
 		return referenceCount_;
+	}
+	@Override public boolean equals(final RTObject other) {
+		assert false;
+		return false;
 	}
 	
 	private int referenceCount_;

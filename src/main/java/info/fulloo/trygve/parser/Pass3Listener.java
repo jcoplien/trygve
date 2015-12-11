@@ -120,7 +120,7 @@ public class Pass3Listener extends Pass2Listener {
 				if (null == returnExpression || returnExpression.type().name().equals("void")) {
 					;
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", returnExpression.getText(), "� of type ",
+					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", returnExpression.getText(), "' of type ",
 							returnExpression.type().getText(), " is incompatible with method that returns no value.", "");
 				}
 			} else if (methodDecl.returnType().canBeConvertedFrom(returnExpression.type())) {

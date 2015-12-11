@@ -23,113 +23,133 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ArrayType;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RTArrayType implements RTType {
-	public RTArrayType(Type baseType) {
+	public RTArrayType(final Type baseType, final ArrayType arrayType) {
 		super();
 		baseType_ = baseType;
+		arrayType_ = arrayType;
+		rTSizeMethod_ = new RTSizeMethod(arrayType.sizeMethodDeclaration(StaticScope.globalScope()));
 	}
 
-	@Override
-	public void addClass(String typeName, RTClass classDecl) {
+	@Override public void addClass(final String typeName, final RTClass classDecl) {
 		assert false;
 	}
 
-	@Override
-	public void addContext(String typeName, RTContext classDecl) {
+	@Override public void addContext(final String typeName, final RTContext classDecl) {
 		assert false;
 	}
 
-	@Override
-	public RTType typeNamed(String typeName) {
-		assert false;
-		return null;
-	}
-
-	@Override
-	public void addMethod(String methodName, RTMethod method) {
-		assert false;
-	}
-
-	@Override
-	public void addObjectDeclaration(String objectName, RTType objectType) {
-		assert false;
-	}
-
-	@Override
-	public void addStageProp(String objectName, RTStageProp stagePropType) {
-		assert false;
-	}
-
-	@Override
-	public void addRole(String objectName, RTRole roleType) {
-		assert false;
-	}
-
-	@Override
-	public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) {
+	@Override public RTType typeNamed(final String typeName) {
 		assert false;
 		return null;
 	}
 
-	@Override
-	public RTMethod lookupMethodIgnoringParameterInSignature(String methodName,
-			ActualOrFormalParameterList pl, String paramToIgnore) {
+	@Override public void addMethod(final String methodName, final RTMethod method) {
+		assert false;
+	}
+
+	@Override public void addObjectDeclaration(final String objectName, final RTType objectType) {
+		assert false;
+	}
+
+	@Override public void addStageProp(final String objectName, final RTStageProp stagePropType) {
+		assert false;
+	}
+
+	@Override public void addRole(final String objectName, final RTRole roleType) {
+		assert false;
+	}
+
+	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
 		assert false;
 		return null;
+	}
+
+	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName,
+			final ActualOrFormalParameterList pl, final String paramToIgnore) {
+		RTMethod retval = null;
+		if (methodName.equals("size") && pl.count() == 1) {
+			retval = rTSizeMethod_;
+		} else {
+			retval = null;
+		}
+		return retval;
 	}
 	
-	@Override
-	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName,
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName,
 			final ActualOrFormalParameterList pl, final String paramToIgnore) {
 		assert false;
 		return null;
 	}
 
-	@Override
-	public Map<String, RTType> objectDeclarations() {
+	@Override public Map<String, RTType> objectDeclarations() {
 		assert false;
 		return null;
 	}
 
-	@Override
-	public void setObject(String objectName, RTObject object) {
+	@Override public void setObject(final String objectName, final RTObject object) {
 		// TODO Auto-generated method stub
 		
 	}
 
-	@Override
-	public RTObject getObject(String objectName) {
+	@Override public RTObject getObject(final String objectName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public RTObject defaultObject() {
+	@Override public RTObject defaultObject() {
 		assert false;
 		return null;
 	}
 
-	@Override
-	public Map<String, RTRole> nameToRoleDeclMap() {
+	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		assert false;
 		return null;
 	}
 
-	@Override
-	public String name() {
-		// TODO Auto-generated method stub
+	@Override public String name() {
 		return null;
+	}
+	
+	private static class RTSizeMethod extends RTMethod {
+		public RTSizeMethod(final MethodDeclaration methodDecl) {
+			super("size", methodDecl);
+		}
+		@Override public RTCode run() {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject theArrayObject = (RTArrayObject)activationRecord.getObject("this");
+			int size = 0;
+			if (theArrayObject instanceof RTNullObject) {
+				size = 0;
+			} else if (theArrayObject instanceof RTArrayObject) {
+				size = ((RTArrayObject)theArrayObject).size();
+			}
+			final RTObject retval = new RTIntegerObject(size);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+			return returnInstruction_;
+		}
 	}
 	
 	public Type baseType() {
 		return baseType_;
 	}
 	
+	public ArrayType arrayType() {
+		return arrayType_;
+	}
 	
+	private final RTMethod rTSizeMethod_;
 	private final Type baseType_;
+	private final ArrayType arrayType_;
 }

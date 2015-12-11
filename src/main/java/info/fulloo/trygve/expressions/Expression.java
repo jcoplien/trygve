@@ -932,7 +932,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			expressionAndDeclList_ = expressionAndDeclList;	// seems to work
 		}
 		
-		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) � RTSwitch fetches
+		// No compileCodeFor(CodeGenerator, MethodDeclaration, RTType) - RTSwitch fetches
 		// our body parts and compiles them
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			assert(false);
@@ -1253,7 +1253,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class TopOfStackExpression extends Expression {
-		// Kind of a dummy � used in RTMethod.java. Never used on the parser side.
+		// Kind of a dummy - used in RTMethod.java. Never used on the parser side.
 		public TopOfStackExpression() {
 			super("", null, null);
 		}
@@ -1438,9 +1438,32 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		final private ContextDeclaration enclosingContext_;
 	}
 	
+	// This is part of the endeavor to add methods to naked
+	// array objects. See also Type.java, method ArrayType.sizeMethodDeclaration.
+	private Type finesseArrayType(final Type type) {
+		Type retval = type;
+		if (type instanceof ArrayType) {
+			final String typeName = type.name();
+			StaticScope scopeOfType = null;
+			if (null == type.enclosedScope()) {
+				scopeOfType = StaticScope.globalScope();
+			} else {
+				scopeOfType = type.enclosedScope().parentScope();
+			}
+			final Type lookedUpType = scopeOfType.lookupTypeDeclaration(typeName);
+			if (null != lookedUpType) {
+				retval = lookedUpType;
+			} else {
+				scopeOfType.declareType(type);
+			}
+		}
+		return retval;
+	}
+	
 	public Expression(final String id, final Type type, final Type enclosingMegaType) {
 		id_ = id;
-		type_ = type;
+		final Type newType = this.finesseArrayType(type);
+		type_ = newType;
 		resultIsConsumed_ = false;
 		enclosingMegaType_ = enclosingMegaType;
 	}

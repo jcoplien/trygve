@@ -37,10 +37,11 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 
 public class RTArrayObject implements RTObject, RTIterable {
-	public RTArrayObject(int size, RTArrayType arrayType) {
+	public RTArrayObject(final int size, final RTArrayType arrayType) {
 		super();
 		size_ = size;
 		baseType_ = arrayType.baseType();
+		rTArrayType_ = arrayType;
 		referenceCount_ = 1;
 		theArray_ = new RTObject[size_];
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
@@ -109,8 +110,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		return null;
 	}
 	@Override public RTType rTType() {
-		assert false;
-		return null;
+		return rTArrayType_;
 	}
 	@Override public boolean isEqualTo(final Object another) {
 		assert false;
@@ -238,10 +238,11 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;	 // meaningless for arrays
 		return null;
 	}
-	private RTArrayObject(final RTObject [] theArray, final Type baseType, final int size) {
+	private RTArrayObject(final RTObject [] theArray, final Type baseType, final RTArrayType rTArrayType, final int size) {
 		super();
 		theArray_ = theArray.clone();
 		baseType_ = baseType;
+		rTArrayType_ = new RTArrayType(baseType_, rTArrayType.arrayType());
 		size_ = size;
 		for (int k = 0; k < size_; k++) {
 			theArray_[k] = theArray_[k].dup();
@@ -253,7 +254,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		return retval;
 	}
 	@Override public RTObject dup() {
-		final RTArrayObject retval = new RTArrayObject(theArray_, baseType_, size_);
+		final RTArrayObject retval = new RTArrayObject(theArray_, baseType_, rTArrayType_, size_);
 		return retval;
 	}
 	@Override public void incrementReferenceCount() {
@@ -262,9 +263,23 @@ public class RTArrayObject implements RTObject, RTIterable {
 	@Override public void decrementReferenceCount() {
 		--referenceCount_;
 	}
-	@Override
-	public long referenceCount() {
+	@Override public long referenceCount() {
 		return referenceCount_;
+	}
+	@Override public boolean equals(final RTObject other) {
+		boolean retval = true;
+		if (other instanceof RTArrayObject) {
+			retval = true;
+			for (int i = 0; i < size_; i++) {
+				if (theArray_[i].equals(((RTArrayObject)other).theArray_[i]) == false) {
+					retval = false;
+					break;
+				}
+			}
+		} else {
+			retval = false;
+		}
+		return retval;
 	}
 	
 	private final RTObject [] theArray_;
@@ -272,4 +287,5 @@ public class RTArrayObject implements RTObject, RTIterable {
 	private final int size_;
 	private int referenceCount_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
+	private final RTArrayType rTArrayType_;
 }

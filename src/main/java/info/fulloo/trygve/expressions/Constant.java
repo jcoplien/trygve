@@ -175,7 +175,7 @@ public abstract class Constant extends Expression {
 			return c_;
 		}
 		@Override public String getText() {
-			return "�" + String.valueOf(c_) + "�";
+			return "'" + String.valueOf(c_) + "'";
 		}
 		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;

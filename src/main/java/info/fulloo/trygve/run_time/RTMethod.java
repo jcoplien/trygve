@@ -152,7 +152,7 @@ public class RTMethod extends RTCode {
 			// is a kludge, but we can separate non-argument locals from parameters
 			// to be able to do this more efficiently. Right now the formal
 			// parameters are in this loop along with the other local
-			// variables in the method � we just snake around the former parameters
+			// variables in the method - we just snake around the former parameters
 			// by seeing that they previously have been added.
 			if (null == activationRecord.getObject(od.name())) {
 				activationRecord.addObjectDeclaration(od.name(), null);
@@ -166,7 +166,7 @@ public class RTMethod extends RTCode {
 		
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_
 				.currentDynamicScope();
-		for (Map.Entry<String, RTExpression> iterator : initializationList_.entrySet()) {
+		for (final Map.Entry<String, RTExpression> iterator : initializationList_.entrySet()) {
 			// Go into the initializer, and run it to completion
 			final RTExpression initializer = iterator.getValue();
 			for (RTCode pc = initializer.run(); pc != null;) {
@@ -247,6 +247,6 @@ public class RTMethod extends RTCode {
 	private int codeSize_, nextCodeIndex_;
 	private MethodDeclaration methodDeclaration_;
 	private Map<String, RTExpression> initializationList_;
-	private RTCode returnInstruction_;
+	protected RTCode returnInstruction_;
 	private Type returnType_;
 }

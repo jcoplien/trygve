@@ -458,6 +458,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		private void commonInit(final StaticScope myEnclosedScope, final Type returnType,
 				final AccessQualifier accessQualifier, final int lineNumber) {
+			if (null== myEnclosedScope) {
+				assert null != myEnclosedScope;
+			}
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			

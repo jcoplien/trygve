@@ -66,6 +66,18 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public int size() {
 		return theList_.size();
 	}
+	@Override public int hashCode() {
+		return theList_.hashCode();
+	}
+	@Override public boolean equals(final Object other) {
+		boolean retval = true;
+		if (other instanceof RTListObject) {
+			retval = theList_.equals(((RTListObject)other).theList_);
+		} else {
+			retval = false;
+		}
+		return retval;
+	}
 	public void setObject(final RTObject theIndexObject, final RTObject rhs) {			
 		final int theIndex = calculateIndexFrom(theIndexObject);
 		

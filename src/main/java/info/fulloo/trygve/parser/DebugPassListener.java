@@ -1,7 +1,6 @@
 package info.fulloo.trygve.parser;
 
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -19,21 +18,18 @@ public class DebugPassListener extends KantBaseListener  {
         }
     }
 
-    @Override public
-    void visitTerminal(TerminalNode n){
+    @Override public void visitTerminal(final TerminalNode n){
         tab();
         System.err.format("> %s \"%s\"\n", n.getClass().getName(), n.getText());
     }
 
-    @Override public
-    void visitErrorNode(ErrorNode n){
+    @Override public void visitErrorNode(final ErrorNode n){
         tab();
         System.err.print("E ");
         System.err.println(n.getText());
     }
 
-    @Override public
-    void enterEveryRule(ParserRuleContext c){
+    @Override public void enterEveryRule(final ParserRuleContext c){
         tab();
         System.err.print(c.getClass().getName());
         System.err.println(" {");
@@ -41,8 +37,7 @@ public class DebugPassListener extends KantBaseListener  {
         indent++;
     }
 
-    @Override public
-    void exitEveryRule(ParserRuleContext c){
+    @Override public void exitEveryRule(final ParserRuleContext c){
         indent--;
         tab();
         System.err.println("}");

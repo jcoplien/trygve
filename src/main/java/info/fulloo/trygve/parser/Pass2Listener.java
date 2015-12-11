@@ -313,7 +313,7 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override public void exitArgument_list(@NotNull KantParser.Argument_listContext ctx)
 	{
-		// Yes � this work belongs in Pass 2
+		// Yes - this work belongs in Pass 2
 		if (ctx.expr() != null) {
 			final Expression expr = parsingData_.popExpression();
 			expr.setResultIsConsumed(true);
@@ -698,6 +698,14 @@ public class Pass2Listener extends Pass1Listener {
 				// Mainly for error stumbling
 				methodSignature = null;
 			}
+		} else if (objectType.name().endsWith("_$array") && objectType instanceof ArrayType) {
+			// This is part of the endeavor to add method invocations to
+			// naked array object appearances (e.g., size())
+			methodSignature = new MethodSignature(message.selectorName(), 
+					StaticScope.globalScope().lookupTypeDeclaration("int"),
+					AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+			methodSignature.setHasConstModifier(true);
+			isOKMethodSignature = true;
 		}
 		
 		final Type returnType = this.processReturnType(ctxGetStart, object, objectType, message);
@@ -853,7 +861,7 @@ public class Pass2Listener extends Pass1Listener {
 								"' is not declared in scope `", currentScope_.name(), "'.", "");
 						type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					} else {
-						// it's O.K. � maybe. Can be used as an L-value in an assignment. R-value, too, I guess
+						// it's O.K. - maybe. Can be used as an L-value in an assignment. R-value, too, I guess
 						type = possibleContextScope.lookupTypeDeclaration(idText);
 						declaringScope = roleDecl.enclosingScope();
 					}
@@ -1087,7 +1095,7 @@ public class Pass2Listener extends Pass1Listener {
 		final MethodDeclaration enclosingMethod = super.methodWithinWhichIAmDeclared(currentScope_);
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			if (signature.hasConstModifier()) {
-				; // it's O.K. � this is a const method
+				; // it's O.K. - this is a const method
 			} else {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
 						"Call of non-const method ", signature.name(),
@@ -1106,13 +1114,13 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
 		s.declareRole(roledecl);	// probably redundant; done in pass 1
 	}
-	private void processDeclareRoleArrayAlias(int lineNumber) {
+	private void processDeclareRoleArrayAlias(final int lineNumber) {
 		// Declare an actual object for the Role, if the Role is a RoleArray type
 		if (currentRole_.isArray()) {
 			final String roleName = currentRole_.type().getText();
 			
 			// Then declare an array base handle for it as well
-			final String compoundName = roleName + "_array";
+			final String compoundName = roleName + "_$array";
 			Type newType = currentScope_.lookupTypeDeclarationRecursive(compoundName);
 			if (null == newType) {
 				newType = new ArrayType(compoundName, currentRole_.type());

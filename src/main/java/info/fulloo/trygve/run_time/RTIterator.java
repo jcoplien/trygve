@@ -43,7 +43,7 @@ public abstract class RTIterator implements RTObject {
 	}
 	
 	public static class RTArrayIterator extends RTIterator {
-		public RTArrayIterator(RTIterable whatIAmIteratingOver) {
+		public RTArrayIterator(final RTIterable whatIAmIteratingOver) {
 			super();
 			assert whatIAmIteratingOver instanceof RTArrayObject;
 			whatIAmIteratingOver_ = whatIAmIteratingOver;
@@ -61,6 +61,11 @@ public abstract class RTIterator implements RTObject {
 		public void advance() {
 			currentIndex_++;
 		}
+		@Override public boolean equals(final RTObject other) {
+			assert false;
+			return false;
+		}
+		
 		private final RTIterable whatIAmIteratingOver_;
 		private int currentIndex_;
 		private final int arraySize_;
@@ -83,6 +88,10 @@ public abstract class RTIterator implements RTObject {
 		}
 		public void advance() {
 			currentIndex_++;
+		}
+		@Override public boolean equals(final RTObject other) {
+			assert false;
+			return false;
 		}
 		
 		private final RTListObject whatIAmIteratingOver_;

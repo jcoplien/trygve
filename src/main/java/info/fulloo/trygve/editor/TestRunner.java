@@ -81,6 +81,8 @@ public class TestRunner {
 		"simplestring1.k",
 		"simplest_role.k",
 		"initordertest.k",
+		"returntest1.k",
+		"arraysizetest1.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

@@ -29,6 +29,7 @@ import java.util.Stack;
 
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
+import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -242,6 +243,31 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 		rtMethod.addCode(listCode);
 	}
+	private void processMapCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtListTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> listCode = new ArrayList<RTCode>();
+		if (methodDeclaration.name().equals("Map")) {
+			listCode.add(new  MapClass.RTMapCtorCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("size")) {
+			listCode.add(new MapClass.RTSizeCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("put")) {
+			listCode.add(new MapClass.RTPutCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("get")) {
+			listCode.add(new MapClass.RTGetCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("remove")) {
+			listCode.add(new MapClass.RTRemoveCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("containsKey")) {
+			listCode.add(new MapClass.RTContainsKeyCode(methodDeclaration.enclosedScope()));
+		} else if (methodDeclaration.name().equals("containsValue")) {
+			listCode.add(new MapClass.RTContainsValueCode(methodDeclaration.enclosedScope()));
+		} else {
+			assert false;	// error message instead? Should be caught earlier
+		}
+		rtMethod.addCode(listCode);
+	}
 	private void processMathCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final RTType rtMathTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtMathTypeDeclaration;
@@ -261,6 +287,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void processPrintStreamCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> printlnCode = new ArrayList<RTCode>();
 		if (formalParameterList.count() == 2) {
 			final ObjectDeclaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
 			final Type printableArgumentType = printableArgumentDeclaration.type();
@@ -268,7 +295,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> printlnCode = new ArrayList<RTCode>();
 			if (printableArgumentType.name().equals("String")) {
 				if (methodDeclaration.name().equals("println")) {
 					printlnCode.add(new SystemClass.RTPrintlnStringCode(methodDeclaration.enclosedScope()));
@@ -309,6 +335,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else {
 					assert false;
 				}
+			} else {
+				assert false;
+			}
+			
+			assert printlnCode.size() > 0;
+			
+			rtMethod.addCode(printlnCode);
+		} else if (formalParameterList.count() == 1) {
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			if (methodDeclaration.name().equals("println")) {
+				printlnCode.add(new SystemClass.RTPrintlnCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -565,6 +602,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().startsWith("Map<")) {
+				processMapCall(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Math")) {
 				processMathCall(methodDeclaration, typeDeclaration);

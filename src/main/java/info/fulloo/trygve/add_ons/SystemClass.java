@@ -38,6 +38,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
@@ -50,9 +51,12 @@ import static java.util.Arrays.asList;
 public final class SystemClass {
 	private static void addTypedPrintStreamPrintDeclaration(final String methodName, final Type argumentType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		ObjectDeclaration formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
+		ObjectDeclaration formalParameter = null;
 		final FormalParameterList formals = new FormalParameterList();
-		formals.addFormalParameter(formalParameter);
+		if (null != argumentType) {
+			 formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
+			 formals.addFormalParameter(formalParameter);
+		}
 		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
 		formals.addFormalParameter(formalParameter);
 		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
@@ -108,6 +112,9 @@ public final class SystemClass {
 
 			// method println(double)
 			addTypedPrintStreamPrintDeclaration("println", doubleType);
+			
+			// method println()
+			addTypedPrintStreamPrintDeclaration("println", null);
 			
 			// Declare the type
 			globalScope.declareType(printStreamType_);
@@ -186,6 +193,8 @@ public final class SystemClass {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
+				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTStringObject;
 				final RTStringObject toPrint = (RTStringObject) rawToPrint;
@@ -205,6 +214,8 @@ public final class SystemClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
+				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
 				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTIntegerObject;
@@ -228,6 +239,8 @@ public final class SystemClass {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
+				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTBooleanObject;
 				final RTBooleanObject toPrint = (RTBooleanObject) rawToPrint;
@@ -238,12 +251,14 @@ public final class SystemClass {
 		}
 	}
 	public static class RTPrintlnDoubleCode extends RTPrintCommon {
-		public RTPrintlnDoubleCode(StaticScope enclosingMethodScope) {
+		public RTPrintlnDoubleCode(final StaticScope enclosingMethodScope) {
 			super("PrintStream", "println", "toprint", "double", enclosingMethodScope);
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
+				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
 				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTDoubleObject;
@@ -251,6 +266,15 @@ public final class SystemClass {
 				final double foobar = toPrint.doubleValue();
 				System.out.println(foobar);
 			}
+			return super.nextCode();
+		}
+	}
+	public static class RTPrintlnCode extends RTPrintCommon {
+		public RTPrintlnCode(final StaticScope enclosingMethodScope) {
+			super("PrintStream", "println", null, null, enclosingMethodScope);
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			System.out.println();
 			return super.nextCode();
 		}
 	}
@@ -262,6 +286,8 @@ public final class SystemClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
+				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
 				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTStringObject;
@@ -283,9 +309,11 @@ public final class SystemClass {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
+				System.out.print("<null>");
 			} else {
 				final RTIntegerObject toPrint = (RTIntegerObject) rawToPrint;
-				assert toPrint instanceof RTIntegerObject;
+				assert rawToPrint instanceof RTIntegerObject;
 				final long foobar = toPrint.intValue();
 				System.out.print(foobar);
 			}
@@ -305,6 +333,8 @@ public final class SystemClass {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
 				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
+				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTBooleanObject;
 				final RTBooleanObject toPrint = (RTBooleanObject)rawToPrint;
@@ -321,6 +351,8 @@ public final class SystemClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			if (rawToPrint instanceof RTNullExpression) {
+				System.out.print("<null>");
+			} else if (rawToPrint instanceof RTNullObject) {
 				System.out.print("<null>");
 			} else {
 				assert rawToPrint instanceof RTDoubleObject;

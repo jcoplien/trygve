@@ -461,7 +461,7 @@ public class StaticScope {
 		if (null == retval) {
 			// Stop searching at Context boundary. If there are nested
 			// Contexts we don't want to go wandering into THAT Context
-			// and pick up a role. Also stop at Class boundaries � it
+			// and pick up a role. Also stop at Class boundaries - it
 			// doesn't make sense to refer to a role inside of a class
 			final Declaration associatedDeclaration = this.associatedDeclaration();
 			final Type myType = null != associatedDeclaration? associatedDeclaration.type(): null;

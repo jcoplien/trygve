@@ -528,7 +528,7 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	
 	public static class StagePropType extends RoleType {
-		public StagePropType(String name, StaticScope scope) {
+		public StagePropType(final String name, final StaticScope scope) {
 			super(name, scope);
 		}
 		public void reportMismatchesWith(final int lineNumber, final Type t) {
@@ -616,6 +616,7 @@ public abstract class Type implements ExpressionStackAPI
 		public ArrayType(final String name, final Type baseType) {
 			super(null);
 			name_ = name;
+			sizeMethodDeclaration_ = null;
 			baseType_ = baseType;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
@@ -643,8 +644,30 @@ public abstract class Type implements ExpressionStackAPI
 		public Type baseType() {
 			return baseType_;
 		}
+		
+		// This is kind of a hack because arrays as objects don't
+		// have that many methods and they really don't have
+		// their own scope where we can declare things like this.
+		public MethodDeclaration sizeMethodDeclaration(final StaticScope enclosingScope) {
+			if (null == sizeMethodDeclaration_) {
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final FormalParameterList formalParameterList = new FormalParameterList();
+				formalParameterList.addFormalParameter(self);
+				final MethodSignature signature = new MethodSignature("size",
+						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						AccessQualifier.PublicAccess, 0, false);
+				signature.addParameterList(formalParameterList);
+				dummyScope_ = new StaticScope(enclosingScope);
+				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				dummyScope_.declareMethod(sizeMethodDeclaration_);
+			}
+			return sizeMethodDeclaration_;
+		}
+		
 		private final Type baseType_;
 		private final String name_;
+		private MethodDeclaration sizeMethodDeclaration_;
+		private StaticScope dummyScope_;
 	}
 	
 	public static class TemplateParameterType extends Type {

@@ -1,6 +1,7 @@
 package info.fulloo.trygve.add_ons;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
@@ -18,12 +19,11 @@ import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
-import info.fulloo.trygve.run_time.RTListObject;
+import info.fulloo.trygve.run_time.RTMapObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
-import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
@@ -50,25 +50,31 @@ import static java.util.Arrays.asList;
  * Jim Coplien at jcoplien@gmail.com
  */
 
-public final class ListClass {
-	private static void declareListMethod(final String methodSelector, final Type returnType,
-			final String paramName,
-			final Type paramType) {
+public final class MapClass {
+	private static void declareMapMethod(final String methodSelector, final Type returnType,
+			final List<String> paramNames,
+			final List<Type> paramTypes) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		
+		final Iterator<Type> typeIterator = null == paramTypes? null: paramTypes.iterator();
 		final FormalParameterList formals = new FormalParameterList();
-		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
-			formals.addFormalParameter(formalParameter);
+		if (null != paramNames) {
+			for (final String paramName : paramNames) {
+				if (null != paramName) {
+					final Type paramType = typeIterator.next();
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					formals.addFormalParameter(formalParameter);
+				}
+			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
 		formals.addFormalParameter(self);
-		StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
+		MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.signature().setHasConstModifier(false);
-		listType_.enclosedScope().declareMethod(methodDecl);
+		mapType_.enclosedScope().declareMethod(methodDecl);
 	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
@@ -80,45 +86,49 @@ public final class ListClass {
 		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
 		assert null != booleanType;
 		
-		if (null == globalScope.lookupTypeDeclaration("List")) {
+		if (null == globalScope.lookupTypeDeclaration("Map")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("List", newScope, /*Base Class*/ null, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, /*Base Class*/ null, 0);
 			newScope.setDeclaration(templateDecl);
-			final Type T = new TemplateParameterType("T", null);
-			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope);
-			templateDecl.addTypeParameter(typeParamId, 1);
-			listType_ = new TemplateType("List", newScope, null);
-			templateDecl.setType(listType_);
+			final Type K = new TemplateParameterType("K", null);
+			final Type V = new TemplateParameterType("V", null);
+			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope);
+			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope);
+			templateDecl.addTypeParameter(keyTypeParamID, 2);
+			templateDecl.addTypeParameter(valueTypeParamID, 2);
+			mapType_ = new TemplateType("Map", newScope, null);
+			templateDecl.setType(mapType_);
 			typeDeclarationList_.add(templateDecl);
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			declareListMethod("List", listType_, null, null);
+			declareMapMethod("Map", mapType_, null, null);
 			
-			declareListMethod("add", voidType, "element", T);
+			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K));
 			
-			declareListMethod("get", T, "theIndex", integerType);
+			declareMapMethod("get", V, asList("key"), asList(K));
 			
-			declareListMethod("indexOf", intType, "element", T);
+			declareMapMethod("containsKey", booleanType, asList("key"), asList(K));
 			
-			declareListMethod("contains", booleanType, "element", T);
+			declareMapMethod("containsValue", booleanType, asList("value"), asList(V));
 			
-			declareListMethod("size", intType, null, null);
+			declareMapMethod("remove", V, asList("key"), asList(K));
 			
-			declareListMethod("isEmpty", booleanType, null, null);
+			declareMapMethod("size", intType, null, null);
 			
 			// Declare the type
-			globalScope.declareType(listType_);
+			globalScope.declareType(mapType_);
 			globalScope.declareTemplate(templateDecl);
 		}
 	}
 	
-	public static class RTListCommon extends RTMessage {
-		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
+	public static class RTMapCommon extends RTMessage {
+		public RTMapCommon(final String className, final String methodName, final List<String> parameterNames,
+				final List<String> parameterTypeNames,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 		}
-		public RTCode run() {
+		@Override public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
 			// until the RTReturn statement processes it, and everything
 			// else has been popped into the activation record by
@@ -145,92 +155,92 @@ public final class ListClass {
 			return null;	// halt the machine
 		}
 	}
-	public static class RTListCtorCode extends RTListCommon {
-		public RTListCtorCode(final StaticScope enclosingMethodScope) {
-			super("List", "List", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTMapCtorCode extends RTMapCommon {
+		public RTMapCtorCode(final StaticScope enclosingMethodScope) {
+			super("Map", "Map", asList("value", "key"), asList("V","K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			theListObject.ctor();
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			theMapObject.ctor();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(this);
 			return super.nextCode();
 		}
 	}
-	public static class RTAddCode extends RTListCommon {
-		public RTAddCode(final StaticScope enclosingMethodScope) {
-			super("List", "add", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTPutCode extends RTMapCommon {
+		public RTPutCode(final StaticScope enclosingMethodScope) {
+			super("Map", "put", asList("value", "key"), asList("V", "K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTObject rawElement = activationRecord.getObject("element");
-			theListObject.add(rawElement);
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTObject rawKey = activationRecord.getObject("key");
+			final RTObject rawValue = activationRecord.getObject("value");
+			theMapObject.put(rawKey, rawValue);
 			return super.nextCode();
 		}
 	}
-	public static class RTSizeCode extends RTListCommon {
-		public RTSizeCode(final StaticScope enclosingMethodScope) {
-			super("List", "size", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final int rawResult = theListObject.size();
-			final RTIntegerObject result = new RTIntegerObject(rawResult);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-			return super.nextCode();
-		}
-	}
-	public static class RTGetCode extends RTListCommon {
+	public static class RTGetCode extends RTMapCommon {
 		public RTGetCode(final StaticScope enclosingMethodScope) {
-			super("List", "get", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("Map", "get", asList("key"), asList("K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("element");
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTObject rawKey = activationRecord.getObject("key");
+			final RTObject value = theMapObject.get(rawKey);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+			return super.nextCode();
+		}
+	}
+	public static class RTContainsKeyCode extends RTMapCommon {
+		public RTContainsKeyCode(final StaticScope enclosingMethodScope) {
+			super("Map", "containsKey", asList("key"), asList("K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTIntegerObject key = (RTIntegerObject)activationRecord.getObject("key");
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTStackable result = (RTStackable)theMapObject.containsKey(key);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
 			return super.nextCode();
 		}
 	}
-	public static class RTIndexOfCode extends RTListCommon {
-		public RTIndexOfCode(final StaticScope enclosingMethodScope) {
-			super("List", "indexOf", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+	public static class RTContainsValueCode extends RTMapCommon {
+		public RTContainsValueCode(final StaticScope enclosingMethodScope) {
+			super("Map", "containsValue", asList("value"), asList("V"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTStackable stackableArgument = activationRecord.getObject("element");
-			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.indexOf(argument);
+			final RTIntegerObject value = (RTIntegerObject)activationRecord.getObject("key");
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTStackable result = (RTStackable)theMapObject.containsValue(value);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
 			return super.nextCode();
 		}
 	}
-	public static class RTContainsCode extends RTListCommon {
-		public RTContainsCode(final StaticScope enclosingMethodScope) {
-			super("List", "contains", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+	public static class RTRemoveCode extends RTMapCommon {
+		public RTRemoveCode(final StaticScope enclosingMethodScope) {
+			super("Map", "remove", asList("key"), asList("K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject argument = activationRecord.getObject("element");
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.contains(argument);
+			final RTIntegerObject key = (RTIntegerObject)activationRecord.getObject("key");
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTStackable result = (RTStackable)theMapObject.remove(key);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
 			return super.nextCode();
 		}
 	}
-	public static class RTIsEmptyCode extends RTListCommon {
-		public RTIsEmptyCode(final StaticScope enclosingMethodScope) {
-			super("List", "isEmpty", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+	public static class RTSizeCode extends RTMapCommon {
+		public RTSizeCode(final StaticScope enclosingMethodScope) {
+			super("Map", "size", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final boolean rawResult = theListObject.isEmpty();
-			final RTBooleanObject result = new RTBooleanObject(rawResult);
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final int rawResult = theMapObject.size();
+			final RTIntegerObject result = new RTIntegerObject(rawResult);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
 			return super.nextCode();
 		}
@@ -241,5 +251,5 @@ public final class ListClass {
 	}
 	
 	private static List<TypeDeclaration> typeDeclarationList_;
-	private static TemplateType listType_;
+	private static TemplateType mapType_;
 }

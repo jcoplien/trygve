@@ -172,7 +172,8 @@ public class ParsingData {
 	public void                     pushTypeNameList(ArrayList<String> los) { typeNameListStack_.push(los); }
     public ArrayList<String>         popTypeNameList() { return typeNameListStack_.pop(); }
     public ArrayList<String>     currentTypeNameList() { return typeNameListStack_.peek(); }
-	public WhileExpression  		 popWhileExpression() { popBreakableExpression(); return whileExpressionStack_.pop(); }
+    public boolean               currentWhileExpressionExists() { return whileExpressionStack_.size() > 0; }
+    public WhileExpression  		 popWhileExpression() { popBreakableExpression(); return whileExpressionStack_.pop(); }
 	public void 					pushWhileExpression(WhileExpression expr) { whileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public WhileExpression 		 currentWhileExpression() { return whileExpressionStack_.peek(); }
 	public Expression            nearestContinuableLoop() {

@@ -499,7 +499,7 @@ public class Pass1Listener extends KantBaseListener {
 		
 		if (null != JAVA_ID) {
 			// It *can* be null. Once had an object declaration inside
-			// a role � resulting grammar error got here with that
+			// a role - resulting grammar error got here with that
 			// null condition. Not much to do but to punt
 
 			final String roleName = JAVA_ID.getText();
@@ -579,7 +579,7 @@ public class Pass1Listener extends KantBaseListener {
 	    //	: method_decl
 	    //	| role_body method_decl
 	    //	| object_decl				// illegal
-	    //	| role_body object_decl		// illegal � for better error messages only
+	    //	| role_body object_decl		// illegal - for better error messages only
 		
 		/* nothing */
 	}
@@ -589,7 +589,7 @@ public class Pass1Listener extends KantBaseListener {
 		// : method_decl
         // | role_body method_decl
         // | object_decl				// illegal
-        // | role_body object_decl		// illegal � for better error messages only
+        // | role_body object_decl		// illegal - for better error messages only
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
@@ -670,7 +670,7 @@ public class Pass1Listener extends KantBaseListener {
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
 		if (null != JAVA_ID) {
 			// It *can* be null. Once had an object declaration inside
-			// a role � resulting grammar error got here with that
+			// a role - resulting grammar error got here with that
 			// null condition. Not much to do but to punt
 			
 			final String stagePropName = JAVA_ID.getText();
@@ -979,7 +979,7 @@ public class Pass1Listener extends KantBaseListener {
 		final AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
 		
 		Type returnType = null;
-		// There may not be any return type at all � as for a constructor
+		// There may not be any return type at all - as for a constructor
 		final KantParser.Return_typeContext returnTypeContext = ctx.return_type();
 		if (null != returnTypeContext) {
 			final String returnTypeName = returnTypeContext.getText();
@@ -1210,7 +1210,7 @@ public class Pass1Listener extends KantBaseListener {
 			
 			if (isArray) {
 				// A derived type
-				final String aName = type.getText() + "_array";
+				final String aName = type.getText() + "_$array";
 				type = new ArrayType(aName, type);
 			}
 			
@@ -1545,6 +1545,7 @@ public class Pass1Listener extends KantBaseListener {
 			// The expression being returned is popped from
 			// parsingData_.popExpression() in this.expressionFromReturnStatement
 			expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
+			expression.setResultIsConsumed(true);	// consumed by the return statement
 			if (printProductionsDebug) { System.err.println("expr : return_expr"); }
 		} else {
 			// Could be a parsing error
@@ -1591,7 +1592,7 @@ public class Pass1Listener extends KantBaseListener {
 				for (int i = 0; i < ctx.ABELIAN_SUMOP().size(); i++) {
 					System.err.print("`");
 					System.err.print(ctx.ABELIAN_SUMOP(i).getText());
-					System.err.print("� abelian_expr ");
+					System.err.print("' abelian_expr ");
 				}
 				System.err.println();
 			}
@@ -1689,7 +1690,7 @@ public class Pass1Listener extends KantBaseListener {
 				for (int i = 0; i < ctx.ABELIAN_MULOP().size(); i++) {
 					System.err.print("`");
 					System.err.print(ctx.ABELIAN_MULOP(i).getText());
-					System.err.print("� abelian_unary_op ");
+					System.err.print("' abelian_unary_op ");
 				}
 				System.err.println();
 			}
@@ -2259,8 +2260,10 @@ public class Pass1Listener extends KantBaseListener {
 		} else {
 			elsePart = new NullExpression();
 		}
-		final Expression thenPart = parsingData_.popExpression();
-		final Expression conditional = parsingData_.popExpression();
+		final Expression thenPart = parsingData_.currentExpressionExists()?
+				parsingData_.popExpression(): new NullExpression();
+		final Expression conditional = parsingData_.currentExpressionExists()?
+				parsingData_.popExpression(): new NullExpression();
 		final Type conditionalType = conditional.type();
 		if (conditionalType.name().equals("boolean") == false) {
 			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
@@ -2493,8 +2496,10 @@ public class Pass1Listener extends KantBaseListener {
 		//	: 'while' '(' expr ')' expr
 	
 		final Expression body = parsingData_.popExpression();
-		final Expression conditional = parsingData_.popExpression();
-		final WhileExpression expression = parsingData_.popWhileExpression();
+		final Expression conditional = parsingData_.currentExpressionExists()?
+				parsingData_.popExpression(): new NullExpression();
+		final WhileExpression expression = parsingData_.currentWhileExpressionExists()?
+				parsingData_.popWhileExpression(): null;
 		
 		body.setResultIsConsumed(true);
 		conditional.setResultIsConsumed(true);
@@ -2504,9 +2509,12 @@ public class Pass1Listener extends KantBaseListener {
 					" of type ", conditional.type().name());
 		}
 		
-		expression.reInit(conditional, body);
-		
-		parsingData_.pushExpression(expression);
+		if (expression != null) {
+			expression.reInit(conditional, body);
+			parsingData_.pushExpression(expression);
+		} else {
+			parsingData_.pushExpression(new NullExpression());
+		}
 		
 		if (printProductionsDebug) {
 			if (null != ctx.expr() && null != ctx.expr(1)) {
@@ -2622,7 +2630,7 @@ public class Pass1Listener extends KantBaseListener {
 			final Expression temp = parsingData_.popExpression();
 			if (temp instanceof Constant == false) {
 				ErrorLogger.error(ErrorType.Internal, ctx.getStart().getLine(), "Case statement has non-const expression: `",
-					temp.getText(), "�", "");
+					temp.getText(), "'", "");
 				constant = new Constant.IntegerConstant(0);
 			} else {
 				constant = (Constant)temp;
@@ -2705,7 +2713,7 @@ public class Pass1Listener extends KantBaseListener {
 			expr.setResultIsConsumed(true);
 			parsingData_.currentArgumentList().addActualArgument(expr);
 		} else {
-			// no actual argument � OK
+			// no actual argument - OK
 		}
 		
 		if (printProductionsDebug) {
@@ -2782,7 +2790,7 @@ public class Pass1Listener extends KantBaseListener {
 			assert null != currentRole_;
 			currentRole_.setType(roleType);
 		}
-		// caller may reset currentScope � NOT us
+		// caller may reset currentScope - NOT us
 	}
 	
 	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
@@ -2812,7 +2820,7 @@ public class Pass1Listener extends KantBaseListener {
 			assert null != currentRole_;
 			currentRole_.setType(stagePropType);
 		}
-		// caller may reset currentScope � NOT us
+		// caller may reset currentScope - NOT us
 	}
 	
 	protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {
@@ -3153,7 +3161,7 @@ public class Pass1Listener extends KantBaseListener {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
 			} else if (isArray) {
 				// A derived type
-				final String aName = paramType.getText() + "_array";
+				final String aName = paramType.getText() + "_$array";
 				paramType = new ArrayType(aName, paramType);
 			}
 			
@@ -3350,7 +3358,7 @@ public class Pass1Listener extends KantBaseListener {
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null == ctxExpr && null != ctxMessage){
 			// : 'new' message
-			final String className = message.selectorName(); // I know ��kludge ...
+			final String className = message.selectorName(); // I know -- kludge ...
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(className);
 			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false) {
 				if (type instanceof TemplateParameterType) {
@@ -3366,7 +3374,7 @@ public class Pass1Listener extends KantBaseListener {
 				expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 				
 				// This adds a hokey argument to the message that
-				// is used mainly for signature checking � to see
+				// is used mainly for signature checking - to see
 				// if there is a constructor that matches the
 				// arguments of the "new" message.
 				addSelfAccordingToPass(type, message, currentScope_);
@@ -3551,6 +3559,17 @@ public class Pass1Listener extends KantBaseListener {
 							"' of class `", object.name(), "'.");
 					}
 				}
+			}
+		} else if (objectTypeName.endsWith("_$array")) {
+			if (methodSelectorName.equals("size") && actualArgumentList.count() == 1) {
+				returnType = StaticScope.globalScope().lookupTypeDeclaration("int");	// is O.K.
+			} else {
+				if (object.name().length() > 0) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
+				} else {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
+				}
+				assert null == mdecl;
 			}
 		} else {
 			if (object.name().length() > 0) {
