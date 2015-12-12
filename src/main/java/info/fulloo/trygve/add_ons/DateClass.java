@@ -75,7 +75,9 @@ public final class DateClass {
 		
 		if (null == globalScope.lookupTypeDeclaration("Date")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration dateDecl = new ClassDeclaration("Date", newScope, /*Base Class*/ null, 0);
+			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
+			assert null != objectBaseClass;
+			final ClassDeclaration dateDecl = new ClassDeclaration("Date", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(dateDecl);
 			dateType_ = new ClassType("Date", newScope, null);
 			dateDecl.setType(dateType_);

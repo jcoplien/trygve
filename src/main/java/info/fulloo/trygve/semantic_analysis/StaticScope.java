@@ -140,6 +140,22 @@ public class StaticScope {
 		if (null == globalScope_.lookupTypeDeclaration("int")) {
 			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 			
+			final StaticScope objectsScope = new StaticScope(globalScope_);
+			final Type objectType = new ClassType("Object", objectsScope, null);
+			globalScope_.declareType(objectType);
+			
+			// Should really take itself as a base class.... Or something... I don't
+			// want a metaclass architecture because it's just not part of the human
+			// mental model — at least not in terms of everyday childlike communication.
+			// Something with self-reference would be O.K.
+			final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, 157239);
+			globalScope_.declareClass(objectClass);
+			objectClass.setType(objectType);
+			objectsScope.setDeclaration(objectClass);
+			
+			final Type classType = new BuiltInType("Class");
+			globalScope_.declareType(classType);
+			
 			final Type intType = reinitializeInt("int");
 			
 			reinitializeInt("Integer");
@@ -155,16 +171,6 @@ public class StaticScope {
 			final Type voidType = new BuiltInType("void");
 			globalScope_.declareType(voidType);
 			
-			final Type objectType = new BuiltInType("Object");
-			globalScope_.declareType(objectType);
-			final StaticScope objectsScope = new StaticScope(globalScope_);
-			// Should really take itself as a base class....
-			final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, 157239);
-			globalScope_.declareClass(objectClass);
-			
-			final Type classType = new BuiltInType("Class");
-			globalScope_.declareType(classType);
-			
 			final Type nullType = new BuiltInType("Null");
 			globalScope_.declareType(nullType);
 			
@@ -178,8 +184,10 @@ public class StaticScope {
 	private static Type reinitializeInt(final String typeName) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final Type intType = new BuiltInType(typeName);
-
-		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intType.enclosedScope(), null, 0);
+		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
+		assert null != objectBaseClass;
+		
+		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intType.enclosedScope(), objectBaseClass, 0);
 		
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, 0);
 		final ObjectDeclaration self = new ObjectDeclaration("t$his", intType, 0);
@@ -216,8 +224,10 @@ public class StaticScope {
 	
 	private static void reinitializeDouble(final Type intType) {
 		final Type doubleType = new BuiltInType("double");
-
-		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleType.enclosedScope(), null, 0);
+		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
+		assert null != objectBaseClass;
+		
+		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleType.enclosedScope(), objectBaseClass, 0);
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, 0);
@@ -285,7 +295,10 @@ public class StaticScope {
 	private static void reinitializeString(final Type intType) {
 		final Type stringType = new BuiltInType("String");
 		final Type booleanType = new BuiltInType("boolean");
-		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), null, 0);
+		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
+		assert null != objectBaseClass;
+		
+		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), objectBaseClass, 0);
 		
 		addStringMethod(stringType, "+", stringType, asList("rhs"), asList(stringType));
 		
@@ -311,9 +324,11 @@ public class StaticScope {
 	
 	private static void reinitializeBoolean() {
 		final Type booleanType = new BuiltInType("boolean");
+		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
+		assert null != objectBaseClass;
 		
 		final StaticScope booleanScope = booleanType.enclosedScope();
-		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, /*Base Class*/ null, 0);
+		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, objectBaseClass, 0);
 		booleanScope.setDeclaration(booleanClassDecl);
 		
 		globalScope_.declareType(booleanType);
@@ -572,7 +587,7 @@ public class StaticScope {
 	
 	public void declareMethod(final MethodDeclaration decl) {
 		final String methodName = decl.name();
-	
+			
 		if (methodDeclarationDictionary_.containsKey(methodName)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodName);
 			for (final MethodDeclaration aDecl : oldEntry) {

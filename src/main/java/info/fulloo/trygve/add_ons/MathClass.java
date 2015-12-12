@@ -73,8 +73,10 @@ public final class MathClass {
 
 		if (null == globalScope.lookupTypeDeclaration("Math")) {
 			final StaticScope newScope = new StaticScope(globalScope);
+			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
+			assert null != objectBaseClass;
 			final ClassDeclaration mathDecl = new ClassDeclaration("Math",
-					newScope, /* Base Class */null, 0);
+					newScope, objectBaseClass, 0);
 			newScope.setDeclaration(mathDecl);
 			mathType_ = new ClassType("Math", newScope, null);
 			mathDecl.setType(mathType_);

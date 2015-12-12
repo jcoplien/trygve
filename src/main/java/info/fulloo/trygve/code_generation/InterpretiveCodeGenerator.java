@@ -342,8 +342,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert printlnCode.size() > 0;
 			
 			rtMethod.addCode(printlnCode);
-		} else if (formalParameterList.count() == 1) {
+		} else if (1 == formalParameterList.count()) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			if (methodDeclaration.name().equals("println")) {
 				printlnCode.add(new SystemClass.RTPrintlnCode(methodDeclaration.enclosedScope()));
 			} else {
@@ -923,7 +926,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTIndexExpression(indexExpression));
 		return retval;
 	}
-	public List<RTCode> compileBodyPartForMethodOfTypeInScope(BodyPart bodyPart, RTMethod rtMethod, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileBodyPartForMethodOfTypeInScope(final BodyPart bodyPart, final RTMethod rtMethod, final RTType rtTypeDeclaration, final StaticScope scope) {
 		List<RTCode> retval = new ArrayList<RTCode>();
 		if (bodyPart instanceof Declaration) {
 			retval = this.compileDeclarationForMethodOfTypeInScope((Declaration) bodyPart, rtMethod.methodDeclaration(),

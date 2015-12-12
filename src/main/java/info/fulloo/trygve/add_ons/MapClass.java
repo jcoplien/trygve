@@ -8,6 +8,7 @@ import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
@@ -88,7 +89,9 @@ public final class MapClass {
 		
 		if (null == globalScope.lookupTypeDeclaration("Map")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, /*Base Class*/ null, 0);
+			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
+			assert null != objectBaseClass;
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(templateDecl);
 			final Type K = new TemplateParameterType("K", null);
 			final Type V = new TemplateParameterType("V", null);

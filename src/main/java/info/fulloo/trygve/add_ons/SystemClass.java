@@ -75,9 +75,11 @@ public final class SystemClass {
 			final Type bigIntegerType = globalScope.lookupTypeDeclaration("Integer");
 			final Type booleanType = globalScope.lookupTypeDeclaration("boolean");
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
+			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
+			assert null != objectBaseClass;
 
 			StaticScope newScope = new StaticScope(globalScope);
-			ClassDeclaration classDecl = new ClassDeclaration("PrintStream", newScope, /*Base Class*/ null, 0);
+			ClassDeclaration classDecl = new ClassDeclaration("PrintStream", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(classDecl);
 			printStreamType_ = new ClassType("PrintStream", newScope, null);
 			classDecl.setType(printStreamType_);
@@ -121,7 +123,7 @@ public final class SystemClass {
 			globalScope.declareClass(classDecl);
 			
 			newScope = new StaticScope(globalScope);
-			classDecl = new ClassDeclaration("System", newScope, /*Base Class*/ null, 0);
+			classDecl = new ClassDeclaration("System", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(classDecl);
 			final Type systemClassType = new ClassType("System", newScope, null);
 			classDecl.setType(systemClassType);
@@ -145,7 +147,12 @@ public final class SystemClass {
 	
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName, final StaticScope enclosingMethodScope) {
-			super("println", RTPrintCommon.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), printStreamType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super("println",
+					RTPrintCommon.buildArguments(className, methodName,
+							null == parameterName?     null: asList(parameterName),
+							null == parameterTypeName? null: asList(parameterTypeName),
+							enclosingMethodScope, false),
+					printStreamType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 			parameterName_ = parameterName;
 		}
 		public RTCode run() {
@@ -182,7 +189,7 @@ public final class SystemClass {
 			return null;	// halt the machine
 		}
 		
-		protected String parameterName_;
+		protected String parameterName_;	// used? FIXME
 	}
 	
 	public static class RTPrintlnStringCode extends RTPrintCommon {

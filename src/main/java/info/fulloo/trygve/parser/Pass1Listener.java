@@ -61,6 +61,7 @@ import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -255,8 +256,10 @@ public class Pass1Listener extends KantBaseListener {
 		if (null != ctx.context_body()) {
 			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
 		} else if (null != ctx.class_body()) {
-			// TODO: Should default base type be null, or Object?
-			ClassType baseType = null;
+			final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
+			assert null != objectBaseClass;
+			assert objectBaseClass instanceof ClassType;
+			ClassType baseType = (ClassType)objectBaseClass;
 			final TerminalNode baseClassNode = ctx.JAVA_ID(1);
 			
 			if (null != baseClassNode) {

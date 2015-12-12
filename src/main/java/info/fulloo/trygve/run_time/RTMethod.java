@@ -106,7 +106,7 @@ public class RTMethod extends RTCode {
 	}
 
 	public void addCode(final List<RTCode> code) {
-		for (RTCode aCode : code) {
+		for (final RTCode aCode : code) {
 			this.addCode(aCode);
 		}
 	}

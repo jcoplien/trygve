@@ -20,7 +20,7 @@ class WhileTest {
          System.out.print(hours);
          System.out.print("   ")
       }
-      System.out.println("");
+      System.out.println();
    }
 }
 
