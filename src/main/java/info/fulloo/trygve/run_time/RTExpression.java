@@ -2158,6 +2158,7 @@ public abstract class RTExpression extends RTCode {
 			super();
 			rTIndexExpression_ = RTExpression.makeExpressionFrom( expr.indexExpr(), nearestEnclosingType );
 			rTArrayExpression_ = RTExpression.makeExpressionFrom( expr.arrayExpr(), nearestEnclosingType );
+			lineNumber_ = expr.lineNumber();
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
@@ -2168,12 +2169,12 @@ public abstract class RTExpression extends RTCode {
 			RTCode pc = rTArrayExpression_;
 			do {
 				pc = pc.run();
-			} while( null != pc);
+			} while (null != pc);
 			
 			pc = rTIndexExpression_;
 			do {
 				pc = pc.run();
-			} while (pc != null);
+			} while (null != pc);
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			final RTStackable rawArrayBase = RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2181,7 +2182,7 @@ public abstract class RTExpression extends RTCode {
 				final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
 				result = arrayBase.getObject(theIndex);
 			} else if (rawArrayBase instanceof RTNullObject) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "Likely access of uninitialized array.", "", "", "");
+				ErrorLogger.error(ErrorType.Runtime, lineNumber_, "Likely access of uninitialized array. Machine halted.", "", "", "");
 				return null;
 			} else if (true) {
 				assert false;
@@ -2238,6 +2239,7 @@ public abstract class RTExpression extends RTCode {
 		
 		private final RTExpression rTIndexExpression_;
 		private final RTExpression rTArrayExpression_;
+		private final int lineNumber_;
 	}
 	public static class RTArrayIndexExpressionUnaryOp extends RTExpression {
 		public RTArrayIndexExpressionUnaryOp(final ArrayIndexExpressionUnaryOp expr, final RTType nearestEnclosingType) {
@@ -3481,6 +3483,8 @@ public abstract class RTExpression extends RTCode {
 					final RTCode returnExpression = returnExpressionList.get(0);
 					if (returnExpression instanceof RTNullExpression == true) {
 						thereIsAReturnExpression = true;
+					} else {
+						thereIsAReturnExpression = false;
 					}
 				} else {
 					thereIsAReturnExpression = false;
@@ -3531,7 +3535,7 @@ public abstract class RTExpression extends RTCode {
 		private List<RTCode> rTRe_;
 		
 		@SuppressWarnings("unused")
-		private String methodName_;
+		private final String methodName_;
 	}
 	
 	public static class RTBlock extends RTExpression {

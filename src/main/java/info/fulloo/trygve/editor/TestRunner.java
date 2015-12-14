@@ -51,6 +51,8 @@ public class TestRunner {
 		"roletest3.k",
 		"roletest4.k",
 		"roletest5.k",
+		"returntest1.k",
+		"returntest2.k",
 		"trygve1.k",
 		"simplemain.k",
 		"simplearray.k",
@@ -84,7 +86,6 @@ public class TestRunner {
 		"simplestring1.k",
 		"simplest_role.k",
 		"initordertest.k",
-		"returntest1.k",
 		"arraysizetest1.k",
 		"andreas1.k",
 		"andreas2.k",
@@ -148,10 +149,14 @@ public class TestRunner {
 			for (final String failure : failures_) {
 				System.err.format("\t%s\n", failure);
 			}
-			// final String firstFailure = failures_.get(0);
-			// This seems not to work — need to explore why
-			// runATest(firstFailure);
+			final String firstFailure = failures_.get(0);
+			loadFile(firstFailure);
 		}
+	}
+	private void loadFile(final String filename) {
+		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
+		gui_.setWWWFileNameField(urlPrefix_ + filename);
+		gui_.wwwButtonActionPerformed(null);
 	}
 	private void runATest(final String filename) {
 		currentTestName_ = filename;
@@ -168,9 +173,7 @@ public class TestRunner {
 		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
-		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
-		gui_.setWWWFileNameField(url);
-		gui_.wwwButtonActionPerformed(null);
+		this.loadFile(filename);
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {
 			gui_.runButtonActionPerformed(null);

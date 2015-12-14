@@ -101,7 +101,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					final ArrayIndexExpression aParam = (ArrayIndexExpression)aParameter;
 					final ArrayExpression aParamBase = aParam.arrayExpr();
 					final ArrayExpression newArrayExpr = new ArrayExpression(aParamBase.originalExpression(), newType);
-					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr());
+					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr(), aParam.lineNumber());
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof IdentifierExpression) {
 					final IdentifierExpression aParam = (IdentifierExpression)aParameter;

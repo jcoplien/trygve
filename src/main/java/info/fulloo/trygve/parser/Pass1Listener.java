@@ -1548,9 +1548,19 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != ctx.RETURN()) {
 			// The expression being returned is popped from
 			// parsingData_.popExpression() in this.expressionFromReturnStatement
+			// It may be null.
 			expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
-			expression.setResultIsConsumed(true);	// consumed by the return statement
-			if (printProductionsDebug) { System.err.println("expr : return_expr"); }
+			if (null != ctx.expr()) {
+				expression.setResultIsConsumed(true);	// consumed by the return statement
+			}
+			
+			if (printProductionsDebug) {
+				if (null == ctx.expr()) {
+					System.err.println("expr : RETURN");
+				} else {
+					System.err.println("expr : RETURN expr");
+				}
+			}
 		} else {
 			// Could be a parsing error
 			expression = new NullExpression();
@@ -2055,7 +2065,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int unused) {
+	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
 		// Pass 1 version. Overridden in Pass 2
 		
 		Expression expression = null;
@@ -2069,7 +2079,7 @@ public class Pass1Listener extends KantBaseListener {
 			final Type baseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, baseType);
 			arrayBase.setResultIsConsumed(true);
-			expression = new ArrayIndexExpression(arrayBase, indexExpr);
+			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
 		} else {
 			expression = new NullExpression();
 		}
@@ -3206,7 +3216,8 @@ public class Pass1Listener extends KantBaseListener {
 		final Interval OperatorInterval = ABELIAN_INCREMENT_OPCtx.getSourceInterval();
 		final UnaryopExpressionWithSideEffect.PreOrPost preOrPost = JavaIDInterval.startsAfter(OperatorInterval)?
 				UnaryopExpressionWithSideEffect.PreOrPost.Pre: UnaryopExpressionWithSideEffect.PreOrPost.Post;
-		retval = new ArrayIndexExpressionUnaryOp(arrayBase, indexExpr, ABELIAN_INCREMENT_OPCtx.getText(), preOrPost);
+		retval = new ArrayIndexExpressionUnaryOp(arrayBase, indexExpr, ABELIAN_INCREMENT_OPCtx.getText(), preOrPost,
+				sexpCtx.getStart().getLine());
 		return retval;
 	}
 		
@@ -3992,11 +4003,12 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	protected <ExprType> Expression expressionFromReturnStatement(final ExprType ctxExpr, final RuleContext unused, final Token ctxGetStart) {
-		Expression returnExpression = null, retval = null;
+		// Pass 1 version. There is another version for Pass 3 / 4.
+		Expression retval = null;
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null != ctxExpr) {
-			returnExpression = parsingData_.popExpression();
+			final Expression returnExpression = parsingData_.popExpression();
 			returnExpression.setResultIsConsumed(true);
-			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
 		}
 		return retval;

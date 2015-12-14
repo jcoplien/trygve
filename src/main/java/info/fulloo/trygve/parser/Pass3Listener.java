@@ -104,33 +104,37 @@ public class Pass3Listener extends Pass2Listener {
 	
 	@Override protected <ExprType> Expression expressionFromReturnStatement(final ExprType ctxExpr, final RuleContext ctxParent, final Token ctxGetStart)
 	{
-		Expression returnExpression = null;
+		Expression expressionReturned = null;
 		if (null != ctxExpr) {
-			returnExpression = parsingData_.popExpression();
+			expressionReturned = parsingData_.popExpression();
 		}
 		final MethodDeclaration methodDecl = (MethodDeclaration)findProperMethodScopeAround(ctxExpr, ctxParent, ctxGetStart);
 		assert null == methodDecl || methodDecl instanceof MethodDeclaration;
+		
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		
 		if (null == methodDecl) {
-			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-			returnExpression = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
+			expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
 			ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
 		} else {
 			if (methodDecl.returnType() == null || methodDecl.returnType().name().equals("void")) {
-				if (null == returnExpression || returnExpression.type().name().equals("void")) {
+				if (null == expressionReturned || expressionReturned.type().name().equals("void")) {
 					;
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", returnExpression.getText(), "' of type ",
-							returnExpression.type().getText(), " is incompatible with method that returns no value.", "");
+					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", expressionReturned.getText(), "' of type ",
+							expressionReturned.type().getText(), " is incompatible with method that returns no value.", "");
+					expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
 				}
-			} else if (methodDecl.returnType().canBeConvertedFrom(returnExpression.type())) {
+			} else if (methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
 				;
 			} else {
-				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression '", returnExpression.getText(),
-						" of type ", returnExpression.type().getText(),
+				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression '", expressionReturned.getText(),
+						" of type ", expressionReturned.type().getText(),
 						" is not compatible with declared return type ", methodDecl.returnType().getText());
+				expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
 			}
 		}
-		return returnExpression;
+		return expressionReturned;
 	}
 	
 	@Override protected void setMethodBodyAccordingToPass(final MethodDeclaration currentMethod)

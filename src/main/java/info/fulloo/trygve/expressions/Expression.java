@@ -551,13 +551,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ArrayIndexExpression extends Expression {
 		// expr '[' expr ']'
-		public ArrayIndexExpression(final ArrayExpression array, final Expression index) {
+		public ArrayIndexExpression(final ArrayExpression array, final Expression index, final int lineNumber) {
 			super(array.getText() + " [ " + index.getText() + " ]", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
 			index_.setResultIsConsumed(true);
 			arrayExpr_ = array;
 			arrayExpr_.setResultIsConsumed(true);
+			lineNumber_ = lineNumber;
 		}
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
@@ -571,14 +572,20 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public ArrayExpression arrayExpr() {
 			return arrayExpr_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
 		
 		private final Expression array_, index_;
 		private final ArrayExpression arrayExpr_;
+		private final int lineNumber_;
 	}
 	
 	public static class ArrayIndexExpressionUnaryOp extends Expression {
 		// expr '[' expr ']'
-		public ArrayIndexExpressionUnaryOp(final ArrayExpression array, final Expression index, final String operation, final PreOrPost preOrPost) {
+		public ArrayIndexExpressionUnaryOp(final ArrayExpression array, final Expression index,
+				final String operation, final PreOrPost preOrPost,
+				final int lineNumber) {
 			super(array.getText() + " [ " + index.getText() + " ] ++", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
@@ -587,6 +594,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			arrayExpr_.setResultIsConsumed(true);
 			preOrPost_ = preOrPost;
 			operation_ = operation;
+			lineNumber_ = lineNumber;
 		}
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
@@ -606,11 +614,15 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public PreOrPost preOrPost() {
 			return preOrPost_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
 		
 		private final Expression array_, index_;
 		private final ArrayExpression arrayExpr_;
 		private final PreOrPost preOrPost_;
 		private final String operation_;
+		private final int lineNumber_;
 	}
 	
 	public static class RoleArrayIndexExpression extends Expression {

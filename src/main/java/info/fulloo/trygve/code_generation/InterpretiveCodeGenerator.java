@@ -738,16 +738,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTQualifiedIdentifier(expr.name(), expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileQualifiedIdentifierExpressionUnaryOp(QualifiedIdentifierExpressionUnaryOp expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileQualifiedIdentifierExpressionUnaryOp(final QualifiedIdentifierExpressionUnaryOp expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTQualifiedIdentifierUnaryOp(expr.name(), expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileQualifiedClassMemberExpression(QualifiedClassMemberExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileQualifiedClassMemberExpression(final QualifiedClassMemberExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		assert false; 	// unreachable?
 		return null;
 	}
-	public List<RTCode> compileQualifiedClassMemberExpressionUnaryOp(QualifiedClassMemberExpressionUnaryOp expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileQualifiedClassMemberExpressionUnaryOp(final QualifiedClassMemberExpressionUnaryOp expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		assert false; 	// never executed?
 		return null;
 	}
@@ -756,147 +756,147 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTMessage(expr.name(), expr, rtTypeDeclaration, scope, expr.isStatic()));
 		return retval;
 	}
-	public List<RTCode> compileDupMessageExpression(DupMessageExpression expr, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileDupMessageExpression(final DupMessageExpression expr, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTDupMessage(expr.name(), expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileIdentifierExpression(IdentifierExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileIdentifierExpression(final IdentifierExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTIdentifier(expr.name(), expr));
 		return retval;
 	}
-	public List<RTCode> compileRelopExpression(RelopExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileRelopExpression(final RelopExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTRelop(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileBooleanExpression(BooleanExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileBooleanExpression(final BooleanExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTBoolean(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileBinopExpression(BinopExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileBinopExpression(final BinopExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTBinop(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileUnaryopExpressionWithSideEffect(UnaryopExpressionWithSideEffect expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileUnaryopExpressionWithSideEffect(final UnaryopExpressionWithSideEffect expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTUnaryopWithSideEffect(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileUnaryAbelianopExpression(UnaryAbelianopExpression expr, String operation, StaticScope scope, RTType rtTypeDeclaration) {
+	public List<RTCode> compileUnaryAbelianopExpression(final UnaryAbelianopExpression expr, final String operation, final StaticScope scope, final RTType rtTypeDeclaration) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTUnaryAbelianop(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileAssignmentExpression(AssignmentExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileAssignmentExpression(final AssignmentExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTAssignment(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileDoubleCasterExpression(DoubleCasterExpression expr, RTType rtTypeDeclaration) {
+	public List<RTCode> compileDoubleCasterExpression(final DoubleCasterExpression expr, final RTType rtTypeDeclaration) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTDoubleCaster(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileNewExpression(NewExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileNewExpression(final NewExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		assert false;
 		return null;
 	}
-	public List<RTCode> compileNewArrayExpression(NewArrayExpression expr, MethodDeclaration methodDeclaration,
-			RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileNewArrayExpression(final NewArrayExpression expr, final MethodDeclaration methodDeclaration,
+			final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTNewArray(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileArrayExpression(ArrayExpression expr, StaticScope scope) {
+	public List<RTCode> compileArrayExpression(final ArrayExpression expr, final StaticScope scope) {
 		assert false;
 		return null;
 	}
-	public List<RTCode> compileArrayIndexExpression(ArrayIndexExpression expr, StaticScope scope, RTType rtTypeDeclaration) {
+	public List<RTCode> compileArrayIndexExpression(final ArrayIndexExpression expr, final StaticScope scope, final RTType rtTypeDeclaration) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTArrayIndexExpression(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileArrayIndexExpressionUnaryOp(ArrayIndexExpressionUnaryOp expr, StaticScope scope, RTType rtTypeDeclaration)
+	public List<RTCode> compileArrayIndexExpressionUnaryOp(final ArrayIndexExpressionUnaryOp expr, final StaticScope scope, final RTType rtTypeDeclaration)
 	{
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTArrayIndexExpressionUnaryOp(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileRoleArrayIndexExpression(RoleArrayIndexExpression expr, RTType nearestEnclosingType, StaticScope scope) {
+	public List<RTCode> compileRoleArrayIndexExpression(final RoleArrayIndexExpression expr, final RTType nearestEnclosingType, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTRoleArrayIndexExpression(expr, nearestEnclosingType));
 		return retval;
 	}
-	public List<RTCode> compileIfExpression(IfExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileIfExpression(final IfExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTIf(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileForExpression(ForExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileForExpression(final ForExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		final RTFor newFor = new RTFor(expr, rtTypeDeclaration);
 		retval.add(newFor);
 		assert null == expr.thingToIterateOver();
 		return retval;
 	}
-	public List<RTCode> compileForIterationExpression(ForExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileForIterationExpression(final ForExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		final RTForIteration newFor = new RTForIteration(expr, rtTypeDeclaration);
 		retval.add(newFor);
 		assert null != expr.thingToIterateOver();
 		return retval;
 	}
-	public List<RTCode> compileWhileExpression(WhileExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileWhileExpression(final WhileExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		final RTWhile newWhile = new RTWhile(expr, rtTypeDeclaration);
 		retval.add(newWhile);
 		return retval;
 	}
-	public List<RTCode> compileDoWhileExpression(DoWhileExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileDoWhileExpression(final DoWhileExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		final RTDoWhile newDoWhile = new RTDoWhile(expr, rtTypeDeclaration);
 		retval.add(newDoWhile);
 		return retval;
 	}
-	public List<RTCode> compileSwitchExpression(SwitchExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileSwitchExpression(final SwitchExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		final RTSwitch newSwitch = new RTSwitch(expr, rtTypeDeclaration);
 		retval.add(newSwitch);
 		return retval;
 	}
-	public List<RTCode> compileBreakExpression(BreakExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileBreakExpression(final BreakExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		assert false;	// ever reached? just curious
 		return null;
 	}
-	public List<RTCode> compileContinueExpression(ContinueExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileContinueExpression(final ContinueExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		assert false;	// ever reached? just curious
 		return null;
 	}
-	public List<RTCode> compileExpressionList(ExpressionList expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileExpressionList(final ExpressionList expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTExpressionList(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileSumExpression(SumExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileSumExpression(final SumExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTSum(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileProductExpression(ProductExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileProductExpression(final ProductExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTProduct(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compilePowerExpression(PowerExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compilePowerExpression(final PowerExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTPower(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileReturnExpression(ReturnExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileReturnExpression(final ReturnExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		List<RTCode> rTExpr = null;
 		if (null != expr) {
@@ -906,17 +906,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		retval.add(new RTReturn(methodDeclaration.name(), rTExpr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileBlockExpression(BlockExpression expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileBlockExpression(final BlockExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTBlock(expr, rtTypeDeclaration));
 		return retval;
 	}
-	public List<RTCode> compileConstant(Constant expr, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+	public List<RTCode> compileConstant(final Constant expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTConstant(expr));
 		return retval;
 	}
-	public List<RTCode> compilePromoteToDoubleExpression(PromoteToDoubleExpr expr, StaticScope scope, RTType t) {
+	public List<RTCode> compilePromoteToDoubleExpression(final PromoteToDoubleExpr expr, final StaticScope scope, final RTType t) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTPromoteToDoubleExpr(expr, t));
 		return retval;

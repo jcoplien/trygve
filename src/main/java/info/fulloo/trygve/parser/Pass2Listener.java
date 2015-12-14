@@ -346,7 +346,7 @@ public class Pass2Listener extends Pass1Listener {
 		parsingData_.pushMessage(newMessage);
 	}
 	
-	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr, int lineNumber) {
+	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
 		Expression expression = null;
 		
 		// On pass one, types may not yet be set up so we may
@@ -377,7 +377,7 @@ public class Pass2Listener extends Pass1Listener {
 			final Type aBaseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, aBaseType);
 			arrayBase.setResultIsConsumed(true);
-			expression = new ArrayIndexExpression(arrayBase, indexExpr);
+			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
 		} else {
 			assert false;
 		}
