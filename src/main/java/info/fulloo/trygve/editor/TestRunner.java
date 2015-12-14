@@ -148,7 +148,7 @@ public class TestRunner {
 			for (final String failure : failures_) {
 				System.err.format("\t%s\n", failure);
 			}
-			final String firstFailure = failures_.get(0);
+			// final String firstFailure = failures_.get(0);
 			// This seems not to work — need to explore why
 			// runATest(firstFailure);
 		}

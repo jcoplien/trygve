@@ -5,7 +5,6 @@ import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
-import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -186,9 +185,6 @@ public final class ListClass {
 	public static class RTGetCode extends RTListCommon {
 		public RTGetCode(final StaticScope enclosingMethodScope) {
 			super("List", "get", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
-			final TemplateInstantiationInfo tii = enclosingMethodScope.templateInstantiationInfo();
-			final Type resolvedType = tii.classSubstitionForTemplateTypeNamed("T");
-			// assert false;	// need something here to hook up T return type
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode pc = null;

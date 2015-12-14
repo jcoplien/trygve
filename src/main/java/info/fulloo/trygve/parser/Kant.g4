@@ -87,6 +87,10 @@ role_decl
 		| 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		| access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}'
 		| access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		| 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		| 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		| access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		| access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		;
 
 role_vec_modifier

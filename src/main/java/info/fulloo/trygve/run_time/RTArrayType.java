@@ -112,12 +112,11 @@ public class RTArrayType implements RTType {
 	}
 
 	@Override public void setObject(final String objectName, final RTObject object) {
-		// TODO Auto-generated method stub
-		
+		assert false;
 	}
 
 	@Override public RTObject getObject(final String objectName) {
-		// TODO Auto-generated method stub
+		assert false;
 		return null;
 	}
 
@@ -141,7 +140,7 @@ public class RTArrayType implements RTType {
 		}
 		@Override public RTCode run() {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject theArrayObject = (RTArrayObject)activationRecord.getObject("this");
+			final RTStackable theArrayObject = activationRecord.getObject("this");
 			int size = 0;
 			if (theArrayObject instanceof RTNullObject) {
 				size = 0;

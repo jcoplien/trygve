@@ -24,9 +24,8 @@ package info.fulloo.trygve.parser;
  */
 
 import org.antlr.v4.runtime.RuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
-import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
@@ -117,7 +116,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	@Override public void enterMethod_decl(@NotNull KantParser.Method_declContext ctx)
+	@Override public void enterMethod_decl(KantParser.Method_declContext ctx)
 	{
 		//  : method_decl_hook '{' expr_and_decl_list '}'
 		// This is our own pass 2 version
@@ -161,7 +160,7 @@ public class Pass2Listener extends Pass1Listener {
 		parsingData_.pushFormalParameterList(pl);
 	}
 
-	@Override public void exitMethod_decl(@NotNull KantParser.Method_declContext ctx)
+	@Override public void exitMethod_decl(KantParser.Method_declContext ctx)
 	{
 		//  : method_decl_hook '{' expr_and_decl_list '}'
 		// Declare parameters in the new scope
@@ -275,7 +274,7 @@ public class Pass2Listener extends Pass1Listener {
 		@SuppressWarnings("unused")
 		final ExprAndDeclList body = parsingData_.popExprAndDecl();
 	}
-	@Override public void enterRole_decl(@NotNull KantParser.Role_declContext ctx)
+	@Override public void enterRole_decl(KantParser.Role_declContext ctx)
 	{
 		// : 'role' JAVA_ID '{' role_body '}'
 		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
@@ -284,7 +283,7 @@ public class Pass2Listener extends Pass1Listener {
 		super.enterRole_decl(ctx);
 		this.processRequiredDeclarations(ctx.getStart().getLine());
 	}
-	@Override public void exitRole_decl(@NotNull KantParser.Role_declContext ctx)
+	@Override public void exitRole_decl(KantParser.Role_declContext ctx)
 	{
 		// : 'role' JAVA_ID '{' role_body '}'
 		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
@@ -294,7 +293,7 @@ public class Pass2Listener extends Pass1Listener {
 		this.processDeclareRoleArrayAlias(ctx.getStart().getLine());
 		super.exitRole_decl(ctx);	// necessary? some of the cleanup seems relevant
 	}
-	@Override public void enterStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
+	@Override public void enterStageprop_decl(KantParser.Stageprop_declContext ctx)
 	{
 		// : 'stageprop' JAVA_ID '{' role_body '}'
 		// | 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
@@ -309,10 +308,10 @@ public class Pass2Listener extends Pass1Listener {
 		currentRole_.processRequiredDeclarations(lineNumber);
 	}
 	
-	@Override public void enterArgument_list(@NotNull KantParser.Argument_listContext ctx)
+	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
 	{
 	}
-	@Override public void exitArgument_list(@NotNull KantParser.Argument_listContext ctx)
+	@Override public void exitArgument_list(KantParser.Argument_listContext ctx)
 	{
 		// Yes - this work belongs in Pass 2
 		if (ctx.expr() != null) {
@@ -324,7 +323,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 
-	@Override public void exitMessage(@NotNull KantParser.MessageContext ctx)
+	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
 		// JAVA_ID '(' argument_list ')'
 		// Certified Pass 2 version ;-)
@@ -778,7 +777,7 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
 	}
 	@Override protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
-			MethodDeclaration mdecl, TypeDeclaration classdecl, @NotNull Token ctxGetStart) {
+			MethodDeclaration mdecl, TypeDeclaration classdecl, Token ctxGetStart) {
 		final long numberOfActualParameters = actuals.count();
 		final long numberOfFormalParameters = formals.count();
 

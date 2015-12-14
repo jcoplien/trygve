@@ -25,7 +25,6 @@ package info.fulloo.trygve.parser;
 
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.NotNull;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.Declaration;
@@ -62,9 +61,9 @@ public class Pass3Listener extends Pass2Listener {
 		super(parsingData);
 	}
 	
-	@Override public void enterExpr_or_null(@NotNull KantParser.Expr_or_nullContext ctx) {
+	@Override public void enterExpr_or_null(KantParser.Expr_or_nullContext ctx) {
 	}
-	@Override public void exitExpr_or_null(@NotNull KantParser.Expr_or_nullContext ctx) {
+	@Override public void exitExpr_or_null(KantParser.Expr_or_nullContext ctx) {
 		// expr_or_null : expr | /* null */ ;
 		// Same as pass2?
 		Expression expression = null;
@@ -145,7 +144,7 @@ public class Pass3Listener extends Pass2Listener {
 	}
 	
 	@Override protected void typeCheck(final FormalParameterList formals, final ActualArgumentList actuals,
-			MethodDeclaration mdecl, TypeDeclaration classdecl, @NotNull org.antlr.v4.runtime.Token ctxGetStart)
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final Token ctxGetStart)
 	{
 		/* Nothing */
 	}

@@ -32,7 +32,6 @@ import java.util.Stack;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
@@ -61,7 +60,6 @@ import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.declarations.Type;
-import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -172,7 +170,7 @@ public class Pass1Listener extends KantBaseListener {
 	
 	// -----------------------------------------------------------------------------------
 	
-	@Override public void enterProgram(@NotNull KantParser.ProgramContext ctx)
+	@Override public void enterProgram(KantParser.ProgramContext ctx)
 	{
 		// : type_declaration_list main
 		// : type_declaration_list
@@ -181,7 +179,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushTypeDeclarationList(currentList);
 	}
 	
-	@Override public void exitProgram(@NotNull KantParser.ProgramContext ctx)
+	@Override public void exitProgram(KantParser.ProgramContext ctx)
 	{
 		// : type_declaration_list main
 		// | type_declaration_list
@@ -214,7 +212,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterMain(@NotNull KantParser.MainContext ctx)
+	@Override public void enterMain(KantParser.MainContext ctx)
 	{
 		// main
 		//	: expr
@@ -222,7 +220,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 	
-	@Override public void exitMain(@NotNull KantParser.MainContext ctx)
+	@Override public void exitMain(KantParser.MainContext ctx)
 	{
 		// main
 		//	: expr
@@ -233,7 +231,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterType_declaration_list(@NotNull KantParser.Type_declaration_listContext ctx)
+	@Override public void enterType_declaration_list(KantParser.Type_declaration_listContext ctx)
 	{
 		// type_declaration_list
 	    //		: type_declaration
@@ -243,7 +241,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 
-	@Override public void enterType_declaration(@NotNull KantParser.Type_declarationContext ctx)
+	@Override public void enterType_declaration(KantParser.Type_declarationContext ctx)
 	{
 		// : 'context' JAVA_ID '{' context_body '}'
 		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
@@ -299,7 +297,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	@Override public void exitType_declaration(@NotNull KantParser.Type_declarationContext ctx)
+	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
 	{
 		// : 'context' JAVA_ID '{' context_body '}'
 		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
@@ -355,7 +353,7 @@ public class Pass1Listener extends KantBaseListener {
 		// nothing on pass one
 	}
 	
-	@Override public void exitImplements_list(@NotNull KantParser.Implements_listContext ctx) {
+	@Override public void exitImplements_list(KantParser.Implements_listContext ctx) {
 		// : 'implements' JAVA_ID
 		// | implements_list ',' JAVA_ID
 		
@@ -385,7 +383,7 @@ public class Pass1Listener extends KantBaseListener {
 		// nothing on pass one
 	}
 	
-	@Override public void exitType_parameters(@NotNull KantParser.Type_parametersContext ctx) {
+	@Override public void exitType_parameters(KantParser.Type_parametersContext ctx) {
 		// : '<' type_parameter (',' type_parameter)* '>'
 		// Pop from the expression stack and add to current template declaration
 		final TemplateDeclaration currentTemplateDecl = parsingData_.currentTemplateDeclaration();
@@ -411,7 +409,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitType_parameter(@NotNull KantParser.Type_parameterContext ctx) {
+	@Override public void exitType_parameter(KantParser.Type_parameterContext ctx) {
 		// : type_name ('extends' type_name)?
 		// Push it on the expression stack (not ideal, but its there)
 		
@@ -438,12 +436,12 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterType_list(@NotNull KantParser.Type_listContext ctx) {
+	@Override public void enterType_list(KantParser.Type_listContext ctx) {
 		// : '<' type_name (',' type_name)* '>'
 		final ArrayList<String> typeNameList = new ArrayList<String>();
 		parsingData_.pushTypeNameList(typeNameList);
 	}
-	@Override public void exitType_list(@NotNull KantParser.Type_listContext ctx) {
+	@Override public void exitType_list(KantParser.Type_listContext ctx) {
 		// : '<' type_name (',' type_name)* '>'
 		final List<String> currentTypeNameList = parsingData_.currentTypeNameList();
 		for (int i = 0; i < ctx.type_name().size(); i++) {
@@ -461,7 +459,7 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	
-	@Override public void enterContext_body(@NotNull KantParser.Context_bodyContext ctx)
+	@Override public void enterContext_body(KantParser.Context_bodyContext ctx)
 	{
 		// context_body
 	    //		: context_body context_body_element
@@ -471,7 +469,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 
-	@Override public void enterContext_body_element(@NotNull KantParser.Context_body_elementContext ctx)
+	@Override public void enterContext_body_element(KantParser.Context_body_elementContext ctx)
 	{
 		// context_body_element
 	    //	: method_decl
@@ -482,7 +480,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 
-	@Override public void enterRole_decl(@NotNull KantParser.Role_declContext ctx)
+	@Override public void enterRole_decl(KantParser.Role_declContext ctx)
 	{
 		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
 		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
@@ -523,7 +521,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	@Override public void exitRole_decl(@NotNull KantParser.Role_declContext ctx)
+	@Override public void exitRole_decl(KantParser.Role_declContext ctx)
 	{
 		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
 		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
@@ -577,7 +575,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterRole_body(@NotNull KantParser.Role_bodyContext ctx)
+	@Override public void enterRole_body(KantParser.Role_bodyContext ctx)
 	{
 		// role_body
 	    //	: method_decl
@@ -589,7 +587,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 	
-	@Override public void exitRole_body(@NotNull KantParser.Role_bodyContext ctx)
+	@Override public void exitRole_body(KantParser.Role_bodyContext ctx)
 	{
 		// : method_decl
         // | role_body method_decl
@@ -617,7 +615,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterSelf_methods(@NotNull KantParser.Self_methodsContext ctx)
+	@Override public void enterSelf_methods(KantParser.Self_methodsContext ctx)
 	{
 		// : self_methods ';' method_signature
 		// | method_signature
@@ -626,7 +624,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushFormalParameterList(new FormalParameterList());
 	}
 	
-	@Override public void exitSelf_methods(@NotNull KantParser.Self_methodsContext ctx)
+	@Override public void exitSelf_methods(KantParser.Self_methodsContext ctx)
 	{
 		// : self_methods ';' method_signature
 		// | method_signature
@@ -656,7 +654,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
+	@Override public void enterStageprop_decl(KantParser.Stageprop_declContext ctx)
 	{
 		// stageprop_decl
 		// : 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
@@ -692,7 +690,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 
-	@Override public void exitStageprop_decl(@NotNull KantParser.Stageprop_declContext ctx)
+	@Override public void exitStageprop_decl(KantParser.Stageprop_declContext ctx)
 	{
 		// stageprop_decl
 		// : 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
@@ -752,7 +750,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterStageprop_body(@NotNull KantParser.Stageprop_bodyContext ctx) {
+	@Override public void enterStageprop_body(KantParser.Stageprop_bodyContext ctx) {
 		// stageprop_body
 	    //	: method_decl
 	    //	| stageprop_body method_decl
@@ -760,7 +758,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 	
-	@Override public void exitStageprop_body(@NotNull KantParser.Stageprop_bodyContext ctx) {
+	@Override public void exitStageprop_body(KantParser.Stageprop_bodyContext ctx) {
 		// stageprop_body
 	    //	: method_decl
 	    //	| stageprop_body method_decl
@@ -787,7 +785,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterClass_body(@NotNull KantParser.Class_bodyContext ctx) {
+	@Override public void enterClass_body(KantParser.Class_bodyContext ctx) {
 		// class_body
 	    //	: class_body class_body_element
 	    //	| class_body_element
@@ -796,7 +794,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 
-	@Override public void enterClass_body_element(@NotNull KantParser.Class_body_elementContext ctx) {
+	@Override public void enterClass_body_element(KantParser.Class_body_elementContext ctx) {
 		// class_body_element
 	    //	: method_decl
 	    //	| object_decl
@@ -804,11 +802,11 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 	
-	@Override public void enterInterface_body(@NotNull KantParser.Interface_bodyContext ctx) {
+	@Override public void enterInterface_body(KantParser.Interface_bodyContext ctx) {
 		parsingData_.pushFormalParameterList(new FormalParameterList());
 	}
 	
-	@Override public void exitInterface_body(@NotNull KantParser.Interface_bodyContext ctx) {
+	@Override public void exitInterface_body(KantParser.Interface_bodyContext ctx) {
 		// : interface_body ';' method_signature
 		// | method_signature
 		// | interface_body /* null */ ';'
@@ -847,7 +845,7 @@ public class Pass1Listener extends KantBaseListener {
 		// nothing in pass 1
 	}
 
-	@Override public void enterMethod_decl(@NotNull KantParser.Method_declContext ctx)
+	@Override public void enterMethod_decl(KantParser.Method_declContext ctx)
 	{
 		// : method_decl_hook '{' expr_and_decl_list '}'
 		
@@ -896,7 +894,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushFormalParameterList(pl);
 	}
 	
-	@Override public void exitMethod_decl_hook(@NotNull KantParser.Method_decl_hookContext ctx)
+	@Override public void exitMethod_decl_hook(KantParser.Method_decl_hookContext ctx)
 	{
 		// method_decl_hook
 		//	: method_signature
@@ -945,7 +943,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitMethod_decl(@NotNull KantParser.Method_declContext ctx)
+	@Override public void exitMethod_decl(KantParser.Method_declContext ctx)
 	{
 		// : method_decl_hook '{' expr_and_decl_list '}'
 		
@@ -975,7 +973,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterMethod_signature(@NotNull KantParser.Method_signatureContext ctx)
+	@Override public void enterMethod_signature(KantParser.Method_signatureContext ctx)
 	{
 		// : access_qualifier return_type method_name '(' param_list ')' CONST*
 		// | access_qualifier return_type method_name CONST*
@@ -1004,7 +1002,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushMethodSignature(currentMethod);
 	}
 	
-	@Override public void exitMethod_signature(@NotNull KantParser.Method_signatureContext ctx)
+	@Override public void exitMethod_signature(KantParser.Method_signatureContext ctx)
 	{
 		// : access_qualifier return_type method_name '(' param_list ')' CONST*
 		// | access_qualifier return_type method_name CONST*
@@ -1032,7 +1030,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterExpr_and_decl_list(@NotNull KantParser.Expr_and_decl_listContext ctx)
+	@Override public void enterExpr_and_decl_list(KantParser.Expr_and_decl_listContext ctx)
 	{
 	}
 	
@@ -1050,7 +1048,7 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
-	@Override public void exitExpr_and_decl_list(@NotNull KantParser.Expr_and_decl_listContext ctx)
+	@Override public void exitExpr_and_decl_list(KantParser.Expr_and_decl_listContext ctx)
 	{
 		//  	: object_decl
         //		| expr ';' object_decl
@@ -1105,7 +1103,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitReturn_type(@NotNull KantParser.Return_typeContext ctx)
+	@Override public void exitReturn_type(KantParser.Return_typeContext ctx)
 	{
 		// return_type
         //		: type_name
@@ -1125,7 +1123,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitMethod_name(@NotNull KantParser.Method_nameContext ctx)
+	@Override public void exitMethod_name(KantParser.Method_nameContext ctx)
 	{
 		// method_name
 		//	: JAVA_ID
@@ -1133,7 +1131,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* nothing */
 	}
 	
-	@Override public void exitAccess_qualifier(@NotNull KantParser.Access_qualifierContext ctx)
+	@Override public void exitAccess_qualifier(KantParser.Access_qualifierContext ctx)
 	{
 		//	access_qualifier
 	    //		: 'public'
@@ -1147,7 +1145,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterObject_decl(@NotNull KantParser.Object_declContext ctx)
+	@Override public void enterObject_decl(KantParser.Object_declContext ctx)
 	{
 		// object_decl
 	    //	: access_qualifier compound_type_name identifier_list ';'
@@ -1156,7 +1154,7 @@ public class Pass1Listener extends KantBaseListener {
 	    //	| compound_type_name identifier_list
 	}
 	
-	@Override public void exitObject_decl(@NotNull KantParser.Object_declContext ctx)
+	@Override public void exitObject_decl(KantParser.Object_declContext ctx)
 	{
 		// object_decl
 	    //	: access_qualifier compound_type_name identifier_list ';'
@@ -1311,7 +1309,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitCompound_type_name(@NotNull KantParser.Compound_type_nameContext ctx)
+	@Override public void exitCompound_type_name(KantParser.Compound_type_nameContext ctx)
 	{	
         // : type_name '[' ']'
         // | type_name
@@ -1328,7 +1326,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitType_name(@NotNull KantParser.Type_nameContext ctx)
+	@Override public void exitType_name(KantParser.Type_nameContext ctx)
 	{
 		// type_name
 	    //	: JAVA_ID
@@ -1407,7 +1405,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitIdentifier_list(@NotNull KantParser.Identifier_listContext ctx)
+	@Override public void exitIdentifier_list(KantParser.Identifier_listContext ctx)
 	{
 		// identifier_list
 	    //	: JAVA_ID
@@ -1436,7 +1434,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
     
-	@Override public void exitParam_list(@NotNull KantParser.Param_listContext ctx)
+	@Override public void exitParam_list(KantParser.Param_listContext ctx)
 	{
 		// : param_decl
         // | param_list ',' param_decl
@@ -1457,7 +1455,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitParam_decl(@NotNull KantParser.Param_declContext ctx)
+	@Override public void exitParam_decl(KantParser.Param_declContext ctx)
 	{
 		// param_decl
         //		: compound_type_name JAVA_ID
@@ -1477,7 +1475,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitExpr(@NotNull KantParser.ExprContext ctx)
+	@Override public void exitExpr(KantParser.ExprContext ctx)
 	{
 		// expr
 		//	: abelian_expr
@@ -1564,7 +1562,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitAbelian_expr(@NotNull KantParser.Abelian_exprContext ctx) {	
+	@Override public void exitAbelian_expr(KantParser.Abelian_exprContext ctx) {	
 		// : abelian_product (ABELIAN_SUMOP abelian_product)*
 		// | abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
 		// | <assoc=right> abelian_expr ASSIGN expr
@@ -1659,7 +1657,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitAbelian_product(@NotNull KantParser.Abelian_productContext ctx) {
+	@Override public void exitAbelian_product(KantParser.Abelian_productContext ctx) {
 		// : abelian_unary_op (ABELIAN_MULOP abelian_unary_op)*
 		// | <assoc=right> abelian_product POW abelian_atom
 		
@@ -1731,7 +1729,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitAbelian_unary_op(@NotNull KantParser.Abelian_unary_opContext ctx) {
+	@Override public void exitAbelian_unary_op(KantParser.Abelian_unary_opContext ctx) {
 		// :  ABELIAN_SUMOP abelian_atom
 		// |  LOGICAL_NEGATION abelian_atom
 		// |  abelian_atom
@@ -1785,14 +1783,14 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterAbelian_atom(@NotNull KantParser.Abelian_atomContext ctx) {
+	@Override public void enterAbelian_atom(KantParser.Abelian_atomContext ctx) {
 		//  | NEW JAVA_ID type_list '(' argument_list ')'
 		if (null != ctx.NEW() && null != ctx.type_list() && null != ctx.argument_list()) {
 			parsingData_.pushArgumentList(new ActualArgumentList());
 		}
 	}
 	
-	@Override public void exitAbelian_atom(@NotNull KantParser.Abelian_atomContext ctx)
+	@Override public void exitAbelian_atom(KantParser.Abelian_atomContext ctx)
 	{
 		//  abelian_expr         
 		//  | NEW message
@@ -2084,14 +2082,14 @@ public class Pass1Listener extends KantBaseListener {
 	// this pass. I still refrain from passing the argument info
 	// in to the semantic analysis routines on Pass 1
 	
-	@Override public void enterMessage(@NotNull KantParser.MessageContext ctx)
+	@Override public void enterMessage(KantParser.MessageContext ctx)
 	{
 		// JAVA_ID '(' argument_list ')'
 		
 		parsingData_.pushArgumentList(new ActualArgumentList());
 	}
 	
-	@Override public void exitMessage(@NotNull KantParser.MessageContext ctx)
+	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
 		// 	| JAVA_ID '(' argument_list ')'
 		
@@ -2116,7 +2114,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitBoolean_expr(@NotNull KantParser.Boolean_exprContext ctx)
+	@Override public void exitBoolean_expr(KantParser.Boolean_exprContext ctx)
 	{
 		// boolean_expr
 		// : boolean_expr BOOLEAN_MULOP expr                       
@@ -2179,7 +2177,7 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 
-	@Override public void enterBlock(@NotNull KantParser.BlockContext ctx)
+	@Override public void enterBlock(KantParser.BlockContext ctx)
 	{
 		//	: '{' expr_and_decl_list '}'
         //	| '{' '}'
@@ -2196,7 +2194,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushBlockExpression(blockExpression);
 	}
 
-	@Override public void exitBlock(@NotNull KantParser.BlockContext ctx)
+	@Override public void exitBlock(KantParser.BlockContext ctx)
 	{
 		//	: '{' expr_and_decl_list '}'
         //	| '{' '}'
@@ -2221,11 +2219,11 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterExpr_or_null(@NotNull KantParser.Expr_or_nullContext ctx)
+	@Override public void enterExpr_or_null(KantParser.Expr_or_nullContext ctx)
 	{ 
 	}
 	
-	@Override public void exitExpr_or_null(@NotNull KantParser.Expr_or_nullContext ctx)
+	@Override public void exitExpr_or_null(KantParser.Expr_or_nullContext ctx)
 	{
 		//  : expr
         //	| /* null */
@@ -2247,7 +2245,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitIf_expr(@NotNull KantParser.If_exprContext ctx)
+	@Override public void exitIf_expr(KantParser.If_exprContext ctx)
 	{
 		// Version for all passes
 		// if_expr
@@ -2289,7 +2287,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitTrivial_object_decl(@NotNull KantParser.Trivial_object_declContext ctx) {
+	@Override public void exitTrivial_object_decl(KantParser.Trivial_object_declContext ctx) {
 		// trivial_object_decl : compound_type_name JAVA_ID
 		final String idName = ctx.JAVA_ID().getText();
 		
@@ -2326,7 +2324,7 @@ public class Pass1Listener extends KantBaseListener {
 		currentScope_.declareObject(objectDecl);
 	}
 	
-	@Override public void enterFor_expr(@NotNull KantParser.For_exprContext ctx)
+	@Override public void enterFor_expr(KantParser.For_exprContext ctx)
 	{
 		//  : 'for' '(' expr ';'    expr ';' expr ')' expr
 		//  | 'for' '(' object_decl expr ';' expr ')' expr
@@ -2345,7 +2343,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushForExpression(forExpression);
 	}
 	
-	@Override public void exitFor_expr(@NotNull KantParser.For_exprContext ctx)
+	@Override public void exitFor_expr(KantParser.For_exprContext ctx)
 	{
 		//  : 'for' '(' expr ';'    expr ';' expr ')' expr
 		//  | 'for' '(' object_decl expr ';' expr ')' expr
@@ -2480,7 +2478,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterWhile_expr(@NotNull KantParser.While_exprContext ctx)
+	@Override public void enterWhile_expr(KantParser.While_exprContext ctx)
 	{
 		// while_expr
 		//	: 'while' '(' expr ')' expr
@@ -2496,7 +2494,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushWhileExpression(whileExpression);
 	}
 	
-	@Override public void exitWhile_expr(@NotNull KantParser.While_exprContext ctx)
+	@Override public void exitWhile_expr(KantParser.While_exprContext ctx)
 	{
 		// while_expr
 		//	: 'while' '(' expr ')' expr
@@ -2532,7 +2530,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterDo_while_expr(@NotNull KantParser.Do_while_exprContext ctx)
+	@Override public void enterDo_while_expr(KantParser.Do_while_exprContext ctx)
 	{
 		// do_while_expr
 		//	: 'do' expr 'while' '(' expr ')'
@@ -2548,7 +2546,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushDoWhileExpression(doWhileExpression);
 	}
 	
-	@Override public void exitDo_while_expr(@NotNull KantParser.Do_while_exprContext ctx)
+	@Override public void exitDo_while_expr(KantParser.Do_while_exprContext ctx)
 	{
 		// do_while_expr
 		//	: 'do' expr 'while' '(' expr ')'
@@ -2579,7 +2577,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void enterSwitch_expr(@NotNull KantParser.Switch_exprContext ctx)
+	@Override public void enterSwitch_expr(KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
@@ -2587,7 +2585,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushSwitchExpr(switchExpression);
 	}
 	
-	@Override public void exitSwitch_expr(@NotNull KantParser.Switch_exprContext ctx)
+	@Override public void exitSwitch_expr(KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
@@ -2617,7 +2615,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterSwitch_body(@NotNull KantParser.Switch_bodyContext ctx)
+	@Override public void enterSwitch_body(KantParser.Switch_bodyContext ctx)
 	{
 		// : ( 'case' constant | 'default' ) ':' expr_and_decl_list
 		
@@ -2626,7 +2624,7 @@ public class Pass1Listener extends KantBaseListener {
 		parsingData_.pushExprAndDecl(newList);
 	}
 	
-	@Override public void exitSwitch_body(@NotNull KantParser.Switch_bodyContext ctx)
+	@Override public void exitSwitch_body(KantParser.Switch_bodyContext ctx)
 	{
 		// : ( 'case' constant | 'default' ) ':' expr_and_decl_list
 		
@@ -2670,7 +2668,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 
-	@Override public void exitNull_expr(@NotNull KantParser.Null_exprContext ctx)
+	@Override public void exitNull_expr(KantParser.Null_exprContext ctx)
 	{
 		// null_expr : NULL
 		
@@ -2684,10 +2682,10 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterConstant(@NotNull KantParser.ConstantContext ctx) {
+	@Override public void enterConstant(KantParser.ConstantContext ctx) {
 	}
 	
-	@Override public void exitConstant(@NotNull KantParser.ConstantContext ctx) {
+	@Override public void exitConstant(KantParser.ConstantContext ctx) {
 		// constant
 	    //	: STRING
 	    //	| INTEGER
@@ -2702,11 +2700,11 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void enterArgument_list(@NotNull KantParser.Argument_listContext ctx)
+	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
 	{
 	}
 
-	@Override public void exitArgument_list(@NotNull KantParser.Argument_listContext ctx)
+	@Override public void exitArgument_list(KantParser.Argument_listContext ctx)
 	{
 		// : expr
         // | argument_list ',' expr
@@ -3135,7 +3133,7 @@ public class Pass1Listener extends KantBaseListener {
 		return objDecl;
 	}
 
-	@Override public void enterParam_list(@NotNull KantParser.Param_listContext ctx)
+	@Override public void enterParam_list(KantParser.Param_listContext ctx)
 	{
 		if (ctx.param_decl() != null) {
 			// : param_decl
@@ -3871,7 +3869,7 @@ public class Pass1Listener extends KantBaseListener {
 		/* Nothing */
 	}
 	protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
-			MethodDeclaration mdecl, TypeDeclaration classdecl, @NotNull Token ctxGetStart)
+			MethodDeclaration mdecl, TypeDeclaration classdecl, Token ctxGetStart)
 	{
 		/* Nothing */
 	}
