@@ -450,6 +450,13 @@ public abstract class Declaration implements BodyPart {
 			this.commonInit(myEnclosedScope, returnType, accessQualifier, lineNumber);
 		}
 		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
+				final int lineNumber, final boolean manuallyInvokesConstructor) {
+			super(signature.name());
+			signature_ = signature;
+			this.commonInit(myEnclosedScope, signature.returnType(),
+					signature.accessQualifier(), lineNumber);
+		}
+		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
 				final int lineNumber) {
 			super(signature.name());
 			signature_ = signature;
@@ -464,7 +471,7 @@ public abstract class Declaration implements BodyPart {
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			
-			bodyPrefix_ = new ExprAndDeclList(lineNumber);
+			bodyPrefix_ = new ExprAndDeclList(lineNumber);	// for implicit construcotr
 			
 			if (associatedDeclaration instanceof ContextDeclaration ||
 					associatedDeclaration instanceof ClassDeclaration) {
@@ -539,7 +546,7 @@ public abstract class Declaration implements BodyPart {
 						
 							// If there's a constructor, set up to call it from the beginning
 							// of this constructor. Very first thing.
-							if (null!= constructor) {
+							if (null != constructor) {
 								final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
 								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false);
 								bodyPrefix_.addBodyPart(messageExpr);
@@ -603,6 +610,13 @@ public abstract class Declaration implements BodyPart {
 				retval = bodyPrefix_.bodyParts();
 			}
 			return retval;
+		}
+		public void hasManualBaseClassConstructorInvocations(final boolean tf) {
+			if (tf) {
+				// Don¨t use the implicit base class ctor call
+				// if the programmer is doing his or her own
+				bodyPrefix_ = new ExprAndDeclList(lineNumber_);
+			}
 		}
 		
 		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(

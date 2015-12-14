@@ -583,6 +583,7 @@ public class Pass1Listener extends KantBaseListener {
 	    //	| role_body method_decl
 	    //	| object_decl				// illegal
 	    //	| role_body object_decl		// illegal - for better error messages only
+		//  | /* null */
 		
 		/* nothing */
 	}
@@ -593,6 +594,7 @@ public class Pass1Listener extends KantBaseListener {
         // | role_body method_decl
         // | object_decl				// illegal
         // | role_body object_decl		// illegal - for better error messages only
+		// | /* null */
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
@@ -1217,6 +1219,10 @@ public class Pass1Listener extends KantBaseListener {
 				type = new ArrayType(aName, type);
 			}
 			
+			// Get the nearest template declaration dictionary for the idInfo computation -- TODO -- old code -- delete
+			final Type objectDeclarationType = associatedDeclaration.type();
+			final StaticScope objectScope = objectDeclarationType.enclosedScope();
+			
 			final Identifier_listContext identifier_list = ctx.identifier_list();
 			final DeclarationsAndInitializers idInfo = this.processIdentifierList(identifier_list, type, lineNumber, accessQualifier);
 			declaredObjectDeclarations = idInfo.objectDecls();
@@ -1791,7 +1797,7 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitAbelian_atom(@NotNull KantParser.Abelian_atomContext ctx)
 	{
-		// abelian_expr         
+		//  abelian_expr         
 		//  | NEW message
         //	| NEW type_name '[' expr ']'
 		//  | NEW JAVA_ID type_list '(' argument_list ')'
@@ -2054,7 +2060,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected Expression processIndexExpression(Expression rawArrayBase, Expression indexExpr, int unused) {
+	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int unused) {
 		// Pass 1 version. Overridden in Pass 2
 		
 		Expression expression = null;
@@ -3015,7 +3021,8 @@ public class Pass1Listener extends KantBaseListener {
 	
 	protected SimpleList variablesToInitialize_, initializationExpressions_;
 	
-	private DeclarationsAndInitializers processIdentifierList(final Identifier_listContext identifier_list, final Type type, final int lineNumber, final AccessQualifier accessQualifier)
+	private DeclarationsAndInitializers processIdentifierList(final Identifier_listContext identifier_list,
+			final Type type, final int lineNumber, final AccessQualifier accessQualifier)
 	{
 		variablesToInitialize_ = new SimpleList();
 		initializationExpressions_ = new SimpleList();
@@ -3030,8 +3037,9 @@ public class Pass1Listener extends KantBaseListener {
 			final Expression initializationExpression = (Expression)initializationExpressions_.objectAtIndex(k);
 			initializationExpression.setResultIsConsumed(true);
 			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(k);
-			final Type expressionType = initializationExpression.type();
+			      Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
+			
 			if (null != declarationType && null != expressionType &&
 					declarationType.canBeConvertedFrom(expressionType)) {
 				// Still need this, though old initialization framework is gone
@@ -3492,6 +3500,14 @@ public class Pass1Listener extends KantBaseListener {
 			if (null == type) {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
+			
+			if (null != type && type instanceof TemplateParameterType) {
+				// Is a template type. Change the return type into a bona fide type here
+				final StaticScope objectScope = objectType.enclosedScope();
+				final TemplateInstantiationInfo templateInstantiationInfo = objectScope.templateInstantiationInfo();
+				type = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(type.name());
+			}
+			
 			assert type != null;
 		}
 		
@@ -3500,9 +3516,37 @@ public class Pass1Listener extends KantBaseListener {
 		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
-		// Pass 1 version. Pass 2 / 3 version turns on signature checking
-		return classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, parameterList, true);
+		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
+		// and checks the signature
+		final StaticScope classScope = classDecl.enclosedScope();
+		return classScope.lookupMethodDeclaration(methodSelectorName, parameterList, true);
 	}
+	protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
+		// and checks the signature
+		StaticScope classScope = classDecl.enclosedScope();
+		MethodDeclaration retval = classScope.lookupMethodDeclaration(methodSelectorName, parameterList, true);
+		if (null == retval) {
+			if (classDecl instanceof ClassDeclaration) {	// should be
+				ClassDeclaration classDeclAsClassDecl = (ClassDeclaration) classDecl;
+				final ClassDeclaration baseClassDeclaration = classDeclAsClassDecl.baseClassDeclaration();
+				if (null != baseClassDeclaration) {
+					classScope = baseClassDeclaration.enclosedScope();
+					retval =  classScope.lookupMethodDeclaration(methodSelectorName, parameterList, true);
+				} else {
+					retval = null;
+				}
+			}
+		}
+		return retval;
+	}
+	/*
+	protected MethodDeclaration processReturnTypeLookupMethodDeclarationRecursiveIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature
+		// and checks the signature
+		return classDecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, parameterList, true);
+	}
+	*/
 	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
 		final String objectTypeName = objectType.name();
 		final ClassDeclaration classDecl = currentScope_.lookupClassDeclarationRecursive(objectTypeName);
@@ -3518,12 +3562,12 @@ public class Pass1Listener extends KantBaseListener {
 		final ActualArgumentList actualArgumentList = message.argumentList();
 		
 		if (null != classDecl) {
-			mdecl = processReturnTypeLookupMethodDeclarationIn(classDecl, methodSelectorName, actualArgumentList);
+			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(classDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
 				final Type currentEnclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 				if (currentEnclosingType instanceof TemplateType) {
 					// Ingore parameters as in Pass 1. We may not find a match with a template type...
-					mdecl = classDecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, true);
+					mdecl = classDecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, actualArgumentList, true);
 					if (null == mdecl) {
 						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
 								"' not declared in class `", classDecl.name(), "'", "");
@@ -3531,6 +3575,55 @@ public class Pass1Listener extends KantBaseListener {
 				} else {
 					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
 							"' not declared in class `", classDecl.name(), "'", "");
+				}
+			}
+			
+			final ClassDeclaration baseClassDeclaration = classDecl.baseClassDeclaration();
+			if (null != baseClassDeclaration) {
+				final String baseClassName = baseClassDeclaration.name();
+				boolean noerrors = true;
+				if (methodSelectorName.equals(baseClassName) && null != mdecl && 
+						mdecl.enclosingScope().pathName().equals(baseClassDeclaration.enclosedScope().pathName())) {
+					// We are invoking a base class constructor. Cool.
+					// Make sure it's the first thing in the class.
+					if (parsingData_.currentExprAndDeclExists()) {
+						final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
+						if (currentExprAndDecl.bodyParts().isEmpty() == false) {
+							errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+									"Call of base class constructor `",
+									baseClassName,
+									"' must be the first statement in the derived class constructor.",
+									"");
+							noerrors = false;
+						}
+					}
+					
+					// Make sure the current method is a constructor!
+					final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+					final ClassDeclaration currentClass = parsingData_.currentClassDeclaration();
+					if (currentClass.name().equals(currentMethod.name()) == false) {
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+								"Base class constructor `",
+								baseClassName,
+								"' can be explicitælly invoked only from a derived class constructor.",
+								"");
+						noerrors = false;
+					}
+					
+					if (noerrors) {
+						// There is code that automatically generates a
+						// base class constructor call (to a default constructor)
+						// if it can find one. If the programmer has taken over,
+						// cancel the automatic one.
+						
+						// Get the calling method
+						final StaticScope callingScope = classDecl.enclosedScope();
+						FormalParameterList paramsToCurrentMethod = currentMethod.formalParameterList();
+						final String callingConstructorName = classDecl.name();
+						final MethodDeclaration callingMethod = callingScope.lookupMethodDeclaration(callingConstructorName, paramsToCurrentMethod, false);
+						assert null != callingMethod;
+						callingMethod.hasManualBaseClassConstructorInvocations(true);
+					}
 				}
 			}
 		} else if (null != roleDecl) {
@@ -3804,8 +3897,10 @@ public class Pass1Listener extends KantBaseListener {
 				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
-		} else {
+		} else if (null != lhsType){
 			tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
+		} else {
+			tf = false;
 		}
 		
 		if (lhs.name().equals("this")) {

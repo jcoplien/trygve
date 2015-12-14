@@ -54,6 +54,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
+import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -427,8 +428,7 @@ public class Pass2Listener extends Pass1Listener {
 		final ActualArgumentList argList = new ActualArgumentList();
 		argList.addActualArgument(rightExpr);
 		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope());
-		// argList.addActualArgument(self);
-		argList.addFirstActualParameter(self);   // gnu!!
+		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
 		final MethodDeclaration mdecl = enclosedScope.lookupMethodDeclaration(operationAsString, argList, false);
 		if (null == mdecl) {
@@ -627,6 +627,7 @@ public class Pass2Listener extends Pass1Listener {
 			final ClassType classObjectType = (ClassType) objectType;
 			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
+			
 			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
 						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
 						null;
@@ -708,7 +709,14 @@ public class Pass2Listener extends Pass1Listener {
 			isOKMethodSignature = true;
 		}
 		
-		final Type returnType = this.processReturnType(ctxGetStart, object, objectType, message);
+		Type returnType = this.processReturnType(ctxGetStart, object, objectType, message);
+		
+		if (null != returnType && returnType instanceof TemplateParameterType) {
+			// Is a template type. Change the return type into a bona fide type here
+			final StaticScope objectScope = objectType.enclosedScope();
+			final TemplateInstantiationInfo newTemplateInstantiationInfo = objectScope.templateInstantiationInfo();
+			returnType = newTemplateInstantiationInfo.classSubstitionForTemplateTypeNamed("T");
+		}
 		
 		if (objectType.name().equals(message.selectorName())) {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
@@ -746,12 +754,29 @@ public class Pass2Listener extends Pass1Listener {
 		
 		return retval;
 	}
-	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
+	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		final StaticScope classScope = classDecl.enclosedScope();
 		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 	}
-	
+	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+		// Pass 2 / 3 version turns on signature checking
+		StaticScope classScope = classDecl.enclosedScope();
+		MethodDeclaration retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+		if (null == retval) {
+			if (classDecl instanceof ClassDeclaration) {	// should be
+				ClassDeclaration classDeclAsClassDecl = (ClassDeclaration) classDecl;
+				final ClassDeclaration baseClassDeclaration = classDeclAsClassDecl.baseClassDeclaration();
+				if (null != baseClassDeclaration) {
+					classScope = baseClassDeclaration.enclosedScope();
+					retval =  classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+				} else {
+					retval = null;
+				}
+			}
+		}
+		return retval;
+	}
 	@Override protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
 			MethodDeclaration mdecl, TypeDeclaration classdecl, @NotNull Token ctxGetStart) {
 		final long numberOfActualParameters = actuals.count();

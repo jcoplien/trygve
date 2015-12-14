@@ -35,6 +35,7 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -418,6 +419,9 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTMessage extends RTExpression {
+		public String msn() {		// for debugging only
+			return methodSelectorName_;
+		}
 		public RTMessage(final String name, final MessageExpression messageExpr, final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
 			super();
 			
@@ -537,6 +541,24 @@ public abstract class RTExpression extends RTCode {
 				retval = receiverScope.lookupMethodDeclaration(methodSelectorName, parameterList, false);
 				if (null == retval) {
 					retval = receiverScope.lookupMethodDeclarationWithConversion(methodSelectorName, parameterList, false);
+				}
+				if (null == retval) {
+					// Check out the base class
+					final Declaration declOfCurrent = typeOfReceiver.enclosedScope().associatedDeclaration();
+					if (declOfCurrent instanceof ClassDeclaration) {
+						ClassDeclaration classOfCurrent = (ClassDeclaration)declOfCurrent;
+						
+						while (null != (classOfCurrent = classOfCurrent.baseClassDeclaration()) ) {
+							final StaticScope huntingScope = classOfCurrent.enclosedScope();
+							retval = huntingScope.lookupMethodDeclaration(methodSelectorName, parameterList, false);
+							if (null == retval) {
+								retval = huntingScope.lookupMethodDeclarationWithConversion(methodSelectorName, parameterList, false);
+							}
+							if (null != retval) {
+								break;
+							}
+						}
+					}
 				}
 			}
 			return retval;
@@ -757,7 +779,7 @@ public abstract class RTExpression extends RTCode {
 			if (null != start && start instanceof RTIdentifier) {
 				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
 				if (startAsRTIdent.name().equals("current$context")) {
-					indexForThisExtraction = 1;	// now unused
+					indexForThisExtraction = 1;	// now unused?
 					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
 				}
 			}

@@ -1,5 +1,8 @@
 package info.fulloo.trygve.editor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /*
  * Trygve IDE
  *   Copyright (c)2015 James O. Coplien
@@ -28,7 +31,6 @@ public class TestRunner {
 	TestSource testSource_;
 	private final static String urlPrefix_ = "file:tests/";
 	private final static String localTestDir_ = "file:tests/";
-	private final static String localPrefix_ = "tests/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
 		"exprtest.k",
@@ -43,6 +45,7 @@ public class TestRunner {
 		"inheritance4.k",
 		"inheritance5.k",
 		"inhertest.k",
+		"inhertest2.k",
 		"roletest.k",
 		"roletest2.k",
 		"roletest3.k",
@@ -83,6 +86,9 @@ public class TestRunner {
 		"initordertest.k",
 		"returntest1.k",
 		"arraysizetest1.k",
+		"andreas1.k",
+		"andreas2.k",
+	//	"andreas3.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -99,6 +105,7 @@ public class TestRunner {
 		plusses_ = " +  +  +  ";
 		passCounter_ = failCounter_ = 0;
 		testSource_ = TestSource.UseLocalFile;
+		failures_ = new ArrayList<String>();
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
@@ -128,13 +135,24 @@ public class TestRunner {
 		System.err.print(passCounter_);
 		System.err.print(" tests passed; ");
 		System.err.print(failCounter_);
-		System.err.println(" tests failed.");
+		System.err.print(" tests failed.");
+		if (failCounter_ > 0) {
+			System.err.print("Failed tests are:");
+		}
+		System.err.println();
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		if (0 == failCounter_) {
 			gui_.setFileNameField(saveFileNameField);
+		} else {
+			for (final String failure : failures_) {
+				System.err.format("\t%s\n", failure);
+			}
+			final String firstFailure = failures_.get(0);
+			runATest(firstFailure);
 		}
 	}
 	private void runATest(final String filename) {
+		currentTestName_ = filename;
 		String url = null;
 		switch (testSource_) {
 		case UseUrl:
@@ -148,7 +166,7 @@ public class TestRunner {
 		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
-		gui_.setFileNameField(localPrefix_ + filename);	// just in case user edits / saves - goes to the right place
+		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
 		gui_.setWWWFileNameField(url);
 		gui_.wwwButtonActionPerformed(null);
 		gui_.parseButtonActionPerformed(null);
@@ -156,55 +174,10 @@ public class TestRunner {
 			gui_.runButtonActionPerformed(null);
 		}
 	}
-	/*
-	private void printHelper(String s1, String s2, int i) {
-		System.err.print(i);
-		System.err.print(": (\\0");
-		System.err.print(Integer.toOctalString(s1.charAt(i)));
-		System.err.print("), (\\0");
-		System.err.print(Integer.toOctalString(s2.charAt(i)));
-		System.err.print(").");
-	}
-	private void specialErrorAnalysis(String s1, String s2) {
-		for (int i = 0; i < s1.length() && i < s2.length(); i++) {
-			if (s1.charAt(i) != s2.charAt(i)) {
-				System.err.print("Difference in test results at byte offset: ");
-				printHelper(s1, s2, i);
-				System.err.println();
-				i++;
-				if (i < s1.length() && i < s2.length()) {
-					for (int j = 0; j < 40; j++) {
-						if (j >= s1.length()) break;
-						System.err.print("(\\0");
-						System.err.print(Integer.toOctalString(s1.charAt(j)));
-						System.err.print(")");
-					}
-					System.err.println();
-					for (int j = 0; j < 40; j++) {
-						if (j >= s2.length()) break;
-						System.err.print("(\\0");
-						System.err.print(Integer.toOctalString(s2.charAt(j)));
-						System.err.print(")");
-					}
-					System.err.println();
-				}
-				
-				break;
-			}
-		}
-	}
-	*/
+
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
-		String testResults = thisTestResults(lastTestResults, rawTestResults);
-		String goldContents = thisRunGoldContents();
-		/*
-		testResults = testResults.replaceAll("\012", "");
-		goldContents = goldContents.replaceAll("\012", "");
-		testResults = testResults.replaceAll("\014", "");
-		goldContents = goldContents.replaceAll("\014", "");
-		testResults = testResults.replaceAll("\015", "");
-		goldContents = goldContents.replaceAll("\015", "");
-		*/
+		final String testResults = thisTestResults(lastTestResults, rawTestResults);
+		final String goldContents = thisRunGoldContents();
 
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
@@ -212,13 +185,11 @@ public class TestRunner {
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
 			passCounter_++;
 		} else {
-			/*
-			specialErrorAnalysis(testResults, goldContents);
-			*/
 			gui_.console().redirectErr(java.awt.Color.RED, null);
 			System.err.println("Test failed");
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
 			failCounter_++;
+			failures_.add(currentTestName_);
 		}
 	}
 
@@ -228,17 +199,6 @@ public class TestRunner {
 		while (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
 			testResults = testResults.substring(1);
 		}
-		/*
-		System.err.print("beginning of testResults in thisTestResults: ");
-		for (int i = 0; i < 10; i++) {
-			System.err.print("(\\0");
-			System.err.print(Integer.toOctalString(testResults.charAt(i)));
-			System.err.print(" / ");
-			System.err.print(testResults.charAt(i));
-			System.err.print(")");
-		}
-		System.err.println();
-		*/
 
 		if (testResults.length() > 10 && testResults.substring(0, plusses_.length()).equals(plusses_)) {
 			testResults = testResults.substring(plusses_.length());
@@ -271,4 +231,6 @@ public class TestRunner {
 	private final TextEditorGUI gui_;
 	private final String underscores_, plusses_;
 	private int passCounter_, failCounter_;
+	private String currentTestName_;
+	private List<String> failures_;
 }

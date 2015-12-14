@@ -5,6 +5,7 @@ import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
+import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -184,15 +185,25 @@ public final class ListClass {
 	}
 	public static class RTGetCode extends RTListCommon {
 		public RTGetCode(final StaticScope enclosingMethodScope) {
-			super("List", "get", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("List", "get", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
+			final TemplateInstantiationInfo tii = enclosingMethodScope.templateInstantiationInfo();
+			final Type resolvedType = tii.classSubstitionForTemplateTypeNamed("T");
+			// assert false;	// need something here to hook up T return type
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode pc = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("element");
+			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-			return super.nextCode();
+			if (null == argument) {
+				ErrorLogger.error(ErrorType.Runtime,  0, "Use of uninitialized list value, or index out of range.", "", "", "");
+				pc = null;	// halt instruction
+			} else {
+				final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+				pc = super.nextCode();
+			}
+			return pc;
 		}
 	}
 	public static class RTIndexOfCode extends RTListCommon {

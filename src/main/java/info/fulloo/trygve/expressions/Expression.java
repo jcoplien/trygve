@@ -87,7 +87,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class QualifiedIdentifierExpression extends Expression {
-		public QualifiedIdentifierExpression(Expression qualifier, String id, Type idType) {
+		public QualifiedIdentifierExpression(final Expression qualifier, final String id, final Type idType) {
 			super(id, idType, qualifier.enclosingMegaType());
 			qualifier_ = qualifier;
 			qualifier_.setResultIsConsumed(true);
@@ -458,14 +458,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		private void doTrivialConversions(final Pass1Listener parser) {
 			// Should be pathnames. FIXME (easy fix).
-			if (lhs_.type().name().equals("double")) {
-				if (rhs_.type().name().equals("int")) {
-					parser.errorHook6p2(ErrorType.Warning, lineNumber_,
-							"WARNING: Substituting double object for `", rhs_.getText(),
-							"' in assignment to `", lhs_.getText(), "'.",
-							"");
-					rhs_ = new DoubleCasterExpression(rhs_);
-					rhs_.setResultIsConsumed(true);
+			if (null != lhs_ && null != rhs_ && null != lhs_.type() && null != rhs_.type()) {		// error stumbling check
+				if (lhs_.type().name().equals("double")) {
+					if (rhs_.type().name().equals("int")) {
+						parser.errorHook6p2(ErrorType.Warning, lineNumber_,
+								"WARNING: Substituting double object for `", rhs_.getText(),
+								"' in assignment to `", lhs_.getText(), "'.",
+								"");
+						rhs_ = new DoubleCasterExpression(rhs_);
+						rhs_.setResultIsConsumed(true);
+					}
 				}
 			}
 		}

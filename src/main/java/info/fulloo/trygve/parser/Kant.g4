@@ -98,7 +98,8 @@ role_body
         : method_decl
         | role_body method_decl
         | object_decl				// illegal
-        | role_body object_decl		// illegal � for better error messages only
+        | role_body object_decl		// illegal - for better error messages only
+        | /* null */
         ;
 
 self_methods
