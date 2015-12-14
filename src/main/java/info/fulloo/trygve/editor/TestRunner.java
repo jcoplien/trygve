@@ -89,6 +89,7 @@ public class TestRunner {
 		"andreas1.k",
 		"andreas2.k",
 	//	"andreas3.k",
+		"andreas4.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -148,7 +149,8 @@ public class TestRunner {
 				System.err.format("\t%s\n", failure);
 			}
 			final String firstFailure = failures_.get(0);
-			runATest(firstFailure);
+			// This seems not to work — need to explore why
+			// runATest(firstFailure);
 		}
 	}
 	private void runATest(final String filename) {

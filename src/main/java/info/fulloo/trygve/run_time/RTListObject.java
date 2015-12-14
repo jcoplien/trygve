@@ -130,8 +130,8 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		theList_ = new ArrayList<RTObject>();
 		baseType_ = baseType;
 		listType_ = listType;
-		for (int k = 0; k < theList_.size(); k++) {
-			theList_.set(k, theList_.get(k));
+		for (int j = 0; j < theList_.size(); j++) {
+			theList_.set(j, theList_.get(j));
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}

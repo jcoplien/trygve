@@ -879,7 +879,7 @@ public class StaticScope {
 					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
 				if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(mappedLoggedSignature, mappedParameterList, paramToIgnore, false)) {
+				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedLoggedSignature, mappedParameterList, paramToIgnore, false)) {
 					retval = aDecl; break;
 				}
 			}
@@ -1117,7 +1117,7 @@ public class StaticScope {
 						final FormalParameterList loggedSignature = aDecl.formalParameterList();
 						if (null == loggedSignature && null == parameterList) {
 							retval = aDecl; break;
-						} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParam(loggedSignature, parameterList, paramToIgnore, false)) {
+						} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParamNamed(loggedSignature, parameterList, paramToIgnore, false)) {
 							retval = aDecl; break;
 						}
 					}

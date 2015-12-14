@@ -76,10 +76,12 @@ public class RTArrayType implements RTType {
 		return null;
 	}
 
-	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName,
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName,
 			final ActualOrFormalParameterList pl, final String paramToIgnore) {
 		RTMethod retval = null;
 		if (methodName.equals("size") && pl.count() == 1) {
+			// This is part of the kludge to give naked array appearances
+			// their own methods
 			retval = rTSizeMethod_;
 		} else {
 			retval = null;
@@ -87,8 +89,19 @@ public class RTArrayType implements RTType {
 		return retval;
 	}
 	
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName,
+	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName,
+			final ActualOrFormalParameterList pl, final int paramToIgnore) {
+		return lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
+	}
+	
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName,
 			final ActualOrFormalParameterList pl, final String paramToIgnore) {
+		assert false;
+		return null;
+	}
+	
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName,
+			final ActualOrFormalParameterList pl, final int paramToIgnore) {
 		assert false;
 		return null;
 	}

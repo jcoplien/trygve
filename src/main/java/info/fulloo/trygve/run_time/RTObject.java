@@ -29,19 +29,19 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 
 public interface RTObject extends RTStackable {
-	public RTObject getObject(String name);
-	public void addObjectDeclaration(String objectName, RTType type);
+	public RTObject getObject(final String name);
+	public void addObjectDeclaration(final String objectName, final RTType type);
 	public Map<String, RTType> objectDeclarations();
-	public void setObject(String objectName, RTObject object);
+	public void setObject(final String objectName, final RTObject object);
 	public Map<String, RTObject> objectMembers();
 	public RTType rTType();
-	public boolean isEqualTo(Object another);
-	public boolean gt(RTObject another);
-	public RTObject plus(RTObject other);
-	public RTObject minus(RTObject other);
-	public RTObject times(RTObject other);
-	public RTObject divideBy(RTObject other);
-	public RTObject modulus(RTObject other);
+	public boolean isEqualTo(final Object another);
+	public boolean gt(final RTObject another);
+	public RTObject plus(final RTObject other);
+	public RTObject minus(final RTObject other);
+	public RTObject times(final RTObject other);
+	public RTObject divideBy(final RTObject other);
+	public RTObject modulus(final RTObject other);
 	public RTObject unaryPlus();
 	public RTObject unaryMinus();
 	public RTObject unaryLogicalNegation();
@@ -49,14 +49,14 @@ public interface RTObject extends RTStackable {
 	public RTObject postIncrement();
 	public RTObject preDecrement();
 	public RTObject postDecrement();
-	public RTObject performUnaryOpOnObjectNamed(String idName, String operator, PreOrPost preOrPost_);
-	public RTObject toThePowerOf(RTObject exponent);
+	public RTObject performUnaryOpOnObjectNamed(final String idName, final String operator, final PreOrPost preOrPost_);
+	public RTObject toThePowerOf(final RTObject exponent);
 	public RTObject dup();
 	public void incrementReferenceCount();
 	public void decrementReferenceCount();
 	public long referenceCount();
-	public void enlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance);
-	public void unenlistAsRolePlayerForContext(String roleName, RTContextObject contextInstance);
+	public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance);
+	public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance);
 	public boolean equals(final RTObject other);
 	public int hashCode();
 }

@@ -126,6 +126,7 @@ import info.fulloo.trygve.parser.KantParser.MessageContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
 import info.fulloo.trygve.parser.KantParser.Method_signatureContext;
+import info.fulloo.trygve.parser.KantParser.Object_declContext;
 import info.fulloo.trygve.parser.KantParser.ProgramContext;
 import info.fulloo.trygve.parser.KantParser.Switch_exprContext;
 import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
@@ -1218,11 +1219,7 @@ public class Pass1Listener extends KantBaseListener {
 				final String aName = type.getText() + "_$array";
 				type = new ArrayType(aName, type);
 			}
-			
-			// Get the nearest template declaration dictionary for the idInfo computation -- TODO -- old code -- delete
-			final Type objectDeclarationType = associatedDeclaration.type();
-			final StaticScope objectScope = objectDeclarationType.enclosedScope();
-			
+						
 			final Identifier_listContext identifier_list = ctx.identifier_list();
 			final DeclarationsAndInitializers idInfo = this.processIdentifierList(identifier_list, type, lineNumber, accessQualifier);
 			declaredObjectDeclarations = idInfo.objectDecls();
@@ -3033,10 +3030,10 @@ public class Pass1Listener extends KantBaseListener {
 		final List<BodyPart> intializationExpressionsToReturn = new ArrayList<BodyPart>();
 		
 		final long initializationCount = variablesToInitialize_.count();
-		for (int k = 0; k < initializationCount; k++) {
-			final Expression initializationExpression = (Expression)initializationExpressions_.objectAtIndex(k);
+		for (int j = 0; j < initializationCount; j++) {
+			final Expression initializationExpression = (Expression)initializationExpressions_.objectAtIndex(j);
 			initializationExpression.setResultIsConsumed(true);
-			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(k);
+			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(j);
 			      Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
 			
@@ -3854,6 +3851,10 @@ public class Pass1Listener extends KantBaseListener {
 			} else if (walker instanceof Abelian_unary_opContext) {
 				;
 			} else if (walker instanceof Abelian_productContext) {
+				;
+			} else if (walker instanceof Identifier_listContext) {
+				;
+			} else if (walker instanceof Object_declContext) {
 				;
 			} else {
 				assert false;

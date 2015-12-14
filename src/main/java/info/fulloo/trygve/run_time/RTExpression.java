@@ -101,6 +101,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
+import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
@@ -666,12 +667,19 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				// Give a direct match the first chance
-				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignature(methodSelectorName, actualParameters, "this");
+				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
 				if (null == methodDecl) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversion(methodSelectorName, actualParameters, "this");
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
 					if (null == methodDecl) {
-						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversion(methodSelectorName, actualParameters, "this");
-						assert null != methodDecl;
+						if (typeOfThisParameterToMethod instanceof RoleType) {
+							methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+							if (null == methodDecl) {
+								methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+							}
+						}
+						if (null == methodDecl) {
+							assert null != methodDecl;
+						}
 					}
 					assert null != methodDecl;
 				}

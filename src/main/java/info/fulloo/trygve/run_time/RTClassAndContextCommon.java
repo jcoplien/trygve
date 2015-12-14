@@ -154,15 +154,22 @@ public abstract class RTClassAndContextCommon implements RTType {
 		}
 	}
 	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
-		return this.lookupMethodIgnoringParameterInSignature(methodName, pl, null);
+		return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversion(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true);
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true, -1);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignature(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, false);
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName, final ActualOrFormalParameterList suppliedParameters, final int ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, null, true, ignoreName);
 	}
-	private RTMethod lookupMethodIgnoringParameterInSignatureCommon(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName, final boolean allowPromotion) {
+	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName, final ActualOrFormalParameterList suppliedParameters, final int ignoredParameterPosition) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, null, true, ignoredParameterPosition);
+	}
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, false, -1);
+	}
+	private RTMethod lookupMethodIgnoringParameterInSignatureCommon(final String methodName, final ActualOrFormalParameterList suppliedParameters,
+			final String ignoreName, final boolean allowPromotion, final int ignoredParameterPosition) {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
@@ -176,16 +183,23 @@ public abstract class RTClassAndContextCommon implements RTType {
 					mappedSuppliedParameters = suppliedParameters.mapTemplateParameters(templateInstantiationInfo_);
 				}
 				
-				if (FormalParameterList.alignsWithParameterListIgnoringParam(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName, allowPromotion)) {
-					retval = aPair.getValue();
-					break;
+				if (-1 == ignoredParameterPosition) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName, allowPromotion)) {
+						retval = aPair.getValue();
+						break;
+					}
+				} else {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamAtPosition(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoredParameterPosition, allowPromotion)) {
+						retval = aPair.getValue();
+						break;
+					}
 				}
 			}
 		} else if (null != this.baseClassDeclaration()) {
 			// We inherit base class methods. Recur.
 			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
 			assert (runTimeBaseClassType instanceof RTClass);
-			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignature(methodName, suppliedParameters, ignoreName);
+			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignatureNamed(methodName, suppliedParameters, ignoreName);
 		} else {
 			retval = null;
 		}

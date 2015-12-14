@@ -45,13 +45,24 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return retval;
 	}
 	public boolean alignsWith(final ActualOrFormalParameterList pl) {
-		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null, false);
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, false, -1);
 	}
 	public boolean alignsWithUsingConversion(final ActualOrFormalParameterList pl) {
-		return FormalParameterList.alignsWithParameterListIgnoringParam(this, pl, null, true);
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, true, -1);
 	}
-	public static boolean alignsWithParameterListIgnoringParam(final ActualOrFormalParameterList pl1,
+	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList pl1,
 			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
+				pl2, paramToIgnore, conversionAllowed, -1);
+	}
+	public static boolean alignsWithParameterListIgnoringParamAtPosition(final ActualOrFormalParameterList pl1,
+			final ActualOrFormalParameterList pl2, final int paramToIgnore, final boolean conversionAllowed) {
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
+				pl2, null, conversionAllowed, paramToIgnore);
+	}
+	public static boolean alignsWithParameterListIgnoringParamCommon(final ActualOrFormalParameterList pl1,
+			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed,
+			final int parameterPositionToIgnore) {
 		boolean retval = true;
 		final int myCount = pl1.count();
 		if (null == pl2) {
@@ -77,6 +88,9 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					// pl2 we're checking. But it's almost always "this" and since it's a
 					// reserved word, it won't be aliased with a user variable
 					if (null != pl1Name && null != paramToIgnore && pl1Name.equals(paramToIgnore)) {
+						continue;
+					}
+					if (0 <= parameterPositionToIgnore && i == parameterPositionToIgnore) {
 						continue;
 					}
 					

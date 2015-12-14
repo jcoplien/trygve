@@ -244,8 +244,8 @@ public class RTArrayObject implements RTObject, RTIterable {
 		baseType_ = baseType;
 		rTArrayType_ = new RTArrayType(baseType_, rTArrayType.arrayType());
 		size_ = size;
-		for (int k = 0; k < size_; k++) {
-			theArray_[k] = theArray_[k].dup();
+		for (int j = 0; j < size_; j++) {
+			theArray_[j] = theArray_[j].dup();
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
