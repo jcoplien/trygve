@@ -181,6 +181,79 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 
+	public static class RTObjectClass extends RTClass {
+		public RTObjectClass(final TypeDeclaration associatedType) {
+			super(associatedType);
+		}
+		public static class RTObjectCommon extends RTMessage {
+			public RTObjectCommon(final String className, final String methodName, final List<String> parameterNames, final List<String> parameterTypeNames,
+					 final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						true);
+			}
+			protected RTObjectCommon(final String objectName, final String halt) {
+				// Just for RTHalt
+				super(objectName, RTMessage.buildArguments("Object", "halt", asList("x"), asList("int"), StaticScope.globalScope(), true),
+						StaticScope.globalScope().lookupTypeDeclaration("void"),
+						StaticScope.globalScope().lookupTypeDeclaration("void"), true);
+			}
+			public RTCode run() {
+				final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				RTCode retval = this.runDetails(myEnclosedScope);
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+			}
+		}
+		public static class RTAssertCode extends RTObjectCommon {
+			public RTAssertCode(final StaticScope methodEnclosedScope) {
+				super("Object", "assert", asList("msg", "tf"), asList("String", "boolean"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable tfArg = dynamicScope.getObject("tf");
+				assert tfArg instanceof RTBooleanObject;
+				final RTBooleanObject booleanObject = (RTBooleanObject)tfArg;
+				final boolean tf = booleanObject.value();
+				if (!tf) {
+					final RTStackable msgArg = dynamicScope.getObject("msg");
+					assert msgArg instanceof RTStringObject;
+					final RTStringObject stringObject = (RTStringObject)msgArg;
+					final String msg = stringObject.stringValue();
+					System.err.format("Assertion failed: %s: ", msg);
+				}
+				final RTCode retval = tf? super.nextCode(): new RTHalt();
+				return retval;
+			}
+		}
+		public static class RTAssertCodeMinimal extends RTObjectCommon {
+			public RTAssertCodeMinimal(final StaticScope methodEnclosedScope) {
+				super("Object", "assert", asList("tf"), asList("boolean"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable tfArg = dynamicScope.getObject("tf");
+				assert tfArg instanceof RTBooleanObject;
+				final RTBooleanObject booleanObject = (RTBooleanObject)tfArg;
+				final boolean tf = booleanObject.value();
+				if (!tf) {
+					System.err.format("Assertion failed.");
+				}
+				final RTCode retval = tf? super.nextCode(): new RTHalt();
+				return retval;
+			}
+		}
+		public static class RTHalt extends RTObjectCommon {
+			public RTHalt() {
+				super("Object", "halt");
+			}
+		}
+	}
 	
 	public static class RTIntegerClass extends RTClass {
 		public RTIntegerClass(final TypeDeclaration associatedType) {

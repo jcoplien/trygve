@@ -148,10 +148,8 @@ public class StaticScope {
 			// want a metaclass architecture because it's just not part of the human
 			// mental model — at least not in terms of everyday childlike communication.
 			// Something with self-reference would be O.K.
-			final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, 157239);
-			globalScope_.declareClass(objectClass);
-			objectClass.setType(objectType);
-			objectsScope.setDeclaration(objectClass);
+
+			reinitializeObject(objectType, objectsScope);
 			
 			final Type classType = new BuiltInType("Class");
 			globalScope_.declareType(classType);
@@ -166,19 +164,53 @@ public class StaticScope {
 			
 			reinitializeBoolean();
 			
-			reinitializeCombos(intType);
-		
 			final Type voidType = new BuiltInType("void");
 			globalScope_.declareType(voidType);
 			
 			final Type nullType = new BuiltInType("Null");
 			globalScope_.declareType(nullType);
 			
+			reinitializeCombos(voidType, intType);
+			
 			SystemClass.setup();
 			ListClass.setup();
 			MathClass.setup();
 			DateClass.setup();
 		}
+	}
+	
+	private static void addObjectMethod(final Type objectType, final String methodSelectorName, final Type returnType,
+			final List<String> paramNames, final List<Type> paramTypes,
+			final boolean isStatic) {
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+
+		FormalParameterList formals = new FormalParameterList();
+		if (null != paramNames) {
+			final Iterator<Type> typeIter = paramTypes.iterator();
+			for (final String paramName : paramNames) {
+				final Type paramType = typeIter.next();
+			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			    formals.addFormalParameter(formalParameter);
+			}
+		}
+		
+		if (false == isStatic) {
+			final ObjectDeclaration self = new ObjectDeclaration("t$his", objectType, 0);
+			formals.addFormalParameter(self);
+		}
+		
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, objectType.enclosedScope(), returnType, Public, 0, isStatic);
+		methodDecl.addParameterList(formals);
+		objectType.enclosedScope().declareMethod(methodDecl);
+	}
+	
+	private static void reinitializeObject(final Type objectType, final StaticScope objectsScope) {
+		final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, 157239);
+		globalScope_.declareClass(objectClass);
+		objectClass.setType(objectType);
+		objectsScope.setDeclaration(objectClass);
+		
+		typeDeclarationList_.add(objectClass);
 	}
 	
 	private static Type reinitializeInt(final String typeName) {
@@ -338,7 +370,7 @@ public class StaticScope {
 		typeDeclarationList_.add(booleanClassDecl);
 	}
 	
-	private static void reinitializeCombos(final Type intType) {
+	private static void reinitializeCombos(final Type voidType, final Type intType) {
 		MethodDeclaration methodDecl = null;
 		FormalParameterList formals = null;
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
@@ -384,6 +416,11 @@ public class StaticScope {
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		bigIntegerType.enclosedScope().declareMethod(methodDecl);
+		
+		final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert null != objectType;
+		addObjectMethod(objectType, "assert", voidType, asList("msg", "tf"), asList(stringType, booleanType), false);
+		addObjectMethod(objectType, "assert", voidType, asList("tf"), asList(booleanType), false);
 	}
 	
 	public static StaticScope globalScope() { return globalScope_; }
@@ -814,7 +851,7 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	static int breakCounter = 0;	/* ROLEDEBUG */
+	
 	public MethodDeclaration lookupMethodDeclaration(final String methodSelector,
 			final ActualOrFormalParameterList parameterList,
 			final boolean ignoreSignature) {

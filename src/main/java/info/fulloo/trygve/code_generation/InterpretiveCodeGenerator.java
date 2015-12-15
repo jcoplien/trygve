@@ -104,6 +104,7 @@ import info.fulloo.trygve.run_time.RTRole;
 import info.fulloo.trygve.run_time.RTStageProp;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass;
 import info.fulloo.trygve.run_time.RTExpression.*;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -583,6 +584,39 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
+	private void processObjectCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		if (formalParameterList.count() == 3) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("assert")) {
+				code.add(new RTObjectClass.RTAssertCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				rtMethod.addCode(code);
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			if (methodDeclaration.name().equals("assert")) {
+				code.add(new RTObjectClass.RTAssertCodeMinimal(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				rtMethod.addCode(code);
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+	}
+	
 	private void compileMethodInScope(final MethodDeclaration methodDeclaration, final StaticScope scope) {
 		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
 		// Null body parts here for "add" declaration in simpletemplate.k
@@ -629,6 +663,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("boolean")) {
 				processBooleanCall(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Object")) {
+				processObjectCall(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -802,8 +839,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		return retval;
 	}
 	public List<RTCode> compileNewExpression(final NewExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
-		assert false;
-		return null;
+		assert true;
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTNew(expr,rtTypeDeclaration));
+		return retval;
 	}
 	public List<RTCode> compileNewArrayExpression(final NewArrayExpression expr, final MethodDeclaration methodDeclaration,
 			final RTType rtTypeDeclaration, final StaticScope scope) {

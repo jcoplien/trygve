@@ -38,6 +38,7 @@ import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -161,7 +162,7 @@ public class RTMethod extends RTCode {
 		}
 	}
 
-	private void initializeLocals() {
+	private RTCode initializeLocals() {
 		// NOTE: initializationList_ is not linked in with code_
 		
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_
@@ -170,7 +171,11 @@ public class RTMethod extends RTCode {
 			// Go into the initializer, and run it to completion
 			final RTExpression initializer = iterator.getValue();
 			for (RTCode pc = initializer.run(); pc != null;) {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			}
 			// We're back from initializer. Is the stack clean?
 
@@ -189,28 +194,34 @@ public class RTMethod extends RTCode {
 		// This is a run-to-completion method. It does not return
 		// a reference to any next code value. The caller must
 		// resume execution autonomously.
+		return null;
 	}
 
 	@Override public RTCode run() {
+		RTCode retval = null;
+		
 		// A new activation record has just been pushed
 		// by the caller. Parameters are already set up.
 		// Populate it with local variables.
 		populateActivationRecord();
 		
 		// NOTE: initializationList_ is not linked in with code_
-		initializeLocals();	// deprecated?
-
-		// Now run the body
-		RTCode retval = null;
-		if (0 < nextCodeIndex_) {	// i.e., if there is anything to execute
-			// The RTMethod node is just a shell, and all it can be
-			// said to handle is a bit of the stack protocol. The
-			// real meat is in the code_ array. So if someone has a
-			// handle to an RTMethod node and asks to run it, we set
-			// up to execute the actual body.
-			retval = code_[0];
+		final RTCode pc = initializeLocals();	// deprecated?
+		if (pc instanceof RTHalt) {
+			retval = pc;
 		} else {
-			retval = returnInstruction_;
+			// Now run the body
+				
+			if (0 < nextCodeIndex_) {	// i.e., if there is anything to execute
+				// The RTMethod node is just a shell, and all it can be
+				// said to handle is a bit of the stack protocol. The
+				// real meat is in the code_ array. So if someone has a
+				// handle to an RTMethod node and asks to run it, we set
+				// up to execute the actual body.
+				retval = code_[0];
+			} else {
+				retval = returnInstruction_;
+			}
 		}
 
 		return retval;

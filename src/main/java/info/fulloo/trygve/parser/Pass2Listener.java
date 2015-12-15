@@ -567,6 +567,13 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
 		} else {
+			// For future reference, we don't want to do this if the
+			// method is static. Of course, we can't in general know
+			// that until we look it up, and we can't look it up
+			// until we have its signature, and we can't have its
+			// signature until we know whether it takes a "this"
+			// parameter... Maybe the answer is to pass a parameter
+			// even for static functions (the class object)
 			message.addActualThisParameter(object);
 		}
 		
@@ -636,6 +643,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == methodDeclaration) {
 				// If we're inside of a template, many argument types won't match.
 				// Try anyhow and see if we can find something.
+
 				methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
 							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
 							null;

@@ -31,6 +31,7 @@ import java.util.Map;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleArrayIndexExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
@@ -258,7 +259,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 		}
 		
-		public void setRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
+		public RTCode setRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
 			// Assign indicated object in RHS to a Role in LHS
 			
 			final String roleName = lhs.roleName();
@@ -266,7 +267,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			// Evaluate the index
 			RTCode pc = lhs.indexExpression();
 			do {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			} while (null != pc);
 			
 			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -281,6 +286,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
 			contextInfo.setRolePlayerNamedAndIndexed(roleName, indexResult, rhs);
+		
+			return null;
 		}
 		
 		@Override public RTObject dup() {

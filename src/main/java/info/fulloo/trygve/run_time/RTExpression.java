@@ -101,6 +101,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
@@ -509,7 +510,7 @@ public abstract class RTExpression extends RTCode {
 				final String className = objectExpression.name();
 				typeOfReceiver = StaticScope.globalScope().lookupTypeDeclaration(className);
 			} else {
-				typeOfReceiver = null != objectExpression? objectExpression.type(): StaticScope.globalScope().lookupTypeDeclaration("void");;
+				typeOfReceiver = null != objectExpression? objectExpression.type(): StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 			
 			final StaticScope receiverScope = typeOfReceiver.enclosedScope();
@@ -688,7 +689,7 @@ public abstract class RTExpression extends RTCode {
 			return methodDecl;
 		}
 		
-		private RTObject pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
+		private RTStackable pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
 				final int indexForThisExtraction) {
 			RTCode pc = start;
 			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
@@ -707,7 +708,9 @@ public abstract class RTExpression extends RTCode {
 				
 				final RTCode oldPc = pc;
 				pc = nextInstruction;
-				if (null != pc) {
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else if (null != pc) {
 					pc.incrementReferenceCount();
 				}
 				oldPc.decrementReferenceCount();
@@ -815,7 +818,12 @@ public abstract class RTExpression extends RTCode {
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null - there
 			// is no link to subsequent code
-			self = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
+			final RTStackable tempSelf = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
+			if (tempSelf instanceof RTObject) {
+				self = (RTObject)tempSelf;
+			} else if (tempSelf instanceof RTHalt) {
+				return (RTCode)tempSelf;
+			}
 			
 			// Get the method declaration by looking it up in the receiver's scope
 			// Null return on error (e.g., attempting to invoke a method on a null object)
@@ -1666,8 +1674,10 @@ public abstract class RTExpression extends RTCode {
 				} else if (lhs_ instanceof RTRoleArrayIndexExpression) {
 					// Role array member assignment.
 					final RTRoleArrayIndexExpression lhs = (RTRoleArrayIndexExpression)lhs_;
-					this.processRoleArrayElementBinding(lhs, rhs);
-					if (this.resultIsConsumed()) {
+					final RTCode check = this.processRoleArrayElementBinding(lhs, rhs);
+					if (check instanceof RTHalt) {
+						return check;
+					} else if (this.resultIsConsumed()) {
 						RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
 					}	
 					return staticNextCode_;
@@ -1789,7 +1799,7 @@ public abstract class RTExpression extends RTCode {
 				ErrorLogger.error(ErrorType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
 			}
 			
-			private void processRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
+			private RTCode processRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
 				// Analogous to processRoleBinding(RTObject rhs) but the Role type
 				// is declared as an array, and we're handling the binding of an object
 				// to one of those elements
@@ -1798,7 +1808,7 @@ public abstract class RTExpression extends RTCode {
 				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
 				
 				assert contextScope.rTType() instanceof RTContext;
-				contextScope.setRoleArrayElementBinding(lhs, rhs);
+				return contextScope.setRoleArrayElementBinding(lhs, rhs);
 			}
 			
 			@Override public void setNextCode(final RTCode code) {
@@ -2144,7 +2154,11 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			RTCode pc = arrayBase_;
 			do {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			} while (null != pc);
 			return nextCode_;
 		}
@@ -2168,12 +2182,20 @@ public abstract class RTExpression extends RTCode {
 			
 			RTCode pc = rTArrayExpression_;
 			do {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			} while (null != pc);
 			
 			pc = rTIndexExpression_;
 			do {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			} while (null != pc);
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2304,6 +2326,9 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			RTCode pc = rTIndexExpression_;
 			do {
+				if (pc instanceof RTHalt) {
+					return pc;
+				}
 				pc = pc.run();
 			} while ( null != pc);
 			
@@ -2496,14 +2521,18 @@ public abstract class RTExpression extends RTCode {
 				retval = test_;
 			}
 			
-			setupIterator();
+			final RTCode checkIterator = setupIterator();
+			if (checkIterator instanceof RTHalt) {
+				retval = checkIterator;
+			}
 			
 			// And run the loop, starting with the rest of the initializations
 			// if necessary
 			return retval;
 		}
-		protected void setupIterator() {
+		protected RTCode setupIterator() {
 			// by default, nothing. Overridden in some derived classes
+			return null;
 		}
 		@Override public RTCode continueHook() {
 			return test_;
@@ -2689,10 +2718,14 @@ public abstract class RTExpression extends RTCode {
 			parsingData.addBreakableRTExpression(label_, this);
 		}
 		
-		protected void setupIterator() {
+		protected RTCode setupIterator() {
 			RTCode pc = rTThingToIterateOverExpr_.run();
 			while (null != pc) {
-				pc = pc.run();
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
 			}
 			final RTStackable rawThingToIterateOver = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			assert rawThingToIterateOver instanceof RTIterable;
@@ -2700,6 +2733,7 @@ public abstract class RTExpression extends RTCode {
 			final RTIterator iterator = RTIterator.makeIterator(rTThingToIterateOver);
 			dynamicScope_.addObjectDeclaration("for$iterator", null);
 			dynamicScope_.setObject("for$iterator", iterator);
+			return pc;
 		}
 	
 		private RTExpression rTThingToIterateOverExpr_;

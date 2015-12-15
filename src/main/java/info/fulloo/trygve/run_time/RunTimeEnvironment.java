@@ -33,6 +33,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTNullExpression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -125,7 +126,12 @@ public class RunTimeEnvironment {
 			final RTCode oldPc = pc;
 			pc = pc.run();
 			if (null != pc) {
-				pc.incrementReferenceCount();
+				if (pc instanceof RTHalt) {
+					pc = null;
+					break;
+				} else {
+					pc.incrementReferenceCount();
+				}
 			}
 			oldPc.decrementReferenceCount();
 		} while (pc != null && pc != exitNode);

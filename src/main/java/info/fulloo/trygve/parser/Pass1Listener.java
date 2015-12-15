@@ -113,6 +113,7 @@ import info.fulloo.trygve.parser.KantParser.Abelian_atomContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_exprContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_productContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_unary_opContext;
+import info.fulloo.trygve.parser.KantParser.Argument_listContext;
 import info.fulloo.trygve.parser.KantParser.BlockContext;
 import info.fulloo.trygve.parser.KantParser.Compound_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Do_while_exprContext;
@@ -250,15 +251,16 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
 		// | 'interface' JAVA_ID '{' interface_body '}'
 		
+		final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert null != objectBaseClass;
+		assert objectBaseClass instanceof ClassType;
+		ClassType baseType = (ClassType)objectBaseClass;
+		
 		final String name = ctx.JAVA_ID(0).getText();
 		ClassDeclaration rawBaseClass = null;
 		if (null != ctx.context_body()) {
 			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
 		} else if (null != ctx.class_body()) {
-			final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
-			assert null != objectBaseClass;
-			assert objectBaseClass instanceof ClassType;
-			ClassType baseType = (ClassType)objectBaseClass;
 			final TerminalNode baseClassNode = ctx.JAVA_ID(1);
 			
 			if (null != baseClassNode) {
@@ -277,7 +279,7 @@ public class Pass1Listener extends KantBaseListener {
 				}
 			} else {
 				// Redundant: for readability...
-				rawBaseClass = null;
+				rawBaseClass = (ClassDeclaration)objectBaseClass.enclosedScope().associatedDeclaration();
 			}
 			
 			if (null != ctx.type_parameters()) {
@@ -657,18 +659,25 @@ public class Pass1Listener extends KantBaseListener {
 	@Override public void enterStageprop_decl(KantParser.Stageprop_declContext ctx)
 	{
 		// stageprop_decl
-		// : 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
-		// | 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
-		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}'
-		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// : 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
 		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
 		
 		final String vecText = ctx.role_vec_modifier().getText();
 		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
-					ctx.access_qualifier().getText(), "' ignored", ".");
+			final String accessQualifier = ctx.access_qualifier().getText();
+			if (0 != accessQualifier.length()) {
+				errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+						ctx.access_qualifier().getText(), "' ignored", ".");
+			}
 		}
 		
 		final TerminalNode JAVA_ID = ctx.JAVA_ID();
@@ -2758,7 +2767,10 @@ public class Pass1Listener extends KantBaseListener {
 	
 	
     protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope, final ClassDeclaration rawBaseClass, final int lineNumber) {
-		return new ClassDeclaration(name, newScope, rawBaseClass, lineNumber);
+		if (null == rawBaseClass) {
+			assert null != rawBaseClass;
+		}
+    	return new ClassDeclaration(name, newScope, rawBaseClass, lineNumber);
 	}
     protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope, final TypeDeclaration rawBaseClass, final int lineNumber) {
     	return new TemplateDeclaration(name, newScope, rawBaseClass, lineNumber);
@@ -3873,6 +3885,10 @@ public class Pass1Listener extends KantBaseListener {
 			} else if (walker instanceof Identifier_listContext) {
 				;
 			} else if (walker instanceof Object_declContext) {
+				;
+			} else if (walker instanceof Argument_listContext) {
+				;
+			} else if (walker instanceof MessageContext) {
 				;
 			} else {
 				assert false;

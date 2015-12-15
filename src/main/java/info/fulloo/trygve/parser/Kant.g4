@@ -115,15 +115,19 @@ self_methods
 stageprop_decl
 		: 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
 		| 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
-		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}'
-		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		| 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		| 'stageprop' role_vec_modifier JAVA_ID '{'  '}' REQUIRES '{' self_methods '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		| access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
 		;
 
 stageprop_body
         : method_decl
         | stageprop_body method_decl
         | object_decl				// illegal
-        | stageprop_body object_decl		// illegal � for better error messages only
+        | stageprop_body object_decl		// illegal - for better error messages only
         ;
 
 class_body

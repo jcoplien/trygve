@@ -29,6 +29,7 @@ import java.util.List;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class Pass4Listener extends Pass3Listener {
@@ -52,8 +53,16 @@ public class Pass4Listener extends Pass3Listener {
 			final ArrayList<String> typeNameList = parsingData_.popTypeNameList();
 			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart().getLine(),
 					typeNameList);
+			if (null == type) {
+				errorHook5p2(ErrorType.Internal, ctx.getStart().getLine(),
+						"No type returned from commonTemplateInstantiationHandling: ",
+						"instantiating a type in an expression: `",
+						ctx.getText(),
+						"'."
+						);
+			}
 			
-			 // Push it back so the Pass 1 logic can use it...
+			// Push it back so the Pass 1 logic can use it...
 			parsingData_.pushTypeNameList(typeNameList);
 		}
 		
