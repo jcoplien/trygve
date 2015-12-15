@@ -1326,6 +1326,27 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
+	protected Type commonTemplateInstantiationHandling(final String templateName, final int lineNumber, final List<String> typeNameList) {
+		/*
+		final StringBuffer stringBuffer = new StringBuffer();
+		stringBuffer.append(templateName);
+		stringBuffer.append("<");
+		for (int i = 0; i < typeNameList.size(); i++) {
+			final String parameterName = typeNameList.get(i);
+			stringBuffer.append(parameterName);
+			if (i < typeNameList.size() - 1) {
+				stringBuffer.append(",");
+			}
+		}
+		stringBuffer.append(">");
+		final String typeName = stringBuffer.toString();
+		*/
+		
+		// Create a new class!
+		final Type type = this.lookupOrCreateTemplateInstantiation(templateName, typeNameList, lineNumber);
+		return type;
+	}
+	
 	@Override public void exitType_name(KantParser.Type_nameContext ctx)
 	{
 		// type_name
@@ -1356,24 +1377,12 @@ public class Pass1Listener extends KantBaseListener {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 		} else if (null != ctx.JAVA_ID() && null != ctx.type_list()) {
-			// Has to be in the context of a template instantiation in progress
-			final List<String> typeNameList = parsingData_.popTypeNameList();
-			final String templateName = ctx.JAVA_ID().getText();
-			final StringBuffer stringBuffer = new StringBuffer();
-			stringBuffer.append(templateName);
-			stringBuffer.append("<");
-			for (int i = 0; i < typeNameList.size(); i++) {
-				final String parameterName = typeNameList.get(i);
-				stringBuffer.append(parameterName);
-				if (i < typeNameList.size() - 1) {
-					stringBuffer.append(",");
-				}
-			}
-			stringBuffer.append(">");
-			typeName = stringBuffer.toString();
+			// | JAVA_ID type_list
+			// Must be in the context of a template instantiation in progress
 			
 			// Create a new class!
-			type = this.lookupOrCreateTemplateInstantiation(templateName, typeNameList, ctx.getStart().getLine());
+			final List<String> typeNameList = parsingData_.popTypeNameList();
+			type = this.commonTemplateInstantiationHandling(ctx.JAVA_ID().getText(), ctx.getStart().getLine(), typeNameList);
 		} else {
 			assert false;
 		}
@@ -1822,7 +1831,7 @@ public class Pass1Listener extends KantBaseListener {
 		//	| /* this. */ message
 		//	| abelian_atom '.' CLONE
 		
-		// All passes
+		// All passes. EXPLICITLY INVOKED FROM PASS 4
 		
 		Expression expression = null;
 		

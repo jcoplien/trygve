@@ -23,6 +23,7 @@ package info.fulloo.trygve.parser;
  * 
  */
 
+import java.util.ArrayList;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.Type;
@@ -33,6 +34,31 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public class Pass4Listener extends Pass3Listener {
 	public Pass4Listener(final ParsingData parsingData) {
 		super(parsingData);
+	}
+	
+	@Override public void exitAbelian_atom(KantParser.Abelian_atomContext ctx) {
+		//  | NEW JAVA_ID type_list '(' argument_list ')'
+		if (null != ctx.NEW() && null != ctx.type_list() && null != ctx.argument_list()) {
+			// Instantiate the template here. Normally, templates are instantiated
+			// in the production:
+			//
+			//    type_name: JAVA_ID type_list
+			//
+			// but here the grammar for NEW catches NEW operations on template
+			// types explicitly. So we can't count on the above production to
+			// turn the template into a class. We here replicate the logic
+			// for that production:
+			
+			final ArrayList<String> typeNameList = parsingData_.popTypeNameList();
+			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart().getLine(),
+					typeNameList);
+			
+			 // Push it back so the Pass 1 logic can use it...
+			parsingData_.pushTypeNameList(typeNameList);
+		}
+		
+		// Same as Pass 1 logic:
+		super.exitAbelian_atom(ctx);
 	}
 	
 	@Override protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {

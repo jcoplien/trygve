@@ -68,10 +68,13 @@ public class Message {
 		return retval;
 	}
 	public void addActualThisParameter(final Expression objectForWhichMethodIsInvoked) {
-		if (objectForWhichMethodIsInvoked.type().name().equals("Class")) {
-			;	// add no parameter
-		} else {
-			argumentList_.addFirstActualParameter(objectForWhichMethodIsInvoked);
+		final Type type = objectForWhichMethodIsInvoked.type();
+		if (null != type) {		// error stumble check
+			if (type.name().equals("Class")) {
+				;	// add no parameter
+			} else {
+				argumentList_.addFirstActualParameter(objectForWhichMethodIsInvoked);
+			}
 		}
 	}
 	
