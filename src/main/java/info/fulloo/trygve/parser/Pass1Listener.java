@@ -3271,7 +3271,10 @@ public class Pass1Listener extends KantBaseListener {
 		final StaticScope newScope = new StaticScope(currentScope_);
 		final ContextDeclaration contextDecl = new ContextDeclaration(name, newScope, currentContext_, lineNumber);
 		newScope.setDeclaration(contextDecl);
-		final ContextType newContextType = new ContextType(name, newScope);
+		final Type rawObjectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert rawObjectType instanceof ClassType;
+		final ClassType objectType = (ClassType) rawObjectType;
+		final ContextType newContextType = new ContextType(name, newScope, objectType);
 		declareTypeSuitableToPass(currentScope_, newContextType);
 		contextDecl.setType(newContextType);
 		currentScope_.declareContext(contextDecl);
@@ -3660,7 +3663,7 @@ public class Pass1Listener extends KantBaseListener {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role ", roleDecl.name());
 			}
 		} else if (null != contextDecl) {
-			mdecl = processReturnTypeLookupMethodDeclarationIn(contextDecl, methodSelectorName, actualArgumentList);
+			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Context ", contextDecl.name());
 			}
@@ -3711,8 +3714,12 @@ public class Pass1Listener extends KantBaseListener {
 			
 			final TypeDeclaration typeDecl = null != classDecl? classDecl: contextDecl;
 			
+			if (mdecl.name().equals("assert")) {
+				int k = 0;
+				k++;
+			}
 			// Type check is polymorphic in compiler passes
-			this.typeCheck(formals, actuals, mdecl, typeDecl, ctxGetStart);
+			this.typeCheckIgnoringParameter(formals, actuals, mdecl, typeDecl, "this", ctxGetStart);
 			
 			returnType = mdecl.returnType();
 		}
@@ -3900,16 +3907,16 @@ public class Pass1Listener extends KantBaseListener {
 
 		return retval;
 	}
-	public void binopTypeCheck(final Expression leftExpr, String operationAsString,
-			final Expression rightExpr, Token ctxGetStart) {
+	public void binopTypeCheck(final Expression leftExpr, final String operationAsString,
+			final Expression rightExpr, final Token ctxGetStart) {
 		/* Nothing */
 	}
-	protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
-			MethodDeclaration mdecl, TypeDeclaration classdecl, Token ctxGetStart)
+	protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart)
 	{
 		/* Nothing */
 	}
-	protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType) {
+	protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
 		/* Nothing */
 	}
 	public Expression assignmentExpr(final Expression lhs, final String operator, final Expression rhs,

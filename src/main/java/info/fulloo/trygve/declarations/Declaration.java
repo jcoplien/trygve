@@ -180,10 +180,22 @@ public abstract class Declaration implements BodyPart {
 		private final Map<String, ObjectDeclaration> stringToStaticObjectMap_;
 	}
 	
-	public static class ContextDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class ObjectSubclassDeclaration extends TypeDeclarationCommon {
+		public ObjectSubclassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, int lineNumber) {
+			super(name, lineNumber, myEnclosedScope);
+			baseClass_ = baseClass;
+		}
+		public ClassDeclaration baseClassDeclaration() {
+			return baseClass_;
+		}
+		
+		protected final ClassDeclaration baseClass_;
+	}
+	
+	public static class ContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration
 	{
 		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, int lineNumber) {
-			super(name, lineNumber, myEnclosedScope);
+			super(name, myEnclosedScope, StaticScope.globalScope().lookupClassDeclaration("Object"), lineNumber);
 			parentContext_ = currentContext;
 		}
 		public void setType(final ContextType type) {
@@ -196,20 +208,16 @@ public abstract class Declaration implements BodyPart {
 		private final ContextDeclaration parentContext_;
 	}
 	
-	public static class ClassDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class ClassDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration
 	{
 		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final int lineNumber) {
-			super(name, lineNumber, myEnclosedScope);
-			baseClass_ = baseClass;
+			super(name, myEnclosedScope, baseClass, lineNumber);
 			templateDeclaration_ = null;
 			methodsHaveBodyParts_ = false;
 		}
 		public void setType(final Type t) {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
-		}
-		public ClassDeclaration baseClassDeclaration() {
-			return baseClass_;
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final TemplateInstantiationInfo newTypes) {
 			templateDeclaration_ = templateDeclaration;
@@ -266,7 +274,6 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 
-		private final ClassDeclaration baseClass_;
 		private TemplateDeclaration templateDeclaration_;
 		private boolean methodsHaveBodyParts_;
 	}

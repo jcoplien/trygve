@@ -32,11 +32,13 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
+import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -562,6 +564,7 @@ public class Pass2Listener extends Pass1Listener {
 		object.setResultIsConsumed(true);
 									
 		final Message message = parsingData_.popMessage();
+		
 		assert null != message;
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
@@ -629,8 +632,8 @@ public class Pass2Listener extends Pass1Listener {
 					methodSignature = methodDeclaration.signature();
 				}
 			}
-		} else if (objectType instanceof ClassType) {
-			final ClassType classObjectType = (ClassType) objectType;
+		} else if (objectType instanceof ClassType || objectType instanceof ContextType) {
+			final ClassOrContextType classObjectType = (ClassOrContextType) objectType;
 			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
 			
@@ -641,16 +644,33 @@ public class Pass2Listener extends Pass1Listener {
 						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
 						null;
 			if (null == methodDeclaration) {
-				// If we're inside of a template, many argument types won't match.
-				// Try anyhow and see if we can find something.
-
-				methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
-							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
-							null;
+				// Check the base class
+				if  (null != classObjectType && null != classObjectType.enclosedScope()) {
+					ClassType baseClassType = classObjectType.baseClass();
+					while (null != baseClassType) {
+						final StaticScope baseClassScope = baseClassType.enclosedScope();
+						assert null != baseClassScope;
+						methodDeclaration = baseClassScope.lookupMethodDeclarationWithConversion(message.selectorName(), argumentList, false);
+						if (null != methodDeclaration) {
+							break;
+						}
+						baseClassType = baseClassType.baseClass();
+					}
+				}
 				if (null == methodDeclaration) {
-					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "' not declared in class ", classObjectType.name());
-					return null;		// punt
+					// If we're inside of a template, many argument types won't match.
+					// Try anyhow and see if we can find something.
+	
+					methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
+								classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
+								null;
+					if (null == methodDeclaration) {
+						// Mainly for error recovery (bad argument to method / method not declared)
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "' not declared in class ", classObjectType.name());
+						return null;		// punt
+					} else {
+						methodSignature = methodDeclaration.signature();
+					}
 				} else {
 					methodSignature = methodDeclaration.signature();
 				}
@@ -696,6 +716,7 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				isOKMethodSignature = true;
 			}
+		/*
 		} else if (objectType instanceof ContextType) {
 			final ContextType contextObjectType = (ContextType) objectType;
 			methodDeclaration = contextObjectType.enclosedScope().lookupMethodDeclarationRecursive(
@@ -706,6 +727,7 @@ public class Pass2Listener extends Pass1Listener {
 				// Mainly for error stumbling
 				methodSignature = null;
 			}
+		*/
 		} else if (objectType.name().endsWith("_$array") && objectType instanceof ArrayType) {
 			// This is part of the endeavor to add method invocations to
 			// naked array object appearances (e.g., size())
@@ -761,7 +783,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		return retval;
 	}
-	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(TypeDeclaration classDecl, String methodSelectorName, ActualOrFormalParameterList parameterList) {
+	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		final StaticScope classScope = classDecl.enclosedScope();
 		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
@@ -771,12 +793,12 @@ public class Pass2Listener extends Pass1Listener {
 		StaticScope classScope = classDecl.enclosedScope();
 		MethodDeclaration retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 		if (null == retval) {
-			if (classDecl instanceof ClassDeclaration) {	// should be
-				ClassDeclaration classDeclAsClassDecl = (ClassDeclaration) classDecl;
-				final ClassDeclaration baseClassDeclaration = classDeclAsClassDecl.baseClassDeclaration();
+			if (classDecl instanceof ClassDeclaration || classDecl instanceof ContextDeclaration) {	// should be
+				final ObjectSubclassDeclaration classDeclAsClassOrContextDecl = (ObjectSubclassDeclaration) classDecl;
+				final ClassDeclaration baseClassDeclaration = classDeclAsClassOrContextDecl.baseClassDeclaration();
 				if (null != baseClassDeclaration) {
 					classScope = baseClassDeclaration.enclosedScope();
-					retval =  classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+					retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 				} else {
 					retval = null;
 				}
@@ -784,8 +806,8 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		return retval;
 	}
-	@Override protected void typeCheck(FormalParameterList formals, ActualArgumentList actuals,
-			MethodDeclaration mdecl, TypeDeclaration classdecl, Token ctxGetStart) {
+	@Override protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart) {
 		final long numberOfActualParameters = actuals.count();
 		final long numberOfFormalParameters = formals.count();
 
@@ -809,6 +831,8 @@ public class Pass2Listener extends Pass1Listener {
 				final Type formalParameterType = formalParameter.type();
 
 				if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
+					continue;
+				} else if (formalParameter.name().equals(parameterToIgnore)) {
 					continue;
 				} else {
 					final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);

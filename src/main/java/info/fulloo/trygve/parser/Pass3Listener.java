@@ -147,8 +147,8 @@ public class Pass3Listener extends Pass2Listener {
 		currentMethod.setBody(body);
 	}
 	
-	@Override protected void typeCheck(final FormalParameterList formals, final ActualArgumentList actuals,
-			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final Token ctxGetStart)
+	@Override protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart)
 	{
 		/* Nothing */
 	}

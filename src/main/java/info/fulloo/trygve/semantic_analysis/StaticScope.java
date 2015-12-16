@@ -195,7 +195,7 @@ public class StaticScope {
 		}
 		
 		if (false == isStatic) {
-			final ObjectDeclaration self = new ObjectDeclaration("t$his", objectType, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", objectType, 0);
 			formals.addFormalParameter(self);
 		}
 		
@@ -222,7 +222,7 @@ public class StaticScope {
 		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intType.enclosedScope(), objectBaseClass, 0);
 		
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, 0);
-		final ObjectDeclaration self = new ObjectDeclaration("t$his", intType, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", intType, 0);
 		final FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
@@ -263,7 +263,7 @@ public class StaticScope {
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, 0);
-		ObjectDeclaration self = new ObjectDeclaration("t$his", doubleType, 0);
+		ObjectDeclaration self = new ObjectDeclaration("this", doubleType, 0);
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
@@ -308,7 +308,7 @@ public class StaticScope {
 	private static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
 			final List<String> paramNames, final List<Type> paramTypes) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		ObjectDeclaration self = new ObjectDeclaration("t$his", stringType, 0);
+		ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
 		FormalParameterList formals = new FormalParameterList();
 		if (null != paramNames) {
 			final Iterator<Type> typeIter = paramTypes.iterator();
@@ -385,7 +385,7 @@ public class StaticScope {
 		methodDecl = new MethodDeclaration("toString", doubleType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", doubleType, 0);
+		self = new ObjectDeclaration("this", doubleType, 0);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
@@ -393,7 +393,7 @@ public class StaticScope {
 		methodDecl = new MethodDeclaration("toString", intType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", intType, 0);
+		self = new ObjectDeclaration("this", intType, 0);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		intType.enclosedScope().declareMethod(methodDecl);
@@ -402,7 +402,7 @@ public class StaticScope {
 		methodDecl = new MethodDeclaration("toString", booleanType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", booleanType, 0);
+		self = new ObjectDeclaration("this", booleanType, 0);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		booleanType.enclosedScope().declareMethod(methodDecl);
@@ -412,7 +412,7 @@ public class StaticScope {
 		methodDecl = new MethodDeclaration("toString", bigIntegerType.enclosedScope(), stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("t$his", bigIntegerType, 0);
+		self = new ObjectDeclaration("this", bigIntegerType, 0);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		bigIntegerType.enclosedScope().declareMethod(methodDecl);
@@ -1246,6 +1246,52 @@ public class StaticScope {
 	
 	public static ArrayList<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;
+	}
+	
+	public void printClassMethodDecls() {
+		for (final Map.Entry<String,ClassDeclaration> classIter : classDeclarationDictionary_.entrySet()) {
+			final String className = classIter.getKey();
+			System.err.format("Class   %s\n", className);
+			final ClassDeclaration classDecl = classIter.getValue();
+			final StaticScope classScope = classDecl.enclosedScope();
+			final List<MethodDeclaration> methodDecls = classScope.methodDeclarations();
+			printMethodDecls(methodDecls);
+		}
+	}
+	
+	public void printContextMethodDecls() {
+		for (final Map.Entry<String,ContextDeclaration> contextIter : contextDeclarationDictionary_.entrySet()) {
+			final String className = contextIter.getKey();
+			System.err.format("Context %s\n", className);
+			final ContextDeclaration classDecl = contextIter.getValue();
+			final StaticScope classScope = classDecl.enclosedScope();
+			final List<MethodDeclaration> methodDecls = classScope.methodDeclarations();
+			printMethodDecls(methodDecls);
+		}
+	}
+
+	private void printMethodDecls(List<MethodDeclaration> methodDecls) {
+		for (final MethodDeclaration methodDecl : methodDecls) {
+			final Type returnType = methodDecl.returnType();
+			String staticModifier;
+			if (methodDecl.signature().isStatic()) {
+				staticModifier = "static ";
+			} else {
+				staticModifier = "";
+			}
+			if (null != returnType) {
+				System.err.format("\t%s%s ", staticModifier, returnType.name());
+			} else {
+				System.err.format("\t%s%s ", staticModifier, "NULL");
+			}
+			System.err.format("%s", methodDecl.name());
+			final FormalParameterList formalParameterList = methodDecl.formalParameterList();
+			System.err.format("%s", formalParameterList.getText());
+			if (methodDecl.isConst()) {
+				System.err.format(" const");
+			}
+			System.err.format("\n");
+		}
 	}
 	
 	private StaticScope parentScope_;

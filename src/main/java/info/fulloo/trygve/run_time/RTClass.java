@@ -187,9 +187,9 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTObjectCommon extends RTMessage {
 			public RTObjectCommon(final String className, final String methodName, final List<String> parameterNames, final List<String> parameterTypeNames,
-					 final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
-						true);
+					 final StaticScope enclosingMethodScope, final Type returnType, final boolean isStatic) {
+				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, isStatic), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						isStatic);
 			}
 			protected RTObjectCommon(final String objectName, final String halt) {
 				// Just for RTHalt
@@ -210,7 +210,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTAssertCode extends RTObjectCommon {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
-				super("Object", "assert", asList("msg", "tf"), asList("String", "boolean"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+				super("Object", "assert", asList("msg", "tf"),
+						asList("String", "boolean"), methodEnclosedScope,
+						StaticScope.globalScope().lookupTypeDeclaration("void"),
+						false);
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
@@ -232,7 +235,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTAssertCodeMinimal extends RTObjectCommon {
 			public RTAssertCodeMinimal(final StaticScope methodEnclosedScope) {
-				super("Object", "assert", asList("tf"), asList("boolean"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+				super("Object", "assert", asList("tf"),
+						asList("boolean"), methodEnclosedScope,
+						StaticScope.globalScope().lookupTypeDeclaration("void"),
+						false);
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
@@ -302,7 +308,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTIntegerObject;
 				final RTIntegerObject intObject = (RTIntegerObject)self;
 				final long iRetval = intObject.intValue();
@@ -362,7 +368,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTBigIntegerObject;
 				final RTBigIntegerObject intObject = (RTBigIntegerObject)self;
 				final long iRetval = intObject.intValue();
@@ -422,7 +428,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTDoubleObject;
 				final RTDoubleObject intObject = (RTDoubleObject)self;
 				final double dRetval = intObject.doubleValue();
@@ -480,7 +486,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject stringObject = (RTStringObject)self;
 				final long iRetval = stringObject.stringValue().length();
@@ -496,7 +502,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject stringObject = (RTStringObject)self;
 				final RTObject from = dynamicScope.getObject("start");
@@ -513,7 +519,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject retval = (RTStringObject)self;
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
@@ -527,7 +533,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject firstStringObject = (RTStringObject)self;
 				final String sRetval1 = firstStringObject.stringValue();
@@ -547,7 +553,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject thisStringObject = (RTStringObject)self;
 				final String thisString = thisStringObject.stringValue();
@@ -569,7 +575,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject thisStringObject = (RTStringObject)self;
 				final String thisString = thisStringObject.stringValue();
@@ -632,7 +638,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
-				final RTStackable self = dynamicScope.getObject("t$his");
+				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTBooleanObject;
 				RTBooleanObject bo = (RTBooleanObject)self;
 				final boolean bRetval = bo.value();

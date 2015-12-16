@@ -52,6 +52,9 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		final StringBuffer stringBuffer = new StringBuffer();
 		for (int i = 0; i < l; i++) {
 			final Expression e = (Expression)parameterAtIndex(i);
+			final Type t = e.type();
+			stringBuffer.append(t.getText());
+			stringBuffer.append(" ");
 			stringBuffer.append(e.getText());
 			if (i < l-1) stringBuffer.append(", ");
 		}

@@ -33,6 +33,12 @@ public class ConfigurationOptions {
 	public static boolean stackSnapshotDebug() {
 		return false;
 	}
+	public static boolean printClassMethodDecls() {
+		return false;
+	}
+	public static boolean printContextMethodDecls() {
+		return false;
+	}
 	
 	static {
 		  boolean assertsEnabled = false;

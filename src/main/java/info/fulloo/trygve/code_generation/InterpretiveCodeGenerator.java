@@ -32,6 +32,7 @@ import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.SystemClass;
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
@@ -154,6 +155,21 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		compileMain();
+		
+		if (ConfigurationOptions.printClassMethodDecls()) {
+			printClassMethodDecls();
+		}
+		if (ConfigurationOptions.printContextMethodDecls()) {
+			printContextMethodDecls();
+		}
+	}
+	private void printClassMethodDecls() {
+		final StaticScope globalScope = StaticScope.globalScope();
+		globalScope.printClassMethodDecls();
+	}
+	private void printContextMethodDecls() {
+		final StaticScope globalScope = StaticScope.globalScope();
+		globalScope.printContextMethodDecls();
 	}
 	private void compileDeclarations(final List<TypeDeclaration> typeDeclarationList) {
 		for (final TypeDeclaration a : typeDeclarationList) {
@@ -380,7 +396,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 2) {
-			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(0);
+			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(1);
 			final Type argumentType = argumentDeclaration.type();
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;

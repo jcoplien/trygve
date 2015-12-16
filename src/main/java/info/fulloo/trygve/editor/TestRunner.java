@@ -92,7 +92,7 @@ public class TestRunner {
 		"andreas3.k",
 		"andreas4.k",
 		"luhnvalidation.k",
-		"new_luhnvalidation.k",
+		// "new_luhnvalidation.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -141,7 +141,7 @@ public class TestRunner {
 		System.err.print(failCounter_);
 		System.err.print(" tests failed.");
 		if (failCounter_ > 0) {
-			System.err.print("Failed tests are:");
+			System.err.print(" Failed tests are:");
 		}
 		System.err.println();
 		gui_.console().redirectErr(java.awt.Color.RED, null);

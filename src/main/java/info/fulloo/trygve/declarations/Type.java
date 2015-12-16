@@ -110,15 +110,25 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		return retval;
 	}
-	public static class ClassType extends Type {
-		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
+	public static class ClassOrContextType extends Type {
+		public ClassOrContextType(final String name, final StaticScope enclosedScope,
+				final ClassType baseType) {
 			super(enclosedScope);
-			baseClass_ = baseClass;
 			name_ = name;
-			interfaceTypes_ =  new ArrayList<InterfaceType>();
+			baseClass_ = baseType;
+		}
+		@Override public Type type() {
+			return this;
 		}
 		@Override public String name() {
 			return name_;
+		}
+		@Override public boolean canBeConvertedFrom(final Type t) {
+			assert false;
+			return false;
+		}
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+			return this.canBeConvertedFrom(t);
 		}
 		public ClassType baseClass() {
 			return baseClass_;
@@ -126,18 +136,24 @@ public abstract class Type implements ExpressionStackAPI
 		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
-			return this.canBeConvertedFrom(t);
+		
+		private final String name_;
+		private ClassType baseClass_;
+	}
+	public static class ClassType extends ClassOrContextType {
+		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
+			super(name, enclosedScope, baseClass);
+			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
-			boolean retval = t.name().equals(name_);
+			boolean retval = t.name().equals(name());
 			if (!retval) {
 				if (t.name().equals("Null")) {
 					retval = true;
-				} else if (t instanceof ClassType) {
-					final ClassType classyT = (ClassType)t;
+				} else if (t instanceof ClassType || t instanceof ContextType) {
+					final ClassOrContextType classyT = (ClassOrContextType)t;
 					for (ClassType aBase = classyT.baseClass(); null != aBase; aBase = aBase.baseClass()) {
-						if (aBase.name().equals(name_)) {
+						if (aBase.name().equals(name())) {
 							retval = true;
 							break;
 						}
@@ -145,9 +161,6 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			return retval;
-		}
-		@Override public Type type() {
-			return this;
 		}
 		@Override public boolean isBaseClassOf(final Type aDerived) {
 			// IMPROPER base class!!
@@ -165,7 +178,7 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final ClassType baseClass,
 				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration) {
-			baseClass_ = baseClass;
+			super.updateBaseType(baseClass);
 			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
 			assert null != newEnclosedScope.parentScope();
 			enclosedScope_ = newEnclosedScope;
@@ -200,8 +213,6 @@ public abstract class Type implements ExpressionStackAPI
 			return interfaceTypes_;
 		}
 		
-		private final String name_;
-		private ClassType baseClass_;
 		private List<InterfaceType> interfaceTypes_;
 	}
 	public static class TemplateType extends Type {
@@ -235,29 +246,17 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 		private ClassType baseClass_;
 	}
-	public static class ContextType extends Type {
-		public ContextType(final String name, final StaticScope scope) {
-			super(scope);
-			name_ = name;
-		}
-		@Override public String name() {
-			return name_;
-		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
-			return this.canBeConvertedFrom(t);
+	public static class ContextType extends ClassOrContextType {
+		public ContextType(final String name, final StaticScope scope, final ClassType baseClass) {
+			super(name, scope, baseClass);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
-			boolean retval = t.name().equals(name_);
+			boolean retval = t.name().equals(name());
 			if (!retval) {
 				retval = t.name().equals("Null");
 			}
 			return retval;
 		}
-		@Override public Type type() {
-			return this;
-		}
-		
-		private final String name_;
 	}
 	public static class InterfaceType extends Type {
 		public InterfaceType(final String name, final StaticScope enclosedScope) {

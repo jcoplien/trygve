@@ -49,11 +49,14 @@ import java.util.List;
 public final class DateClass {
 	private static void singleSimpleFunctionSetup(final String methodSelector, final ObjectDeclaration parameter) {
 		final FormalParameterList formals = new FormalParameterList();
-		final ObjectDeclaration self = new ObjectDeclaration("this", dateType_, 0);
-		formals.addFormalParameter(self);
+
 		if (null != parameter) {
 			formals.addFormalParameter(parameter);
 		}
+		
+		final ObjectDeclaration self = new ObjectDeclaration("this", dateType_, 0);
+		formals.addFormalParameter(self);
+		
 		final StaticScope methodScope = new StaticScope(dateType_.enclosedScope());
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, dateType_, Public, 0, false);

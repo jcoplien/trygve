@@ -503,6 +503,14 @@ public abstract class RTExpression extends RTCode {
 		
 		private MethodDeclaration staticLookupMethodDecl(final MessageExpression messageExpr) {
 			final Expression objectExpression = messageExpr.objectExpression();
+			/*
+			if (messageExpr.message().selectorName().equals("assert")) {
+				int k = 0;
+				k++;
+			}
+			final String argsAsString = messageExpr.message().argumentList().getText();
+			System.err.format("staticLookupMethodDecl(\"%s(%s)\"\n", messageExpr.message().selectorName(), argsAsString);	// k = 0
+			 */
 
 			Type typeOfReceiver = null;
 			if (messageExpr.isStatic()) {

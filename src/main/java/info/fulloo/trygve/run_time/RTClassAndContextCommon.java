@@ -30,6 +30,7 @@ import java.util.Map;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -207,7 +208,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 	}
 	public ClassDeclaration baseClassDeclaration() {
 		final ClassDeclaration classDeclaration = typeDeclaration_ instanceof ClassDeclaration? (ClassDeclaration)typeDeclaration_: null;
-		final ClassDeclaration baseClassDeclaration = null == classDeclaration? null: classDeclaration.baseClassDeclaration();
+		final ContextDeclaration contextDeclaration = typeDeclaration_ instanceof ContextDeclaration? (ContextDeclaration)typeDeclaration_: null;
+		
+		ClassDeclaration baseClassDeclaration = null;
+		if (null != classDeclaration) {
+			baseClassDeclaration = classDeclaration.baseClassDeclaration();
+		} else if (null != contextDeclaration) {
+			baseClassDeclaration = contextDeclaration.baseClassDeclaration();
+		}
 		return baseClassDeclaration;
 	}
 	public final String name() {

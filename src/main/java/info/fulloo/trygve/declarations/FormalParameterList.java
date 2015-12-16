@@ -60,26 +60,26 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
 				pl2, null, conversionAllowed, paramToIgnore);
 	}
-	public static boolean alignsWithParameterListIgnoringParamCommon(final ActualOrFormalParameterList pl1,
-			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed,
+	public static boolean alignsWithParameterListIgnoringParamCommon(final ActualOrFormalParameterList formals,
+			final ActualOrFormalParameterList actuals, final String paramToIgnore, final boolean conversionAllowed,
 			final int parameterPositionToIgnore) {
 		boolean retval = true;
-		final int myCount = pl1.count();
-		if (null == pl2) {
-			if (myCount != 0) {
+		final int formalsCount = formals.count();
+		if (null == actuals) {
+			if (formalsCount != 0) {
 				retval = false;
 			} else {
 				// Redundant, but clear
 				retval = true;
 			}
 		} else {
-			final int plCount = pl2.count();
-			if (plCount != myCount) {
+			final int actualsCount = actuals.count();
+			if (actualsCount != formalsCount) {
 				retval = false;
 			} else {
-				for (int i = 0; i < plCount; i++) {
-					final String pl1Name = pl1.nameOfParameterAtPosition(i),
-							     pl2Name = pl2.nameOfParameterAtPosition(i);
+				for (int i = 0; i < actualsCount; i++) {
+					final String pl1Name = formals.nameOfParameterAtPosition(i),
+							     pl2Name = actuals.nameOfParameterAtPosition(i);
 					if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
 						continue;
 					}
@@ -94,16 +94,16 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 						continue;
 					}
 					
-					final Type plt = pl2.typeOfParameterAtPosition(i);
-					final Type myt = pl1.typeOfParameterAtPosition(i);
-					if (plt == null || null == myt) {
+					final Type actualsType = actuals.typeOfParameterAtPosition(i);
+					final Type formalsType = formals.typeOfParameterAtPosition(i);
+					if (null == actualsType || null == formalsType) {
 						retval = false;
-					} else if (plt.enclosedScope() == myt.enclosedScope()) {
+					} else if (actualsType.enclosedScope() == formalsType.enclosedScope()) {
 						continue;
-					} else if (plt.isBaseClassOf(myt)) {
+					} else if (formalsType.isBaseClassOf(actualsType)) {
 						continue;
 					} else if (conversionAllowed) {
-						retval = myt.canBeConvertedFrom(plt);
+						retval = formalsType.canBeConvertedFrom(actualsType);
 					} else {
 						retval = false;
 						break;
@@ -194,11 +194,21 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	}
 	@Override public String getText() {
 		final StringBuffer stringBuffer = new StringBuffer();
-		final int l = count();
-		for (int i = 0; i < l; i++) {
-			final Type type = typeOfParameterAtPosition(i);
-			stringBuffer.append(type.getText());
-			if (i < l-1) stringBuffer.append(", ");
+		final int numberOfParameters = this.count();
+		stringBuffer.append("(");
+		if (numberOfParameters == 0) {
+			stringBuffer.append(")");
+		} else for (int i = 0; i < numberOfParameters; i++) {
+			final Type argumentType = this.typeOfParameterAtPosition(i);
+			final ObjectDeclaration argument = this.parameterAtPosition(i);
+			stringBuffer.append(argumentType.name());
+			stringBuffer.append(" ");
+			stringBuffer.append(argument.name());
+			if (i == numberOfParameters - 1) {
+				stringBuffer.append(")");
+			} else {
+				stringBuffer.append(", ");
+			}
 		}
 		return stringBuffer.toString();
 	}
