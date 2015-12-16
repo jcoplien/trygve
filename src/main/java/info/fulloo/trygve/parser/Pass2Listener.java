@@ -236,7 +236,6 @@ public class Pass2Listener extends Pass1Listener {
 		
 		@SuppressWarnings("unused")
 		final FormalParameterList pl = parsingData_.popFormalParameterList();	// hope this is the right place
-		
 		final int lastLineNumber = ctx.getStop().getLine();
 		
 		final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
@@ -313,6 +312,7 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
 	{
 	}
+	/* Seems to be the same as Pass 1
 	@Override public void exitArgument_list(KantParser.Argument_listContext ctx)
 	{
 		// Yes - this work belongs in Pass 2
@@ -324,6 +324,7 @@ public class Pass2Listener extends Pass1Listener {
 			// no actual argument - OK
 		}
 	}
+	*/
 
 	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
@@ -716,18 +717,6 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				isOKMethodSignature = true;
 			}
-		/*
-		} else if (objectType instanceof ContextType) {
-			final ContextType contextObjectType = (ContextType) objectType;
-			methodDeclaration = contextObjectType.enclosedScope().lookupMethodDeclarationRecursive(
-					message.selectorName(), message.argumentList(), false);
-			if (null != methodDeclaration) {
-				methodSignature = methodDeclaration.signature();
-			} else {
-				// Mainly for error stumbling
-				methodSignature = null;
-			}
-		*/
 		} else if (objectType.name().endsWith("_$array") && objectType instanceof ArrayType) {
 			// This is part of the endeavor to add method invocations to
 			// naked array object appearances (e.g., size())

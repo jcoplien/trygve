@@ -38,6 +38,7 @@ import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
+import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -447,6 +448,9 @@ public abstract class RTExpression extends RTCode {
 			if (null != methodDecl) {
 				// "if" test is error stumble insurance
 				argPush_ = this.buildArgumentPushList(methodDecl.formalParameterList(), messageExpr.name(), messageExpr.lineNumber());
+				assert null != argPush_;
+			} else {
+				argPush_ = null;
 			}
 			final Type returnType = messageExpr.returnType();
 			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
@@ -468,14 +472,13 @@ public abstract class RTExpression extends RTCode {
 			isStatic_ = isStatic;
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			
-			final int thisIndex = actualParameters_.count() - 1;
 			Expression fakeSelfExpression = null;
 			final Message fakeMessage = new Message(name, actualParameters, lineNumber_, enclosingMegaType);
 			fakeMessage.setReturnType(returnType);
 			MessageExpression fakeMessageExpression = null;
 			
 			if (false == isStatic) {
-				fakeSelfExpression = actualParameters.parameterAtPosition(thisIndex);
+				fakeSelfExpression = actualParameters.parameterAtPosition(0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
 					returnType, lineNumber_, isStatic_);
 			} else {
@@ -503,15 +506,6 @@ public abstract class RTExpression extends RTCode {
 		
 		private MethodDeclaration staticLookupMethodDecl(final MessageExpression messageExpr) {
 			final Expression objectExpression = messageExpr.objectExpression();
-			/*
-			if (messageExpr.message().selectorName().equals("assert")) {
-				int k = 0;
-				k++;
-			}
-			final String argsAsString = messageExpr.message().argumentList().getText();
-			System.err.format("staticLookupMethodDecl(\"%s(%s)\"\n", messageExpr.message().selectorName(), argsAsString);	// k = 0
-			 */
-
 			Type typeOfReceiver = null;
 			if (messageExpr.isStatic()) {
 				assert objectExpression instanceof IdentifierExpression;
@@ -519,6 +513,10 @@ public abstract class RTExpression extends RTCode {
 				typeOfReceiver = StaticScope.globalScope().lookupTypeDeclaration(className);
 			} else {
 				typeOfReceiver = null != objectExpression? objectExpression.type(): StaticScope.globalScope().lookupTypeDeclaration("void");
+			}
+			
+			if (null == typeOfReceiver) {
+				assert null != typeOfReceiver;
 			}
 			
 			final StaticScope receiverScope = typeOfReceiver.enclosedScope();
@@ -554,8 +552,8 @@ public abstract class RTExpression extends RTCode {
 				if (null == retval) {
 					// Check out the base class
 					final Declaration declOfCurrent = typeOfReceiver.enclosedScope().associatedDeclaration();
-					if (declOfCurrent instanceof ClassDeclaration) {
-						ClassDeclaration classOfCurrent = (ClassDeclaration)declOfCurrent;
+					if (declOfCurrent instanceof ClassDeclaration || declOfCurrent instanceof ContextDeclaration) {
+						ObjectSubclassDeclaration classOfCurrent = (ObjectSubclassDeclaration)declOfCurrent;
 						
 						while (null != (classOfCurrent = classOfCurrent.baseClassDeclaration()) ) {
 							final StaticScope huntingScope = classOfCurrent.enclosedScope();
@@ -997,10 +995,14 @@ public abstract class RTExpression extends RTCode {
 		protected static ActualArgumentList buildArguments(final String className, final String methodName,
 				final List<String> parameterNames, final List<String> parameterTypeNames, final StaticScope enclosedMethodScope,
 				final boolean isStatic) {
-			
 			final ActualArgumentList argList = new ActualArgumentList();
 			final Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
 			assert null != enclosedMethodScope;
+			
+			if (false == isStatic) {
+				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
+				argList.addActualArgument(self);
+			}
 			
 			if (null != parameterNames) {
 				final Iterator<String> typeNameIter = parameterTypeNames.iterator();
@@ -1014,10 +1016,7 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			
-			if (false == isStatic) {
-				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
-				argList.addActualArgument(self);
-			}
+
 			
 			return argList;
 		}
@@ -1028,7 +1027,7 @@ public abstract class RTExpression extends RTCode {
 		private TemplateInstantiationInfo templateInstantiationInfo_;
 		private String methodSelectorName_;
 		private MessageExpression messageExpr_;
-		protected RTCode argPush_;
+		protected final RTCode argPush_;
 		private ActualArgumentList actualParameters_;
 		private final int lineNumber_;
 		private final int [] expressionsCountInArguments_;

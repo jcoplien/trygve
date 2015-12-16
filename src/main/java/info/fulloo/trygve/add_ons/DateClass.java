@@ -145,7 +145,10 @@ public final class DateClass {
 	public static class RTDateCommon extends RTMessage {
 		public RTDateCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			super(methodName, RTMessage.buildArguments(className, methodName,
+					null == parameterName? null: asList(parameterName),
+					null == parameterTypeName? null: asList(parameterTypeName),
+					enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 		}
 		public RTCode run() {
 			// Don't need to push or pop anything. The return code stays

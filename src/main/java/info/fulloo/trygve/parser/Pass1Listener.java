@@ -3445,10 +3445,10 @@ public class Pass1Listener extends KantBaseListener {
 		assert null != expression;
 		return expression;
 	}
-	public void addSelfAccordingToPass(Type type, Message message, StaticScope scope) {
+	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		/* Nothing */
 	}
-	public void ctorCheck(Type type, Message message, int lineNumber) {
+	public void ctorCheck(final Type type, final Message message, final int lineNumber) {
 		/* Nothing */
 	}
 
@@ -3713,11 +3713,7 @@ public class Pass1Listener extends KantBaseListener {
 			assert actuals != null;
 			
 			final TypeDeclaration typeDecl = null != classDecl? classDecl: contextDecl;
-			
-			if (mdecl.name().equals("assert")) {
-				int k = 0;
-				k++;
-			}
+
 			// Type check is polymorphic in compiler passes
 			this.typeCheckIgnoringParameter(formals, actuals, mdecl, typeDecl, "this", ctxGetStart);
 			

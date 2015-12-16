@@ -160,7 +160,7 @@ public final class MapClass {
 	}
 	public static class RTMapCtorCode extends RTMapCommon {
 		public RTMapCtorCode(final StaticScope enclosingMethodScope) {
-			super("Map", "Map", asList("value", "key"), asList("V","K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Map", "Map", asList("key", "value"), asList("K","V"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
@@ -172,7 +172,7 @@ public final class MapClass {
 	}
 	public static class RTPutCode extends RTMapCommon {
 		public RTPutCode(final StaticScope enclosingMethodScope) {
-			super("Map", "put", asList("value", "key"), asList("V", "K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Map", "put", asList("key", "value"), asList("K", "V"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();

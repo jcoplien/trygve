@@ -92,7 +92,7 @@ public class TestRunner {
 		"andreas3.k",
 		"andreas4.k",
 		"luhnvalidation.k",
-		// "new_luhnvalidation.k",
+		"new_luhnvalidation.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

@@ -50,14 +50,20 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		String retval = "";
 		final int l = count();
 		final StringBuffer stringBuffer = new StringBuffer();
+		stringBuffer.append("(");
 		for (int i = 0; i < l; i++) {
 			final Expression e = (Expression)parameterAtIndex(i);
 			final Type t = e.type();
-			stringBuffer.append(t.getText());
+			if (null == t) {
+				stringBuffer.append("NULL");
+			} else {
+				stringBuffer.append(t.getText());
+			}
 			stringBuffer.append(" ");
 			stringBuffer.append(e.getText());
 			if (i < l-1) stringBuffer.append(", ");
 		}
+		stringBuffer.append(")");
 		retval = stringBuffer.toString();
 		return retval;
 	}

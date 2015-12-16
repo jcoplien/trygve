@@ -210,8 +210,9 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTAssertCode extends RTObjectCommon {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
-				super("Object", "assert", asList("msg", "tf"),
-						asList("String", "boolean"), methodEnclosedScope,
+				super("Object", "assert",
+						asList("tf", "msg"), asList("boolean", "String"),
+						methodEnclosedScope,
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
 						false);
 			}
@@ -235,8 +236,9 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTAssertCodeMinimal extends RTObjectCommon {
 			public RTAssertCodeMinimal(final StaticScope methodEnclosedScope) {
-				super("Object", "assert", asList("tf"),
-						asList("boolean"), methodEnclosedScope,
+				super("Object", "assert",
+						asList("tf"), asList("boolean"),
+						methodEnclosedScope,
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
 						false);
 			}
@@ -268,8 +270,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTIntegerCommon extends RTMessage {
 			public RTIntegerCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
-						true);
+				super(methodName, RTMessage.buildArguments(className, methodName,
+						null == parameterName? null: asList(parameterName),
+						null == parameterTypeName? null: asList(parameterTypeName),
+						enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						false);
 				parameterName_ = parameterName;
 			}
 			public RTCode run() {
@@ -328,7 +333,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTBigIntegerCommon extends RTMessage {
 			public RTBigIntegerCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+				super(methodName, RTMessage.buildArguments(className, methodName,
+						null == parameterName? null: asList(parameterName),
+						null == parameterTypeName? null: asList(parameterTypeName),
+						enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 						true);
 				parameterName_ = parameterName;
 			}
@@ -388,8 +396,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTDoubleCommon extends RTMessage {
 			public RTDoubleCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
-						true);
+				super(methodName, RTMessage.buildArguments(className, methodName, 
+						null == parameterName? null: asList(parameterName),
+						null == parameterTypeName? null: asList(parameterTypeName),
+						enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						false);
 				parameterName_ = parameterName;
 			}
 			public RTCode run() {
@@ -497,7 +508,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTSubstringCode extends RTStringCommon {
 			public RTSubstringCode(final StaticScope methodEnclosedScope) {
-				super("String", "substring", asList("end", "start"), asList("int", "int"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+				super("String", "substring", asList("start", "end"), asList("int", "int"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
@@ -601,8 +612,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTBooleanCommon extends RTMessage {
 			public RTBooleanCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
-						true);
+				super(methodName, RTMessage.buildArguments(className, methodName,
+						null == parameterName? null: asList(parameterName),
+						null == parameterTypeName? null: asList(parameterTypeName),
+						enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+						false);
 			}
 			public RTCode run() {
 				// Don't need to push or pop anything. The return code stays

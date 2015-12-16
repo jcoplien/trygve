@@ -1,23 +1,13 @@
-class Assert {
-    public Assert(boolean expression, String message) {
-        if(expression == false) {
-            System.out.print("ASSERTION FAILED: ");
-            System.out.println(message);
-            0/0;
-        }
-    }
-}
-
 class CreditCard {
     public CreditCard(List<int> number) {
-        // assert (number != null, "CreditCard null List arg check")
+        assert (number != null, "CreditCard null List arg check")
         number_ = number;
     }
 
     public CreditCard(int [] number) {
         number_ = new List<int>();
         for(int i : number) number_.add(i);
-        // assert(number.size() == number_.size())
+        assert(number.size() == number_.size())
     }
 
     public List<int> number() {
@@ -75,8 +65,6 @@ context LuhnValidation {
     }
 
     public LuhnValidation(List<int> number) {
-       new Assert(number.size() > 1, "Number must be at least two digits.");
-
        assert (number.size() > 1, "Number must be at least two digits.")
 
         Number = number;

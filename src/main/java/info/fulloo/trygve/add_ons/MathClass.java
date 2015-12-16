@@ -94,7 +94,10 @@ public final class MathClass {
 	public static class RTMathCommon extends RTMessage {
 		public RTMathCommon(final String className, final String methodName, final String parameterName,
 				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, asList(parameterName), asList(parameterTypeName), enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+			super(methodName, RTMessage.buildArguments(className, methodName, 
+					null == parameterName? null: asList(parameterName),
+					null == parameterTypeName? null: asList(parameterTypeName),
+					enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 					true);
 		}
 		public RTCode run() {

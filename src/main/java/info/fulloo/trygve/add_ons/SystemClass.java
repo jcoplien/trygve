@@ -148,7 +148,7 @@ public final class SystemClass {
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName, final StaticScope enclosingMethodScope) {
 			super("println",
-					RTPrintCommon.buildArguments(className, methodName,
+					RTMessage.buildArguments(className, methodName,
 							null == parameterName?     null: asList(parameterName),
 							null == parameterTypeName? null: asList(parameterTypeName),
 							enclosingMethodScope, false),
