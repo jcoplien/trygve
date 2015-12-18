@@ -44,6 +44,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		objectMembers_ = new LinkedHashMap<String, RTObject>();
 		rTTypeMap_ = new LinkedHashMap<String, RTType>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		stagePropsIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 		referenceCount_ = 1;
 	}
 	protected RTObjectCommon(final RTObject object) {
@@ -55,6 +56,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		objectMembers_ = ((RTObjectCommon)object).objectMembers();
 		rTTypeMap_ = ((RTObjectCommon)object).objectDeclarations();
 		rolesIAmPlayingInContext_ = ((RTObjectCommon)object).rolesIAmPlayingInContext_;
+		stagePropsIAmPlayingInContext_ = ((RTObjectCommon)object).stagePropsIAmPlayingInContext_;
 		referenceCount_ = 1;
 	}
 	@Override public boolean isEqualTo(final Object other) {
@@ -133,6 +135,24 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 	
+	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
+		// Refactor!
+		List<String> stagePropsIAmPlayingHere = null;
+		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
+			stagePropsIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+		} else {
+			stagePropsIAmPlayingHere = new ArrayList<String>();
+			stagePropsIAmPlayingInContext_.put(contextInstance, stagePropsIAmPlayingHere);
+		}
+		
+		stagePropsIAmPlayingHere.add(stagePropName);
+		
+		int count = 0;
+		for (final Map.Entry<RTContextObject, List<String>> iter : stagePropsIAmPlayingInContext_.entrySet()) {
+			count += iter.getValue().size();
+		}
+	}
+	
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -144,13 +164,28 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			assert false;
 		}
 	}
+	
+	@Override public void unenlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
+			final List<String> rolesIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
+			rolesIAmPlayingHere.remove(roleName);
+			if (0 == rolesIAmPlayingHere.size()) {
+				stagePropsIAmPlayingInContext_.remove(contextInstance);
+			}
+		} else {
+			assert false;
+		}
+	}
 
 	public static class RTContextObject extends RTObjectCommon implements RTObject {
 		public RTContextObject(final RTType classs) {
 			super(classs);
 			nameToRoleMap_ = new LinkedHashMap<String, RTRole>();
+			nameToStagePropMap_ = new LinkedHashMap<String, RTStageProp>();
 			nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+			nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 			isRoleArrayMap_ = new LinkedHashMap<String, String>();
+			isStagePropArrayMap_ = new LinkedHashMap<String, String>();
 			
 			// context$info is used to track things like
 			// who our roleplayers are. It kind of seemed like this
@@ -170,13 +205,24 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				contextInfo.addRolePlayer(name, nullObject);
 			}
 		}
+		public void addStagePropDeclaration(final String name, final RTStageProp stageProp) {
+			final RTContextInfo contextInfo = this.contextInfo();
+			final RTNullObject nullObject = new RTNullObject();
+			if (stageProp.isArray() == false) {
+				nameToStagePropMap_.put(name, stageProp);
+				nameToStagePropBindingMap_.put(name, nullObject);
+				contextInfo.addStagePropPlayer(name, nullObject);
+			}
+		}
 		public Map<String, RTRole> roleDeclarations() {
 			return nameToRoleMap_;
 		}
-		public RTObject getRoleBinding(final String name) {
+		public RTObject getRoleOrStagePropBinding(final String name) {
 			RTObject retval = null;
 			if (nameToRoleBindingMap_.containsKey(name)) {
 				retval = nameToRoleBindingMap_.get(name);
+			} else if (nameToStagePropBindingMap_.containsKey(name)) {
+				retval = nameToStagePropBindingMap_.get(name);
 			} else {
 				assert false;
 			}
@@ -221,8 +267,30 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				contextInfo.addRolePlayer(name, value);
 			}
 		}
+		public void setStagePropBinding(final String name, final RTObject value) {
+			value.incrementReferenceCount();
+			RTObject oldValue = null;
+			if (nameToStagePropBindingMap_.containsKey(name)) {
+				oldValue = nameToStagePropBindingMap_.get(name);
+			}
+			
+			nameToStagePropBindingMap_.put(name, value);
+			
+			final RTContextInfo contextInfo = this.contextInfo();
+			assert null != contextInfo;
+				
+			if (null != oldValue) {
+				oldValue.decrementReferenceCount();
+				contextInfo.removeRolePlayer(name, oldValue);
+			}
+				
+			contextInfo.addStagePropPlayer(name, value);
+		}
 		public void designateRoleAsArray(final String roleArrayName) {
 			isRoleArrayMap_.put(roleArrayName, roleArrayName);
+		}
+		public void designateStagePropAsArray(final String stagePropArrayName) {
+			isStagePropArrayMap_.put(stagePropArrayName, stagePropArrayName);
 		}
 		public void setRoleArrayBindingToArray(final RTRoleIdentifier lhs, final RTArrayObject rhs) {
 			rhs.incrementReferenceCount();
@@ -259,6 +327,38 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 		}
 		
+		public void setStagePropArrayBindingToArray(final RTRoleIdentifier lhs, final RTArrayObject rhs) {
+			// Refactor!
+			rhs.incrementReferenceCount();
+			final String roleName = lhs.name();
+			RTArrayObject oldValue = null;
+			if (nameToRoleBindingMap_.containsKey(roleName)) {
+				oldValue = (RTArrayObject)nameToRoleBindingMap_.get(roleName);
+			}
+			
+			nameToStagePropBindingMap_.put(roleName, rhs);
+			
+			final RTContextInfo contextInfo = this.contextInfo();
+			assert null != contextInfo;
+			
+			if (null != oldValue) {
+				for (int i = 0; i < oldValue.size(); i++) {
+					final RTObject value = rhs.get(i);
+					value.decrementReferenceCount();
+					contextInfo.removeStagePropArrayPlayer(roleName, i);
+				}
+			}
+			
+			for (Map.Entry<String, String> iter : isStagePropArrayMap_.entrySet()) {
+				contextInfo.designateStagePropAsArray(iter.getKey());
+			}
+			
+			for (int i = 0; i < rhs.size(); i++) {
+				final RTObject value = rhs.get(i);
+				contextInfo.addStagePropArrayPlayer(roleName, i, value);
+			}
+		}
+		
 		public RTCode setRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
 			// Assign indicated object in RHS to a Role in LHS
 			
@@ -290,6 +390,37 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			return null;
 		}
 		
+		public RTCode setStagePropArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
+			// Assign indicated object in RHS to a Role in LHS
+			
+			final String stagePlayerName = lhs.roleName();
+			
+			// Evaluate the index
+			RTCode pc = lhs.indexExpression();
+			do {
+				if (pc instanceof RTHalt) {
+					return pc;
+				} else {
+					pc = pc.run();
+				}
+			} while (null != pc);
+			
+			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawIndexResult instanceof RTIntegerObject;
+			final RTIntegerObject indexResult = (RTIntegerObject) rawIndexResult;
+			
+			// Current context could be in current$context if we're in a Role method,
+			// or simply in "this" if we're in a Context method
+			final RTObject currentContext = this;
+			final RTObject rawContextInfo = currentContext.getObject("context$info");
+			assert rawContextInfo instanceof RTContextInfo;
+			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
+			
+			contextInfo.setStagePropPlayerNamedAndIndexed(stagePlayerName, indexResult, rhs);
+		
+			return null;
+		}
+		
 		@Override public RTObject dup() {
 			assert false;
 			return null;
@@ -299,13 +430,13 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTContextInfo contextInfo = contextInfo();
 			if (0 >= referenceCount()) {
 				// I'm outta here. Let all my RolePlayers know
-				contextInfo.removeAllRolePlayers();
+				contextInfo.removeAllRoleAndStagePropPlayers();
 			} else if (1 == referenceCount()) {
 				// It could be that we were the last expression to
 				// be evaluated, and the reference count is artificially
 				// high because of that cache holding us
 				if (this == RTExpression.lastExpressionResult()) {
-					contextInfo.removeAllRolePlayers();
+					contextInfo.removeAllRoleAndStagePropPlayers();
 				}
 			}
 		}
@@ -316,8 +447,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	
 		private final Map<String, RTRole> nameToRoleMap_;
-		private final Map<String, RTObject> nameToRoleBindingMap_;
-		private final Map<String, String> isRoleArrayMap_;
+		private final Map<String, RTStageProp> nameToStagePropMap_;
+		private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
+		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
 	}
 	
 	public static class RTIntegerObject extends RTObjectCommon implements RTObject {
@@ -807,6 +939,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	protected final Map<String, RTObject> objectMembers_;
 	private final Map<String, RTType> rTTypeMap_;
 	private Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
+	private Map<RTContextObject, List<String>> stagePropsIAmPlayingInContext_;
 	
 	private long referenceCount_;
 }

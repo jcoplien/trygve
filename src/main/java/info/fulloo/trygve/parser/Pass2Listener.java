@@ -105,14 +105,14 @@ public class Pass2Listener extends Pass1Listener {
 
 	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		// Return value is through currentRole_
-		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(roleName);
+		currentRole_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
 		if (null == currentRole_) {
 			assert null != currentRole_;
 		}
 	}
 	@Override protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
 		// Return value is through currentRole_
-		currentRole_ = currentScope_.lookupRoleDeclarationRecursive(stagePropName);
+		currentRole_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(stagePropName);
 		if (null == currentRole_) {
 			assert null != currentRole_;
 		}
@@ -312,19 +312,6 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
 	{
 	}
-	/* Seems to be the same as Pass 1
-	@Override public void exitArgument_list(KantParser.Argument_listContext ctx)
-	{
-		// Yes - this work belongs in Pass 2
-		if (ctx.expr() != null) {
-			final Expression expr = parsingData_.popExpression();
-			expr.setResultIsConsumed(true);
-			currentArgumentList().addActualArgument(expr);
-		} else {
-			// no actual argument - OK
-		}
-	}
-	*/
 
 	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
@@ -361,7 +348,7 @@ public class Pass2Listener extends Pass1Listener {
 			final RoleType roleBaseType = (RoleType)baseType;
 			// Look up the actual array. It is in the current scope as a type
 			final StaticScope contextScope = roleBaseType.contextDeclaration().type().enclosedScope();
-			final RoleDeclaration roleDecl = contextScope.lookupRoleDeclaration(roleName);
+			final RoleDeclaration roleDecl = contextScope.lookupRoleOrStagePropDeclaration(roleName);
 			if (null == roleDecl) {
 				assert false;
 			} else {
@@ -900,7 +887,7 @@ public class Pass2Listener extends Pass1Listener {
 				}
 			} else if (associatedDeclaration == currentContext_) {
 				if (null != possibleContextScope) {
-					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleDeclaration(idText);
+					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleOrStagePropDeclaration(idText);
 					if (null == roleDecl) {
 						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
 								"' is not declared in scope `", currentScope_.name(), "'.", "");
@@ -1156,8 +1143,8 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) {
 		s.declareObject(objdecl);
 	}
-	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		s.declareRole(roledecl);	// probably redundant; done in pass 1
+	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+		s.declareRoleOrStageProp(roledecl);	// probably redundant; done in pass 1
 	}
 	private void processDeclareRoleArrayAlias(final int lineNumber) {
 		// Declare an actual object for the Role, if the Role is a RoleArray type

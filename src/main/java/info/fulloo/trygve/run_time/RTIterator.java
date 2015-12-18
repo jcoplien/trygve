@@ -126,10 +126,14 @@ public abstract class RTIterator implements RTObject {
 	@Override public void incrementReferenceCount() { referenceCount_++; }
 	@Override public void decrementReferenceCount() { --referenceCount_; }
 	@Override public long referenceCount() { return referenceCount_; }
-	@Override public void enlistAsRolePlayerForContext(String roleName,
-			RTContextObject contextInstance) { assert false; }
-	@Override public void unenlistAsRolePlayerForContext(String roleName,
-			RTContextObject contextInstance) { assert false; }
+	@Override public void enlistAsRolePlayerForContext(final String roleName,
+			final RTContextObject contextInstance) { assert false; }
+	@Override public void unenlistAsRolePlayerForContext(final String roleName,
+			final RTContextObject contextInstance) { assert false; }
+	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName,
+			final RTContextObject contextInstance) { assert false; }
+	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName,
+			final RTContextObject contextInstance) { assert false; }
 	
 	private int referenceCount_;
 }

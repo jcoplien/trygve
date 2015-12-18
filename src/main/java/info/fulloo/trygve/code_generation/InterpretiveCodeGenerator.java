@@ -806,7 +806,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public List<RTCode> compileMessageExpression(final MessageExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
-		retval.add(new RTMessage(expr.name(), expr, rtTypeDeclaration, scope, expr.isStatic()));
+		retval.add(RTMessage.makeRTMessage(expr.name(), expr, rtTypeDeclaration, scope, expr.isStatic()));
 		return retval;
 	}
 	public List<RTCode> compileDupMessageExpression(final DupMessageExpression expr, final RTType rtTypeDeclaration, final StaticScope scope) {
@@ -1121,7 +1121,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public static RTType scopeToRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
-		assert null != enclosedScope;
+		if (null == enclosedScope) {
+			assert null != enclosedScope;
+		}
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();

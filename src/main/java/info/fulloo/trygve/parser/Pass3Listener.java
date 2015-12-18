@@ -168,7 +168,7 @@ public class Pass3Listener extends Pass2Listener {
 		// nothing in pass 3, 4
 	}
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { }
-	@Override public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) { }
+	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) { }
 	@Override public void errorHook5p1(final ErrorType errorType, int i, final String s1, final String s2, final String s3, final String s4) { }
 	@Override public void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
 	@Override public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) { }

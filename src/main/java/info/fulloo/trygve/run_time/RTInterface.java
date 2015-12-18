@@ -60,6 +60,10 @@ public class RTInterface extends RTClassAndContextCommon implements RTType {
 		assert false;
 		return null;
 	}
+	@Override public Map<String, RTStageProp> nameToStagePropDeclMap() {
+		assert false;
+		return null;
+	}
 	@Override public void addContext(String typeName, RTContext classDecl) {
 		assert false;
 	}

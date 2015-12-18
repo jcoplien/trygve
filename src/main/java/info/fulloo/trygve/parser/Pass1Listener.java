@@ -488,6 +488,10 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}'
 		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
 		//
 		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
 		
@@ -667,6 +671,7 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'stageprop' JAVA_ID '{' '}'
 		// | access_qualifier 'stageprop' JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		//
 		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
 		
 		final String vecText = ctx.role_vec_modifier().getText();
@@ -706,6 +711,10 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'stageprop' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}'
 		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' '}'
+		// | access_qualifier 'stageprop' JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
 		
 		final String vecText = ctx.role_vec_modifier().getText();
 		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
@@ -2798,7 +2807,7 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
-		final RoleDeclaration requestedRole = currentScope_.lookupRoleDeclaration(roleName);
+		final RoleDeclaration requestedRole = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		if (null != requestedRole) {
 			currentRole_ = requestedRole;
 			
@@ -2814,9 +2823,9 @@ public class Pass1Listener extends KantBaseListener {
 					   : new RoleDeclaration(roleName, rolesScope, currentContext_, lineNumber);
 			rolesScope.setDeclaration(roleDecl);
 			
-			// declareRole will also declare the name as an array handle
+			// declareRoleOrStageProp will also declare the name as an array handle
 			// if isRoleArray was set (in pass 2)
-			declareRole(currentScope_, roleDecl, lineNumber);
+			declareRoleOrStageProp(currentScope_, roleDecl, lineNumber);
 			
 			final RoleType roleType = new RoleType(roleName, rolesScope);
 			currentScope_.declareType(roleType);
@@ -2829,7 +2838,7 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
-		final Declaration rawDeclaration = currentScope_.lookupRoleDeclaration(roleName);
+		final Declaration rawDeclaration = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		assert null == rawDeclaration || rawDeclaration instanceof StagePropDeclaration;
 		final StagePropDeclaration requestedStageProp = (StagePropDeclaration)rawDeclaration;
 		if (null != requestedStageProp) {
@@ -2846,7 +2855,7 @@ public class Pass1Listener extends KantBaseListener {
 					   ? new StagePropArrayDeclaration(roleName, stagePropScope, currentContext_, lineNumber)
 					   : new StagePropDeclaration(roleName, stagePropScope, currentContext_, lineNumber);
 			stagePropScope.setDeclaration(stagePropDecl);
-			declareRole(currentScope_, stagePropDecl, lineNumber);
+			declareRoleOrStageProp(currentScope_, stagePropDecl, lineNumber);
 			
 			final StagePropType stagePropType = new StagePropType(roleName, stagePropScope);
 			currentScope_.declareType(stagePropType);
@@ -3251,8 +3260,8 @@ public class Pass1Listener extends KantBaseListener {
 
 	// WARNING. Tricky code here
 	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
-	public void declareRole(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		s.declareRole(roledecl);
+	public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+		s.declareRoleOrStageProp(roledecl);
 	}
 	
 	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
@@ -3580,7 +3589,7 @@ public class Pass1Listener extends KantBaseListener {
 	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
 		final String objectTypeName = objectType.name();
 		final ClassDeclaration classDecl = currentScope_.lookupClassDeclarationRecursive(objectTypeName);
-		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(objectTypeName);
+		final RoleDeclaration roleDecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(objectTypeName);
 		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(objectTypeName);
 		final InterfaceDeclaration interfaceDecl = currentScope_.lookupInterfaceDeclarationRecursive(objectTypeName);
 		
@@ -3754,8 +3763,6 @@ public class Pass1Listener extends KantBaseListener {
 				scope = null;
 			} else if (associatedDeclaration instanceof ClassDeclaration) {
 				scope = null;
-			} else if (associatedDeclaration instanceof StagePropDeclaration) {
-				scope = null;
 			} else {
 				scope = scope.parentScope();
 			}
@@ -3775,7 +3782,7 @@ public class Pass1Listener extends KantBaseListener {
 					null;
 		if (null != enclosingMethod && associatedDeclaration instanceof ContextDeclaration) {
 			final ContextDeclaration contextDeclaration = (ContextDeclaration)associatedDeclaration;
-			final RoleDeclaration roleDeclaration = contextDeclaration.enclosedScope().lookupRoleDeclaration(idName);
+			final RoleDeclaration roleDeclaration = contextDeclaration.enclosedScope().lookupRoleOrStagePropDeclaration(idName);
 			retval = roleDeclaration;
 		}
 		return retval;
@@ -3788,7 +3795,7 @@ public class Pass1Listener extends KantBaseListener {
 		StaticScope declaringScope = null;
 		final String idName = ctxJAVA_ID.getText();
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
-		final RoleDeclaration roleDecl = currentScope_.lookupRoleDeclarationRecursive(idName);
+		final RoleDeclaration roleDecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(idName);
 		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
 		if (idName.equals("index")) {
 			// This is a legal identifier if invoked from within the

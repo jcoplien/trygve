@@ -45,5 +45,6 @@ public interface RTType {
 	public RTObject getObject(final String objectName);
 	public RTObject defaultObject();
 	public Map<String, RTRole> nameToRoleDeclMap();
+	public Map<String, RTStageProp> nameToStagePropDeclMap();
 	public String name();
 }

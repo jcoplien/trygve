@@ -101,6 +101,12 @@ public class RTCommonRunTimeCrap implements RTObject {
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, RTContextObject contextInstance) {
 		assert false;
 	}
+	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance) {
+		assert false;
+	}
+	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance) {
+		assert false;
+	}
 	@Override public RTObject performUnaryOpOnObjectNamed(final String idName, String operator, PreOrPost preOrPost_) {
 		assert false;	 // meaningless for arrays
 		return null;

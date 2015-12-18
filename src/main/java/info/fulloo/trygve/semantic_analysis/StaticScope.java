@@ -71,7 +71,7 @@ public class StaticScope {
 		typeDeclarationDictionary_ = new LinkedHashMap<String, Type>();
 		methodDeclarationDictionary_ = new LinkedHashMap<String, ArrayList<MethodDeclaration>>();
 		contextDeclarationDictionary_ = new LinkedHashMap<String, ContextDeclaration>();
-		roleDeclarationDictionary_ = new LinkedHashMap<String, RoleDeclaration>();
+		roleAndStagePropDeclarationDictionary_ = new LinkedHashMap<String, RoleDeclaration>();
 		classDeclarationDictionary_ = new LinkedHashMap<String, ClassDeclaration>();
 		templateDeclarationDictionary_ = new LinkedHashMap<String, TemplateDeclaration>();
 		interfaceDeclarationDictionary_ =  new LinkedHashMap<String,InterfaceDeclaration>();
@@ -106,7 +106,7 @@ public class StaticScope {
 		contextDeclarationDictionary_ = scope.contextDeclarationDictionary_;
 		classDeclarationDictionary_ = scope.classDeclarationDictionary_;
 		templateDeclarationDictionary_ = scope.templateDeclarationDictionary_;
-		roleDeclarationDictionary_ = scope.roleDeclarationDictionary_;
+		roleAndStagePropDeclarationDictionary_ = scope.roleAndStagePropDeclarationDictionary_;
 		interfaceDeclarationDictionary_ =  scope.interfaceDeclarationDictionary_;
 		hasDeclarationsThatAreLostBetweenPasses_ = scope.hasDeclarationsThatAreLostBetweenPasses_;
 		templateInstantiationInfo_ = newTypes;
@@ -467,8 +467,8 @@ public class StaticScope {
 				} else if (classDeclarationDictionary_.containsKey(name)) {
 					collidingDeclaration = classDeclarationDictionary_.get(name);
 					collision = true;
-				} else if (roleDeclarationDictionary_.containsKey(name)) {
-					collidingDeclaration = roleDeclarationDictionary_.get(name);
+				} else if (roleAndStagePropDeclarationDictionary_.containsKey(name)) {
+					collidingDeclaration = roleAndStagePropDeclarationDictionary_.get(name);
 					collision = true;
 				}
 				if (collision) {
@@ -498,18 +498,18 @@ public class StaticScope {
 		return retval;
 	}
 	
-	public void declareRole(final RoleDeclaration decl) {
-		final String roleName = decl.name();
-		if (roleDeclarationDictionary_.containsKey(roleName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of role ", roleName, " in ", name());
+	public void declareRoleOrStageProp(final RoleDeclaration decl) {
+		final String roleOrStagePropName = decl.name();
+		if (roleAndStagePropDeclarationDictionary_.containsKey(roleOrStagePropName)) {
+			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of role ", roleOrStagePropName, " in ", name());
 		} else {
-			roleDeclarationDictionary_.put(roleName, decl);
+			roleAndStagePropDeclarationDictionary_.put(roleOrStagePropName, decl);
 		}
 		if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
 	}
 	
-	public RoleDeclaration lookupRoleDeclarationRecursive(final String roleName) {
-		RoleDeclaration retval = this.lookupRoleDeclaration(roleName);
+	public RoleDeclaration lookupRoleOrStagePropDeclarationRecursive(final String roleName) {
+		RoleDeclaration retval = this.lookupRoleOrStagePropDeclaration(roleName);
 		if (null == retval) {
 			// Stop searching at Context boundary. If there are nested
 			// Contexts we don't want to go wandering into THAT Context
@@ -520,15 +520,17 @@ public class StaticScope {
 			if (myType instanceof ClassType || myType instanceof ContextType) {
 				retval = null;	// redundant, but clear
 			} else if (null != parentScope_) {
-				retval = parentScope_.lookupRoleDeclarationRecursive(roleName);
+				retval = parentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
 			}
 		}
 		return retval;
 	}
-	public RoleDeclaration lookupRoleDeclaration(final String roleName) {
+	public RoleDeclaration lookupRoleOrStagePropDeclaration(final String roleName) {
 		RoleDeclaration retval = null;
-		if (roleDeclarationDictionary_.containsKey(roleName)) {
-			retval = roleDeclarationDictionary_.get(roleName);
+		if (roleAndStagePropDeclarationDictionary_.containsKey(roleName)) {
+			retval = roleAndStagePropDeclarationDictionary_.get(roleName);
+		} else {
+			retval = null;
 		}
 		return retval;
 	}
@@ -1025,7 +1027,7 @@ public class StaticScope {
 	}
 	public List<StagePropDeclaration> stagePropDeclarations() {
 		final List<StagePropDeclaration> retval = new ArrayList<StagePropDeclaration>();
-		for (Map.Entry<String, RoleDeclaration> stagePropDecl : roleDeclarationDictionary_.entrySet()) {
+		for (Map.Entry<String, RoleDeclaration> stagePropDecl : roleAndStagePropDeclarationDictionary_.entrySet()) {
 			final Declaration d = stagePropDecl.getValue();
 			if (d instanceof StagePropDeclaration) {
 				retval.add((StagePropDeclaration)d);
@@ -1035,7 +1037,7 @@ public class StaticScope {
 	}
 	public List<RoleDeclaration> roleDeclarations() {
 		final List<RoleDeclaration> retval = new ArrayList<RoleDeclaration>();
-		for (Map.Entry<String, RoleDeclaration> roleDecl : roleDeclarationDictionary_.entrySet()) {
+		for (Map.Entry<String, RoleDeclaration> roleDecl : roleAndStagePropDeclarationDictionary_.entrySet()) {
 			retval.add(roleDecl.getValue());
 		}
 		return retval;
@@ -1305,7 +1307,7 @@ public class StaticScope {
 	private final Map<String,ClassDeclaration> classDeclarationDictionary_;
 	private final Map<String,InterfaceDeclaration> interfaceDeclarationDictionary_;
 	private final Map<String,TemplateDeclaration> templateDeclarationDictionary_;
-	private Map<String,RoleDeclaration> roleDeclarationDictionary_;
+	private Map<String,RoleDeclaration> roleAndStagePropDeclarationDictionary_;
 	private boolean hasDeclarationsThatAreLostBetweenPasses_;
 	private TemplateInstantiationInfo templateInstantiationInfo_;
 	private static ArrayList<TypeDeclaration> typeDeclarationList_;

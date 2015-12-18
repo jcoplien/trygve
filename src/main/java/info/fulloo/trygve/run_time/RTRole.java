@@ -31,9 +31,13 @@ import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 
 
-public class RTRole extends RTClassAndContextCommon implements RTType  {
+public class RTRole extends RTClassAndContextCommon implements RTType {
 	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
+		if (associatedDeclaration.name().equals("CheckDigit")) {
+			int k = 0;
+			k++;
+		}
 		associatedDeclaration_ = associatedDeclaration;
 		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 		populateNameToStaticObjectMap();
@@ -79,6 +83,9 @@ public class RTRole extends RTClassAndContextCommon implements RTType  {
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		return new LinkedHashMap<String, RTRole>();
+	}
+	@Override public Map<String, RTStageProp> nameToStagePropDeclMap() {
+		return new LinkedHashMap<String, RTStageProp>();
 	}
 	public boolean isArray() {
 		return associatedDeclaration_ instanceof RoleArrayDeclaration;

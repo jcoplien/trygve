@@ -52,7 +52,9 @@ public abstract class RTClassAndContextCommon implements RTType {
 		nameToStaticObjectMap_ = new LinkedHashMap<String, RTObject>();
 		nameToStaticObjectTypeMap_ = new LinkedHashMap<String, Type>();
 		nameToRoleDeclMap_ = new LinkedHashMap<String, RTRole>();
+		nameToStagePropDeclMap_ = new LinkedHashMap<String, RTStageProp>();
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 		nameToTypeObjectMap_ = new LinkedHashMap<String, RTType>();
 		typeDeclaration_ = typeDeclaration;
 		
@@ -129,7 +131,11 @@ public abstract class RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	public RTRole getRole(final String name) {
+		assert false;
 		return nameToRoleDeclMap_.get(name);
+	}
+	public RTStageProp getStageProp(final String name) {
+		return nameToStagePropDeclMap_.get(name);
 	}
 	@Override public void addMethod(final String methodName, final RTMethod methodDecl) {
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
@@ -241,12 +247,15 @@ public abstract class RTClassAndContextCommon implements RTType {
 	
 	private long referenceCount_;
 	
+	// Not final; modified in derived classes
 	protected Map<String, RTType> nameToTypeObjectMap_;
-	protected Map<String, RTRole> nameToRoleDeclMap_;
-	protected Map<String, RTObject> nameToRoleBindingMap_;
+	
+	protected final Map<String, RTRole> nameToRoleDeclMap_;
+	protected final Map<String, RTStageProp> nameToStagePropDeclMap_;
+	protected final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	protected TypeDeclaration typeDeclaration_;
-	private Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
-	protected Map<String, RTObject> nameToStaticObjectMap_;
-	protected Map<String, Type> nameToStaticObjectTypeMap_;
+	private final Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
+	protected final Map<String, RTObject> nameToStaticObjectMap_;
+	protected final Map<String, Type> nameToStaticObjectTypeMap_;
 	private final TemplateInstantiationInfo templateInstantiationInfo_;
 }

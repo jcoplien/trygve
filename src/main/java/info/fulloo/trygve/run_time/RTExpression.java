@@ -39,6 +39,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -159,7 +160,7 @@ public abstract class RTExpression extends RTCode {
 				final TypeDeclaration typeDeclaration = rTClass.typeDeclaration();
 				scope = typeDeclaration.enclosedScope();
 			}
-			retval = new RTMessage(expr.name(), (MessageExpression)expr, nearestEnclosingType, scope,
+			retval = RTMessage.makeRTMessage(expr.name(), (MessageExpression)expr, nearestEnclosingType, scope,
 					((MessageExpression)expr).isStatic());
 		} else if (expr instanceof DupMessageExpression) {
 			retval = new RTDupMessage(expr.name(), (DupMessageExpression)expr, nearestEnclosingType);
@@ -421,6 +422,11 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTMessage extends RTExpression {
+		public static RTMessage makeRTMessage(final String name, final MessageExpression messageExpr,
+				final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
+			final RTMessage retval = new RTMessage(name, messageExpr, nearestEnclosingType, scope,isStatic);
+			return retval;
+		}
 		public String msn() {		// for debugging only
 			return methodSelectorName_;
 		}
@@ -771,6 +777,12 @@ public abstract class RTExpression extends RTCode {
 				activationRecord.setObject(ithParameterName, anArgument);
 				anArgument.decrementReferenceCount();	// not on the stack any more
 			}
+			if (this.isBuiltInAssert_) {
+				// Put the line number in the activation record
+				final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+				activationRecord.addObjectDeclaration("lineNumber", null);
+				activationRecord.setObject("lineNumber", lineNumberToPush);
+			}
 		}
 
 		@Override public RTCode run() {
@@ -820,6 +832,7 @@ public abstract class RTExpression extends RTCode {
 			}
 
 			this.pushContextPointerIfNecessary(typeOfThisParameterToMethod, indexForThisExtraction);
+
 			
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null - there
@@ -833,8 +846,24 @@ public abstract class RTExpression extends RTCode {
 			
 			// Get the method declaration by looking it up in the receiver's scope
 			// Null return on error (e.g., attempting to invoke a method on a null object)
-						
+			
 			final RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToMethod, indexForThisExtraction, self);
+			
+			// While we're at it, see if we're calling the real assert. It
+			// gets an extra argument pushed in the loop below.
+			isBuiltInAssert_ = false;
+			if (methodSelectorName_.equals("assert")) {
+				if (null != methodDecl) {
+					final MethodDeclaration originalMethodDeclaration = methodDecl.methodDeclaration();
+					if (null != originalMethodDeclaration) {
+						final StaticScope methodScope = originalMethodDeclaration.enclosedScope();
+						final String typePathName = methodScope.associatedDeclaration().type().pathName();
+						if (typePathName.equals("Object.")) {
+							isBuiltInAssert_ = true;
+						}
+					}
+				}
+			}
 			
 			if (null != methodDecl) {
 				// Now that the actual parameters are on the stack, let's
@@ -972,7 +1001,7 @@ public abstract class RTExpression extends RTCode {
 				name_ = name;
 			}
 			@Override public RTCode run() {
-			if (false == resultIsConsumed()) {
+				if (false == resultIsConsumed()) {
 					RunTimeEnvironment.runTimeEnvironment_.popStack();
 				}
 				return super.nextCode();
@@ -1015,14 +1044,13 @@ public abstract class RTExpression extends RTCode {
 					argList.addActualArgument(theArgument);
 				}
 			}
-			
-
-			
 			return argList;
 		}
+		
 		public boolean isStatic() {
 			return isStatic_;
 		}
+
 
 		private TemplateInstantiationInfo templateInstantiationInfo_;
 		private String methodSelectorName_;
@@ -1034,6 +1062,7 @@ public abstract class RTExpression extends RTCode {
 		private final RTPostReturnProcessing postReturnProcessing_;
 		private RTType nearestEnclosingType_;
 		private final boolean isStatic_;
+		private boolean isBuiltInAssert_;
 	}
 	
 	public static class RTDupMessage extends RTExpression {
@@ -1098,9 +1127,15 @@ public abstract class RTExpression extends RTCode {
 			if (null != declaringScope) {		// mainly in user program error situations
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
 				if (associatedDeclaration instanceof ContextDeclaration) {
-					final RoleDeclaration isItARole = declaringScope.lookupRoleDeclaration(name);
+					final RoleDeclaration isItARole = declaringScope.lookupRoleOrStagePropDeclaration(name);
 					if (null != isItARole) {
-						retval = new RTRoleIdentifier(name, expression);
+						if (isItARole instanceof StagePropDeclaration) {
+							retval = new RTStagePropIdentifier(name, expression);
+						} else if (isItARole instanceof RoleDeclaration) {
+							retval = new RTRoleIdentifier(name, expression);
+						} else {
+							assert false;
+						}
 					} else {
 						retval = new RTIdentifier(name, expression);
 					}
@@ -1169,7 +1204,7 @@ public abstract class RTExpression extends RTCode {
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
-					value = rTSelf.getRoleBinding(idName_);
+					value = rTSelf.getRoleOrStagePropBinding(idName_);
 					assert null != value;
 				} else {
 					assert false;
@@ -1241,7 +1276,7 @@ public abstract class RTExpression extends RTCode {
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
-					value = rTSelf.getRoleBinding(idName_);
+					value = rTSelf.getRoleOrStagePropBinding(idName_);
 					assert null != value;
 				} else {
 					// We need to get the role binding
@@ -1251,13 +1286,18 @@ public abstract class RTExpression extends RTCode {
 					assert tempContextPointer instanceof RTContextObject;
 					
 					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
-					value = contextPointer.getRoleBinding(idName_);
+					value = contextPointer.getRoleOrStagePropBinding(idName_);
 					assert null != value;
 				}
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
 			setLastExpressionResult(value);
 			return nextCode_;
+		}
+	}
+	public static class RTStagePropIdentifier extends RTRoleIdentifier {
+		public RTStagePropIdentifier(final String name, final IdentifierExpression expression) {
+			super(name, expression);
 		}
 	}
 	
@@ -1659,14 +1699,14 @@ public abstract class RTExpression extends RTCode {
 				String name = null;
 				if (lhs_ instanceof RTRoleIdentifier) {
 					final StaticScope declaringScope = ((RTRoleIdentifier)lhs_).declaringScope();
-					final RoleDeclaration lhsDecl = declaringScope.lookupRoleDeclaration(((RTRoleIdentifier)lhs_).name());
+					final RoleDeclaration lhsDecl = declaringScope.lookupRoleOrStagePropDeclaration(((RTRoleIdentifier)lhs_).name());
 					if (lhsDecl.isArray()) {
 						assert rhs instanceof RTArrayObject;
 						final RTArrayObject aRhs = (RTArrayObject)rhs;
 						assert lhs_ instanceof RTRoleIdentifier;
 						this.processRoleArrayBinding2(aRhs);
 					} else {
-						this.processRoleBinding(rhs);
+						this.processRoleOrStagePropBinding(rhs);
 					}
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
 					return staticNextCode_;
@@ -1745,7 +1785,7 @@ public abstract class RTExpression extends RTCode {
 				return staticNextCode_;
 			}
 			
-			private void processRoleBinding(final RTObject rhs) {
+			private void processRoleOrStagePropBinding(final RTObject rhs) {
 				// Role binding is unlike ordinary assignment in many ways. The Role
 				// name is allowed to bind both to a class-like entity (a Role declaration)
 				// that bears the methods for the role, and to the object playing that
@@ -1777,7 +1817,13 @@ public abstract class RTExpression extends RTCode {
 				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
 				
 				assert contextScope.rTType() instanceof RTContext;
-				contextScope.setRoleBinding(lhs.name(), rhs);
+				if (lhs instanceof RTStagePropIdentifier) {
+					contextScope.setStagePropBinding(lhs.name(), rhs);
+				} else if (lhs instanceof RTRoleIdentifier) {
+					contextScope.setRoleBinding(lhs.name(), rhs);
+				} else {
+					assert false;
+				}
 			}
 			
 			private void processRoleArrayBinding2(final RTArrayObject rhs) {
@@ -1964,7 +2010,7 @@ public abstract class RTExpression extends RTCode {
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
 				final RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
-				rTConstructor_ = new RTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
+				rTConstructor_ = RTMessage.makeRTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
 				
 				// In the past, there was code in RTContext::run that checked to see if
 				// rTConstructor was set and, if so, put t$his in the activation record
@@ -2002,6 +2048,9 @@ public abstract class RTExpression extends RTCode {
 				newlyCreatedObject = new RTContextObject(rTType_);
 				for (final String iter : ((RTContext)rTType_).isRoleArrayMapEntries()) {
 					((RTContextObject)newlyCreatedObject).designateRoleAsArray(iter);
+				}
+				for (final String iter : ((RTContext)rTType_).isStagePropArrayMapEntries()) {
+					((RTContextObject)newlyCreatedObject).designateStagePropAsArray(iter);
 				}
 			} else if (classType_.name().startsWith("List<")) {
 				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
@@ -2052,6 +2101,20 @@ public abstract class RTExpression extends RTCode {
 						downcastObject.addRoleDeclaration(name, roleDeclIter.getValue());
 						final RTNullObject nullObject = new RTNullObject();
 						downcastObject.setRoleBinding(name, nullObject);
+						nullObject.decrementReferenceCount();
+					}
+				}
+				
+				
+				// ... and StageProps
+				final Map<String, RTStageProp> nameToStagePropDeclMap = rTType_.nameToStagePropDeclMap();
+				for (final Map.Entry<String, RTStageProp> stagePropDeclIter : nameToStagePropDeclMap.entrySet()) {
+					final String name = stagePropDeclIter.getKey();
+					final RTStageProp theStageProp = stagePropDeclIter.getValue();
+					if (theStageProp.isArray() == false) {
+						downcastObject.addStagePropDeclaration(name, stagePropDeclIter.getValue());
+						final RTNullObject nullObject = new RTNullObject();
+						downcastObject.setStagePropBinding(name, nullObject);
 						nullObject.decrementReferenceCount();
 					}
 				}
@@ -3240,6 +3303,8 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTObject postDecrement() { return rTExpr_.postDecrement(); }
 		@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) { assert false; }
 		@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {  assert false; }
+		@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) { assert false; }
+		@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {  assert false; }
 		@Override public boolean equals(final RTObject other) { assert false; return false; }
 		
 		protected RTObject rTExpr_;
@@ -3742,6 +3807,9 @@ public abstract class RTExpression extends RTCode {
 		assert false;
 	}
 	public void setRoleBinding(final String name, final RTObject value) {
+		assert false;
+	}
+	public void setStagePropBinding(final String name, final RTObject value) {
 		assert false;
 	}
 	

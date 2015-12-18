@@ -130,6 +130,11 @@ public class RTArrayType implements RTType {
 		return null;
 	}
 
+	@Override public Map<String, RTStageProp> nameToStagePropDeclMap() {
+		assert false;
+		return null;
+	}
+
 	@Override public String name() {
 		return null;
 	}

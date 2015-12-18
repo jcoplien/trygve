@@ -252,6 +252,14 @@ public class RTMethod extends RTCode {
 		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classOrRoleOrContextScope);
 		return rTType;
 	}
+	
+	public boolean isClassMethod() {
+		final StaticScope methodsScope = methodDeclaration_.enclosedScope();
+		final Type megaType = Expression.nearestEnclosingMegaTypeOf(methodsScope);
+		final boolean retval = megaType instanceof ClassType;
+		return retval;
+	}
+
 
 	private String name_;
 	private RTCode[] code_;

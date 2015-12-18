@@ -33,6 +33,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		// An object IS a scope
 		
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 		object.incrementReferenceCount();
 		
 		// So far this is used only for debugging
@@ -42,6 +43,7 @@ public class RTDynamicScope extends RTObjectCommon {
 	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope) {
 		super((RTType)null);
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
+		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 		
 		// So far this is used only for debugging
 		methodSelector_ = methodSelector;
@@ -73,6 +75,13 @@ public class RTDynamicScope extends RTObjectCommon {
 			}
 		}
 		
+		for (Map.Entry<String, RTObject> iter : nameToStagePropBindingMap_.entrySet()) {
+			final RTObject boundToStageProp = iter.getValue();
+			if (null != boundToStageProp) {
+				boundToStageProp.decrementReferenceCount();
+			}
+		}
+		
 		for (Map.Entry<String, RTObject> iter : objectMembers_.entrySet()) {
 			final RTObject boundToLocalIdentifier = iter.getValue();
 			if (null != boundToLocalIdentifier) {
@@ -96,22 +105,40 @@ public class RTDynamicScope extends RTObjectCommon {
 		return retval;
 	}
 	
-	public void setRoleBinding(String name, RTObject value) {
+	public void setRoleBinding(final String name, final RTObject value) {
 		value.incrementReferenceCount();
 		nameToRoleBindingMap_.put(name, value);
 	}
-	public RTObject getRoleBinding(String name) {
+	public RTObject getRoleBinding(final String name) {
 		RTObject retval = null;
 		if (nameToRoleBindingMap_.containsKey(name)) {
 		   	retval = nameToRoleBindingMap_.get(name);
 	    } else {
 	    	retval = new RTNullObject();
-		    
 	    }
 		return retval;
 	}
+	
+	public void setStagePropBinding(final String name, final RTObject value) {
+		value.incrementReferenceCount();
+		nameToStagePropBindingMap_.put(name, value);
+	}
+	public RTObject getStagePropBinding(final String name) {
+		RTObject retval = null;
+		if (nameToStagePropBindingMap_.containsKey(name)) {
+		   	retval = nameToStagePropBindingMap_.get(name);
+	    } else {
+	    	retval = new RTNullObject();
+	    }
+		return retval;
+	}
+	
+	
 	public Map<String, RTObject> roleBindings() {
 		return nameToRoleBindingMap_;
+	}
+	public Map<String, RTObject> stagePropBindings() {
+		return nameToStagePropBindingMap_;
 	}
 	public RTDynamicScope parentScope() {
 		return parentScope_;
@@ -121,7 +148,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		return this;
 	}
 		
-	private final Map<String, RTObject> nameToRoleBindingMap_;
+	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
 	
 	@SuppressWarnings("unused")

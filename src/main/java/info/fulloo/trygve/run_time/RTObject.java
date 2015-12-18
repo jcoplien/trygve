@@ -57,6 +57,8 @@ public interface RTObject extends RTStackable {
 	public long referenceCount();
 	public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance);
 	public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance);
+	public void enlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance);
+	public void unenlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance);
 	public boolean equals(final RTObject other);
 	public int hashCode();
 }

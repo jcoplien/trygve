@@ -45,6 +45,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		referenceCount_ = 1;
 		theArray_ = new RTObject[size_];
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		stagePropsIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
 	public Type baseType() {
@@ -203,6 +204,35 @@ public class RTArrayObject implements RTObject, RTIterable {
 			assert false;
 		}
 	}
+	@Override public void enlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		List<String> stagePropsIAmPlayingHere = null;
+		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
+			;  // rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+		} else {
+			stagePropsIAmPlayingHere = new ArrayList<String>();
+			stagePropsIAmPlayingInContext_.put(contextInstance, stagePropsIAmPlayingHere);
+		}
+		int count = 0;
+		for (final Map.Entry<RTContextObject, List<String>> iter : stagePropsIAmPlayingInContext_.entrySet()) {
+			count += iter.getValue().size();
+		}
+		if ((1 < count) && (1 < stagePropsIAmPlayingInContext_.size())) {
+			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+					" playing too many roles, including ", roleName);
+		}
+	}
+	@Override public void unenlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		List<String> rolesIAmPlayingHere = null;
+		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
+			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+			rolesIAmPlayingHere.remove(roleName);
+			if (0 == rolesIAmPlayingHere.size()) {
+				rolesIAmPlayingInContext_.remove(contextInstance);
+			}
+		} else {
+			assert false;
+		}
+	}
 	
 	
 	public RTObject performUnaryOpOnObject(RTObject theIndex, String operation, PreOrPost preOrPost) {
@@ -248,6 +278,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 			theArray_[j] = theArray_[j].dup();
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		stagePropsIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	public RTIterator makeIterator() {
 		final RTIterator retval = new RTArrayIterator(this);
@@ -286,6 +317,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 	private final Type baseType_;
 	private final int size_;
 	private int referenceCount_;
-	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
+	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_,
+						stagePropsIAmPlayingInContext_;
 	private final RTArrayType rTArrayType_;
 }

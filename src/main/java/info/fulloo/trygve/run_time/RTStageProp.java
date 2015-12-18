@@ -30,7 +30,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 
-public class RTStageProp extends RTClassAndContextCommon implements RTType  {
+public class RTStageProp extends RTClassAndContextCommon implements RTType {
 	public RTStageProp(final StagePropDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		associatedDeclaration_ = associatedDeclaration;
@@ -75,6 +75,9 @@ public class RTStageProp extends RTClassAndContextCommon implements RTType  {
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		return new LinkedHashMap<String, RTRole>();
+	}
+	@Override public Map<String, RTStageProp> nameToStagePropDeclMap() {
+		return new LinkedHashMap<String, RTStageProp>();
 	}
 	public boolean isArray() {
 		return associatedDeclaration_ instanceof StagePropArrayDeclaration;

@@ -49,7 +49,7 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/new_luhnvalidation.k";
+	private final static String defaultFile = "tests/chord_identifier.k";
     
     private File fileName = new File("noname");
     

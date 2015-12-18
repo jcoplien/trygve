@@ -136,6 +136,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		assert false;
 		return null;
 	}
+	@Override public Map<String, RTStageProp> nameToStagePropDeclMap() {
+		assert false;
+		return null;
+	}
 	/*
 	protected void populateNameToMethodMap() {
 		final List<MethodDeclaration> methodDeclarations = typeDeclaration_.enclosedScope().methodDeclarations();
@@ -219,6 +223,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTIntegerObject lineNumber = (RTIntegerObject)dynamicScope.getObject("lineNumber");
 				final RTStackable tfArg = dynamicScope.getObject("tf");
 				assert tfArg instanceof RTBooleanObject;
 				final RTBooleanObject booleanObject = (RTBooleanObject)tfArg;
@@ -228,7 +233,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					assert msgArg instanceof RTStringObject;
 					final RTStringObject stringObject = (RTStringObject)msgArg;
 					final String msg = stringObject.stringValue();
-					System.err.format("Assertion failed: %s: ", msg);
+					System.err.format("Line %d: Assertion failed: %s\n", lineNumber.intValue(), msg);
 				}
 				final RTCode retval = tf? super.nextCode(): new RTHalt();
 				return retval;
@@ -245,12 +250,13 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTIntegerObject lineNumber = (RTIntegerObject)dynamicScope.getObject("lineNumber");
 				final RTStackable tfArg = dynamicScope.getObject("tf");
 				assert tfArg instanceof RTBooleanObject;
 				final RTBooleanObject booleanObject = (RTBooleanObject)tfArg;
 				final boolean tf = booleanObject.value();
 				if (!tf) {
-					System.err.format("Assertion failed.");
+					System.err.format("Line %d: Assertion failed.\n", lineNumber.intValue());
 				}
 				final RTCode retval = tf? super.nextCode(): new RTHalt();
 				return retval;
