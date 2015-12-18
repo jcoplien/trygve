@@ -25,8 +25,6 @@ class Note {
         if(name_ == "G")  pos = 8.0;
         if(name_ == "G#") pos = 9.0;
         if(name_ == "Ab") pos = 9.0;
-        // NOTE: Compiler warning here
-        // WARNING: Substituting double object for `10' in assignment to `pos'.
         if(name_ == "A")  pos = 10.0;
         if(name_ == "A#") pos = 11.0;
         if(name_ == "Bb") pos = 11.0;
@@ -95,7 +93,6 @@ Object of type Note playing too many roles, including HighNote
 }
 
 /* GOLD:
-line 30: WARNING: Substituting double object for `10' in assignment to `pos'.
 ___________________________________________________________
 A to C: 1.5 semitones.
 C to A: 4.5 semitones.
