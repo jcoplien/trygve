@@ -91,9 +91,11 @@ public class TestRunner {
 		"andreas2.k",
 		"andreas3.k",
 		"andreas4.k",
+		"assertbug1.k",
 		"luhnvalidation.k",
 		"new_luhnvalidation.k",
 		"chord_identifier.k",
+		"chord_identifier2.k"
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

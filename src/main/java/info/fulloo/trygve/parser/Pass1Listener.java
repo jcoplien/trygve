@@ -2226,7 +2226,7 @@ public class Pass1Listener extends KantBaseListener {
 
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		final BlockExpression blockExpression = new BlockExpression(ctx.getStart().getLine(), newList, currentScope_, enclosingMegaType);
-		currentScope_.setDeclaration(oldScope.associatedDeclaration());	/// hmmm....
+		currentScope_.setDeclaration(null);	/// hmmm....
 		
 		parsingData_.pushBlockExpression(blockExpression);
 	}
@@ -2374,7 +2374,7 @@ public class Pass1Listener extends KantBaseListener {
 		// registered. We fill in the meat in exitFor_expr
 		final ForExpression forExpression = new ForExpression(null, null, null, null, newScope,
 				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass());
-		newScope.setDeclaration(currentScope_.associatedDeclaration());	/// hmmm....
+		newScope.setDeclaration(null);	/// hmmm....
 		
 		currentScope_ = newScope;
 		parsingData_.pushForExpression(forExpression);
@@ -2418,7 +2418,9 @@ public class Pass1Listener extends KantBaseListener {
 			//  | 'for' '(' object_decl expr ';' expr ')' expr
 			final Expression body = parsingData_.popExpression();
 			final Expression increment = parsingData_.popExpression();
-			final Expression conditional = parsingData_.popExpression();
+			final Expression conditional = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
 			expression = parsingData_.popForExpression();
 			
 			body.setResultIsConsumed(false);
@@ -3485,7 +3487,7 @@ public class Pass1Listener extends KantBaseListener {
 				object = new NullExpression();
 			}
 		} else {
-			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			if (null == enclosingMegaType) {
 				object = new NullExpression();
@@ -3796,7 +3798,7 @@ public class Pass1Listener extends KantBaseListener {
 		final String idName = ctxJAVA_ID.getText();
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(idName);
-		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 		if (idName.equals("index")) {
 			// This is a legal identifier if invoked from within the
 			// scope of a Role, where the Role is declared as a Role
@@ -3852,7 +3854,7 @@ public class Pass1Listener extends KantBaseListener {
 			} else if (null == declaringScope) {
 				// NOTE: This will also lump in references to Role identifiers
 				// They are distinguished by their enclosing scope
-				declaringScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				declaringScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			}
 				
 			if (null == type) {
@@ -3899,6 +3901,10 @@ public class Pass1Listener extends KantBaseListener {
 			} else if (walker instanceof Argument_listContext) {
 				;
 			} else if (walker instanceof MessageContext) {
+				;
+			} else if (walker instanceof BlockContext) {
+				;
+			} else if (walker instanceof For_exprContext) {
 				;
 			} else {
 				assert false;

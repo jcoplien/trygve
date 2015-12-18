@@ -159,10 +159,10 @@ public class StaticScope {
 			reinitializeInt("Integer");
 			
 			reinitializeDouble(intType);
-		
-			reinitializeString(intType);
 			
 			reinitializeBoolean();
+		
+			reinitializeString(intType, globalScope_.lookupTypeDeclaration("boolean"));
 			
 			final Type voidType = new BuiltInType("void");
 			globalScope_.declareType(voidType);
@@ -324,9 +324,8 @@ public class StaticScope {
 		stringType.enclosedScope().declareMethod(methodDecl);
 	}
 	
-	private static void reinitializeString(final Type intType) {
+	private static void reinitializeString(final Type intType, final Type booleanType) {
 		final Type stringType = new BuiltInType("String");
-		final Type booleanType = new BuiltInType("boolean");
 		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 		assert null != objectBaseClass;
 		
@@ -668,7 +667,12 @@ public class StaticScope {
 							collision = true;
 							break;
 						} else {
-							assert false;	// not sure what's going on here
+							ErrorLogger.error(ErrorType.Warning,
+									decl.lineNumber(),
+									"WARNING: Method declaration for `",
+									decl.name(),
+									"' may hide method declared at line ",
+									String.valueOf(aDecl.lineNumber()));
 						}
 					}
 				}
@@ -1198,8 +1202,8 @@ public class StaticScope {
 			}
  			declarationEnclosingMegaType = associatedScopeDeclaration.type();
 		} else if (decl instanceof ObjectDeclaration) {
-			myEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(this);
-			declsEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(((ObjectDeclaration) decl).enclosingScope());
+			myEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(this);
+			declsEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(((ObjectDeclaration) decl).enclosingScope());
 		} else {
 			declarationEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(decl.type().enclosedScope());
 		}

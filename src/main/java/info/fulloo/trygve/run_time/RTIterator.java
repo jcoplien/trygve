@@ -109,6 +109,9 @@ public abstract class RTIterator implements RTObject {
 	@Override public boolean gt(RTObject another) { assert false; return false; }
 	@Override public RTObject plus(RTObject other) { assert false; return null; }
 	@Override public RTObject minus(RTObject other) { assert false; return null; }
+	@Override public RTObject logicalAnd(final RTObject other) { assert false; return null; }
+	@Override public RTObject logicalOr(final RTObject other) { assert false; return null; }
+	@Override public RTObject logicalXor(final RTObject other) { assert false; return null; }
 	@Override public RTObject times(RTObject other) { assert false; return null; }
 	@Override public RTObject divideBy(RTObject other) { assert false; return null; }
 	@Override public RTObject modulus(RTObject other) { assert false; return null; }

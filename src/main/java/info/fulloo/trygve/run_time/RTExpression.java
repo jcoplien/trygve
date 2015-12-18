@@ -1273,6 +1273,9 @@ public abstract class RTExpression extends RTCode {
 			} else {
 				// WARNING. This is a bit presumptuous and needs work. TODO.
 				final RTObject self = scope.getObject("this");
+				if (null == self) {
+					assert null != self;
+				}
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
@@ -3291,6 +3294,9 @@ public abstract class RTExpression extends RTCode {
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }
 		@Override public RTObject plus(final RTObject other) { return rTExpr_.plus(other); }
 		@Override public RTObject minus(final RTObject other) { return rTExpr_.minus(other); }
+		@Override public RTObject logicalAnd(final RTObject other) { assert false; return null; }
+		@Override public RTObject logicalOr(final RTObject other) { assert false; return null; }
+		@Override public RTObject logicalXor(final RTObject other) { assert false; return null; }
 		@Override public RTObject times(final RTObject other) { return rTExpr_.times(other); }
 		@Override public RTObject divideBy(final RTObject other) { return rTExpr_.divideBy(other); }
 		@Override public RTObject modulus(final RTObject other) { return rTExpr_.modulus(other); }
@@ -3422,6 +3428,12 @@ public abstract class RTExpression extends RTCode {
 					result = lhs.plus(rhs);
 				} else if (operator_.equals("-")) {
 					result = lhs.minus(rhs);
+				} else if (operator_.equals("||")) {
+					result = lhs.logicalOr(rhs);
+				} else if (operator_.equals("&&")) {
+					result = lhs.logicalAnd(rhs);
+				} else if (operator_.equals("^")) {
+					result = lhs.logicalXor(rhs);
 				} else {
 					assert false;
 				}

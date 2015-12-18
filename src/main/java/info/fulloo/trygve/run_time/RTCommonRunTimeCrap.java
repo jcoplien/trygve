@@ -49,6 +49,18 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return null;
 	}
+	@Override public RTObject logicalAnd(final RTObject other) {
+		assert false;
+		return null;
+	}
+	@Override public RTObject logicalOr(final RTObject other) {
+		assert false;
+		return null;
+	}
+	@Override public RTObject logicalXor(final RTObject other) {
+		assert false;
+		return null;
+	}
 	@Override public RTObject times(RTObject other) {
 		assert false;
 		return null;

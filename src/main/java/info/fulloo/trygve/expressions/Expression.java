@@ -1524,15 +1524,21 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return retval;
 	}
 	
-	public static StaticScope nearestEnclosingMethodScopeOf(StaticScope scope) {	// FIXME? Not static.
-		while (scope != StaticScope.globalScope()) {
-			final Declaration associatedDeclaration = scope.associatedDeclaration();
+	public static StaticScope nearestEnclosingMethodScopeAround(final StaticScope scopeArg) {
+		StaticScope scopeRunner = scopeArg, retval = null;
+		while (scopeRunner != StaticScope.globalScope()) {
+			final Declaration associatedDeclaration = scopeRunner.associatedDeclaration();
+			
+			// NOTE: associatedDeclaration may be null for BlockDeclarations. No
+			// problem. Their parentScope field is still O.K., and we can just
+			// keep walking up the tree.
 			if (associatedDeclaration instanceof MethodDeclaration) {
-				return scope;
+				retval = scopeRunner;
+				break;
 			}
-			scope = scope.parentScope();
+			scopeRunner = scopeRunner.parentScope();
 		}
-		return null;
+		return retval;
 	}
 	protected String forgeLabel() {
 		labelCounter_++;

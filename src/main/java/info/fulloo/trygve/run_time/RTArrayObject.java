@@ -141,6 +141,18 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
+	@Override public RTObject logicalAnd(final RTObject other) {
+		assert false;
+		return null;
+	}
+	@Override public RTObject logicalOr(final RTObject other) {
+		assert false;
+		return null;
+	}
+	@Override public RTObject logicalXor(final RTObject other) {
+		assert false;
+		return null;
+	}
 	@Override public RTObject unaryPlus() {
 		assert false;
 		return null;

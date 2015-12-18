@@ -355,7 +355,7 @@ public class Pass2Listener extends Pass1Listener {
 				// do something useful
 				
 				final Type contextType = Expression.nearestEnclosingMegaTypeOf(roleDecl.enclosedScope());
-				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope);
 				final Expression roleNameInvocation = new QualifiedIdentifierExpression(currentContext, roleName, roleDecl.type());
 				expression = new RoleArrayIndexExpression(roleName, roleNameInvocation, indexExpr);
@@ -524,7 +524,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		MethodDeclaration methodDeclaration = null;
 		Expression object = null, retval = null;
-		final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+		final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		
 		// Pop the expression for the indicated object and message
@@ -825,6 +825,29 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		}
 	}
+	
+	/*private static StaticScope nearestEnclosingProcedureScope(final StaticScope scope) {
+		// See if we are inside a method. If so, return the method scope.
+		StaticScope retval = null;
+		for(StaticScope current = scope; null != current; current = scope.parentScope()) {
+			final Declaration associatedDeclaration = scope.associatedDeclaration();
+			if (associatedDeclaration instanceof MethodDeclaration) {
+				retval = scope; break;
+				
+			// For these, we don't look any further. End of the line...
+			} else if (associatedDeclaration instanceof ClassDeclaration) {
+				break;
+			} else if (associatedDeclaration instanceof RoleDeclaration) {
+				break;
+			} else if (associatedDeclaration instanceof ContextDeclaration) {
+				break;
+			}
+			
+			// For the rest (blocks, loop "blocks", etc.) we just keep going
+		}
+		return retval;
+	}
+	*/
 
 	@Override public Expression idExpr(TerminalNode ctxJAVA_ID, Token ctxGetStart) {
 		// | JAVA_ID
@@ -850,7 +873,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (declaringScope == megaTypeScope) {
 				// Then it's a member of an object of the current class / context
 				// Probably better to make it a qualified identifier
-				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
 				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope);
 				retval = new QualifiedIdentifierExpression(self, idText, type);
@@ -871,10 +894,11 @@ public class Pass2Listener extends Pass1Listener {
 			declaringScope = aRoleDecl.enclosingScope();
 			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
 		} else {
-			final StaticScope possibleProcedureScope = currentScope_;
-			final StaticScope possibleRoleScope = null == possibleProcedureScope? null: possibleProcedureScope.parentScope();
+			final StaticScope possibleMethodName = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+			final StaticScope possibleRoleScope = null == possibleMethodName? null: possibleMethodName.parentScope();
 			final StaticScope possibleContextScope = null ==  possibleRoleScope? null: possibleRoleScope.parentScope();
 			final Declaration associatedDeclaration = null == possibleContextScope? null: possibleContextScope.associatedDeclaration();
+			
 			if (null != possibleRoleScope && idText.equals("index")) {
 				// It's O.K.
 				final RoleDeclaration roleDeclaration = (RoleDeclaration)possibleRoleScope.associatedDeclaration();
@@ -963,7 +987,7 @@ public class Pass2Listener extends Pass1Listener {
 					// Good. It also exists in the base class
 					if (baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
 						final Type type = baseClassInstance.type();
-						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeOf(currentScope_);
+						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope);
 						self.setResultIsConsumed(true);
 						retval = new QualifiedIdentifierExpression(self, idName, type);

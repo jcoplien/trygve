@@ -44,6 +44,9 @@ public interface RTObject extends RTStackable {
 	public RTObject modulus(final RTObject other);
 	public RTObject unaryPlus();
 	public RTObject unaryMinus();
+	public RTObject logicalOr(final RTObject other);
+	public RTObject logicalAnd(final RTObject other);
+	public RTObject logicalXor(final RTObject other);
 	public RTObject unaryLogicalNegation();
 	public RTObject preIncrement();
 	public RTObject postIncrement();

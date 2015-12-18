@@ -50,7 +50,7 @@ public class Message {
 	public String getText() {
 		String argumentListString = null, selectorNameString = null;
 		if (null == argumentList_) {
-			argumentListString = "<no arguments>";
+			argumentListString = "()";
 		} else {
 			// If we ever need self: final Expression zerothArgument = argumentList_.parameterAtPosition(0);
 			final ActualArgumentList justTheArgs = new ActualArgumentList();
@@ -64,7 +64,7 @@ public class Message {
 		} else {
 			selectorNameString = selectorName_;
 		}
-		final String retval = selectorNameString + "(" + argumentListString + ")";
+		final String retval = selectorNameString + argumentListString;
 		return retval;
 	}
 	public void addActualThisParameter(final Expression objectForWhichMethodIsInvoked) {

@@ -136,21 +136,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
-		// Refactor!
 		List<String> stagePropsIAmPlayingHere = null;
-		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
-			stagePropsIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
+		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
+			stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
 		} else {
 			stagePropsIAmPlayingHere = new ArrayList<String>();
 			stagePropsIAmPlayingInContext_.put(contextInstance, stagePropsIAmPlayingHere);
 		}
 		
 		stagePropsIAmPlayingHere.add(stagePropName);
-		
-		int count = 0;
-		for (final Map.Entry<RTContextObject, List<String>> iter : stagePropsIAmPlayingInContext_.entrySet()) {
-			count += iter.getValue().size();
-		}
 	}
 	
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
@@ -167,9 +161,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	
 	@Override public void unenlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
-			final List<String> rolesIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
-			rolesIAmPlayingHere.remove(roleName);
-			if (0 == rolesIAmPlayingHere.size()) {
+			final List<String> stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
+			stagePropsIAmPlayingHere.remove(roleName);
+			if (0 == stagePropsIAmPlayingHere.size()) {
 				stagePropsIAmPlayingInContext_.remove(contextInstance);
 			}
 		} else {
@@ -817,6 +811,27 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				retval = false;
 			}
 			return retval;
+		}
+		@Override public RTObject logicalAnd(final RTObject other) {
+			boolean answer = false;
+			if (other instanceof RTBooleanObject) {
+				answer = foobar_ && ((RTBooleanObject)other).foobar_;
+			}
+			return new RTBooleanObject(answer);
+		}
+		@Override public RTObject logicalOr(final RTObject other) {
+			boolean answer = false;
+			if (other instanceof RTBooleanObject) {
+				answer = foobar_ || ((RTBooleanObject)other).foobar_;
+			}
+			return new RTBooleanObject(answer);
+		}
+		@Override public RTObject logicalXor(final RTObject other) {
+			boolean answer = false;
+			if (other instanceof RTBooleanObject) {
+				answer = foobar_ ^ ((RTBooleanObject)other).foobar_;
+			}
+			return new RTBooleanObject(answer);
 		}
 		
 		private boolean foobar_;
