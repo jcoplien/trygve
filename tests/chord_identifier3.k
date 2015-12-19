@@ -64,7 +64,6 @@ context Interval {
 context Chord {
     stageprop Root {} requires {
         int position() const;
-        // NOTE: Doesn't compile with the name method included
         String name() const;
     }
 
@@ -75,10 +74,8 @@ context Chord {
 
         public boolean hasInterval(double semitones) {
             for(int i = 1; i < this.size(); i++) {
-                // NOTE: Cannot access Root.position here.
-                // Exception in thread "AWT-EventQueue-0" java.lang.AssertionError
                   int pos = Root.position();
-//                System.out.println(pos);
+                  System.out.println(pos);
                 
                 // NOTE: Cannot use Root for duck typing:
 //                Interval i = new Interval(Root, this.get(i));
@@ -119,3 +116,14 @@ context Chord {
     Chord chord = new Chord(notes);
     System.out.println(chord.name());
 }
+
+/* GOLD:
+line 65: WARNING: Method declaration for `name' may hide method declared at line 100
+___________________________________________________________
+2
+made it through assert
+1
+1
+false
+Chord::name
+*/

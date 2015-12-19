@@ -1271,8 +1271,9 @@ public abstract class RTExpression extends RTCode {
 				value = activationRecord.getObject(idName_);
 				assert null != value;
 			} else {
-				// WARNING. This is a bit presumptuous and needs work. TODO.
-				final RTObject self = scope.getObject("this");
+				// WARNING. This is a bit presumptuous and needs work.
+				// It's a bit better now...
+				final RTObject self = scope.getObjectRecursive("this");
 				if (null == self) {
 					assert null != self;
 				}
@@ -1284,8 +1285,10 @@ public abstract class RTExpression extends RTCode {
 				} else {
 					// We need to get the role binding
 					final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-					final RTObject tempContextPointer = currentScope.getObject("current$context");
-					assert null != tempContextPointer;
+					final RTObject tempContextPointer = currentScope.getObjectRecursive("current$context");
+					if (null == tempContextPointer) {
+						assert null != tempContextPointer;
+					}
 					assert tempContextPointer instanceof RTContextObject;
 					
 					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
@@ -3049,7 +3052,8 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			RTCode retval = null;
 			if (expressionList_.size() > 0) {
-				retval = expressionList_.get(0).run();
+				final RTCode doit = expressionList_.get(0);
+				retval = doit.run();
 			} else {
 				retval = this.nextCode();
 			}
@@ -3840,6 +3844,9 @@ public abstract class RTExpression extends RTCode {
 	}
 	public static final RTObject lastExpressionResult() {
 		return lastExpressionResult_;
+	}
+	public static void reboot() {
+		lastExpressionResult_ = null;
 	}
 	
 	protected final static Stack<RTSwitch> switchStack_ = new Stack<RTSwitch>();

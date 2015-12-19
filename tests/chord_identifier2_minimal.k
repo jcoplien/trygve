@@ -92,22 +92,13 @@ context Chord {
     }
 
     public Chord(List<Note> notes) {
-        System.out.println("Chord::notes");
-        System.out.println(notes.size());
-        assert(notes.size() > 1, "Chord must have more than one note.");
-//        Note root = notes.get(0);
-//        System.out.println(root.name());
-//        Root = root;
-//        Notes = notes;
+
     }
 
     public String name() {
-//        Notes.hasInterval(1.0);
         return "Chord::name";
     }
 }
-
-// ----- Start -------------------------------
 
 {
     List<Note> notes = new List<Note>();
@@ -117,46 +108,9 @@ context Chord {
 
     System.out.println(notes.get(0).name());
     Chord chord = new Chord(notes);
-//    System.out.println(chord.name());
 }
-
-
-// -----------------------------------------
-
-/*
-{
-    Interval I = new Interval(A,C);
-    System.out.print(A.name() + " to " + C.name() + ": ");
-    System.out.print(I.semitones());
-    System.out.println(" semitones.");
-
-NOTE: What's happening here?
-Object of type Note playing too many roles, including LowNote
-	In Context Interval: HighNote.
-	In Context Interval: LowNote.
-Object of type Note playing too many roles, including HighNote
-	In Context Interval: LowNote.
-	In Context Interval: HighNote.
-    Interval I2 = new Interval(C,A);
-    System.out.print(C.name() + " to " + A.name() + ": ");
-    System.out.print(I2.semitones());
-    System.out.println(" semitones.");
-}
-*/
-
-
-/*
- * NOTE: There is a kludge in testRunner to run this
- * particular test twice in a row to look for a
- * residual state bug. That's why the Gold stutters...
- */
 
 /* GOLD:
 ___________________________________________________________
 C
-Chord::notes
-3
-C
-Chord::notes
-3
 */

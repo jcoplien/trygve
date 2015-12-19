@@ -40,14 +40,15 @@ import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
 // Doubles for classes and contexts
 public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
 	public RTObjectCommon(final RTType classs) {
+		super();
 		classOrContext_ = classs;
 		objectMembers_ = new LinkedHashMap<String, RTObject>();
 		rTTypeMap_ = new LinkedHashMap<String, RTType>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 		stagePropsIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
-		referenceCount_ = 1;
 	}
 	protected RTObjectCommon(final RTObject object) {
+		super();
 		// Used to define RTDynamicScope
 		if (object instanceof RTObjectCommon == false) {
 			assert object instanceof RTObjectCommon;
@@ -57,7 +58,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		rTTypeMap_ = ((RTObjectCommon)object).objectDeclarations();
 		rolesIAmPlayingInContext_ = ((RTObjectCommon)object).rolesIAmPlayingInContext_;
 		stagePropsIAmPlayingInContext_ = ((RTObjectCommon)object).stagePropsIAmPlayingInContext_;
-		referenceCount_ = 1;
 	}
 	@Override public boolean isEqualTo(final Object other) {
 		return this == other;
@@ -955,6 +955,4 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	private final Map<String, RTType> rTTypeMap_;
 	private Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
 	private Map<RTContextObject, List<String>> stagePropsIAmPlayingInContext_;
-	
-	private long referenceCount_;
 }

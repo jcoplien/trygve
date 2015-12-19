@@ -34,10 +34,6 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 public class RTRole extends RTClassAndContextCommon implements RTType {
 	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
-		if (associatedDeclaration.name().equals("CheckDigit")) {
-			int k = 0;
-			k++;
-		}
 		associatedDeclaration_ = associatedDeclaration;
 		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 		populateNameToStaticObjectMap();

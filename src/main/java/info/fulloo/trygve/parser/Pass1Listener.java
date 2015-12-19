@@ -2219,7 +2219,6 @@ public class Pass1Listener extends KantBaseListener {
 		//	: '{' expr_and_decl_list '}'
         //	| '{' '}'
 		// Set up the block
-		final StaticScope oldScope = currentScope_;
 		currentScope_ = new StaticScope(currentScope_, true);
 		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart().getLine());
 		parsingData_.pushExprAndDecl(newList);
@@ -2374,7 +2373,7 @@ public class Pass1Listener extends KantBaseListener {
 		// registered. We fill in the meat in exitFor_expr
 		final ForExpression forExpression = new ForExpression(null, null, null, null, newScope,
 				ctx.getStart().getLine(), parsingDataArgumentAccordingToPass());
-		newScope.setDeclaration(null);	/// hmmm....
+		newScope.setDeclaration(null);	/// hmmm.... TODO: Fix this for while and do/while loops too
 		
 		currentScope_ = newScope;
 		parsingData_.pushForExpression(forExpression);

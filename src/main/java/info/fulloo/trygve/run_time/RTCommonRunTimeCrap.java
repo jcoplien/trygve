@@ -141,5 +141,5 @@ public class RTCommonRunTimeCrap implements RTObject {
 		return false;
 	}
 	
-	private int referenceCount_;
+	protected int referenceCount_;
 }

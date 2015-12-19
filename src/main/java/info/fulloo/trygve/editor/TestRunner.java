@@ -95,7 +95,9 @@ public class TestRunner {
 		"luhnvalidation.k",
 		"new_luhnvalidation.k",
 		"chord_identifier.k",
-		"chord_identifier2.k"
+		"chord_identifier3.k",
+		"chord_identifier2.k",
+		"chord_identifier2_minimal.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -182,6 +184,12 @@ public class TestRunner {
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {
 			gui_.runButtonActionPerformed(null);
+			
+			// Special case - running this twice in a row
+			// is a problem
+			if (filename.equals("chord_identifier2.k")) {
+				gui_.runButtonActionPerformed(null);
+			}
 		}
 	}
 

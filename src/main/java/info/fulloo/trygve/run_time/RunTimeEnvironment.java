@@ -34,7 +34,6 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
-import info.fulloo.trygve.run_time.RTExpression.RTNullExpression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
@@ -55,6 +54,7 @@ public class RunTimeEnvironment {
 		runTimeEnvironment_ = theThis;
 	}
 	public void reboot() {
+		RTExpression.reboot();	// reset lastExpression_, etc.
 		stack = new Stack<RTStackable>();
 		dynamicScopes = new Stack<RTDynamicScope>();
 		framePointers_ = new Stack<IntWrapper>();
@@ -113,7 +113,7 @@ public class RunTimeEnvironment {
 		// argument to the constructor
 		handleMetaInits();
 		
-		final RTExpression exitNode = new RTNullExpression();
+		final RTExpression exitNode = new RTHalt();
 		mainExpr.setNextCode(exitNode);
 		
 		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null);

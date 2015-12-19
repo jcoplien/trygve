@@ -233,7 +233,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		}
 		public void removeStagePropPlayer(final String stagePropName, final RTObject stagePropPlayer) {
 			stagePropPlayers_.remove(stagePropName);
-			stagePropPlayer.unenlistAsRolePlayerForContext(stagePropName, rTContext_);
+			stagePropPlayer.unenlistAsStagePropPlayerForContext(stagePropName, rTContext_);
 		}
 		public void removeStagePropArrayPlayer(final String stagePropArrayName, final int theIndex) {
 			final Map<Integer,RTObject> stagePropPlayerArray = stagePropArrayPlayers_.get(stagePropArrayName);
@@ -253,22 +253,22 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			for (Map.Entry<String, RTObject> iter : stagePropPlayers_.entrySet()) {
 				final String stagePropName = iter.getKey();
 				if (this.isStagePropArray(stagePropName) == false) {
-					final RTObject rolePlayer = iter.getValue();
-					rolePlayer.unenlistAsStagePropPlayerForContext(stagePropName, rTContext_);
+					final RTObject stagePropPlayer = iter.getValue();
+					stagePropPlayer.unenlistAsStagePropPlayerForContext(stagePropName, rTContext_);
 				}
 			}
 			for (Map.Entry<String, Map<Integer, RTObject>> iter : roleArrayPlayers_.entrySet()) {
-				final String roleName = iter.getKey();
+				final String roleArrayName = iter.getKey();
 				for (Map.Entry<Integer, RTObject> iter2 : iter.getValue().entrySet()) {
-					final RTObject rolePlayer = iter2.getValue();
-					rolePlayer.unenlistAsRolePlayerForContext(roleName, rTContext_);
+					final RTObject rolePlayerArray = iter2.getValue();
+					rolePlayerArray.unenlistAsRolePlayerForContext(roleArrayName, rTContext_);
 				}
 			}
 			for (Map.Entry<String, Map<Integer, RTObject>> iter : stagePropArrayPlayers_.entrySet()) {
-				final String roleName = iter.getKey();
+				final String stagePropPlayerArrayName = iter.getKey();
 				for (Map.Entry<Integer, RTObject> iter2 : iter.getValue().entrySet()) {
-					final RTObject rolePlayer = iter2.getValue();
-					rolePlayer.unenlistAsStagePropPlayerForContext(roleName, rTContext_);
+					final RTObject stagePropPlayerArray = iter2.getValue();
+					stagePropPlayerArray.unenlistAsStagePropPlayerForContext(stagePropPlayerArrayName, rTContext_);
 				}
 			}
 		}

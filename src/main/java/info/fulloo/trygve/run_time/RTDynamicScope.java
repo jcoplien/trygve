@@ -28,7 +28,7 @@ import java.util.Map;
 
 
 public class RTDynamicScope extends RTObjectCommon {
-	public RTDynamicScope(String methodSelector, RTObject object, RTDynamicScope parentScope) {
+	public RTDynamicScope(final String methodSelector, final RTObject object, final RTDynamicScope parentScope) {
 		super(object);
 		// An object IS a scope
 		
@@ -146,6 +146,18 @@ public class RTDynamicScope extends RTObjectCommon {
 	public RTObject dup() {
 		assert false;
 		return this;
+	}
+	public RTObject getObjectRecursive(final String name) {
+		RTObject retval = null;
+		
+		for (RTDynamicScope self = this; self != null; self = self.parentScope()) {
+			retval = self.getObject(name);
+			if (null != retval) {
+				break;
+			}
+		}
+		
+		return retval;
 	}
 		
 	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
