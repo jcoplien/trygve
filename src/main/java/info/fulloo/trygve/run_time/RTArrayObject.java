@@ -106,10 +106,6 @@ public class RTArrayObject implements RTObject, RTIterable {
 		theArray_[theIndex] = rhs;
 		rhs.incrementReferenceCount();
 	}
-	@Override public Map<String, RTObject> objectMembers() {
-		assert false;
-		return null;
-	}
 	@Override public RTType rTType() {
 		return rTArrayType_;
 	}

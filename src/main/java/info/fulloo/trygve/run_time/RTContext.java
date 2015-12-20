@@ -117,9 +117,6 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 	@Override public void addObjectDeclaration(final String objectName, final RTType objectType) {
 		nameToTypeObjectMap_.put(objectName, objectType);
 	}
-	@Override public Map<String, RTObject> objectMembers() {
-		return nameToObjectDeclMap_;
-	}
 	@Override public void setObject(final String name, final RTObject value) {
 		nameToObjectDeclMap_.put(name, value);
 		value.incrementReferenceCount();

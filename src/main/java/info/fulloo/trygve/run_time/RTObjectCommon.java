@@ -54,7 +54,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			assert object instanceof RTObjectCommon;
 		}
 		classOrContext_ = object.rTType();
-		objectMembers_ = ((RTObjectCommon)object).objectMembers();
+		objectMembers_ = ((RTObjectCommon)object).objectMembers_;
 		rTTypeMap_ = ((RTObjectCommon)object).objectDeclarations();
 		rolesIAmPlayingInContext_ = ((RTObjectCommon)object).rolesIAmPlayingInContext_;
 		stagePropsIAmPlayingInContext_ = ((RTObjectCommon)object).stagePropsIAmPlayingInContext_;
@@ -62,8 +62,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	@Override public boolean isEqualTo(final Object other) {
 		return this == other;
 	}
-	@Override public Map<String, RTObject> objectMembers() { return objectMembers_; }
-	@Override public void setObject(String name, RTObject object) {
+	@Override public void setObject(final String name, final RTObject object) {
 		assert null != object;
 		if (objectMembers_.containsKey(name)) {
 			final RTObject oldObject = objectMembers_.get(name);
@@ -894,6 +893,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	public long referenceCount() {
 		return referenceCount_;
 	}
+	
+	// Special constructor only for cloning
 	private RTObjectCommon(final RTType classOrContext, final Map<String,RTObject> objectMembers, Map<String, RTType> rTTypeMap) {
 		super();
 		classOrContext_ = classOrContext;
@@ -923,7 +924,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				retval = false;
 			} else {
 				final RTObjectCommon commonOther = (RTObjectCommon)other;
-				if (objectMembers_.size() != commonOther.numberOfObjectMembers()) {
+				if (objectMembers_.size() != commonOther.objectMembers_.size()) {
 					retval = false;
 				} else {
 					for (final String aKey : objectMembers_.keySet()) {
@@ -946,9 +947,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		return retval;
 	}
+	/*
 	private int numberOfObjectMembers() {
 		return objectMembers_.size();
 	}
+	*/
 	
 	private final RTType classOrContext_;
 	protected final Map<String, RTObject> objectMembers_;

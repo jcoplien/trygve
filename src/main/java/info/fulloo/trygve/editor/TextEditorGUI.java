@@ -40,16 +40,11 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 
-/**
- *
- * @author  pawel
- */
-
 
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/chord_identifier2_minimal.k";
+	private final static String defaultFile = "tests/chord_identifier3.k";
     
     private File fileName = new File("noname");
     
@@ -471,7 +466,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	Arrays.sort(allURLs);
     	
     	
-    	char [] menuBreaks = { 'g', 'n', 'u', 'z' }; int j = 0;
+    	char [] menuBreaks = { 'g', 'n', 's', 'z' }; int j = 0;
 		JMenu submenu = new JMenu("a-f");
     	for (int i = 0; i < numberOfTestCases; i++) {
     		assert 'a' > 'A';
@@ -482,8 +477,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     		}
     		if (firstChar >= menuBreaks[j]) {
     			jMenu3.add(submenu);
-    			if (menuBreaks[j] != 'z') {
-	    			final String newRange = menuBreaks[j] + "-" + menuBreaks[j+1];
+    			if (j < menuBreaks.length && menuBreaks[j+1] == 'z') {
+    				final String newRange = menuBreaks[j] + "-" + 'z';
+	    			submenu = new JMenu(newRange);
+    			} else if (menuBreaks[j] != 'z') {
+	    			final String newRange = menuBreaks[j] + "-" + (char)(menuBreaks[j+1]-1);
 	    			submenu = new JMenu(newRange);
     			}
     			j++;

@@ -1930,12 +1930,15 @@ public class Pass1Listener extends KantBaseListener {
 				System.err.println("abelian_product : abelian_atom '.' message");
 			}
 		} else if (null != ctx.NEW()) {
-			// 'new' message
-			// 'new' type_name '[' expr ']'
+			// NEW message
+			// NEW type_name '[' expr ']'
 			
 			final KantParser.ExprContext sizeExprCtx = (null == ctx.expr())? null:
 														((ctx.expr().size() == 0)? null: ctx.expr(0));
-			expression = this.newExpr(ctx.children, ctx.getStart(), sizeExprCtx, ctx.message());
+			final List<ParseTree> ctxChildren = ctx.children;
+			final Token ctxGetStart = ctx.getStart();
+			final MessageContext ctxMessage = ctx.message();
+			expression = this.newExpr(ctxChildren, ctxGetStart, sizeExprCtx, ctxMessage);
 			
 			if (printProductionsDebug) {
 				System.err.print("expr : ");
@@ -3401,23 +3404,24 @@ public class Pass1Listener extends KantBaseListener {
 	
 	public <ExprType> Expression newExpr(final List<ParseTree> ctxChildren, final Token ctxGetStart,
 			final ExprType ctxExpr, final MessageContext ctxMessage) {
-		// : 'new' message
-		// | 'new' type_name '[' expr ']'
+		// : NEW message
+		// | NEW type_name '[' expr ']'
+		
 		// Called in all passes.
 		Expression expression = null;	// guaranteed non-null return
 		final Message message = parsingData_.popMessage();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null == ctxExpr && null != ctxMessage){
 			// : 'new' message
-			final String className = message.selectorName(); // I know -- kludge ...
-			final Type type = currentScope_.lookupTypeDeclarationRecursive(className);
+			final String classOrContextName = message.selectorName(); // I know -- kludge ...
+			final Type type = currentScope_.lookupTypeDeclarationRecursive(classOrContextName);
 			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false) {
 				if (type instanceof TemplateParameterType) {
 					// then it's Ok
 					expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 					addSelfAccordingToPass(type, message, currentScope_);
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", className, "': can apply `new' only to a class or Context type", "");
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", classOrContextName, "': can apply `new' only to a class or Context type", "");
 					expression = new NullExpression();
 				}
 			} else {
@@ -3452,6 +3456,7 @@ public class Pass1Listener extends KantBaseListener {
 		} else {
 			assert false;	// internal error of some kind
 		}
+		
 		assert null != expression;
 		return expression;
 	}

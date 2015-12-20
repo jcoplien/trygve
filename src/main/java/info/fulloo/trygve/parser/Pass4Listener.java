@@ -55,14 +55,14 @@ public class Pass4Listener extends Pass3Listener {
 					typeNameList);
 			if (null == type) {
 				errorHook5p2(ErrorType.Internal, ctx.getStart().getLine(),
-						"No type returned from commonTemplateInstantiationHandling: ",
+						"No Type returned from commonTemplateInstantiationHandling: ",
 						"instantiating a type in an expression: `",
 						ctx.getText(),
 						"'."
 						);
 			}
 			
-			// Push it back so the Pass 1 logic can use it...
+			// Push it back so the Pass 1 logic below can use it...
 			parsingData_.pushTypeNameList(typeNameList);
 		}
 		

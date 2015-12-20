@@ -25,10 +25,6 @@ public class RTCommonRunTimeCrap implements RTObject {
 		// and do everything with String selectors
 		assert false;
 	}
-	@Override public Map<String, RTObject> objectMembers() {
-		assert false;
-		return null;
-	}
 	@Override public RTType rTType() {
 		assert false;
 		return null;

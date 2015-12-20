@@ -27,7 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 
-public class RTDynamicScope extends RTObjectCommon {
+public final class RTDynamicScope extends RTObjectCommon {
 	public RTDynamicScope(final String methodSelector, final RTObject object, final RTDynamicScope parentScope) {
 		super(object);
 		// An object IS a scope
@@ -50,6 +50,7 @@ public class RTDynamicScope extends RTObjectCommon {
 		
 		parentScope_ = parentScope;
 	}
+	
 	public void setNamedSlotToValue(final String name, final RTObject value) {
 		if (objectMembers_.containsKey(name)) {
 			final RTObject oldValue = objectMembers_.get(name);
@@ -143,7 +144,7 @@ public class RTDynamicScope extends RTObjectCommon {
 	public RTDynamicScope parentScope() {
 		return parentScope_;
 	}
-	public RTObject dup() {
+	@Override public RTObject dup() {
 		assert false;
 		return this;
 	}

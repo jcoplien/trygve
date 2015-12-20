@@ -31,7 +31,6 @@ public interface RTContextInstance {
 	public void addObjectDeclaration(String objectName, RTType type);
 	public Map<String, RTType> objectDeclarations();
 	public void setObject(String objectName, RTObject object);
-	public Map<String, RTObject> objectMembers();
 	public RTType rTType();
 	
 	public void incrementReferenceCount();

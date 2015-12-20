@@ -95,9 +95,10 @@ public class TestRunner {
 		"luhnvalidation.k",
 		"new_luhnvalidation.k",
 		"chord_identifier.k",
-		"chord_identifier3.k",
 		"chord_identifier2.k",
 		"chord_identifier2_minimal.k",
+		"chord_identifier3_stripped.k",
+		// "chord_identifier3.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

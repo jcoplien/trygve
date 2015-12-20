@@ -427,7 +427,7 @@ public abstract class RTExpression extends RTCode {
 			final RTMessage retval = new RTMessage(name, messageExpr, nearestEnclosingType, scope,isStatic);
 			return retval;
 		}
-		public String msn() {		// for debugging only
+		public String methodSelectorName() {		// for debugging only
 			return methodSelectorName_;
 		}
 		public RTMessage(final String name, final MessageExpression messageExpr, final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
@@ -606,7 +606,7 @@ public abstract class RTExpression extends RTCode {
 					// The "this" parameter is a pointer to the Role Player, typed
 					// in terms of the Role Player's type.
 
-					// That implies that the call is invoking an instance method
+					// That implies for now that the call is invoking an instance method
 					// and not a role method. So:
 					
 					final RTObject rolePlayer = (RTObject)tempContextPointer;
@@ -751,10 +751,12 @@ public abstract class RTExpression extends RTCode {
 					// No declaration of current$context in the current scope.
 					// We're not a Role method. We are just a Context method.
 
-					// If we're not a Role method the right value to pass is
+					// If we're not a Role method the right value to pass for
+					// the current formal current$context parameter is
 					// the current value of "this" in the calling activation
 					// record. Set up for an extra push before everything else
-					// is pushed
+					// is pushed. It will be popped and added to the Role method's
+					// activation record.
 					final RTObject tempContextPointer = currentScope.getObject("this");
 					assert null != tempContextPointer;
 					assert tempContextPointer instanceof RTContextObject;
@@ -807,7 +809,8 @@ public abstract class RTExpression extends RTCode {
 			if (null != start && start instanceof RTIdentifier) {
 				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
 				if (startAsRTIdent.name().equals("current$context")) {
-					indexForThisExtraction = 1;	// now unused?
+					assert true;
+					indexForThisExtraction = 1;  
 					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
 				}
 			}
@@ -825,9 +828,9 @@ public abstract class RTExpression extends RTCode {
 				typeOfThisParameterToMethod = StaticScope.globalScope().lookupTypeDeclaration(className);
 				assert null != typeOfThisParameterToMethod;
 			} else {
-				final Object rawDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
-				assert null != rawDeclaration && rawDeclaration instanceof Expression;
-				thisDeclaration = (Expression)rawDeclaration;
+				final Object rawThisDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
+				assert null != rawThisDeclaration && rawThisDeclaration instanceof Expression;
+				thisDeclaration = (Expression)rawThisDeclaration;
 				typeOfThisParameterToMethod = thisDeclaration.type();	// tentative...
 			}
 
@@ -1184,7 +1187,8 @@ public abstract class RTExpression extends RTCode {
 						// method activation record, then this must not be a
 						// Role method from which we're making the invocation.
 						// But it must be a Context method - only Context methods
-						// can call Role methods.
+						// or Role methods can call Role methods (guaranteed by the
+						// grammar).
 						//
 						// Probably worth adding some assertions around this, if
 						// there's enough data in the environment
@@ -1200,7 +1204,10 @@ public abstract class RTExpression extends RTCode {
 				}
 			} else {
 				// WARNING. This is a bit presumptuous and needs work. TODO.
-				final RTObject self = scope.getObject("this");
+				// Maybe will fail if there is a nested declaration of an
+				// identifier in a Role method and it goes looking for
+				// it... Need some tests.
+				final RTObject self = scope.getObjectRecursive("this");
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
@@ -1264,16 +1271,16 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			// Get the value of an identifier from the appropriate scope
 			RTObject value = null;
-			final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			if (isLocal_) {
 				// It's just in the local activation record
-				final RTDynamicScope activationRecord = scope;
+				final RTDynamicScope activationRecord = currentDynamicScope;
 				value = activationRecord.getObject(idName_);
 				assert null != value;
 			} else {
 				// WARNING. This is a bit presumptuous and needs work.
 				// It's a bit better now...
-				final RTObject self = scope.getObjectRecursive("this");
+				final RTObject self = currentDynamicScope.getObjectRecursive("this");
 				if (null == self) {
 					assert null != self;
 				}
@@ -1284,12 +1291,12 @@ public abstract class RTExpression extends RTCode {
 					assert null != value;
 				} else {
 					// We need to get the role binding
-					final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-					final RTObject tempContextPointer = currentScope.getObjectRecursive("current$context");
+					final RTObject tempContextPointer = currentDynamicScope.getObjectRecursive("current$context");
 					if (null == tempContextPointer) {
 						assert null != tempContextPointer;
+					} else if (false == tempContextPointer instanceof RTContextObject) {
+						assert tempContextPointer instanceof RTContextObject;
 					}
-					assert tempContextPointer instanceof RTContextObject;
 					
 					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
 					value = contextPointer.getRoleOrStagePropBinding(idName_);
@@ -1939,9 +1946,32 @@ public abstract class RTExpression extends RTCode {
 	public static class RTNew extends RTExpression {
 		public RTNew(final NewExpression expr, final RTType nearestEnclosingType) {
 			super();
-			currentContextVariableName_ = "current$context"; // + counter_;  TODO - FIXME
-			thisVariableName_ = "t$his"; //  + counter_;   TODO - FIXME
-			// counter_++;
+			
+			// I initiall thought that we'd need a unique variable each
+			// time they are used. They are used to push the "object for
+			// which this method is called" arguments on the stack - as
+			// actual arguments, not formals - from which they will be
+			// copied into the callee's activation record. But since there
+			// is only one call active at a time, they don't collide with
+			// each other. And since t$his is type-less it can stand in as
+			// an actual parameter for any method.
+			//
+			// The sticking point is current$context, which could collide
+			// with the real McCoy in the activation record of a Role method.
+			// Fortunately, it doesn't seem like we need a *named* actual
+			// parameter to affect this. First, we can just push an extra
+			// (unnamed) parameter on the stack as part of the stack protocol,
+			// so the RTMethod code picks it up and puts it in the activation
+			// record for the Role method. Second, there are some corner cases
+			// when code will go looking for current$context in the current
+			// scope, but it isn't there (involving a Context method). The
+			// right thing to do there is to just use the value of this, and
+			// there is a fake-out to do that. See the kludges above in
+			// RTArrayIndexExpression.run() and in pushContextPointerIfNecessary.
+			//
+			// currentContextVariableName_ removed.
+			
+			thisVariableName_ = "t$his";
 			classType_ = expr.classType();
 			StaticScope classScope = classType_.enclosedScope();
 			if (null == classScope) {
@@ -2136,10 +2166,16 @@ public abstract class RTExpression extends RTCode {
 				// that stupid variable now... It corresponds to the thing
 				// we pushed onto the stack above.
 				
-				if (isAContextConstructor) {
-					callingActivationRecord.addObjectDeclaration(currentContextVariableName_, rTType_);
-					callingActivationRecord.setObject(currentContextVariableName_, newlyCreatedObject);
-				}
+				// if (isAContextConstructor) {
+				//	// BUG: This can't be called current$context — that mapping must be
+				//	// constant from the time it is passed in to us as an argument. The
+				//	// dummy that we set up for the ensuing logic must be something else.
+				//	// It needn't be unique, but it cannot be current$context.
+				//	
+				//	// BIGGER BUG: These don't seem to be needed at all...
+				//	callingActivationRecord.addObjectDeclaration(currentContextVariableName_ + "$", rTType_);
+				//	callingActivationRecord.setObject(currentContextVariableName_ + "$", newlyCreatedObject);
+				// }
 
 				callingActivationRecord.addObjectDeclaration(thisVariableName_, rTType_);
 				callingActivationRecord.setObject(thisVariableName_, newlyCreatedObject);
@@ -2172,7 +2208,7 @@ public abstract class RTExpression extends RTCode {
 		private RTType rTType_;
 		private RTMessage rTConstructor_;
 		// private static int counter_ = 0;
-		private String currentContextVariableName_, thisVariableName_;
+		private String thisVariableName_;
 	}
 	public static class RTNewArray extends RTExpression {
 		public RTNewArray(final NewArrayExpression expr, final RTType nearestEnclosingType) {
@@ -3292,7 +3328,9 @@ public abstract class RTExpression extends RTCode {
 		@Override public void addObjectDeclaration(final String objectName, final RTType type) { assert false; }
 		@Override public Map<String, RTType> objectDeclarations() { assert false; return null; }
 		@Override public void setObject(final String objectName, final RTObject object) { assert false; }
+		/*
 		@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
+		*/
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
 		@Override public boolean isEqualTo(final Object another) { return rTExpr_.isEqualTo(another); }
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }

@@ -78,10 +78,10 @@ context Chord {
                   System.out.println(pos);
                 
                 // NOTE: Cannot use Root for duck typing:
-//                Interval i = new Interval(Root, this.get(i));
+                Interval internval = new Interval(Root, this.get(i));
                 
                 // NOTE: Cannot return, the loop keeps going
-//                if(i.semitones() == semitones) return true;
+//                if(interval.semitones() == semitones) return true;
             }
             return false;
         } 

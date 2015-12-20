@@ -103,7 +103,6 @@ public abstract class RTIterator implements RTObject {
 	@Override public void addObjectDeclaration(String objectName, RTType type) { assert false; }
 	@Override public Map<String, RTType> objectDeclarations() { assert false; return null; }
 	@Override public void setObject(String objectName, RTObject object) { assert false; }
-	@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
 	@Override public RTType rTType() { assert false; return null; }
 	@Override public boolean isEqualTo(Object another) { assert false; return false; }
 	@Override public boolean gt(RTObject another) { assert false; return false; }

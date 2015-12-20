@@ -33,7 +33,6 @@ public interface RTObject extends RTStackable {
 	public void addObjectDeclaration(final String objectName, final RTType type);
 	public Map<String, RTType> objectDeclarations();
 	public void setObject(final String objectName, final RTObject object);
-	public Map<String, RTObject> objectMembers();
 	public RTType rTType();
 	public boolean isEqualTo(final Object another);
 	public boolean gt(final RTObject another);

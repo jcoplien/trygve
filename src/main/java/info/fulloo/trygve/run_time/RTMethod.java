@@ -146,6 +146,7 @@ public class RTMethod extends RTCode {
 		final List<ObjectDeclaration> objectDeclarations = methodScope.objectDeclarations();
 		final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 		for (final ObjectDeclaration od : objectDeclarations) {
+			final String objectName = od.name();
 			// RTType runTimeDeclaration =
 			// InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(od);
 
@@ -155,9 +156,10 @@ public class RTMethod extends RTCode {
 			// parameters are in this loop along with the other local
 			// variables in the method - we just snake around the former parameters
 			// by seeing that they previously have been added.
-			if (null == activationRecord.getObject(od.name())) {
-				activationRecord.addObjectDeclaration(od.name(), null);
-				activationRecord.setObject(od.name(), new RTNullObject());
+			final RTObject namedObject = activationRecord.getObject(objectName);
+			if (null == namedObject) {
+				activationRecord.addObjectDeclaration(objectName, null);
+				activationRecord.setObject(objectName, new RTNullObject());
 			}
 		}
 	}
