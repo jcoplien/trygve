@@ -3884,7 +3884,12 @@ public abstract class RTExpression extends RTCode {
 		return lastExpressionResult_;
 	}
 	public static void reboot() {
-		lastExpressionResult_ = null;
+		if (null != lastExpressionResult_) {
+			// Make sure it lets go of its Role-players
+			// if it is a Context.  Mieux vaut tard que jamais...
+			lastExpressionResult_.decrementReferenceCount();
+			lastExpressionResult_ = null;
+		}
 	}
 	
 	protected final static Stack<RTSwitch> switchStack_ = new Stack<RTSwitch>();

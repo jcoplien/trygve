@@ -36,6 +36,9 @@ import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleArrayIndexExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
 
+// For future reference:
+// Integer.toHexString(System.identityHashCode(object))
+// http://www.nomachetejuggling.com/2008/06/04/getting-a-java-objects-reference-id/
 
 // Doubles for classes and contexts
 public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
@@ -158,10 +161,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 	
-	@Override public void unenlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
+	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
-			stagePropsIAmPlayingHere.remove(roleName);
+			stagePropsIAmPlayingHere.remove(stagePropName);
 			if (0 == stagePropsIAmPlayingHere.size()) {
 				stagePropsIAmPlayingInContext_.remove(contextInstance);
 			}
@@ -424,13 +427,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			if (0 >= referenceCount()) {
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
-			} else if (1 == referenceCount()) {
-				// It could be that we were the last expression to
-				// be evaluated, and the reference count is artificially
-				// high because of that cache holding us
-				if (this == RTExpression.lastExpressionResult()) {
-					contextInfo.removeAllRoleAndStagePropPlayers();
-				}
 			}
 		}
 		
@@ -947,11 +943,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		return retval;
 	}
-	/*
-	private int numberOfObjectMembers() {
-		return objectMembers_.size();
-	}
-	*/
 	
 	private final RTType classOrContext_;
 	protected final Map<String, RTObject> objectMembers_;
