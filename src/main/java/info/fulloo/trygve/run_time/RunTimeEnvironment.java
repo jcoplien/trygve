@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
@@ -119,6 +120,14 @@ public class RunTimeEnvironment {
 		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
+		
+		// Take all object declarations from global scope and
+		// get them into firstActivationRecord
+		final StaticScope globalScope = StaticScope.globalScope();
+		final List<ObjectDeclaration> objectDeclarations = globalScope.objectDeclarations();
+		for (final ObjectDeclaration objectDeclaration : objectDeclarations) {
+			firstActivationRecord.addObjectDeclaration(objectDeclaration.name(), null);
+		}
 		
 		// And go.
 		RTCode pc = mainExpr;

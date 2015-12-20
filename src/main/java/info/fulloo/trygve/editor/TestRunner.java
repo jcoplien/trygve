@@ -98,6 +98,7 @@ public class TestRunner {
 		"chord_identifier2.k",
 		"chord_identifier2_minimal.k",
 		"chord_identifier3_stripped.k",
+		"naked_new.k",
 		// "chord_identifier3.k",
 	};
 	public static int numberOfTestCases() {

@@ -1561,8 +1561,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	protected void setType(final Type t) {
 		type_ = t;
-	}
-	
+	}	
 	public abstract List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	
 	private final String id_;

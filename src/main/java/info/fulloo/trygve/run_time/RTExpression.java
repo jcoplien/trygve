@@ -1780,7 +1780,9 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
-				assert null != dynamicScope;
+				if (null == dynamicScope) {
+					assert null != dynamicScope;
+				}
 				
 				// Reference count increment is done within the dynamic scope object
 				// (Note: setNamedSlotToValue decrements the reference count of

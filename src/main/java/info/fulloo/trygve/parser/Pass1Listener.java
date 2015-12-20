@@ -1827,6 +1827,39 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
+	private Expression checkNakedNew(final Expression newExpr) {
+		if (newExpr instanceof NewExpression == false && newExpr instanceof NewArrayExpression == false) {
+			assert newExpr instanceof NewExpression || newExpr instanceof NewArrayExpression;
+		}
+		Expression retval = newExpr;
+		
+		// It's possible to write an expression of the form:
+		//
+		//		new foo
+		//
+		// without binding the result. That means that the
+		// object reference count is never manipulated, which
+		// means that the object is never reclaimed. If we
+		// have one of those, just give it a temporary home
+		// in the current activation record. Activation record
+		// closure will clean it up.
+
+		if (newExpr.resultIsConsumed() == false && this instanceof Pass4Listener) {
+			// Pass4Listener check above is so we do this only once,
+			// avoiding multiple declarations of the temporary
+			// variable
+			final String tempName = "temp$" + variableGeneratorCounter_;
+			variableGeneratorCounter_++;
+			final ObjectDeclaration tempVariableDecl = new ObjectDeclaration(tempName, newExpr.type(), newExpr.lineNumber());;
+			currentScope_.declareObject(tempVariableDecl);
+			
+			final IdentifierExpression tempVariable = new IdentifierExpression(tempName, newExpr.type(), currentScope_);
+			
+			retval = new AssignmentExpression(tempVariable, "=", newExpr, newExpr.lineNumber(), this);
+		}
+		return retval;
+	}
+	
 	@Override public void exitAbelian_atom(KantParser.Abelian_atomContext ctx)
 	{
 		//  abelian_expr         
@@ -1904,6 +1937,8 @@ public class Pass1Listener extends KantBaseListener {
 							"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 				}
 			}
+			
+			expression = checkNakedNew(expression);
 
 			if (printProductionsDebug) {
 				System.err.println("abelian_atom : NEW JAVA_ID type_list '(' argument_list ')'");
@@ -1939,6 +1974,7 @@ public class Pass1Listener extends KantBaseListener {
 			final Token ctxGetStart = ctx.getStart();
 			final MessageContext ctxMessage = ctx.message();
 			expression = this.newExpr(ctxChildren, ctxGetStart, sizeExprCtx, ctxMessage);
+			expression = checkNakedNew(expression);
 			
 			if (printProductionsDebug) {
 				System.err.print("expr : ");
