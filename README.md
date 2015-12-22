@@ -28,3 +28,5 @@ Also remember to enable assertions ([Eclipse](http://stackoverflow.com/questions
 To rebuild ANTLR parser run `gradlew antlr`.
 
 To build a distribution `gradlew build`.
+
+Send questions to cope@gertrudandcope.com.

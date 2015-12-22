@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE
+ * Trygve IDE 1.1 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -243,6 +243,22 @@ public abstract class RTExpression extends RTCode {
 		} else {
 			retval = new RTNullExpression();
 		}
+		return retval;
+	}
+	protected static RTObject getObjectUpToMethodScopeFrom(final String id, final RTDynamicScope scopeArg) {
+		// Like getObjectRecursive, but it stops at method scope
+		RTObject retval = null;
+		RTDynamicScope scope = scopeArg;
+		do {
+			retval = scope.getObject(id);
+			scope = scope.parentScope();
+		} while (null == retval && null != scope && scope.rTType() instanceof RTMethod == false);
+		
+		//  If we didn't find it, give it one more chance, at method level
+		if (null == retval && null != scope) {
+			retval = scope.getObject(id);
+		}
+		
 		return retval;
 	}
 	public static class RTNullExpression extends RTExpression {
@@ -594,7 +610,7 @@ public abstract class RTExpression extends RTCode {
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// Then self is an object playing the Role (with rTType an instance of RTClass)
 				// Get the current RTContext (must be in self of current activation record)
-				final RTObject tempContextPointer = currentScope.getObject("this");
+				final RTObject tempContextPointer = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);;
 				assert null != tempContextPointer;
 				if (tempContextPointer instanceof RTContextObject) {
 					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
@@ -626,7 +642,7 @@ public abstract class RTExpression extends RTCode {
 					if (null == methodDecl) {
 						// ... then it is another Role method invocation on the
 						// RolePlayer.  First, get the RTRole:
-						final RTObject objectContextPointer = currentScope.getObject("current$context");
+						final RTObject objectContextPointer = getObjectUpToMethodScopeFrom("current$context", currentScope);
 						assert objectContextPointer instanceof RTContextObject;
 						final RTContextObject contextPointer = (RTContextObject)objectContextPointer;
 						
@@ -748,7 +764,7 @@ public abstract class RTExpression extends RTCode {
 			assert null != self || isStatic();
 			return self;
 		}
-		
+
 		private void pushContextPointerIfNecessary(final Type typeOfThisParameterToMethod, final int indexForThisExtraction) {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
@@ -757,7 +773,7 @@ public abstract class RTExpression extends RTCode {
 				// to push an extra argument - current$context. If we're calling
 				// a Role method it can be only from within a Context.
 				
-				if (null == currentScope.getObject("current$context")) {
+				if (null == RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope)) {
 					// No declaration of current$context in the current scope.
 					// We're not a Role method. We are just a Context method.
 
@@ -767,9 +783,14 @@ public abstract class RTExpression extends RTCode {
 					// record. Set up for an extra push before everything else
 					// is pushed. It will be popped and added to the Role method's
 					// activation record.
-					final RTObject tempContextPointer = currentScope.getObject("this");
-					assert null != tempContextPointer;
-					assert tempContextPointer instanceof RTContextObject;
+					
+					final RTObject tempContextPointer = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);
+					if (null == tempContextPointer) {
+						assert null != tempContextPointer;
+					}
+					if (false == tempContextPointer instanceof RTContextObject) {
+						assert tempContextPointer instanceof RTContextObject;
+					}
 					
 					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(contextPointer);
@@ -1196,7 +1217,7 @@ public abstract class RTExpression extends RTCode {
 				// It's just in the local activation record
 				final RTDynamicScope activationRecord = scope;
 				assert null != activationRecord;
-				value = activationRecord.getObject(idName_);
+				value = RTExpression.getObjectUpToMethodScopeFrom(idName_, activationRecord);
 				if (null == value) {
 					if (idName_.equals("current$context")) {
 						// This is kind of an ugly kludge. If we're being asked
@@ -1209,8 +1230,10 @@ public abstract class RTExpression extends RTCode {
 						//
 						// Probably worth adding some assertions around this, if
 						// there's enough data in the environment
-						assert declaringScope_.parentScope().associatedDeclaration() instanceof ContextDeclaration;
-						final RTObject self = scope.getObject("this");
+						if (declaringScope_.parentScope().associatedDeclaration() instanceof ContextDeclaration == false) {
+							assert declaringScope_.parentScope().associatedDeclaration() instanceof ContextDeclaration;
+						}
+						final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 						assert self instanceof RTContextObject;
 						value = self;
 					} else {
@@ -1224,7 +1247,7 @@ public abstract class RTExpression extends RTCode {
 				// Maybe will fail if there is a nested declaration of an
 				// identifier in a Role method and it goes looking for
 				// it... Need some tests.
-				final RTObject self = scope.getObjectRecursive("this");
+				final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", scope);;
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
@@ -1301,7 +1324,7 @@ public abstract class RTExpression extends RTCode {
 			} else {
 				// WARNING. This is a bit presumptuous and needs work.
 				// It's a bit better now...
-				final RTObject self = currentDynamicScope.getObjectRecursive("this");
+				final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", currentDynamicScope);
 				if (null == self) {
 					assert null != self;
 				}
@@ -1855,7 +1878,7 @@ public abstract class RTExpression extends RTCode {
 				// We need to evaluate lhs to get the actual Context object
 				final RTRoleIdentifier lhs = (RTRoleIdentifier)lhs_;
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
 				if (lhs instanceof RTStagePropIdentifier) {
@@ -1874,7 +1897,7 @@ public abstract class RTExpression extends RTCode {
 				
 				final RTRoleIdentifier lhs = (RTRoleIdentifier)lhs_;
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
 				
@@ -1887,7 +1910,7 @@ public abstract class RTExpression extends RTCode {
 				// to that role
 				
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
 				ErrorLogger.error(ErrorType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
@@ -1899,7 +1922,7 @@ public abstract class RTExpression extends RTCode {
 				// to one of those elements
 				
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTContextObject contextScope = (RTContextObject)scope.getObject("this");
+				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
 				return contextScope.setRoleArrayElementBinding(lhs, rhs);
@@ -2493,9 +2516,9 @@ public abstract class RTExpression extends RTCode {
 			// current$context is undeclared and we just use "this"
 			RTObject currentContext = null;
 			if (nearestEnclosingType_ instanceof RTRole) {
-				currentContext = currentScope.getObject("current$context");
+				currentContext = RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
 			} else {
-				currentContext = currentScope.getObject("this");
+				currentContext = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);
 			}
 			
 			final RTObject rawContextInfo = currentContext.getObject("context$info");
@@ -3908,9 +3931,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject currentContext = currentScope.getObject("current$context");
+			final RTObject currentContext = RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
 			final RTObject rawContextInfo = currentContext.getObject("context$info");
-			final RTObject self = currentScope.getObject("this");
+			final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);
 			assert rawContextInfo instanceof RTContextInfo;
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			

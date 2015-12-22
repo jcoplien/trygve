@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE
+ * Trygve IDE 1.1 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTAssignment;
+import info.fulloo.trygve.run_time.RTExpression.RTConstant;
 import info.fulloo.trygve.run_time.RTExpression.RTIdentifier;
 import info.fulloo.trygve.run_time.RTExpression.RTIf;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
@@ -45,6 +46,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTNew;
 import info.fulloo.trygve.run_time.RTExpression.RTQualifiedIdentifier;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -322,6 +324,8 @@ public class RunTimeEnvironment {
 					System.err.format(" from \"%s\"", ((RTQualifiedIdentifier)code).getText());
 				} else if (code instanceof RTPostReturnProcessing) {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
+				} else if (code instanceof RTConstant) {
+					System.err.format(" for \"%s\"", ((RTConstant)code).toString());
 				}
 				System.err.format("\n");
 			}
@@ -349,6 +353,10 @@ public class RunTimeEnvironment {
 				System.err.format(" (\"%s\")", ((RTStringObject)element).stringValue());
 			} else if (element instanceof RTBooleanObject) {
 				System.err.format(" (\"%b\")", ((RTBooleanObject)element).value());
+			} else if (element instanceof RTContextObject) {
+				System.err.format(" (\"%s\")", ((RTContextObject)element).rTType().name());
+			} else if (element instanceof RTRole) {
+				System.err.format(" (\"%s\")", ((RTRole)element).name());
 			}
 			if (topFramePointer == i-1) {
 				System.err.format(" <== frame pointer (%d)", i+1);

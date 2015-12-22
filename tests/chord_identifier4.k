@@ -71,7 +71,7 @@ context Chord {
     role Notes {
         public String quality() {
             // NOTE: cannot use bool expression directly, must use if statement.
-            boolean hasDominant = if(dominant().length() > 0) true else false;
+            boolean hasDominant = if (dominant().length() > 0) true else false;
 
             boolean minor = isMinor();
             boolean major = isMajor();
@@ -232,9 +232,10 @@ context Chord {
 }
 
 /* GOLD:
+line 65: WARNING: Method declaration for `name' may hide method declared at line 189
 ___________________________________________________________
 Cm11
 Dsus
-Em7b5b9
+Emmaj7b5#11
 Fmaj9
 */
