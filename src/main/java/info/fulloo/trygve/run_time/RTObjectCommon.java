@@ -366,7 +366,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			} while (null != pc);
 			
@@ -397,7 +397,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			} while (null != pc);
 			
@@ -455,9 +455,24 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			if ((another instanceof RTIntegerObject) == false) return false;
 			else return foobar_ == ((RTIntegerObject)another).intValue();
 		}
+		/*
 		@Override public boolean gt(final RTObject another) {
 			if ((another instanceof RTIntegerObject) == false) return false;
 			else return foobar_ > ((RTIntegerObject)another).intValue();
+		}
+		*/
+		@Override public boolean gt(final RTObject other) {
+			boolean result = false;
+			if (other instanceof RTIntegerObject) {
+				final long otherValue = ((RTIntegerObject)other).intValue();
+				result = foobar_ > otherValue;
+			} else if (other instanceof RTDoubleObject) {
+				final double otherValue = ((RTDoubleObject)other).doubleValue();
+				result = foobar_ > otherValue;
+			} else {
+				assert false;
+			}
+			return result;
 		}
 		@Override public RTObject plus(final RTObject other) {
 			long result = 0;

@@ -75,6 +75,7 @@ import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NewArrayExpression;
 import info.fulloo.trygve.expressions.Expression.NewExpression;
+import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.PowerExpression;
 import info.fulloo.trygve.expressions.Expression.ProductExpression;
 import info.fulloo.trygve.expressions.Expression.PromoteToDoubleExpr;
@@ -111,6 +112,9 @@ import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class InterpretiveCodeGenerator implements CodeGenerator {
+	private enum RetvalTypes { usingInt, usingBool, usingDouble, usingTemplate,
+							   usingString, none, undefined };
+	
 	public static InterpretiveCodeGenerator interpretiveCodeGenerator = null;
 	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
 		interpretiveCodeGenerator = justThis;
@@ -235,7 +239,41 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void compileTemplate(final TemplateDeclaration roleDeclaration) {
 		// We compile instantiations (classes), not the templates themselves.
 	}
-	private void processListCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	
+
+	private void addReturn(final MethodDeclaration methodDeclaration,
+			final RetvalTypes retvalType, final List<RTCode> codeVector) {
+		final int sizeOfCodeArray = codeVector.size();
+		assert (sizeOfCodeArray > 0);
+		RTCode last = codeVector.get(sizeOfCodeArray - 1);
+		final StaticScope myScope = methodDeclaration.enclosedScope();
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
+		
+		ReturnExpression returnExpression = null;
+		RTCode returnStatement = new RTReturn("error", (Expression)null, null);
+		switch (retvalType) {
+		case usingDouble:
+		case usingBool:
+		case usingInt:
+		case usingTemplate:
+		case usingString:
+			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
+			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(), retval.type());
+		case none:
+			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+			break;
+		case undefined:
+		default:
+			assert false;
+		}
+		returnStatement.setNextCode(last.nextCode());
+		last.setNextCode(returnStatement);
+		codeVector.add(returnStatement);
+	}
+	private void processListMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		RetvalTypes retvalType;
+		
 		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtListTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
@@ -243,49 +281,75 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final List<RTCode> listCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("List")) {
 			listCode.add(new ListClass.RTListCtorCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("size")) {
 			listCode.add(new ListClass.RTSizeCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingInt;
 		} else if (methodDeclaration.name().equals("add")) {
 			listCode.add(new ListClass.RTAddCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get")) {
 			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("indexOf")) {
 			listCode.add(new ListClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingInt;
 		} else if (methodDeclaration.name().equals("contains")) {
 			listCode.add(new ListClass.RTContainsCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
 		} else if (methodDeclaration.name().equals("isEmpty")) {
 			listCode.add(new ListClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
 		} else {
 			assert false;	// error message instead? Should be caught earlier
+			retvalType = RetvalTypes.undefined;
 		}
+		
+		addReturn(methodDeclaration, retvalType, listCode);
+		
 		rtMethod.addCode(listCode);
 	}
-	private void processMapCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
-		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-		assert null != rtListTypeDeclaration;
+	private void processMapMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final RTType rtMapTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtMapTypeDeclaration;
+		RetvalTypes retvalType = RetvalTypes.undefined;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
-		final List<RTCode> listCode = new ArrayList<RTCode>();
+		rtMapTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> mapCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("Map")) {
-			listCode.add(new  MapClass.RTMapCtorCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new  MapClass.RTMapCtorCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("size")) {
-			listCode.add(new MapClass.RTSizeCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTSizeCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingInt;
 		} else if (methodDeclaration.name().equals("put")) {
-			listCode.add(new MapClass.RTPutCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTPutCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get")) {
-			listCode.add(new MapClass.RTGetCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTGetCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("remove")) {
-			listCode.add(new MapClass.RTRemoveCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTRemoveCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("containsKey")) {
-			listCode.add(new MapClass.RTContainsKeyCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTContainsKeyCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
 		} else if (methodDeclaration.name().equals("containsValue")) {
-			listCode.add(new MapClass.RTContainsValueCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTContainsValueCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
 		} else {
+			retvalType = RetvalTypes.undefined;
 			assert false;	// error message instead? Should be caught earlier
 		}
-		rtMethod.addCode(listCode);
+		
+		addReturn(methodDeclaration, retvalType, mapCode);
+		
+		assert mapCode.size() > 0;
+		
+		rtMethod.addCode(mapCode);
 	}
-	private void processMathCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processMathMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		RetvalTypes retvalType;
 		final RTType rtMathTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtMathTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
@@ -293,24 +357,32 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final List<RTCode> mathCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("Math")) {
 			ErrorLogger.error(ErrorType.Fatal, "Cannot instantiate class Math", "", "", "");
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("random")) {
 			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingDouble;
 		} else if (methodDeclaration.name().equals("sqrt")) {
 			mathCode.add(new MathClass.RTSqrtCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingDouble;
 		} else {
+			retvalType = RetvalTypes.none;
 			assert false;	// error message instead? Should be caught earlier
 		}
+		
+		addReturn(methodDeclaration, retvalType, mathCode);
+		
 		rtMethod.addCode(mathCode);
 	}
-	private void processPrintStreamCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processPrintStreamMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		final List<RTCode> printlnCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
 		if (formalParameterList.count() == 2) {
 			final ObjectDeclaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
 			final Type printableArgumentType = printableArgumentDeclaration.type();
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			if (printableArgumentType.name().equals("String")) {
 				if (methodDeclaration.name().equals("println")) {
@@ -356,160 +428,173 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 			
-			assert printlnCode.size() > 0;
-			
-			rtMethod.addCode(printlnCode);
 		} else if (1 == formalParameterList.count()) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			if (methodDeclaration.name().equals("println")) {
 				printlnCode.add(new SystemClass.RTPrintlnCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
-			
-			assert printlnCode.size() > 0;
-			
-			rtMethod.addCode(printlnCode);
 		} else {
 			assert false;
 		}
+		
+		final int sizeOfCodeArray = printlnCode.size();
+		assert (sizeOfCodeArray > 0);
+		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
+		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
+		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(), self.type());
+		final StaticScope myScope = methodDeclaration.enclosedScope();
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
+		final RTCode returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+		returnStatement.setNextCode(last.nextCode());
+		last.setNextCode(returnStatement);
+		printlnCode.add(returnStatement);
+		
+		assert printlnCode.size() > 0;
+		
+		rtMethod.addCode(printlnCode);
 	}
-	private void processDateCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processDateMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		RetvalTypes retvalType;
+		
+		final List<RTCode> getSomethingInDateCode = new ArrayList<RTCode>();
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
 		if (formalParameterList.count() == 4) {
 			// probably the constructor
 			if (methodDeclaration.name().equals("Date")) {
-				final List<RTCode> ctorCode = new ArrayList<RTCode>();
-				final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-				assert null != rtTypeDeclaration;
-				final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-				rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-				ctorCode.add(new DateClass.RTDateCtorCode(methodDeclaration.enclosedScope()));
-				
-				assert ctorCode.size() > 0;
-				
-				rtMethod.addCode(ctorCode);
+				retvalType = RetvalTypes.none;
+				getSomethingInDateCode.add(new DateClass.RTDateCtorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
 		} else if (formalParameterList.count() == 2) {
 			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(1);
 			final Type argumentType = argumentDeclaration.type();
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> setSomethingInDateCode = new ArrayList<RTCode>();
+
 			if (argumentType.name().equals("int") || argumentType.name().equals("Integer")) {
 				if (methodDeclaration.name().equals("setYear")) {
-					setSomethingInDateCode.add(new DateClass.RTSetYearCode(methodDeclaration.enclosedScope()));
+					getSomethingInDateCode.add(new DateClass.RTSetYearCode(methodDeclaration.enclosedScope()));
+					retvalType = RetvalTypes.none;
 				} else if (methodDeclaration.name().equals("setMonth")) {
-					setSomethingInDateCode.add(new DateClass.RTSetMonthCode(methodDeclaration.enclosedScope()));
+					getSomethingInDateCode.add(new DateClass.RTSetMonthCode(methodDeclaration.enclosedScope()));
+					retvalType = RetvalTypes.none;
 				} else if (methodDeclaration.name().equals("setDay")) {
-					setSomethingInDateCode.add(new DateClass.RTSetDayCode(methodDeclaration.enclosedScope()));
+					getSomethingInDateCode.add(new DateClass.RTSetDayCode(methodDeclaration.enclosedScope()));
+					retvalType = RetvalTypes.none;
 				} else if (methodDeclaration.name().equals("setDate")) {
-					setSomethingInDateCode.add(new DateClass.RTSetDateCode(methodDeclaration.enclosedScope()));
+					getSomethingInDateCode.add(new DateClass.RTSetDateCode(methodDeclaration.enclosedScope()));
+					retvalType = RetvalTypes.none;
 				} else {
+					retvalType = RetvalTypes.undefined;
 					assert false;
 				}
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-			
-			assert setSomethingInDateCode.size() > 0;
-			
-			rtMethod.addCode(setSomethingInDateCode);
 		} else if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> getSomethingInDateCode = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("getYear")) {
 				getSomethingInDateCode.add(new DateClass.RTGetYearCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("getMonth")) {
 				getSomethingInDateCode.add(new DateClass.RTGetMonthCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("getDay")) {
 				getSomethingInDateCode.add(new DateClass.RTGetDayCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("getDate")) {
 				getSomethingInDateCode.add(new DateClass.RTGetDateCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("toString")) {
 				getSomethingInDateCode.add(new DateClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else if (methodDeclaration.name().equals("Date")) {
 				// Simple constructor
 				getSomethingInDateCode.add(new DateClass.RTDateSimpleCtorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-			
-			assert getSomethingInDateCode.size() > 0;
-			
-			rtMethod.addCode(getSomethingInDateCode);
 		} else {
+			retvalType = RetvalTypes.undefined;
 			assert false;
 		}
+		
+		assert getSomethingInDateCode.size() > 0;
+		
+		addReturn(methodDeclaration, retvalType, getSomethingInDateCode);
+		
+		rtMethod.addCode(getSomethingInDateCode);
 	}
-	private void processStringCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processStringMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> code = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.undefined;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
 		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("length")) {
 				code.add(new RTStringClass.RTLengthCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("toString")) {
+				retvalType = RetvalTypes.usingString;
 				code.add(new RTStringClass.RTToStringCode(methodDeclaration.enclosedScope()));
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-			
-			assert code.size() > 0;
-			
-			rtMethod.addCode(code);
 		} else if (formalParameterList.count() == 2) {
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("+")) {
 				code.add(new RTStringClass.RTPlusCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else if (methodDeclaration.name().equals("indexOf")) {
 				code.add(new RTStringClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("contains")) {
 				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingBool;
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-			
-			assert code.size() > 0;
-			
-			rtMethod.addCode(code);
 		} else if (formalParameterList.count() == 3) {
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("substring")) {
 				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else {
+				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-
-			assert code.size() > 0;
-			
-			rtMethod.addCode(code);
 		} else {
+			retvalType = RetvalTypes.undefined;
 			assert false;
 		}
+		
+		addReturn(methodDeclaration, retvalType, code);
+		
+		assert code.size() > 0;
+		
+		rtMethod.addCode(code);
 	}
-	private void processDoubleCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processDoubleMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
@@ -523,6 +608,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 			
+			addReturn(methodDeclaration, RetvalTypes.usingString, code);
+			
 			assert code.size() > 0;
 			
 			rtMethod.addCode(code);
@@ -533,9 +620,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
-			if (methodDeclaration.name().equals("*")) {
+			final String methodName = methodDeclaration.name();
+			if (methodName.equals("*") || methodName.equals("/") || methodName.equals("+") ||
+					 methodName.equals("-")) {
 				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
 				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
 				rtMethod.addCode(code);
 			} else {
 				// assert false;
@@ -545,7 +635,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
-	private void processIntegerCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processIntegerMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
@@ -559,6 +649,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 			
+			addReturn(methodDeclaration, RetvalTypes.usingString, code);
+			
 			assert code.size() > 0;
 			
 			rtMethod.addCode(code);
@@ -568,9 +660,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
-			if (methodDeclaration.name().equals("*")) {
+			final String methodName = methodDeclaration.name();
+			if (methodName.equals("*") || methodName.equals("/") || methodName.equals("+") ||
+					 methodName.equals("-")) {
 				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
 				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
 				rtMethod.addCode(code);
 			} else {
 				// assert false;
@@ -580,7 +675,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
-	private void processBooleanCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processBooleanMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
@@ -591,6 +686,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			if (methodDeclaration.name().equals("toString")) {
 				code.add(new RTBooleanClass.RTToStringCode(methodDeclaration.enclosedScope()));
 				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingBool, code);
 				rtMethod.addCode(code);
 			} else {
 				assert false;
@@ -600,7 +696,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
-	private void processObjectCall(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processObjectMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		if (formalParameterList.count() == 3) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
@@ -651,37 +747,37 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (roleOrContextOrClass instanceof ClassDeclaration) {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("PrintStream")) {
-				processPrintStreamCall(methodDeclaration, typeDeclaration);
+				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
-				processListCall(methodDeclaration, typeDeclaration);
+				processListMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("Map<")) {
-				processMapCall(methodDeclaration, typeDeclaration);
+				processMapMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Math")) {
-				processMathCall(methodDeclaration, typeDeclaration);
+				processMathMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Date")) {
-				processDateCall(methodDeclaration, typeDeclaration);
+				processDateMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("String")) {
-				processStringCall(methodDeclaration, typeDeclaration);
+				processStringMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("double")) {
-				processDoubleCall(methodDeclaration, typeDeclaration);
+				processDoubleMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("int")) {
-				processIntegerCall(methodDeclaration, typeDeclaration);
+				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Integer")) {
-				processIntegerCall(methodDeclaration, typeDeclaration);
+				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("boolean")) {
-				processBooleanCall(methodDeclaration, typeDeclaration);
+				processBooleanMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Object")) {
-				processObjectCall(methodDeclaration, typeDeclaration);
+				processObjectMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -955,8 +1051,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		List<RTCode> rTExpr = null;
 		if (null != expr) {
-			rTExpr = this.compileExpressionForMethodOfTypeInScope(expr, methodDeclaration, rtTypeDeclaration, scope);
-			assert null != rTExpr;
+			final Expression returnExpression = expr.returnExpression();
+			if (null != returnExpression && returnExpression instanceof NullExpression == false) {
+				rTExpr = this.compileExpressionForMethodOfTypeInScope(returnExpression, methodDeclaration, rtTypeDeclaration, scope);
+				if (null == rTExpr) {
+					assert null != rTExpr;
+				}
+			}
 		}
 		retval.add(new RTReturn(methodDeclaration.name(), rTExpr, rtTypeDeclaration));
 		return retval;
@@ -1121,9 +1222,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public static RTType scopeToRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
-		if (null == enclosedScope) {
-			assert null != enclosedScope;
-		}
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();

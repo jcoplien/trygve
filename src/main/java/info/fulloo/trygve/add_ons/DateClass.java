@@ -12,13 +12,13 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDateObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
-import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 import java.util.ArrayList;
@@ -47,7 +47,8 @@ import java.util.List;
  */
 
 public final class DateClass {
-	private static void singleSimpleFunctionSetup(final String methodSelector, final ObjectDeclaration parameter) {
+	private static void singleSimpleFunctionSetup(final String methodSelector,
+			final ObjectDeclaration parameter) {
 		final FormalParameterList formals = new FormalParameterList();
 
 		if (null != parameter) {
@@ -59,7 +60,8 @@ public final class DateClass {
 		
 		final StaticScope methodScope = new StaticScope(dateType_.enclosedScope());
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, dateType_, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector,
+				methodScope, dateType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		final Type integerType = StaticScope.globalScope().lookupTypeDeclaration("int");
 		methodDecl.setReturnType(integerType);
@@ -142,7 +144,7 @@ public final class DateClass {
 		}
 	}
 	
-	public static class RTDateCommon extends RTMessage {
+	public static class RTDateCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTDateCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName,
@@ -212,7 +214,10 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject year = theDateObject.getYear();
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(year);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", year);
+			
 			return super.nextCode();
 		}
 	}
@@ -238,7 +243,10 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject month = theDateObject.getMonth();
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(month);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", month);
+			
 			return super.nextCode();
 		}
 	}
@@ -262,7 +270,10 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject date = theDateObject.getDate();
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(date);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", date);
+			
 			return super.nextCode();
 		}
 	}
@@ -286,7 +297,10 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject day = theDateObject.getDay();
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(day);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", day);
+			
 			return super.nextCode();
 		}
 	}
@@ -310,7 +324,10 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject string = theDateObject.toStringCall();
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(string);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", string);
+			
 			return super.nextCode();
 		}
 	}

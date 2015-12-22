@@ -263,14 +263,16 @@ public abstract class RTExpression extends RTCode {
 			super();
 			part2_ = new RTQualifiedIdentifierPart2(name);
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
+			stringRep_ = qie.getText();
 			qualifier_ = RTExpression.makeExpressionFrom(qie.qualifier(), nearestEnclosingType);
 			qualifier_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
-			return qualifier_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(qualifier_);
 		}
 		public RTDynamicScope dynamicScope() {
 			assert null != part2_.dynamicScope_;
@@ -308,9 +310,17 @@ public abstract class RTExpression extends RTCode {
 			private RTDynamicScope dynamicScope_;	// this should not be in a program element. FIXME.
 			private final String idName_;
 		}
+		public int lineNumber() {
+			return lineNumber_;
+		}
+		public String getText() {
+			return stringRep_;
+		}
 
 		private final RTExpression qualifier_;
 		private final RTQualifiedIdentifierPart2 part2_;
+		private final int lineNumber_;
+		private final String stringRep_;
 	}
 	public static class RTQualifiedIdentifierUnaryOp extends RTExpression {
 		public RTQualifiedIdentifierUnaryOp(final String name, final Expression expr, final RTType nearestEnclosingType) {
@@ -325,7 +335,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
-			RTCode haltInstruction = qualifier_.run();
+			RTCode haltInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(qualifier_);
 			assert null == haltInstruction;
 			
 			// Pop the qualifier expression off the stack
@@ -716,7 +726,7 @@ public abstract class RTExpression extends RTCode {
 				// off the stack - but what's sitting on the stack is the return
 				// address for the method (RTPostReturnProcessing) and "nextInstruction"
 				// points to a method
-				final RTCode nextInstruction = pc.run();
+				final RTCode nextInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				
 				final RTCode oldPc = pc;
 				pc = nextInstruction;
@@ -997,7 +1007,10 @@ public abstract class RTExpression extends RTCode {
 			return lineNumber_;
 		}
 		
-		private static class RTPostReturnProcessing extends RTExpression {
+		// Should be a private class, but it's public for access
+		// to the debugging empire in RunTimeEnvironment
+		
+		public static class RTPostReturnProcessing extends RTExpression {
 			public RTPostReturnProcessing(final RTCode nextCode, final String name) {
 				super();
 				super.setNextCode(nextCode);
@@ -1010,7 +1023,10 @@ public abstract class RTExpression extends RTCode {
 				return super.nextCode();
 			}
 			
-			@SuppressWarnings("unused")
+			public String name() {
+				return name_;
+			}
+			
 			private final String name_;		// for debugging only
 		}
 		
@@ -1082,7 +1098,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			final RTCode retval = objectToClone_.run();
+			final RTCode retval = RunTimeEnvironment.runTimeEnvironment_.runner(objectToClone_);
 			return retval;
 		}
 		
@@ -1154,7 +1170,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		public RTIdentifier(final String name, final IdentifierExpression expression) {
 			super();
-				
+
+			lineNumber_ = expression.lineNumber();
 			declaringScope_ = expression.scopeWhereDeclared();
 			
 			if (null != declaringScope_) {
@@ -1237,10 +1254,14 @@ public abstract class RTExpression extends RTCode {
 		public StaticScope declaringScope() {
 			return declaringScope_;
 		}
+		public int lineNumber() {
+			return lineNumber_;
+		}
 
 		protected final String idName_;
 		protected StaticScope declaringScope_;
 		protected final boolean isLocal_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTArrayIdentifier extends RTIdentifier {
@@ -1341,7 +1362,7 @@ public abstract class RTExpression extends RTCode {
 			rhs_.setNextCode(part2_);
 		}
 		@Override public RTCode run() {
-			return lhs_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
 		}
 		@Override public void setNextCode(final RTCode code) {
 			part2_.setNextCode(code);
@@ -1402,8 +1423,8 @@ public abstract class RTExpression extends RTCode {
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			lhs_.run();
-			rhs_.run();
+			RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
+			RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 			
 			// That should get them on the stack
 			final RTBooleanObject rhs = (RTBooleanObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -1506,7 +1527,7 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			return lhs_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
 		}
 		
 		@Override public void setNextCode(final RTCode next) {
@@ -1580,7 +1601,7 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			return rhs_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 		}
 		
 		@Override public void setNextCode(RTCode next) {
@@ -1630,7 +1651,7 @@ public abstract class RTExpression extends RTCode {
 			originalRHS_.setNextCode(part2_);
 		}
 		@Override public RTCode run() {
-			return originalRHS_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(originalRHS_);
 		}
 		@Override public void setNextCode(final RTCode code) {
 			part2_.setNextCode(code);
@@ -1673,6 +1694,7 @@ public abstract class RTExpression extends RTCode {
 			rhs_.setResultIsConsumed(true);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			// I found I needed to add this loop to a new ArrayType [expr]
@@ -1680,12 +1702,16 @@ public abstract class RTExpression extends RTCode {
 			// and does null initialization - it does not call the constructor.
 			//
 			// So I broke out the real assignment processing into RTAssignmentPart2.
-			return rhs_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 		}
 		public void setNextCode(final RTCode pc) {
 			part2_.setNextCode(pc);
 		}
 	
+		public int lineNumber() {
+			return lineNumber_;
+		}
+		
 		public static class RTAssignmentPart2 extends RTExpression {
 			public RTAssignmentPart2(final AssignmentExpression expr, final RTExpression rhs, final RTType nearestEnclosingType) {
 				super();
@@ -1759,7 +1785,7 @@ public abstract class RTExpression extends RTCode {
 				} else if (lhs_ instanceof RTQualifiedIdentifier) {
 					// We need to actually run LHS in order to compute
 					// the qualifier...
-					final RTCode restOfLhs = lhs_.run();
+					final RTCode restOfLhs = RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
 					part2b_.setRhs(rhs);
 					return restOfLhs;
 				} else if (lhs_ instanceof RTArrayIndexExpression) {
@@ -1943,13 +1969,14 @@ public abstract class RTExpression extends RTCode {
 		private RTExpression rhs_;
 		private RTAssignmentPart2 part2_;
 		private TemplateInstantiationInfo templateInstantiationInfo_;
+		private int lineNumber_;
 	}
 	
 	public static class RTNew extends RTExpression {
 		public RTNew(final NewExpression expr, final RTType nearestEnclosingType) {
 			super();
 			
-			// I initiall thought that we'd need a unique variable each
+			// I initially thought that we'd need a unique variable each
 			// time they are used. They are used to push the "object for
 			// which this method is called" arguments on the stack - as
 			// actual arguments, not formals - from which they will be
@@ -1973,6 +2000,7 @@ public abstract class RTExpression extends RTCode {
 			//
 			// currentContextVariableName_ removed.
 			
+			lineNumber_ = expr.lineNumber();
 			thisVariableName_ = "t$his";
 			classType_ = expr.classType();
 			StaticScope classScope = classType_.enclosedScope();
@@ -2206,10 +2234,18 @@ public abstract class RTExpression extends RTCode {
 			}
 		}
 		
+		@Override public String toString() {
+			return "new " + classType_.name();
+		}
+		
+		public int lineNumber() {
+			return lineNumber_;
+		}
+		
 		private Type classType_;
 		private RTType rTType_;
 		private RTMessage rTConstructor_;
-		// private static int counter_ = 0;
+		private final int lineNumber_;
 		private String thisVariableName_;
 	}
 	public static class RTNewArray extends RTExpression {
@@ -2222,7 +2258,7 @@ public abstract class RTExpression extends RTCode {
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
 		@Override public RTCode run() {
-			final RTCode haltInstruction = sizeExpression_.run();	// will return null
+			final RTCode haltInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(sizeExpression_);	// will return null
 			assert haltInstruction == null;
 			final RTStackable tempSizeExpr = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			assert tempSizeExpr instanceof RTIntegerObject;
@@ -2271,7 +2307,7 @@ public abstract class RTExpression extends RTCode {
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			} while (null != pc);
 			return nextCode_;
@@ -2299,7 +2335,7 @@ public abstract class RTExpression extends RTCode {
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			} while (null != pc);
 			
@@ -2308,7 +2344,7 @@ public abstract class RTExpression extends RTCode {
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			} while (null != pc);
 			
@@ -2319,7 +2355,7 @@ public abstract class RTExpression extends RTCode {
 				result = arrayBase.getObject(theIndex);
 			} else if (rawArrayBase instanceof RTNullObject) {
 				ErrorLogger.error(ErrorType.Runtime, lineNumber_, "Likely access of uninitialized array. Machine halted.", "", "", "");
-				return null;
+				return new RTHalt();
 			} else if (true) {
 				assert false;
 			}
@@ -2338,13 +2374,13 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		public RTCode assign(final RTObject rhs) {
-			final RTCode haltInstruction = rTArrayExpression_.run();
+			final RTCode haltInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(rTArrayExpression_);
 			assert null == haltInstruction;
 			
 			// Yuk. Firmware loop.
 			RTCode pc2 = rTIndexExpression_;
 			do {
-				pc2 = pc2.run();	// probably also returns null... well... maybe..
+				pc2 = RunTimeEnvironment.runTimeEnvironment_.runner(pc2);	// probably also returns null... well... maybe..
 			} while (null != pc2);
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2392,7 +2428,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			return rTArrayExpression_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(rTArrayExpression_);
 		}
 		
 		@Override public void setNextCode(RTCode code) {
@@ -2443,7 +2479,7 @@ public abstract class RTExpression extends RTCode {
 				if (pc instanceof RTHalt) {
 					return pc;
 				}
-				pc = pc.run();
+				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 			} while ( null != pc);
 			
 			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2490,10 +2526,11 @@ public abstract class RTExpression extends RTCode {
 			conditionalExpression_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			// Put the condition on the stack
-			return conditionalExpression_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(conditionalExpression_);
 		}
 		@Override public void setNextCode(RTCode code) {
 			part2_.setNextCode(code);
@@ -2527,9 +2564,13 @@ public abstract class RTExpression extends RTCode {
 			}
 			private final RTExpression thenPart_, elsePart_;
 		}
+		public int lineNumber() {
+			return lineNumber_;
+		}
 		
 		private final RTIfPart2 part2_;
 		private final RTExpression conditionalExpression_;
+		private final int lineNumber_;
 	}
 	
 	private static class RTForTestRunner extends RTExpression {
@@ -2541,7 +2582,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			return test_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
 		}
 		
 		@Override public void setNextCode(final RTCode next) {
@@ -2630,7 +2671,7 @@ public abstract class RTExpression extends RTCode {
 						
 			RTCode retval = null;
 			if (initializations_.size() > 0) {
-				retval = initializations_.get(0).run();
+				retval = RunTimeEnvironment.runTimeEnvironment_.runner(initializations_.get(0));
 			} else {
 				retval = test_;
 			}
@@ -2833,12 +2874,12 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		protected RTCode setupIterator() {
-			RTCode pc = rTThingToIterateOverExpr_.run();
+			RTCode pc = RunTimeEnvironment.runTimeEnvironment_.runner(rTThingToIterateOverExpr_);
 			while (null != pc) {
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			}
 			final RTStackable rawThingToIterateOver = RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2863,7 +2904,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			return test_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
 		}
 		
 		@Override public void setNextCode(final RTCode next) {
@@ -2963,7 +3004,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		@Override public RTCode run() {
-			return test_.run();
+			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
 		}
 		
 		@Override public void setNextCode(final RTCode code) {
@@ -3091,7 +3132,7 @@ public abstract class RTExpression extends RTCode {
 			RTCode retval = null;
 			if (expressionList_.size() > 0) {
 				final RTCode doit = expressionList_.get(0);
-				retval = doit.run();
+				retval = RunTimeEnvironment.runTimeEnvironment_.runner(doit);
 			} else {
 				retval = this.nextCode();
 			}
@@ -3193,7 +3234,7 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		@Override public RTCode run() {
-			RTCode retval = switchExpression_.run();
+			final RTCode retval = RunTimeEnvironment.runTimeEnvironment_.runner(switchExpression_);
 			assert null != retval;
 			return retval;
 		}
@@ -3615,48 +3656,73 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTReturn extends RTExpression {
-		public RTReturn(final String methodName, final List<RTCode> re, final RTType ignoredForNow) {
+		public RTReturn(final String methodName, final List<RTCode> re, final RTType nearestEnclosingType) {
 			super();
 			rTRe_ = re;
 			
 			// So far this is used only for debugging
 			methodName_ = methodName;
+			lineNumber_ = 0;
 		}
-		public RTReturn(final String methodName, final Expression returnExpression, final RTType ignoredForNow) {
+		public RTReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
 			super();
 
-			// If returnExpr isn't null, it's a dummy
+			// If returnExpr isn't null, then there's a return value. It's the
+			// responsibility of the return statement to evaluate it and put
+			// it on the stack, and to get it back to the caller
 			if (null != returnExpression) {
 				rTRe_ = new ArrayList<RTCode>();
-				rTRe_.add(new RTNullExpression());
+				// rTRe_.add(new RTNullExpression());
+				assert returnExpression instanceof NullExpression == false;
+				if (returnExpression instanceof ReturnExpression == false) {
+					assert returnExpression instanceof ReturnExpression;
+				}
+				final RTExpression expressionToCreateReturnValue =
+						RTExpression.makeExpressionFrom(((ReturnExpression)returnExpression).returnExpression(), nearestEnclosingType);
+				rTRe_.add(expressionToCreateReturnValue);
 			} else {
 				rTRe_ = null;
 			}
 			
 			// So far this is used only for debugging
 			methodName_ = methodName;
+			lineNumber_ = null == returnExpression? 0: returnExpression.lineNumber();
 		}
 		@Override public RTCode run() {
 			RTCode returnAddress = null;
-			boolean thereIsAReturnExpression = false;
+			boolean thereIsAReturnExpression = false;		// hasAReturnExpression
+			List<RTCode> returnExpressionList = null;
 			if (null != rTRe_) {
-				final List<RTCode> returnExpressionList = rTRe_;
+				returnExpressionList = rTRe_;
 				if (returnExpressionList.size() == 1) {
 					final RTCode returnExpression = returnExpressionList.get(0);
 					if (returnExpression instanceof RTNullExpression == true) {
-						thereIsAReturnExpression = true;
-					} else {
+						// In the old days we didn't handle return expressions
+						// so religiously, and all it took was a non-null
+						// rTRe_ list here to constitute a return expression. Now
+						// with real ReturnExpression processing we actually evaluate
+						// the expression explicitly. This makes a problem for the
+						// print empire, which takes a shortcut.
 						thereIsAReturnExpression = false;
+					} else {
+						thereIsAReturnExpression = true;
 					}
 				} else {
 					thereIsAReturnExpression = false;
 				}
 			}
 			if (thereIsAReturnExpression) {
-				// It's already evaluated and on top of the stack.
+				// It's already evaluated and on top of the stack? No. Gotta do it now.
 				// Step one: Get it - if it's used
 				RTStackable returnValue = null;
-				if (resultIsConsumed()) {
+				if (resultIsConsumed()) {	// maybe is always true?
+					RTCode pc = returnExpressionList.get(0);
+					do {
+						pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+						if (pc instanceof RTHalt) return pc;
+					} while (pc != null);
+					
+					// Now, the return value is on top of the stack. Pop it temporarily.
 					returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				}
 				
@@ -3664,10 +3730,10 @@ public abstract class RTExpression extends RTCode {
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
 				returnAddress = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				
-				// Step 3. Put the return value on the stack.
+				// Step 3. Put the return value back on the stack.
 				if (resultIsConsumed()) {
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
-					returnValue.decrementReferenceCount();	// (from the stack pop)
+					returnValue.decrementReferenceCount();	// (from the stack pop above)
 				}
 			} else {
 				// There is no R-value on the stack: just get the return address
@@ -3692,12 +3758,22 @@ public abstract class RTExpression extends RTCode {
 			
 			return returnAddress;
 		}
-
+		public String methodName() {
+			return methodName_;
+		}
+		public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public boolean resultIsConsumed() {
+			// All dogs go to heaven
+			return true;
+		}
 		
 		private List<RTCode> rTRe_;
 		
-		@SuppressWarnings("unused")
+		// Only for debugging and tracing
 		private final String methodName_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTBlock extends RTExpression {

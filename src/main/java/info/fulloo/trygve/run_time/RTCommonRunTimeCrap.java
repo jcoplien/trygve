@@ -33,15 +33,15 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return false;
 	}
-	@Override public boolean gt(RTObject another) {
+	@Override public boolean gt(final RTObject another) {
 		assert false;
 		return false;
 	}
-	@Override public RTObject plus(RTObject other) {
+	@Override public RTObject plus(final RTObject other) {
 		assert false;
 		return null;
 	}
-	@Override public RTObject minus(RTObject other) {
+	@Override public RTObject minus(final RTObject other) {
 		assert false;
 		return null;
 	}

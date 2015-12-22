@@ -267,23 +267,34 @@ public class StaticScope {
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", doubleType.enclosedScope(), doubleType, Public, 0, false);
+		
+		StaticScope newScope = new StaticScope(doubleType.enclosedScope());
+		MethodDeclaration methodDecl = new MethodDeclaration("+", newScope, doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("-", doubleType.enclosedScope(), doubleType, Public, 0, false);
+		newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("-", newScope, doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("*", doubleType.enclosedScope(), doubleType, Public, 0, false);
+		newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("*", newScope, doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("/", doubleType.enclosedScope(), doubleType, Public, 0, false);
+		newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("/", newScope, doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("**", doubleType.enclosedScope(), doubleType, Public, 0, false);
+		newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("**", newScope, doubleType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		doubleType.enclosedScope().declareMethod(methodDecl);
+		
+		newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("%", newScope, doubleType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
@@ -319,7 +330,8 @@ public class StaticScope {
 			}
 		}
 		formals.addFormalParameter(self);
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, stringType.enclosedScope(), returnType, Public, 0, false);
+		final StaticScope myScope = new StaticScope(stringType.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		stringType.enclosedScope().declareMethod(methodDecl);
 	}
@@ -381,7 +393,8 @@ public class StaticScope {
 		final Type doubleType = StaticScope.globalScope().lookupTypeDeclaration("double");
 		assert null != doubleType;
 		
-		methodDecl = new MethodDeclaration("toString", doubleType.enclosedScope(), stringType, Public, 0, false);
+		StaticScope newScope = new StaticScope(doubleType.enclosedScope());
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
 		self = new ObjectDeclaration("this", doubleType, 0);
@@ -389,7 +402,8 @@ public class StaticScope {
 		methodDecl.addParameterList(formals);
 		doubleType.enclosedScope().declareMethod(methodDecl);
 		
-		methodDecl = new MethodDeclaration("toString", intType.enclosedScope(), stringType, Public, 0, false);
+		newScope = new StaticScope(intType.enclosedScope());
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
 		self = new ObjectDeclaration("this", intType, 0);
@@ -398,7 +412,8 @@ public class StaticScope {
 		intType.enclosedScope().declareMethod(methodDecl);
 		
 		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
-		methodDecl = new MethodDeclaration("toString", booleanType.enclosedScope(), stringType, Public, 0, false);
+		newScope = new StaticScope(booleanType.enclosedScope());
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
 		self = new ObjectDeclaration("this", booleanType, 0);
@@ -408,7 +423,9 @@ public class StaticScope {
 		
 		final Type bigIntegerType = StaticScope.globalScope().lookupTypeDeclaration("Integer");
 		assert null != bigIntegerType;
-		methodDecl = new MethodDeclaration("toString", bigIntegerType.enclosedScope(), stringType, Public, 0, false);
+		newScope = new StaticScope(bigIntegerType.enclosedScope());
+
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
 		methodDecl.signature().setHasConstModifier(true);
 		formals = new FormalParameterList();
 		self = new ObjectDeclaration("this", bigIntegerType, 0);

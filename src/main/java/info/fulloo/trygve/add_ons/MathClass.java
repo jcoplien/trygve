@@ -11,17 +11,19 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt; 
+import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
-import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import static java.util.Arrays.asList;
 
 /*
@@ -91,7 +93,7 @@ public final class MathClass {
 			globalScope.declareClass(mathDecl);
 		}
 	}
-	public static class RTMathCommon extends RTMessage {
+	public static class RTMathCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTMathCommon(final String className, final String methodName, final String parameterName,
 				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, 
@@ -132,8 +134,12 @@ public final class MathClass {
 			super("Math", "random", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {
-			final RTDoubleObject retval = new RTDoubleObject(Math.random());
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+			final RTDoubleObject answer = new RTDoubleObject(Math.random());
+			
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", answer);
+			
 			return super.nextCode();
 		}
 	}
@@ -142,7 +148,7 @@ public final class MathClass {
 			super("Math", "sqrt", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
-			RTCode retval = null;
+			RTCode nextPC = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject rawElement = activationRecord.getObject("x");
 			double argument = 0.0;
@@ -155,18 +161,23 @@ public final class MathClass {
 			} else {
 				assert false;
 			}
-				
+
+			RTDoubleObject answer = null;
 			if (argument < 0) {
 				ErrorLogger.error(ErrorType.Runtime, "square root of negative number", "", "", "");
-				final RTDoubleObject answer = new RTDoubleObject(0);
+				answer = new RTDoubleObject(0);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(answer);
-				retval = null;	// halt the machine
+				nextPC = new RTHalt();	// halt the machine
 			} else {
-				final RTDoubleObject answer = new RTDoubleObject(argument);
+				answer = new RTDoubleObject(argument);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(answer);
-				retval = super.nextCode();
+				nextPC = super.nextCode();
 			}
-			return retval;
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", answer);
+			
+			return nextPC;
 		}
 	}
 	public static List<TypeDeclaration> typeDeclarationList() {

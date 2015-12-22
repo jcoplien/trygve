@@ -36,8 +36,6 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.expressions.Expression;
-import info.fulloo.trygve.expressions.Expression.ReturnExpression;
-import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
@@ -54,39 +52,44 @@ public class RTMethod extends RTCode {
 			rawClassType = null;
 		}
 		
-		ReturnExpression returnExpression = null;
-		Expression dummyReturnExpression = null;
+		Expression returnExpression = null;
 		name_ = name;
 		codeSize_ = 10;
 		nextCodeIndex_ = 0; 
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
+		lineNumber_ = methodDeclaration.lineNumber();
+		
+		// Put in a default return statement at the end of the function.
+		// We need one if nothing is returned. If something *is* returned,
+		// the user will need to supply an explicit return statement. To
+		// miss doing that will cause a parse error. Doing it will insert
+		// a proper return that dispatches the value back to the caller.
+		// This "safety" return statement will remain. I suppose we
+		// could get rid of it unless the function returns void... 
+		//
+		// We still need to do template transformations, though
 		if (null != returnType_ && returnType_ instanceof TemplateType) {
 			final ClassType classType = (null == rawClassType)? null: (ClassType)rawClassType;
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 			assert null != templateInstantiationInfo;
 			returnType_ = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType_.name());
-			
-			// Put one in anyhow, even though there is no return value...
-			returnExpression = new ReturnExpression(dummyReturnExpression,
-								methodDeclaration.lineNumber(), rawClassType);
-			returnExpression.setResultIsConsumed(false);
+
+			// Put one in anyhow, even though there is no return value for this one...
+			returnExpression = null;
 		} else if (null != returnType_
 				&& returnType_ != StaticScope.globalScope().lookupTypeDeclaration("void")) {
-			dummyReturnExpression = new TopOfStackExpression();
-			returnExpression = new ReturnExpression(dummyReturnExpression,
-					methodDeclaration.lineNumber(), rawClassType);
-			returnExpression.setResultIsConsumed(true);
+			returnExpression = null;
 		} else {
 			// Put one in anyhow, even though there is no return value...
-			dummyReturnExpression = null;
-			returnExpression = new ReturnExpression(dummyReturnExpression,
-					methodDeclaration.lineNumber(), rawClassType);
-			returnExpression.setResultIsConsumed(false);
+			returnExpression = null;
 		}
 
 		methodDeclaration_ = methodDeclaration;
 
+		// Again, this is really used only for void functions,
+		// where a return statement is optional: this is the
+		// one we provide for them.
 		returnInstruction_ = new RTReturn(methodDeclaration_.name(), returnExpression, null);
 		this.addCode(returnInstruction_);
 		
@@ -96,7 +99,12 @@ public class RTMethod extends RTCode {
 		// consumed.)
 		assert null != returnInstruction_ && returnInstruction_ instanceof RTExpression;
 		final RTExpression returnInstruction = (RTExpression)returnInstruction_;
-		returnInstruction.setResultIsConsumed(returnExpression.resultIsConsumed());
+		
+		// We can say "true" here as though it were a void return
+		// (keep other logic from popping anything off the stack).
+		// Even if it's not a function returning a real object,
+		// execution will never reach here...
+		returnInstruction.setResultIsConsumed(true);
 		
 		// WARNING: Fake-out. We continue to insert at the beginning
 		// even though the return statement is at the end. It's a bit
@@ -172,11 +180,11 @@ public class RTMethod extends RTCode {
 		for (final Map.Entry<String, RTExpression> iterator : initializationList_.entrySet()) {
 			// Go into the initializer, and run it to completion
 			final RTExpression initializer = iterator.getValue();
-			for (RTCode pc = initializer.run(); pc != null;) {
+			for (RTCode pc = RunTimeEnvironment.runTimeEnvironment_.runner(initializer); pc != null;) {
 				if (pc instanceof RTHalt) {
 					return pc;
 				} else {
-					pc = pc.run();
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
 			}
 			// We're back from initializer. Is the stack clean?
@@ -261,6 +269,10 @@ public class RTMethod extends RTCode {
 		final boolean retval = megaType instanceof ClassType;
 		return retval;
 	}
+	
+	public int lineNumber() {
+		return lineNumber_;
+	}
 
 
 	private String name_;
@@ -270,4 +282,5 @@ public class RTMethod extends RTCode {
 	private Map<String, RTExpression> initializationList_;
 	protected RTCode returnInstruction_;
 	private Type returnType_;
+	private final int lineNumber_;
 }

@@ -44,7 +44,6 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.NullExpression;
-import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 import info.fulloo.trygve.parser.KantParser.Class_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
@@ -111,10 +110,8 @@ public class Pass3Listener extends Pass2Listener {
 		final MethodDeclaration methodDecl = (MethodDeclaration)findProperMethodScopeAround(ctxExpr, ctxParent, ctxGetStart);
 		assert null == methodDecl || methodDecl instanceof MethodDeclaration;
 		
-		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		
 		if (null == methodDecl) {
-			expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
+			expressionReturned = new NullExpression();
 			ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
 		} else {
 			if (methodDecl.returnType() == null || methodDecl.returnType().name().equals("void")) {
@@ -123,7 +120,7 @@ public class Pass3Listener extends Pass2Listener {
 				} else {
 					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", expressionReturned.getText(), "' of type ",
 							expressionReturned.type().getText(), " is incompatible with method that returns no value.", "");
-					expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
+					expressionReturned = new NullExpression();
 				}
 			} else if (methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
 				;
@@ -131,7 +128,7 @@ public class Pass3Listener extends Pass2Listener {
 				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression '", expressionReturned.getText(),
 						" of type ", expressionReturned.type().getText(),
 						" is not compatible with declared return type ", methodDecl.returnType().getText());
-				expressionReturned = new ReturnExpression(new NullExpression(), ctxGetStart.getLine(), enclosingMegaType);
+				expressionReturned = new NullExpression();
 			}
 		}
 		return expressionReturned;

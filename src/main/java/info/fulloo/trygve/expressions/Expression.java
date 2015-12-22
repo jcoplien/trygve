@@ -438,7 +438,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			final String retval = "(double) " + rhs_.getText();
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileDoubleCasterExpression(this, rtTypeDeclaration);
 		}
 		
@@ -481,7 +481,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			final String retval = lhs_.getText() + " = " + rhs_.getText();
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		
@@ -1280,8 +1280,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ReturnExpression extends Expression
 	{
 		public ReturnExpression(final Expression returnExpression, final int lineNumber, final Type nearestEnclosingMegaType) {
-			super(null != returnExpression? returnExpression.getText(): "return",
-					null != returnExpression? returnExpression.type():
+			super("return" + (null !=  returnExpression? " " + returnExpression.getText(): ""),
+				  null != returnExpression? returnExpression.type():
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
 						nearestEnclosingMegaType);
 			returnExpression_ = returnExpression;

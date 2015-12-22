@@ -98,8 +98,13 @@ public class TestRunner {
 		"chord_identifier2.k",
 		"chord_identifier2_minimal.k",
 		"chord_identifier3_stripped.k",
+		"simplereturn.k",
 		"naked_new.k",
+		"simplearraysize.k",
+		"simplearraysize2.k",
 		// "chord_identifier3.k",
+		// "returnbreak.k",
+		// "printstreamrole.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

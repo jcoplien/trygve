@@ -29,12 +29,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
+import info.fulloo.trygve.run_time.RTExpression.RTAssignment;
+import info.fulloo.trygve.run_time.RTExpression.RTIdentifier;
+import info.fulloo.trygve.run_time.RTExpression.RTIf;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
+import info.fulloo.trygve.run_time.RTExpression.RTNew;
+import info.fulloo.trygve.run_time.RTExpression.RTQualifiedIdentifier;
+import info.fulloo.trygve.run_time.RTExpression.RTReturn;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
@@ -133,7 +145,7 @@ public class RunTimeEnvironment {
 		RTCode pc = mainExpr;
 		do {
 			final RTCode oldPc = pc;
-			pc = pc.run();
+			pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 			if (null != pc) {
 				if (pc instanceof RTHalt) {
 					pc = null;
@@ -207,9 +219,17 @@ public class RunTimeEnvironment {
 			// Can be null (e.g., the nextCode for end-of-evaluation at the end of the program)
 			stackable.incrementReferenceCount();
 		}
+
 		stack.push(stackable);
+		
+		if (ConfigurationOptions.runtimeStackTrace()) {
+			printStack();
+		}
 	}
 	public RTStackable popStack() {
+		if (ConfigurationOptions.runtimeStackTrace()) {
+			printStack();
+		}
 		final RTStackable retval = stack.pop();
 		return retval;
 	}
@@ -256,6 +276,88 @@ public class RunTimeEnvironment {
 			retval = null;
 		}
 		return retval;
+	}
+	private void runnerPrefix(final RTCode code) {
+		if (ConfigurationOptions.fullExecutionTrace()) {
+			if (null == code) {
+				System.err.format("> code == NULL\n");
+			} else if (null == code.getClass()) {
+				System.err.format("> *code == NULL\n");
+			} else {
+				String lineNumber = "   ";
+				if (code instanceof RTMessage) {
+					lineNumber = Integer.toString(((RTMessage)code).lineNumber()) + ".";
+				} else if (code instanceof RTMethod) {
+					lineNumber = Integer.toString(((RTMethod)code).lineNumber()) + ".";
+				} else if (code instanceof RTIdentifier) {
+					lineNumber = Integer.toString(((RTIdentifier)code).lineNumber()) + ".";
+				} else if (code instanceof RTAssignment) {
+					lineNumber = Integer.toString(((RTAssignment)code).lineNumber()) + ".";
+				} else if (code instanceof RTNew) {
+					lineNumber = Integer.toString(((RTNew)code).lineNumber()) + ".";
+				} else if (code instanceof RTIf) {
+					lineNumber = Integer.toString(((RTIf)code).lineNumber()) + ".";
+				} else if (code instanceof RTQualifiedIdentifier) {
+					lineNumber = Integer.toString(((RTQualifiedIdentifier)code).lineNumber()) + ".";
+				} else if (code instanceof RTReturn) {
+					final int iLineNumber = ((RTReturn)code).lineNumber();
+					if (0 > iLineNumber) {
+						lineNumber = Integer.toString(iLineNumber) + ".";
+					}
+				}
+				
+				System.err.format("> %4s  %s", lineNumber, code.getClass().getSimpleName());
+				
+				if (code instanceof RTMessage) {
+					System.err.format(" \"%s\"", ((RTMessage)code).methodSelectorName());
+				} else if (code instanceof RTMethod) {
+					System.err.format(" \"%s\"", ((RTMethod)code).methodDeclaration().getText());
+				} else if (code instanceof RTNew) {
+					System.err.format(" \"%s\"", ((RTNew)code).toString());
+				} else if (code instanceof RTIdentifier) {
+					System.err.format(" \"%s\"", ((RTIdentifier)code).name());
+				} else if (code instanceof RTReturn) {
+					System.err.format(" from \"%s\"", ((RTReturn)code).methodName());
+				} else if (code instanceof RTQualifiedIdentifier) {
+					System.err.format(" from \"%s\"", ((RTQualifiedIdentifier)code).getText());
+				} else if (code instanceof RTPostReturnProcessing) {
+					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
+				}
+				System.err.format("\n");
+			}
+		}
+	}
+	public RTCode runner(final RTCode code) {
+		RTCode retval = null;
+		runnerPrefix(code);
+		assert null != code;
+		retval = code.run();
+		return retval;
+	}
+	
+	private void printStack() {
+		final int stackSize = stack.size();
+		System.err.format("________________________________________________________ (%d)\n", stackSize);
+		final int endIndex = stackSize > 5? stackSize - 5: 0;
+		final int topFramePointer = framePointers_.size() > 0? framePointers_.peek().value(): -1;
+		for (int i = stackSize-1; i >= endIndex; i--) {
+			RTStackable element = stack.elementAt(i);
+			System.err.format(":  %s", element.getClass().getSimpleName());
+			if (element instanceof RTIntegerObject) {
+				System.err.format(" (\"%d\")", ((RTIntegerObject)element).intValue());
+			} else if (element instanceof RTStringObject) {
+				System.err.format(" (\"%s\")", ((RTStringObject)element).stringValue());
+			} else if (element instanceof RTBooleanObject) {
+				System.err.format(" (\"%b\")", ((RTBooleanObject)element).value());
+			}
+			if (topFramePointer == i-1) {
+				System.err.format(" <== frame pointer (%d)", i+1);
+			}
+			System.err.format("\n");
+		}
+		if (endIndex != 0) {
+			System.err.format(":  ...\n");
+		}
 	}
 	
 	

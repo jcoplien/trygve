@@ -134,7 +134,6 @@ public final class ListClass {
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTCode retval = this.runDetails(myEnclosedScope);
 			
-			
 			// All dogs go to heaven, and all return statements that
 			// have something to return do it. We deal with consumption
 			// in the message. This function's return statement will be
@@ -146,6 +145,11 @@ public final class ListClass {
 			// Effectively a pure virtual method, but Java screws us again...
 			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 			return null;	// halt the machine
+		}
+		protected void addRetvalTo(final RTDynamicScope activationRecord) {
+			if (null == activationRecord.getObject("ret$val")) {
+				activationRecord.addObjectDeclaration("ret$val", null);
+			}
 		}
 	}
 	public static class RTListCtorCode extends RTListCommon {
@@ -181,7 +185,10 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final int rawResult = theListObject.size();
 			final RTIntegerObject result = new RTIntegerObject(rawResult);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
 			return super.nextCode();
 		}
 	}
@@ -198,8 +205,11 @@ public final class ListClass {
 				ErrorLogger.error(ErrorType.Runtime,  0, "Use of uninitialized list value, or index out of range.", "", "", "");
 				pc = null;	// halt instruction
 			} else {
-				final RTStackable result = (RTStackable)theListObject.get((int)argument.intValue());
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+				final RTObject result = theListObject.get((int)argument.intValue());
+
+				addRetvalTo(activationRecord);
+				activationRecord.setObject("ret$val", result);
+				
 				pc = super.nextCode();
 			}
 			return pc;
@@ -214,8 +224,11 @@ public final class ListClass {
 			final RTStackable stackableArgument = activationRecord.getObject("element");
 			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.indexOf(argument);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTObject result = theListObject.indexOf(argument);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
 			return super.nextCode();
 		}
 	}
@@ -227,8 +240,11 @@ public final class ListClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject argument = activationRecord.getObject("element");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theListObject.contains(argument);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTObject result = (RTObject)theListObject.contains(argument);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
 			return super.nextCode();
 		}
 	}
@@ -241,7 +257,10 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final boolean rawResult = theListObject.isEmpty();
 			final RTBooleanObject result = new RTBooleanObject(rawResult);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
 			return super.nextCode();
 		}
 	}

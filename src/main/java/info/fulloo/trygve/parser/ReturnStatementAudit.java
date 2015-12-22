@@ -37,7 +37,7 @@ import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 // This is just a little utility class to audit basic
 // properties of return statements in methods
 public class ReturnStatementAudit {
-	public ReturnStatementAudit(Type returnType, ExprAndDeclList exprAndDeclList, int lineNumber, Pass1Listener pass) {
+	public ReturnStatementAudit(final Type returnType, final ExprAndDeclList exprAndDeclList, final int lineNumber, final Pass1Listener pass) {
 		super();
 		returnType_ = returnType;
 		lineNumber_ = lineNumber;
@@ -51,7 +51,7 @@ public class ReturnStatementAudit {
 		this.extractFromExprAndDeclList(exprAndDeclList);
 		this.wrapup();
 	}
-	public void processExpression(BodyPart bodyPart) {
+	public void processExpression(final BodyPart bodyPart) {
 		if (bodyPart instanceof ExprAndDeclList) {
 			somethingFollowedReturn_ = true;
 			this.extractFromExprAndDeclList((ExprAndDeclList)bodyPart);
@@ -67,18 +67,18 @@ public class ReturnStatementAudit {
 		lastLineNumber_ = lastLineNumber_ > bodyPart.lineNumber()?
 							lastLineNumber_: bodyPart.lineNumber();
 	}
-	public void extractFromExpressionList(ExpressionList expressionList) {
-		for (Expression expression : expressionList.expressions()) {
+	public void extractFromExpressionList(final ExpressionList expressionList) {
+		for (final Expression expression : expressionList.expressions()) {
 			this.processExpression(expression);
 		}
 	}
-	public void extractFromExprAndDeclList(ExprAndDeclList exprAndDeclList) {
-		for (BodyPart bodyPart : bodyParts_) {
+	public void extractFromExprAndDeclList(final ExprAndDeclList exprAndDeclList) {
+		for (final BodyPart bodyPart : bodyParts_) {
 			this.processExpression(bodyPart);
 		}
 	}
 	public void wrapup() {
-		for (ReturnExpression retExpr : returnExpressions_) {
+		for (final ReturnExpression retExpr : returnExpressions_) {
 			if (null == returnType_) {
 				if (null != retExpr.returnExpression()) {
 					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",

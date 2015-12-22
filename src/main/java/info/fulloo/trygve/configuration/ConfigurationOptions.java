@@ -39,6 +39,12 @@ public class ConfigurationOptions {
 	public static boolean printContextMethodDecls() {
 		return false;
 	}
+	public static boolean fullExecutionTrace() {
+		return false;
+	}
+	public static boolean runtimeStackTrace() {
+		return false;
+	}
 	
 	static {
 		  boolean assertsEnabled = false;

@@ -281,6 +281,11 @@ public class Pass2Listener extends Pass1Listener {
 		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | 'role' JAVA_ID '{' '}'
+		// | 'role' JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' JAVA_ID '{ '}'
+		// | access_qualifier 'role' JAVA_ID '{ '}' REQUIRES '{' self_methods '}'
+		
 		super.enterRole_decl(ctx);
 		this.processRequiredDeclarations(ctx.getStart().getLine());
 	}
@@ -290,6 +295,10 @@ public class Pass2Listener extends Pass1Listener {
 		// | 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
 		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | 'role' JAVA_ID '{' '}'
+		// | 'role' JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' JAVA_ID '{ '}'
+		// | access_qualifier 'role' JAVA_ID '{ '}' REQUIRES '{' self_methods '}'
 		
 		this.processDeclareRoleArrayAlias(ctx.getStart().getLine());
 		super.exitRole_decl(ctx);	// necessary? some of the cleanup seems relevant

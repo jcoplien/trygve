@@ -104,6 +104,7 @@ import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.SumExpression;
 import info.fulloo.trygve.expressions.Expression.SwitchBodyElement;
 import info.fulloo.trygve.expressions.Expression.SwitchExpression;
+import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
@@ -1580,6 +1581,30 @@ public class Pass1Listener extends KantBaseListener {
 			if (null != ctx.expr()) {
 				expression.setResultIsConsumed(true);	// consumed by the return statement
 			}
+			
+			if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
+				if (null == expression.type()) {
+					assert null != expression.type();
+				}
+				assert null != expression.type().pathName();
+				if (expression.type().pathName().equals("void")) {
+					assert false;	// may never happen anyhooo
+					expression = new TopOfStackExpression();
+				}
+			}
+			
+			// Now, speaking of the return statement... Methods stick one in at
+			// the end for free. But we have an explicit return here and it
+			// may not be at the end. If it is, then there may just be extra
+			// redundant return code. But watch for scope management stuff.
+			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			assert null != nearestEnclosingMegaType;
+			if (expression instanceof ReturnExpression) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"You may not return another `return' expression.", "", "", "");
+				expression = new NullExpression();
+			}
+			expression = new ReturnExpression(expression, ctx.getStart().getLine(), nearestEnclosingMegaType);
 			
 			if (printProductionsDebug) {
 				if (null == ctx.expr()) {
@@ -3711,7 +3736,17 @@ public class Pass1Listener extends KantBaseListener {
 			// Calling a role method
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role ", roleDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role `", roleDecl.name() + "'.");
+				if (message.lineNumber() < roleDecl.lineNumber()) {
+					final MethodSignature enclosingMethod = parsingData_.currentMethodSignature();
+					if (null != enclosingMethod) {
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
+								"' befor the definition of method `", enclosingMethod.getText() + "'.");
+					} else {
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
+							"' befor the invocation of `", methodSelectorName+ "'.");
+					}
+				}
 			}
 		} else if (null != contextDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
@@ -4086,11 +4121,10 @@ public class Pass1Listener extends KantBaseListener {
 	protected <ExprType> Expression expressionFromReturnStatement(final ExprType ctxExpr, final RuleContext unused, final Token ctxGetStart) {
 		// Pass 1 version. There is another version for Pass 3 / 4.
 		Expression retval = null;
-		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		if (null != ctxExpr) {
 			final Expression returnExpression = parsingData_.popExpression();
 			returnExpression.setResultIsConsumed(true);
-			retval = new ReturnExpression(returnExpression, ctxGetStart.getLine(), enclosingMegaType);
+			retval = returnExpression;
 		}
 		return retval;
 	}

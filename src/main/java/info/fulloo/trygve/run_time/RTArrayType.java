@@ -152,9 +152,33 @@ public class RTArrayType implements RTType {
 			} else if (theArrayObject instanceof RTArrayObject) {
 				size = ((RTArrayObject)theArrayObject).size();
 			}
-			final RTObject retval = new RTIntegerObject(size);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
-			return returnInstruction_;
+			final RTObject result = new RTIntegerObject(size);
+			
+			// This is a VERY tightly integrated function. It
+			// does not use an RTReturn functor but handles
+			// return processing riiiiight here. The only thing
+			// that follows is RTPostReturnProcessing, which
+			// is where the return address takes us.
+			
+			// This does nothing but pop the frame pointer stack, really
+			RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();	// is this right?
+			
+			final RTStackable rawReturnAddress = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawReturnAddress instanceof RTCode;
+			RTCode returnAddress = (RTCode) rawReturnAddress;
+			
+			final RTDynamicScope lastPoppedScope = RunTimeEnvironment.runTimeEnvironment_.popDynamicScope();
+			lastPoppedScope.decrementReferenceCount();
+			
+			// No one else should have a handle to the activation record
+			assert lastPoppedScope.referenceCount() == 0;
+			
+			lastPoppedScope.closeScope();
+
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return returnAddress;
+			
+			// ignore returnInstruction_;
 		}
 	}
 	

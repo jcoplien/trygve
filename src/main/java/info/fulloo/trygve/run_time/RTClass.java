@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
@@ -212,6 +213,18 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return null;	// halt the machine
 			}
 		}
+		public static class RTSimpleObjectMethodsCommon extends RTMessage {
+			public RTSimpleObjectMethodsCommon(final String name, final ActualArgumentList parameters,
+					final Type returnType, final Type enclosingMegaType,
+					final boolean isStatic) {
+				super(name, parameters, returnType, enclosingMegaType, isStatic);
+			}
+			protected void addRetvalTo(final RTDynamicScope activationRecord) {
+				if (null == activationRecord.getObject("ret$val")) {
+					activationRecord.addObjectDeclaration("ret$val", null);
+				}
+			}
+		}
 		public static class RTAssertCode extends RTObjectCommon {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
 				super("Object", "assert",
@@ -273,7 +286,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTIntegerClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		public static class RTIntegerCommon extends RTMessage {
+		public static class RTIntegerCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 			public RTIntegerCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 				super(methodName, RTMessage.buildArguments(className, methodName,
@@ -307,7 +320,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				// Effectively a pure virtual method, but Java screws us again...
 				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 				return null;	// halt the machine
-
 			}
 			
 			protected final String parameterName_;
@@ -324,7 +336,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTIntegerObject intObject = (RTIntegerObject)self;
 				final long iRetval = intObject.intValue();
 				final RTStringObject retval = new RTStringObject(String.valueOf(iRetval));
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -336,7 +351,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTBigIntegerClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		public static class RTBigIntegerCommon extends RTMessage {
+		public static class RTBigIntegerCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 			public RTBigIntegerCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 				super(methodName, RTMessage.buildArguments(className, methodName,
@@ -370,7 +385,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				// Effectively a pure virtual method, but Java screws us again...
 				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 				return null;	// halt the machine
-
 			}
 			
 			protected final String parameterName_;
@@ -387,7 +401,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTBigIntegerObject intObject = (RTBigIntegerObject)self;
 				final long iRetval = intObject.intValue();
 				final RTStringObject retval = new RTStringObject(String.valueOf(iRetval));
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -399,7 +416,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTDoubleClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		public static class RTDoubleCommon extends RTMessage {
+		public static class RTDoubleCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 			public RTDoubleCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 				super(methodName, RTMessage.buildArguments(className, methodName, 
@@ -433,7 +450,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				// Effectively a pure virtual method, but Java screws us again...
 				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 				return null;	// halt the machine
-
 			}
 			
 			protected final String parameterName_;
@@ -447,10 +463,13 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
 				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTDoubleObject;
-				final RTDoubleObject intObject = (RTDoubleObject)self;
-				final double dRetval = intObject.doubleValue();
+				final RTDoubleObject doubleObject = (RTDoubleObject)self;
+				final double dRetval = doubleObject.doubleValue();
 				final RTStringObject retval = new RTStringObject(String.valueOf(dRetval));
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -463,10 +482,12 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			super(associatedType);
 			// super.populateNameToMethodMap();
 		}
-		public static class RTStringCommon extends RTMessage {
+		public static class RTStringCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 			public RTStringCommon(final String className, final String methodName, final List<String> parameterNames,
 					final List<String> parameterTypeNames, final StaticScope enclosingMethodScope, final Type returnType) {
-				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
+				super(methodName,
+						RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false),
+						returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 						false);
 			}
 			public RTCode run() {
@@ -507,8 +528,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				assert self instanceof RTStringObject;
 				final RTStringObject stringObject = (RTStringObject)self;
 				final long iRetval = stringObject.stringValue().length();
-				final RTIntegerObject retval = new RTIntegerObject(iRetval);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				final RTIntegerObject result = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", result);
+				
 				return super.nextCode();
 			}
 		}
@@ -525,7 +549,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTObject from = dynamicScope.getObject("start");
 				final RTObject to = dynamicScope.getObject("end");
 				final RTStringObject retval = stringObject.substring(from, to);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -539,7 +566,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTStringObject;
 				final RTStringObject retval = (RTStringObject)self;
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -559,7 +589,12 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStringObject rhs = (RTStringObject)secondStringObject;
 				final String sRetval2 = rhs.stringValue();
 				final RTStringObject retval = new RTStringObject(sRetval1 + sRetval2);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
 				return super.nextCode();
 			}
 		}
@@ -580,7 +615,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final String sstring = searchString.stringValue();
 				final long lRetval = thisString.indexOf(sstring);
 				final RTIntegerObject retval = new RTIntegerObject(lRetval);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}
@@ -602,7 +640,10 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final String sstring = searchString.stringValue();
 				final boolean bRetval = thisString.contains(sstring);
 				final RTBooleanObject retval = new RTBooleanObject(bRetval);
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}

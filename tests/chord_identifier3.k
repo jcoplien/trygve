@@ -52,6 +52,11 @@ context Interval {
     public int semitones() {
         int lowPos = LowNote.position();
         int highPos = HighNote.position();
+        System.out.print("lowPos=")
+                   .print(lowPos)
+                   .print(", highPos=")
+                   .print(highPos)
+                   .println()
         int octaveOffset = if(lowPos > highPos) 12 else 0;
 
         return (highPos - lowPos + octaveOffset) / 2;

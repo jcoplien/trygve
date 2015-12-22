@@ -64,6 +64,7 @@ public final class SystemClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.signature().setHasConstModifier(true);
 		printStreamType_.enclosedScope().declareMethod(methodDecl);
+		methodDecl.setReturnType(printStreamType_);
 	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
@@ -147,7 +148,7 @@ public final class SystemClass {
 	
 	public static class RTPrintCommon extends RTMessage {
 		public RTPrintCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName, final StaticScope enclosingMethodScope) {
-			super("println",
+			super(methodName,
 					RTMessage.buildArguments(className, methodName,
 							null == parameterName?     null: asList(parameterName),
 							null == parameterTypeName? null: asList(parameterTypeName),
@@ -166,11 +167,11 @@ public final class SystemClass {
 			// Parameters have all been packaged into the
 			// activation record
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTCode retval = this.runDetails(myEnclosedScope);
+			final RTCode nextPC = this.runDetails(myEnclosedScope);
 			
 			// We DO push a return value, which is just "this"
-			// It is always returned. It is up to the RTMessage
-			// logic to deal with consumption.
+			// It is always returned. It is up to the RTReturn / RTMessage /
+			// RTPostReturnProcessing logic to deal with consumption.
 			
 			final RTObject self = myEnclosedScope.getObject("this");
 			assert null != self;
@@ -181,7 +182,7 @@ public final class SystemClass {
 			// in the message. This function's return statement will be
 			// set for a consumed result in higher-level logic.
 			
-			return retval;
+			return nextPC;
 		}
 		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
