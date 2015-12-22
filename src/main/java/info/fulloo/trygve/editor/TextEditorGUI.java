@@ -44,7 +44,7 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/andreas1.k";
+	private final static String defaultFile = "tests/chord_identifier4.k";
     
     private File fileName = new File("noname");
     

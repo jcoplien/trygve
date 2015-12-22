@@ -3371,9 +3371,6 @@ public abstract class RTExpression extends RTCode {
 		@Override public void addObjectDeclaration(final String objectName, final RTType type) { assert false; }
 		@Override public Map<String, RTType> objectDeclarations() { assert false; return null; }
 		@Override public void setObject(final String objectName, final RTObject object) { assert false; }
-		/*
-		@Override public Map<String, RTObject> objectMembers() { assert false; return null; }
-		*/
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
 		@Override public boolean isEqualTo(final Object another) { return rTExpr_.isEqualTo(another); }
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }
@@ -3663,6 +3660,7 @@ public abstract class RTExpression extends RTCode {
 			// So far this is used only for debugging
 			methodName_ = methodName;
 			lineNumber_ = 0;
+			nestingLevelInsideMethod_ = 0;
 		}
 		public RTReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
 			super();
@@ -3672,7 +3670,6 @@ public abstract class RTExpression extends RTCode {
 			// it on the stack, and to get it back to the caller
 			if (null != returnExpression) {
 				rTRe_ = new ArrayList<RTCode>();
-				// rTRe_.add(new RTNullExpression());
 				assert returnExpression instanceof NullExpression == false;
 				if (returnExpression instanceof ReturnExpression == false) {
 					assert returnExpression instanceof ReturnExpression;
@@ -3687,6 +3684,9 @@ public abstract class RTExpression extends RTCode {
 			// So far this is used only for debugging
 			methodName_ = methodName;
 			lineNumber_ = null == returnExpression? 0: returnExpression.lineNumber();
+			nestingLevelInsideMethod_ = (null == returnExpression)?
+					0:
+					((ReturnExpression)returnExpression).nestingLevelInsideMethod();
 		}
 		@Override public RTCode run() {
 			RTCode returnAddress = null;
@@ -3726,7 +3726,11 @@ public abstract class RTExpression extends RTCode {
 					returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				}
 				
-				// Step 2. Clean up the stack.
+				// Step 2. Clean up the stack. First, get out to method scope
+				// Pop as many dynamic scopes as we must
+				RunTimeEnvironment.runTimeEnvironment_.popDynamicScopeInstances(nestingLevelInsideMethod_);
+				
+				// Now get ready to interface with the caller
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
 				returnAddress = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				
@@ -3774,6 +3778,7 @@ public abstract class RTExpression extends RTCode {
 		// Only for debugging and tracing
 		private final String methodName_;
 		private final int lineNumber_;
+		private final int nestingLevelInsideMethod_;
 	}
 	
 	public static class RTBlock extends RTExpression {

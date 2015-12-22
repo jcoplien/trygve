@@ -56,12 +56,10 @@ context Chord {
 }
 
 /* GOLD:
-line 65: WARNING: Method declaration for `name' may hide method declared at line 100
+line 18: WARNING: Method declaration for `name' may hide method declared at line 40
 ___________________________________________________________
-2
-made it through assert
-1
-1
-false
+13
+i=0
+true
 Chord::name
 */

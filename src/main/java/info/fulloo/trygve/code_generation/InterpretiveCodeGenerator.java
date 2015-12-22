@@ -259,7 +259,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingTemplate:
 		case usingString:
 			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
-			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(), retval.type());
+			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
+					retval.type(), StaticScope.globalScope());
 		case none:
 			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
 			break;
@@ -446,7 +447,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		assert (sizeOfCodeArray > 0);
 		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
 		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
-		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(), self.type());
+		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
+				self.type(), StaticScope.globalScope());
 		final StaticScope myScope = methodDeclaration.enclosedScope();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
 		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());

@@ -1279,13 +1279,27 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ReturnExpression extends Expression
 	{
-		public ReturnExpression(final Expression returnExpression, final int lineNumber, final Type nearestEnclosingMegaType) {
+		public ReturnExpression(final Expression returnExpression, final int lineNumber,
+				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
 			super("return" + (null !=  returnExpression? " " + returnExpression.getText(): ""),
 				  null != returnExpression? returnExpression.type():
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
 						nearestEnclosingMegaType);
 			returnExpression_ = returnExpression;
 			lineNumber_ = lineNumber;
+			
+			int nestingLevelInsideMethod = 0;
+			
+			// Don't do it if someone passed in global scope
+			// (kind of a sentinel, too...)
+			if (null != enclosingScope.parentScope()) {
+				StaticScope myScope = enclosingScope;
+				while (myScope.associatedDeclaration() instanceof MethodDeclaration == false) {
+					nestingLevelInsideMethod++;
+					myScope = myScope.parentScope();
+				}
+			}
+			nestingLevelInsideMethod_ = nestingLevelInsideMethod;
 		}
 		@Override public String getText() {
 			final StringBuffer stringBuffer = new StringBuffer();
@@ -1306,9 +1320,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileReturnExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
+		public int nestingLevelInsideMethod() {
+			return nestingLevelInsideMethod_;
+		}
 		
 		private final Expression returnExpression_;	// may be null
 		private final int lineNumber_;
+		private final int nestingLevelInsideMethod_;
 	}
 	
 	public static class BlockExpression extends Expression

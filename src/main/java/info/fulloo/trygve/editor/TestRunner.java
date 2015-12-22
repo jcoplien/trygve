@@ -102,9 +102,11 @@ public class TestRunner {
 		"naked_new.k",
 		"simplearraysize.k",
 		"simplearraysize2.k",
-		// "chord_identifier3.k",
-		// "returnbreak.k",
-		// "printstreamrole.k",
+		"chord_identifier3.k",
+		"returnbreak.k",
+		"printstreamrole.k",
+		// "chord_identifier4.k",
+		// "moneytransfer1.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

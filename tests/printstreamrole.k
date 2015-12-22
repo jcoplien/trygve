@@ -17,3 +17,9 @@ context C1 {
 {
     new C1();
 }
+
+/* GOLD:
+line 7: Method `println' not declared in Role `log'.
+line 7: 	Try moving the declaration of `log' befor the definition of method `C1()'.
+___________________________________________________________
+*/

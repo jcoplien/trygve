@@ -49,9 +49,9 @@ context Interval {
         HighNote = highNote;
     }
 
-    public int semitones() {
-        int lowPos = LowNote.position();
-        int highPos = HighNote.position();
+    public double semitones() {
+        double lowPos = LowNote.position();
+        double highPos = HighNote.position();
         System.out.print("lowPos=")
                    .print(lowPos)
                    .print(", highPos=")
@@ -83,10 +83,10 @@ context Chord {
                   System.out.println(pos);
                 
                 // NOTE: Cannot use Root for duck typing:
-                Interval internval = new Interval(Root, this.get(i));
+                Interval interval = new Interval(Root, this.get(i));
                 
                 // NOTE: Cannot return, the loop keeps going
-//                if(interval.semitones() == semitones) return true;
+                if(interval.semitones() == semitones) return true;
             }
             return false;
         } 
@@ -123,12 +123,15 @@ context Chord {
 }
 
 /* GOLD:
-line 65: WARNING: Method declaration for `name' may hide method declared at line 100
+line 53: WARNING: Substituting double object for `LowNote.position()' in assignment to `lowPos'.
+line 54: WARNING: Substituting double object for `HighNote.position()' in assignment to `highPos'.
+line 70: WARNING: Method declaration for `name' may hide method declared at line 105
 ___________________________________________________________
-2
+lowPos=6.0, highPos=11.0
+2.5
 made it through assert
 1
-1
-false
+lowPos=1.0, highPos=4.0
+true
 Chord::name
 */

@@ -1604,7 +1604,8 @@ public class Pass1Listener extends KantBaseListener {
 						"You may not return another `return' expression.", "", "", "");
 				expression = new NullExpression();
 			}
-			expression = new ReturnExpression(expression, ctx.getStart().getLine(), nearestEnclosingMegaType);
+			expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+					nearestEnclosingMegaType, currentScope_);
 			
 			if (printProductionsDebug) {
 				if (null == ctx.expr()) {

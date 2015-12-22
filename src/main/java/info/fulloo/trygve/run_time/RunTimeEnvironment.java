@@ -258,7 +258,7 @@ public class RunTimeEnvironment {
 	public RTDynamicScope currentDynamicScope() {
 		return dynamicScopes.peek();
 	}
-	public void popDynamicScopeInstances(long depth) {
+	public void popDynamicScopeInstances(final long depth) {
 		// May be zero, but usually not
 		for (int i = 0; i < depth; i++) {
 			final RTDynamicScope retval = dynamicScopes.pop();
