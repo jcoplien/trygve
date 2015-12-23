@@ -60,24 +60,17 @@ context Interval {
 
 // -------------------------------------------------
 
-// The first note in the list will be the root.
 context Chord {
     stageprop Root {} requires {
         double position() const;
-        // NOTE: Compilation error with the "name" method included:
         String name() const;
     }
 
     role Notes {
         public String quality() {
-            // NOTE: cannot use bool expression directly, must use if statement.
-            boolean hasDominant = if (dominant().length() > 0) true else false;
-
+            boolean hasDominant = dominant().length() > 0;
             boolean minor = isMinor();
             boolean major = isMajor();
-
-            // NOTE: Any call to isMinor() or isMajor() below
-            // creates a runtime crash. Temp vars is the workaround.
 
             String sus2 = "";
             if(hasInterval(2.0)) {
@@ -97,7 +90,6 @@ context Chord {
                 }
             }
 
-            // NOTE: Parenthesis around expression doesn't work, need temp var.
             String majorOrMinor = if(isMinor()) "m" else "";
             return majorOrMinor + sus2 + sus4;
         }
@@ -114,7 +106,7 @@ context Chord {
             String highest = "";
             String maj7 = if(hasInterval(11.0)) "maj" else "";
 
-            // NOTE: Crashes here for every hasInterval call
+            if(hasInterval(7.0)) if(size() == 2) highest = "5";
             if(hasInterval(9.0)) highest = "6";
             if(hasInterval(10.0)) highest = "7";
             if(hasInterval(11.0)) highest = "7";
@@ -131,6 +123,7 @@ context Chord {
             return maj7 + highest;
         }
         
+        // TODO: Calculate #11 (Lydian chord)
         public String augmentations() {
             List<String> augs = new List<String>();
 
@@ -139,8 +132,7 @@ context Chord {
             if (hasInterval(1.0)) augs.add("b9");
             if (hasInterval(3.0)) if(isMinor() == false) augs.add("#9");
             if (hasInterval(4.0)) if(isMajor() == false) augs.add("b11");
-            if (hasInterval(6.0)) augs.add("#11");
-            if(hasInterval(8.0)) augs.add("b13");
+            if (hasInterval(8.0)) augs.add("b13");
 
             String output = "";
             for(String aug : augs) output = output + aug;
@@ -149,32 +141,11 @@ context Chord {
 
         public boolean hasInterval(double semitones) {
             for (int i = 1; i < this.size(); i++) {
-                // NOTE: Cannot access Root.position here, compilation error:
-                // Exception in thread "AWT-EventQueue-0" java.lang.AssertionError
-                double pos = Root.position();
-                
-                // NOTE: Cannot use Root directly for duck typing, need a temp var.
                 Interval interval = new Interval(Root, this.get(i));
-                
-                // NOTE: Cannot return, the loop keeps going.
-                // This is true in general, only one return statement seems 
-                // allowed in methods.
                 if(interval.semitones() == semitones) return true;
             }
             return false;
         } 
-/*
-        // Workaround for the broken method
-        private boolean hasInterval(double semitones) {
-            boolean has = false;
-            Root root = Root;
-            for(int i = 1; i < this.size(); i++) {
-                Interval interval = new Interval(root, this.get(i));                
-                if(interval.semitones() == semitones) has = true;
-            }
-            return has;
-        } 
-*/
     } requires {
         Note get(int pos);
         int size();
@@ -187,12 +158,11 @@ context Chord {
     }
 
     public String name() {
-        // NOTE: Cannot use Root.name() directly, need temp var.
         return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
-// ----- Start -------------------------------
+// ----- Entrypoint -------------------------------
 
 {
     List<Note> notes = new List<Note>();
@@ -214,7 +184,7 @@ context Chord {
     notes3.add(new Note("G"));
     notes3.add(new Note("Bb"));
     notes3.add(new Note("D"));
-    notes3.add(new Note("Eb"));
+    notes3.add(new Note("F"));
     Chord chord3 = new Chord(notes3);
 
     List<Note> notes4 = new List<Note>();
@@ -225,17 +195,24 @@ context Chord {
     notes4.add(new Note("G"));
     Chord chord4 = new Chord(notes4);
 
+    List<Note> notes5 = new List<Note>();
+    notes5.add(new Note("F#"));
+    notes5.add(new Note("C#"));
+    Chord chord5 = new Chord(notes5);
+
     System.out.println(chord.name());
     System.out.println(chord2.name());
     System.out.println(chord3.name());
     System.out.println(chord4.name());
+    System.out.println(chord5.name());
 }
 
 /* GOLD:
-line 65: WARNING: Method declaration for `name' may hide method declared at line 189
+line 64: WARNING: Method declaration for `name' may hide method declared at line 160
 ___________________________________________________________
 Cm11
 Dsus
-Emmaj7b5#11
+Em7b5b9
 Fmaj9
+F#5
 */
