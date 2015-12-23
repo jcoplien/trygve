@@ -560,7 +560,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		object.setResultIsConsumed(true);
 									
-		final Message message = parsingData_.popMessage();
+		Message message = parsingData_.popMessage();
 		
 		assert null != message;
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
@@ -602,8 +602,8 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
 			if (wannabeContextType instanceof RoleType) {
-				final RoleType nearestEMT = (RoleType) nearestEnclosingMegaType;
-				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEMT.enclosingScope());
+				final RoleType nearestEnclosingRole = (RoleType) nearestEnclosingMegaType;
+				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRole.enclosingScope());
 				assert wannabeContextType instanceof ContextType;
 			}
 			
@@ -614,10 +614,11 @@ public class Pass2Listener extends Pass1Listener {
 			final RoleType roleType = (RoleType)objectType;
 			methodSignature = roleType.lookupMethodSignatureDeclaration(message.selectorName());
 			if (null != methodSignature) {
-				// Then it's in the "required" declarations and is NOT a role method per se
+				// Then it may be in the "required" declarations and is NOT a role method per se
 				isOKMethodSignature = true;
 			} else {
 				final Expression currentContext = new IdentifierExpression("current$context", wannabeContextType, nearestMethodScope);
+				final ActualArgumentList saveArgumentList = message.argumentList().copy();
 				message.argumentList().addFirstActualParameter(currentContext);
 				currentContext.setResultIsConsumed(true);
 				
@@ -627,6 +628,22 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != methodDeclaration) {
 					// Null check is related to error stumbling
 					methodSignature = methodDeclaration.signature();
+				} else {
+					// It's a role. Could be a call to assert or something like that
+					// in the base class
+					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
+					assert null != objectDecl;
+					methodDeclaration = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, message.selectorName(), message.argumentList());
+					
+					if (null != methodDeclaration) {
+						// I THINK that the right thing to do at this point is to pull
+						// the context out of the signature. Luckily, we copied the
+						// parameter list above...
+						
+						message = new Message(message.selectorName(), saveArgumentList,
+								message.lineNumber(), message.enclosingMegaType());
+						methodSignature = methodDeclaration.signature();
+					}
 				}
 			}
 		} else if (objectType instanceof ClassType || objectType instanceof ContextType) {
@@ -739,7 +756,7 @@ public class Pass2Listener extends Pass1Listener {
 		if (null == methodDeclaration && isOKMethodSignature == false) {
 			final String methodSelectorName = message.selectorName();
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
-					methodSelectorName, "' not declared in class ", "classname");
+					methodSelectorName, "' not declared in class ", "classname (dubious error — see other messages)");
 		}
 		
 		assert null != returnType;
@@ -752,7 +769,8 @@ public class Pass2Listener extends Pass1Listener {
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
 			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic());
 			if (null == methodDeclaration) {
-				// Could be a "required" method in a Role. TODO.
+				// Could be a "required" method in a Role. It's O.K.
+				assert true;
 			} else {
 				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart.getLine());
 				if (accessOK == false) {
@@ -773,6 +791,11 @@ public class Pass2Listener extends Pass1Listener {
 		final StaticScope classScope = classDecl.enclosedScope();
 		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 	}
+	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+		// Pass 2 / 3 version turns on signature checking
+		final StaticScope classScope = classDecl.enclosedScope();
+		return classScope.lookupMethodDeclarationIgnoringRoleStuff(methodSelectorName, parameterList);
+	}
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		StaticScope classScope = classDecl.enclosedScope();
@@ -791,8 +814,117 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		return retval;
 	}
-	@Override protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
-			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart) {
+	private void typeCheckHelperForRoleMismatches(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore,
+			final Token ctxGetStart) {
+		
+		// This is for checking agreement with functions like assert
+		
+		int actualParameterIndex = 0, formalParameterIndex = 0;
+		final int numberOfFormalParameters = formals.count(),
+				  numberOfActualParameters = (null == actuals)? 0: actuals.count();
+		if (null == actuals) {
+			if (numberOfActualParameters != 0) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in call of method ", mdecl.name(),
+						" does not match declaration of ", mdecl.name());
+				int lineNumber = mdecl.lineNumber();
+				if (0 == lineNumber) {
+					// e.g., for a built-in type
+					lineNumber = ctxGetStart.getLine();
+				}
+				errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+			}
+		} else {
+			// Strip off all the stuff up front
+			String actualParameterName = actuals.nameOfParameterAtPosition(actualParameterIndex);
+			while (actualParameterName.equals("this") || actualParameterName.equals("t$this") ||
+					actualParameterName.equals("current$context") || actualParameterName.equals("current$role")) {
+				actualParameterIndex++;
+				if (actualParameterIndex < numberOfActualParameters) {
+					actualParameterName = actuals.nameOfParameterAtPosition(actualParameterIndex);
+				} else {
+					break;
+				}
+			}
+			
+			String formalParameterName = formals.nameOfParameterAtPosition(formalParameterIndex);
+			while (formalParameterName.equals("this") || formalParameterName.equals("t$this") ||
+					formalParameterName.equals("current$context") || formalParameterName.equals("current$role")) {
+				formalParameterIndex++;
+				if (formalParameterIndex < numberOfFormalParameters) {
+					formalParameterName = formals.nameOfParameterAtPosition(formalParameterIndex);
+				} else {
+					break;
+				}
+			}
+				
+			Expression actualParameter = null;
+			Type actualParameterType = null;
+			ObjectDeclaration formalParameter = null;
+			Type formalParameterType = null;
+				
+			while (formalParameterIndex < numberOfFormalParameters &&
+					actualParameterIndex < numberOfActualParameters) {
+				boolean parametersMatch = true;
+
+				final Object rawActualParameter = actuals.argumentAtPosition(actualParameterIndex);
+				if (rawActualParameter == null || (rawActualParameter instanceof Expression) == false) {
+					assert rawActualParameter != null && rawActualParameter instanceof Expression;
+				}
+				actualParameter = (Expression)rawActualParameter;
+				actualParameterType = actualParameter.type();
+					
+				formalParameterName = formals.nameOfParameterAtPosition(formalParameterIndex);
+				formalParameter = formals.parameterAtPosition(formalParameterIndex);
+				formalParameterType = formalParameter.type();
+					
+				if (actualParameterType.enclosedScope() == formalParameterType.enclosedScope()) {
+					actualParameterIndex++; formalParameterIndex++;
+				} else if (actualParameterType.isBaseClassOf(formalParameterType)) {
+					actualParameterIndex++; formalParameterIndex++;
+				} else if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
+					actualParameterIndex++; formalParameterIndex++;
+				} else {
+					final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+					if (enclosingType instanceof TemplateType) {
+						// It could just work. This is just the template we're processing. Check things out
+						// later in the class instead.
+						actualParameterIndex++; formalParameterIndex++;
+					} else {
+						parametersMatch = false;
+					}
+				}
+					
+				if (false == parametersMatch) {
+					final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
+					final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+							" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
+				}
+			}
+				
+			if (formalParameterIndex != numberOfFormalParameters ||
+						actualParameterIndex != numberOfActualParameters) {
+				if (null != mdecl) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in call of method ", mdecl.name(),
+						" does not match declaration of ", mdecl.name());
+				}
+					
+				int lineNumber = null == mdecl ? 0 : mdecl.lineNumber();
+				if (0 == lineNumber) {
+					// e.g., for a built-in type
+					lineNumber = ctxGetStart.getLine();
+				}
+				if (null != classdecl && null != mdecl) {
+					errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+				}	
+			}
+		}
+	}
+	
+	protected void typeCheckIgnoringParameterNormal(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore,
+			final Token ctxGetStart) {
 		final long numberOfActualParameters = actuals.count();
 		final long numberOfFormalParameters = formals.count();
 
@@ -832,6 +964,20 @@ public class Pass2Listener extends Pass1Listener {
 					}
 				}	
 			}
+		}
+	}
+	@Override protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore,
+			final Token ctxGetStart, final boolean roleHint) {
+		
+		// roleHint is set if the method was successfully found by turning off
+		// any consideration of Role parameters, like current$context. This
+		// typically applies in the ancilliary lookup of the assert API in
+		// class Object when invoked through a Role pointer.
+		if (roleHint) {
+			typeCheckHelperForRoleMismatches(formals, actuals, mdecl, classdecl, parameterToIgnore, ctxGetStart);
+		} else {
+			typeCheckIgnoringParameterNormal(formals, actuals, mdecl, classdecl, parameterToIgnore, ctxGetStart);
 		}
 	}
 	
@@ -1018,14 +1164,14 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
 	}
 	
-	@Override protected ContextDeclaration lookupOrCreateContextDeclaration(String name, int lineNumber) {
+	@Override protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
 		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(name);
 		assert null != contextDecl;  // maybe turn into an error message later
 		currentScope_ = contextDecl.enclosedScope();
 		assert null != currentScope_;	// maybe turn into an error message later
 		return contextDecl;
 	}
-	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(String name, ClassDeclaration rawBaseClass, ClassType baseType, int lineNumber) {
+	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
 		final ClassDeclaration newClass = currentScope_.lookupClassDeclarationRecursive(name);
 		final Type rawClass = newClass.type();
 		assert rawClass instanceof ClassType;
@@ -1033,19 +1179,19 @@ public class Pass2Listener extends Pass1Listener {
 		classType.updateBaseType(baseType);
 		return newClass;
 	}
-	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(String name, TypeDeclaration rawBaseType, Type baseType, int lineNumber) {
+	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
 		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
 		return newTemplate;
 	}
-	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(String name, int lineNumber) {
+	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
 		final InterfaceDeclaration newInterface = currentScope_.lookupInterfaceDeclarationRecursive(name);
 		assert null != newInterface;
 		return newInterface;
 	}
-	@Override protected void declareTypeSuitableToPass(StaticScope scope, Type decl) {
+	@Override protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
 		/* Nothing */
 	}
-	@Override protected void declareObjectSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
+	@Override protected void declareObjectSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
 		if (scope.hasDeclarationsThatAreLostBetweenPasses()) {
 			// e.g., a FOR Loop or a Block
 			scope.declareObject(objDecl);
@@ -1054,7 +1200,7 @@ public class Pass2Listener extends Pass1Listener {
 			; 		/* Nothing */
 		}
 	}
-	@Override protected void declareFormalParametersSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
+	@Override protected void declareFormalParametersSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
 		scope.reDeclareObject(objDecl);
 	}
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
@@ -1063,37 +1209,37 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
 		classType.addInterfaceType(interfaceType);
 	}
-	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, final int lineNumber) {
 		newDeclaration.doIImplementImplementsList(this, lineNumber);
 	}
-	@Override protected void errorHook5p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
+	@Override protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* Nothing */
 	}
-	@Override protected void errorHook6p1(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	@Override protected void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* Nothing */
 	}	
-	@Override public void errorHook5p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4) {
+	@Override public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
 	}
-	@Override public void errorHook6p2(ErrorType errorType, int i, String s1, String s2, String s3, String s4, String s5, String s6) {
+	@Override public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
-	@Override protected void updateInitializationLists(Expression initializationExpr, ObjectDeclaration objDecl) {
+	@Override protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
 		// It actually is right that one of these is an add and one is an insert...
 		// Same version for pass 2, 3, and 4
 		initializationExpressions_.add(initializationExpr);
 		variablesToInitialize_.insertAtStart(objDecl);
 	}
-	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, int lineNumber) {
+	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, final int lineNumber) {
 		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
 		// It's been declared, so multiple declarations aren't an error
 		return objDecl;
 	}
-	@Override protected void reportMismatchesWith(int lineNumber, RoleType lhsType, Type rhsType) {
+	@Override protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
 		lhsType.reportMismatchesWith(lineNumber, rhsType);
 	}
 	
-	@Override protected void checkForAssignmentViolatingConstness(AssignmentExpression assignment, Token ctxGetStart) {
+	@Override protected void checkForAssignmentViolatingConstness(final AssignmentExpression assignment, final Token ctxGetStart) {
 		final MethodDeclaration enclosingMethod = super.methodWithinWhichIAmDeclared(currentScope_);
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			final Expression assignee = assignment.lhs();
@@ -1101,7 +1247,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	@Override protected void checkForIncrementOpViolatingConstness(ArrayIndexExpressionUnaryOp expression, Token ctxGetStart) {
+	@Override protected void checkForIncrementOpViolatingConstness(final ArrayIndexExpressionUnaryOp expression, final Token ctxGetStart) {
 		final MethodDeclaration enclosingMethod = super.methodWithinWhichIAmDeclared(currentScope_);
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			// We can have no idea where the array base is "pointing," so we have
@@ -1113,14 +1259,14 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	@Override protected void checkForIncrementOpViolatingIdentifierConstness(UnaryopExpressionWithSideEffect id, Token ctxGetStart) {
+	@Override protected void checkForIncrementOpViolatingIdentifierConstness(final UnaryopExpressionWithSideEffect id, final Token ctxGetStart) {
 		final MethodDeclaration enclosingMethod = super.methodWithinWhichIAmDeclared(currentScope_);
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			checkLhsForAssignmentViolatingConstness(id.lhs(), enclosingMethod, ctxGetStart);
 		}
 	}
 	
-	private void checkLhsForAssignmentViolatingConstness(Expression assignee, MethodDeclaration enclosingMethod, Token ctxGetStart) {
+	private void checkLhsForAssignmentViolatingConstness(final Expression assignee, final MethodDeclaration enclosingMethod, final Token ctxGetStart) {
 		if (assignee instanceof IdentifierExpression) {
 			final Declaration idDecl = currentScope_.lookupObjectDeclarationRecursiveWithinMethod(assignee.name());
 			if (null == idDecl) {
@@ -1156,7 +1302,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	protected void checkForMessageSendViolatingConstness(MethodSignature signature, Token ctxGetStart) {
+	protected void checkForMessageSendViolatingConstness(final MethodSignature signature, final Token ctxGetStart) {
 		final MethodDeclaration enclosingMethod = super.methodWithinWhichIAmDeclared(currentScope_);
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			if (signature.hasConstModifier()) {

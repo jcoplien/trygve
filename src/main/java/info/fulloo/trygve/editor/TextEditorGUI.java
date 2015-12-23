@@ -6,7 +6,7 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/moneytransfer1.k";
+	private final static String defaultFile = "tests/assert_in_roletest.k";
     
     private File fileName = new File("noname");
     

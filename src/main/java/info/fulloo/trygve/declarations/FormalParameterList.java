@@ -115,7 +115,9 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	}
 	public static boolean alignsWithParameterListIgnoringRoleStuff(final ActualOrFormalParameterList pl1, final ActualOrFormalParameterList pl2) {
 		boolean retval = true;
-		final int pl1Count = pl1.count();
+		int i = 0, j = 0;
+		final int pl1Count = pl1.count(),
+				  pl2Count = (null == pl2)? 0: pl2.count();
 		if (null == pl2) {
 			if (pl1Count != 0) {
 				retval = false;
@@ -124,13 +126,20 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 				retval = true;
 			}
 		} else {
-			final int pl2Count = pl2.count();
-			int i = 0, j = 0;
-			while (i < pl1Count && j < pl2Count) {
+			while (i < pl1Count || j < pl2Count) {
 				boolean testFlag = true;
-				final String pl1Name = pl1.nameOfParameterAtPosition(i),
-						     pl2Name = pl2.nameOfParameterAtPosition(j);
+				final String pl1Name, pl2Name;
 				
+				if (i < pl1Count) {
+					pl1Name = pl1.nameOfParameterAtPosition(i);
+				} else {
+					pl1Name = " abc ";
+				}
+				if (j < pl2Count) {
+					pl2Name = pl2.nameOfParameterAtPosition(j);
+				} else {
+					pl2Name = " xyz ";
+				}
 				if (pl1Name.equals("this") || pl1Name.equals("t$this") ||
 						pl1Name.equals("current$context") || pl1Name.equals("current$role")) {
 					i++;
@@ -141,7 +150,17 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					j++;
 					testFlag = false;
 				}
-				if (testFlag){
+				if (i == pl1Count && j == pl2Count) {
+					break;
+				}
+				if (testFlag) {
+					if (i >= pl1Count) {
+						retval = false;
+						break;
+					} else if (j >= pl2Count) {
+						retval = false;
+						break;
+					}
 					final Type plt = pl2.typeOfParameterAtPosition(j);
 					final Type myt = pl1.typeOfParameterAtPosition(i);
 					
@@ -153,10 +172,14 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 						retval = false;
 						break;
 					}
-					i++;
 				}
 			}
 		}
+		
+		if (i != pl1Count || j != pl2Count) {
+			retval = false;
+		}
+
 		return retval;
 	}
 	

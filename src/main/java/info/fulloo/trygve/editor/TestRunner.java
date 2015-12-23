@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,8 @@ public class TestRunner {
 		"returnbreak.k",
 		"printstreamrole.k",
 		"chord_identifier4.k",
+		"assert_in_roletest.k",
+		"moneytransfer_original.k",
 		// "moneytransfer1.k",
 	};
 	public static int numberOfTestCases() {

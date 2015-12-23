@@ -145,7 +145,8 @@ public class Pass3Listener extends Pass2Listener {
 	}
 	
 	@Override protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
-			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart)
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl,
+			final String parameterToIgnore, final Token ctxGetStart, final boolean roleHint)
 	{
 		/* Nothing */
 	}

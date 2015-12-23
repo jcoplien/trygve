@@ -3628,6 +3628,12 @@ public class Pass1Listener extends KantBaseListener {
 		final StaticScope classScope = classDecl.enclosedScope();
 		return classScope.lookupMethodDeclaration(methodSelectorName, parameterList, true);
 	}
+	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+		// Pass 1 version. Pass 2 / 3 version is the same for now,
+		// but checks the signature
+		final StaticScope classScope = classDecl.enclosedScope();
+		return classScope.lookupMethodDeclarationIgnoringRoleStuff(methodSelectorName, parameterList);
+	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
 		// and checks the signature
@@ -3667,6 +3673,7 @@ public class Pass1Listener extends KantBaseListener {
 		MethodDeclaration mdecl = null;
 		Type returnType = null;
 		final ActualArgumentList actualArgumentList = message.argumentList();
+		boolean roleHint = false;
 		
 		if (null != classDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(classDecl, methodSelectorName, actualArgumentList);
@@ -3736,6 +3743,20 @@ public class Pass1Listener extends KantBaseListener {
 		} else if (null != roleDecl) {
 			// Calling a role method
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
+			
+			if (null == mdecl) {
+				// If this is a Role variable, it's fair game to look for
+				// methods in what will be a base class for every Role-player:
+				// class object
+				final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
+				assert null != objectDecl;
+				
+				mdecl = processReturnTypeLookupMethodDeclarationIn(objectDecl, methodSelectorName, actualArgumentList);
+				if (null == mdecl) {
+					mdecl = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, methodSelectorName, actualArgumentList);
+					roleHint = true;
+				}
+			}
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role `", roleDecl.name() + "'.");
 				if (message.lineNumber() < roleDecl.lineNumber()) {
@@ -3802,7 +3823,7 @@ public class Pass1Listener extends KantBaseListener {
 			final TypeDeclaration typeDecl = null != classDecl? classDecl: contextDecl;
 
 			// Type check is polymorphic in compiler passes
-			this.typeCheckIgnoringParameter(formals, actuals, mdecl, typeDecl, "this", ctxGetStart);
+			this.typeCheckIgnoringParameter(formals, actuals, mdecl, typeDecl, "this", ctxGetStart, roleHint);
 			
 			returnType = mdecl.returnType();
 		}
@@ -3997,7 +4018,8 @@ public class Pass1Listener extends KantBaseListener {
 		/* Nothing */
 	}
 	protected void typeCheckIgnoringParameter(final FormalParameterList formals, final ActualArgumentList actuals,
-			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore, final Token ctxGetStart)
+			final MethodDeclaration mdecl, final TypeDeclaration classdecl, final String parameterToIgnore,
+			final Token ctxGetStart, final boolean roleHint)
 	{
 		/* Nothing */
 	}

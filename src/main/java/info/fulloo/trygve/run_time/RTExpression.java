@@ -475,6 +475,7 @@ public abstract class RTExpression extends RTCode {
 			actualParameters_ = message.argumentList();
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			lineNumber_ = messageExpr.lineNumber();
+
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
 			
 			if (null != methodDecl) {
@@ -518,7 +519,7 @@ public abstract class RTExpression extends RTCode {
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
 						returnType, lineNumber_, isStatic_);
 			}
-			
+
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
 			FormalParameterList fakeParameterList = null;
 			if (null != methodDecl) {
@@ -598,6 +599,17 @@ public abstract class RTExpression extends RTCode {
 							}
 						}
 					}
+				}
+			}
+			if (null == retval) {
+				if (typeOfReceiver instanceof RoleType) {
+					// Normally, Role lookups don't come here. (I need better to document here where
+					// they properly *are* handled...) But a typical case that lands us here is
+					// an assert invocation from inside a Role method. We need to switch to
+					// the base class of all Role-players -- Object -- and look there.
+					final ClassDeclaration classObject = StaticScope.globalScope().lookupClassDeclaration("Object");
+					final StaticScope classObjectScope = classObject.enclosedScope();
+					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
 				}
 			}
 			return retval;

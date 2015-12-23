@@ -141,4 +141,14 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 			return retval;
 		}
 	}
+	public ActualArgumentList copy() {
+		// We need to make only a shallow copy
+		final ActualArgumentList retval = new ActualArgumentList();
+		final int numberOfParameters = count();
+		for (int i = 0; i < numberOfParameters; i++) {
+			final Expression anActualParameter = parameterAtPosition(i);
+			retval.addActualArgument(anActualParameter);
+		}
+		return retval;
+	}
 }
