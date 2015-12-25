@@ -4233,6 +4233,8 @@ public class Pass1Listener extends KantBaseListener {
 				;
 			} else if (walker instanceof For_exprContext) {
 				;
+			} else if (walker instanceof While_exprContext) {
+				;
 			} else {
 				assert false;
 				retval = false;
