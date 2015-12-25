@@ -1,7 +1,7 @@
 package info.fulloo.trygve.semantic_analysis;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -373,6 +373,31 @@ public class StaticScope {
 		final StaticScope booleanScope = booleanType.enclosedScope();
 		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, objectBaseClass, 0);
 		booleanScope.setDeclaration(booleanClassDecl);
+		
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", booleanType, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", booleanType, 0);
+		FormalParameterList formals = new FormalParameterList();
+		
+		formals.addFormalParameter(formalParameter);
+		formals.addFormalParameter(self);
+		MethodDeclaration methodDecl = new MethodDeclaration("&&", booleanType.enclosedScope(), booleanType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		booleanType.enclosedScope().declareMethod(methodDecl);
+		
+		formals = new FormalParameterList();
+		formals.addFormalParameter(formalParameter);
+		formals.addFormalParameter(self);
+		methodDecl = new MethodDeclaration("||", booleanType.enclosedScope(), booleanType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		booleanType.enclosedScope().declareMethod(methodDecl);
+
+		formals = new FormalParameterList();
+		formals.addFormalParameter(formalParameter);
+		formals.addFormalParameter(self);
+		methodDecl = new MethodDeclaration("^", booleanType.enclosedScope(), booleanType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		booleanType.enclosedScope().declareMethod(methodDecl);
 		
 		globalScope_.declareType(booleanType);
 		booleanClassDecl.setType(booleanType);

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -428,7 +428,8 @@ public class Pass2Listener extends Pass1Listener {
 		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope());
 		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
-		final MethodDeclaration mdecl = enclosedScope.lookupMethodDeclaration(operationAsString, argList, false);
+		
+		final MethodDeclaration mdecl = enclosedScope.lookupMethodDeclarationWithConversion(operationAsString, argList, false);
 		if (null == mdecl) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "No such operation '", operationAsString, "' on type ",
 					resultType.name(), " for argument ", rightExpr.type().name());

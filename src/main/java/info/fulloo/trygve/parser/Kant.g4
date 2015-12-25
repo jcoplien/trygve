@@ -244,7 +244,6 @@ expr
 
 abelian_expr
 		: abelian_product (ABELIAN_SUMOP abelian_product)*
-		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
 		| <assoc=right> abelian_expr ASSIGN expr
 		;
 		
@@ -255,7 +254,6 @@ abelian_product
 		
 abelian_unary_op
 		:  ABELIAN_SUMOP abelian_atom
-  		|  LOGICAL_NEGATION abelian_atom
   		|  abelian_atom
  		;
 	
@@ -281,16 +279,35 @@ abelian_atom
         | abelian_atom '.' CLONE '(' ')'
         ;
 
+boolean_expr
+		: boolean_product (BOOLEAN_SUMOP boolean_product)*
+		| if_expr
+		| boolean_expr op=('&&' | '||' | '^' ) boolean_expr
+		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
+		| <assoc=right> boolean_expr ASSIGN expr
+		| abelian_expr
+		;
+		
+boolean_product
+		: boolean_unary_op (BOOLEAN_MULOP boolean_unary_op)*
+		;
+		
+boolean_unary_op
+  		:  LOGICAL_NEGATION boolean_expr
+  		|  boolean_atom
+ 		;
+	
+boolean_atom
+		: constant
+		| JAVA_ID
+		| null_expr
+		| '(' boolean_expr ')'
+        ;
+
+
 message
         : <assoc=right> JAVA_ID '(' argument_list ')'
         ;
-
-boolean_expr
-		: boolean_expr BOOLEAN_MULOP expr
-		| boolean_expr BOOLEAN_SUMOP expr
-		| constant		// 'true' / 'false'
-		| abelian_expr
-		;
 
 block
         : '{' expr_and_decl_list '}'
@@ -380,8 +397,6 @@ CLONE : 'clone' ;
 NULL : 'null' ;
 
 CONST : 'const' ;
-
-LOGICAL_NOT : '!' ;
 
 POW : '**' ;
 

@@ -390,16 +390,6 @@ public interface KantListener extends ParseTreeListener {
 	 */
 	void exitAbelian_atom(KantParser.Abelian_atomContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link KantParser#message}.
-	 * @param ctx the parse tree
-	 */
-	void enterMessage(KantParser.MessageContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link KantParser#message}.
-	 * @param ctx the parse tree
-	 */
-	void exitMessage(KantParser.MessageContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link KantParser#boolean_expr}.
 	 * @param ctx the parse tree
 	 */
@@ -409,6 +399,46 @@ public interface KantListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitBoolean_expr(KantParser.Boolean_exprContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#boolean_product}.
+	 * @param ctx the parse tree
+	 */
+	void enterBoolean_product(KantParser.Boolean_productContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#boolean_product}.
+	 * @param ctx the parse tree
+	 */
+	void exitBoolean_product(KantParser.Boolean_productContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#boolean_unary_op}.
+	 * @param ctx the parse tree
+	 */
+	void enterBoolean_unary_op(KantParser.Boolean_unary_opContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#boolean_unary_op}.
+	 * @param ctx the parse tree
+	 */
+	void exitBoolean_unary_op(KantParser.Boolean_unary_opContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#boolean_atom}.
+	 * @param ctx the parse tree
+	 */
+	void enterBoolean_atom(KantParser.Boolean_atomContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#boolean_atom}.
+	 * @param ctx the parse tree
+	 */
+	void exitBoolean_atom(KantParser.Boolean_atomContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#message}.
+	 * @param ctx the parse tree
+	 */
+	void enterMessage(KantParser.MessageContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#message}.
+	 * @param ctx the parse tree
+	 */
+	void exitMessage(KantParser.MessageContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link KantParser#block}.
 	 * @param ctx the parse tree

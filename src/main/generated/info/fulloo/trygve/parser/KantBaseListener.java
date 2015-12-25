@@ -2,6 +2,7 @@
 
     package info.fulloo.trygve.parser;
 
+
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -473,18 +474,6 @@ public class KantBaseListener implements KantListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
-	@Override public void enterMessage(KantParser.MessageContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitMessage(KantParser.MessageContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
 	@Override public void enterBoolean_expr(KantParser.Boolean_exprContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -492,6 +481,54 @@ public class KantBaseListener implements KantListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitBoolean_expr(KantParser.Boolean_exprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterBoolean_product(KantParser.Boolean_productContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBoolean_product(KantParser.Boolean_productContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterBoolean_unary_op(KantParser.Boolean_unary_opContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBoolean_unary_op(KantParser.Boolean_unary_opContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterBoolean_atom(KantParser.Boolean_atomContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitBoolean_atom(KantParser.Boolean_atomContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterMessage(KantParser.MessageContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitMessage(KantParser.MessageContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

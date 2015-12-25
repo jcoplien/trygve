@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -343,6 +343,44 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTBinaryOpCode extends RTIntegerCommon {
+			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTIntegerObject;
+				final RTStackable rhs = dynamicScope.getObject("rhs");
+				assert rhs instanceof RTIntegerObject;
+				final RTIntegerObject selfObject = (RTIntegerObject)self;
+				final long selfValue = selfObject.intValue();
+				final RTIntegerObject rhsObject = (RTIntegerObject)rhs;
+				final long rhsValue = rhsObject.intValue();
+				
+				final String operator = this.methodSelectorName();
+				long iRetval = 0;
+				
+				if (operator.equals("+")) {
+					iRetval = selfValue + rhsValue;
+				} else if (operator.equals("-")) {
+					iRetval = selfValue - rhsValue;
+				} else if (operator.equals("*")) {
+					iRetval = selfValue * rhsValue;
+				} else if (operator.equals("/")) {
+					iRetval = selfValue / rhsValue;
+				} else if (operator.equals("%")) {
+					iRetval = selfValue % rhsValue;
+				}
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("int"); }
@@ -473,6 +511,55 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTBinaryOpCode extends RTDoubleCommon {
+			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			private RTDoubleObject makeDouble(final RTObject object) {
+				RTDoubleObject retval = null;
+				if (object instanceof RTDoubleObject) {
+					retval = (RTDoubleObject)object;
+				} else if (object instanceof RTIntegerObject) {
+					retval = new RTDoubleObject((double)((RTIntegerObject)object).intValue());
+				} else {
+					assert false;
+				}
+				return retval;
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTDoubleObject;
+				final RTStackable rhs = dynamicScope.getObject("rhs");
+				final RTDoubleObject selfObject = (RTDoubleObject)self;
+				final double selfValue = selfObject.doubleValue();
+				final RTDoubleObject rhsObject = makeDouble((RTObject)rhs);
+				final double rhsValue = rhsObject.doubleValue();
+				
+				final String operator = this.methodSelectorName();
+				double dRetval = 0;
+				
+				if (operator.equals("+")) {
+					dRetval = selfValue + rhsValue;
+				} else if (operator.equals("-")) {
+					dRetval = selfValue - rhsValue;
+				} else if (operator.equals("*")) {
+					dRetval = selfValue * rhsValue;
+				} else if (operator.equals("/")) {
+					dRetval = selfValue / rhsValue;
+				} else if (operator.equals("%")) {
+					dRetval = selfValue % rhsValue;
+				}
+				final RTDoubleObject retval = new RTDoubleObject(dRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("double"); }
@@ -656,7 +743,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTBooleanClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		public static class RTBooleanCommon extends RTMessage {
+		public static class RTBooleanCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 			public RTBooleanCommon(final String className, final String methodName, final String parameterName,
 					final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
 				super(methodName, RTMessage.buildArguments(className, methodName,
@@ -705,6 +792,40 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final boolean bRetval = bo.value();
 				final RTStringObject retval = new RTStringObject(bRetval? "true": "false");
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(retval);
+				return super.nextCode();
+			}
+		}
+		public static class RTBinaryOpCode extends RTBooleanCommon {
+			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("boolean", operation, "rhs", "boolean", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTBooleanObject;
+				final RTStackable rhs = dynamicScope.getObject("rhs");
+				assert rhs instanceof RTBooleanObject;
+				final RTBooleanObject selfObject = (RTBooleanObject)self;
+				final boolean selfValue = selfObject.value();
+				final RTBooleanObject rhsObject = (RTBooleanObject)rhs;
+				final boolean rhsValue = rhsObject.value();
+				
+				final String operator = this.methodSelectorName();
+				boolean iRetval = false;
+				
+				if (operator.equals("&&")) {
+					iRetval = selfValue && rhsValue;
+				} else if (operator.equals("||")) {
+					iRetval = selfValue || rhsValue;
+				} else if (operator.equals("^")) {
+					iRetval = selfValue ^ rhsValue;
+				}
+				final RTBooleanObject retval = new RTBooleanObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
 				return super.nextCode();
 			}
 		}

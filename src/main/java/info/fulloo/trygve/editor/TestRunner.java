@@ -106,8 +106,11 @@ public class TestRunner {
 		"returnbreak.k",
 		"printstreamrole.k",
 		"chord_identifier4.k",
+		"chord_identifier4_original.k",
+		"chord_identifier5.k",
 		"assert_in_roletest.k",
 		"moneytransfer_original.k",
+		"bool_op1.k",
 		// "moneytransfer1.k",
 	};
 	public static int numberOfTestCases() {

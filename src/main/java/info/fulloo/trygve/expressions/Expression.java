@@ -1,7 +1,7 @@
 package info.fulloo.trygve.expressions;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -261,8 +261,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	{
 		public RelopExpression(Expression lhs, String operator, Expression rhs) {
 			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
-			assert operator.equals("==") || operator.equals("!=") || operator.equals(">")
-				|| operator.equals("<")  || operator.equals(">=") || operator.equals("<=");
+			
+			if ( operator.equals("==") || operator.equals("!=") || operator.equals(">")
+					|| operator.equals("<")  || operator.equals(">=") || operator.equals("<=")
+					|| operator.equals("||") || operator.equals("&&") || operator.equals("^")) {
+				;
+			} else {
+				assert operator.equals("==") || operator.equals("!=") || operator.equals(">")
+				|| operator.equals("<")  || operator.equals(">=") || operator.equals("<=")
+				|| operator.equals("||") || operator.equals("&&") || operator.equals("^");
+			}
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
@@ -400,7 +408,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public UnaryAbelianopExpression(Expression rhs, String operator) {
 			// For unary operators, one or the other of lhs or rhs could be null
 			super(operator, rhs.type(), rhs.enclosingMegaType());
-			assert operator.equals("+") || operator.equals("-");
+			assert operator.equals("+") || operator.equals("-") || operator.equals("!");
 			rhs_ = rhs;
 			rhs_.setResultIsConsumed(true);
 			operator_ = operator;
@@ -1123,12 +1131,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class SumExpression extends Expression
 	{
-		public SumExpression(final Expression lhs, final String operator, final Expression rhs) {
+		public SumExpression(final Expression lhs, final String operator, final Expression rhs, final Token ctxGetStart, final Pass1Listener pass1Listener) {
 			super("[" + lhs.getText() + " " + operator + " " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lhs_.setResultIsConsumed(true);
 			rhs_.setResultIsConsumed(true);
+			pass1Listener.binopTypeCheck(lhs_, operator, rhs_, ctxGetStart);
 			operator_ = operator;
 		}
 		@Override public String getText() {

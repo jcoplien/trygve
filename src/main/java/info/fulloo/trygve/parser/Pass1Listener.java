@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.misc.Interval;
@@ -1627,7 +1628,6 @@ public class Pass1Listener extends KantBaseListener {
 	
 	@Override public void exitAbelian_expr(KantParser.Abelian_exprContext ctx) {	
 		// : abelian_product (ABELIAN_SUMOP abelian_product)*
-		// | abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
 		// | <assoc=right> abelian_expr ASSIGN expr
 		
 		Expression expression = null;
@@ -1648,7 +1648,7 @@ public class Pass1Listener extends KantBaseListener {
 				for (int i = 0; i < abelianSumopSize; i++) {
 					final Expression expr2 = exprStack.pop();
 					final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
-					expression = new SumExpression(expression, operatorAsString, expr2);
+					expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 				}
 			} else {
 				expression = new NullExpression();
@@ -1668,31 +1668,8 @@ public class Pass1Listener extends KantBaseListener {
 			if (printProductionsDebug) {
 				System.err.println("abelian_expr : abelian_product ");
 			}
-		} else if (null != ctx.abelian_expr() && ctx.abelian_expr().size() > 1 &&
-				null != ctx.op && ctx.op.getText().length() > 0) {
-			//	| abelian_expr op=('<=' | '>=' | '<' | '>' | '==' | '!=') abelian_expr
-			final Token relationalOperator = ctx.op;
-	
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
-			lhs.setResultIsConsumed(true);	// is this right? FIXME
-			rhs.setResultIsConsumed(true);
-			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Expression '", rhs.getText(), "' is not of the right type","");
-			}
-			
-			assert null != relationalOperator;
-			final String operationAsString = relationalOperator.getText();
-			expression = new RelopExpression(lhs, operationAsString, rhs);
-	
-			if (printProductionsDebug) {
-				System.err.print("relop_expr : abelian_expr ");
-				System.err.print(operationAsString);
-				System.err.println(" abelian_expr");
-			}
 		} else if ((null != ctx.expr()) && (null != ctx.abelian_expr()) &&
-				(ctx.abelian_expr().size() == 1) && null != ctx.ASSIGN()) {
+				null != ctx.ASSIGN()) {
 			// : lhs '=' rhs
 			Expression rhs = null, lhs = null;
 			if (parsingData_.currentExpressionExists()) {
@@ -1717,6 +1694,147 @@ public class Pass1Listener extends KantBaseListener {
 			parsingData_.pushExpression(expression);
 		}
 		
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void exitBoolean_expr(KantParser.Boolean_exprContext ctx) {	
+		// : boolean_product (ABELIAN_SUMOP abelian_product)*
+		// | boolean_expr op=('&&' | '||' | '^' ) boolean_expr
+		// | if_expr
+		// | abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
+		// | <assoc=right> boolean_expr ASSIGN expr
+		
+		Expression expression = null;
+		
+		if ((null != ctx.abelian_expr() && ctx.abelian_expr().size() == 1) && (null != ctx.boolean_expr()) &&
+				(null == ctx.boolean_expr() || ctx.boolean_expr().size() == 0) && null == ctx.ASSIGN()) {
+			// : abelian_expr
+			Expression rhs = null;
+			if (parsingData_.currentExpressionExists()) {
+				rhs = parsingData_.popExpression();
+			} else {
+				rhs = new NullExpression();
+			}
+
+			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
+			expression = rhs;
+			if (printProductionsDebug) { System.err.println("boolean_expr : abelian_expr"); }
+		} else if (null != ctx.if_expr()) {
+			// | if_expr
+			expression = parsingData_.popExpression();
+			if (printProductionsDebug) {
+				System.err.println("boolean_expr : if_expr ");
+			}
+		} else if (null != ctx.boolean_product() && ctx.boolean_product().size() > 1 && null != ctx.BOOLEAN_SUMOP()) {
+			// | boolean_expr op=('&&' | '||' | '^' ) boolean_expr
+			
+			// Make it left-associative
+			final int booleanSumopSize = ctx.BOOLEAN_SUMOP().size();
+			final Stack<Expression> exprStack = new Stack<Expression>();
+			for (int i = 0; i < booleanSumopSize; i++) {
+				final Expression expr2 = parsingData_.popExpression();
+				exprStack.push(expr2);
+			}
+			
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				for (int i = 0; i < booleanSumopSize; i++) {
+					final Expression expr2 = exprStack.pop();
+					final String operatorAsString = ctx.BOOLEAN_SUMOP(i).getText();
+					expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+				}
+			} else {
+				expression = new NullExpression();
+			}
+			
+			if (printProductionsDebug) {
+				System.err.print("boolean_expr : boolean_expr ");
+				for (int i = 0; i < ctx.BOOLEAN_SUMOP().size(); i++) {
+					System.err.print("`");
+					System.err.print(ctx.BOOLEAN_SUMOP(i).getText());
+					System.err.print("' boolean_expr ");
+				}
+				System.err.println();
+			}
+		} else if (null != ctx.boolean_product() && ctx.boolean_product().size() == 1) {
+			expression = parsingData_.popExpression();
+			if (printProductionsDebug) {
+				System.err.println("boolean_expr : boolean_product ");
+			}
+		} else if (null != ctx.boolean_expr() && ctx.boolean_expr().size() > 1 &&
+				null != ctx.op && ctx.op.getText().length() > 0) {
+			//	| abelian_expr op=('&&') abelian_expr
+			final Token relationalOperator = ctx.op;
+	
+			final Expression rhs = parsingData_.popExpression();
+			final Expression lhs = parsingData_.popExpression();
+			lhs.setResultIsConsumed(true);
+			rhs.setResultIsConsumed(true);
+			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"Expression '", rhs.getText(), "' is not of the right type","");
+			}
+			
+			assert null != relationalOperator;
+			final String operationAsString = relationalOperator.getText();
+			expression = new RelopExpression(lhs, operationAsString, rhs);
+	
+			if (printProductionsDebug) {
+				System.err.print("relop_expr : boolean_expr ");
+				System.err.print(operationAsString);
+				System.err.println(" boolean_expr");
+			}
+		} else if ((null != ctx.boolean_expr()) &&
+				(ctx.boolean_expr().size() == 1) &&
+				(ctx.expr() != null) &&
+				null != ctx.ASSIGN()) {
+			// : lhs '=' rhs
+			Expression rhs = null, lhs = null;
+			if (parsingData_.currentExpressionExists()) {
+				rhs = parsingData_.popExpression();
+			} else {
+				rhs = new NullExpression();
+			}
+			if (parsingData_.currentExpressionExists()) {
+				lhs = parsingData_.popExpression();
+			} else {
+				lhs = new NullExpression();
+			}
+			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
+			expression = this.assignmentExpr(lhs, ctx.ASSIGN().getText(), rhs, ctx);
+			if (printProductionsDebug) { System.err.println("boolean_expr : boolean_expr ASSIGN boolean_expr"); }
+		} else if (null != ctx.abelian_expr() && ctx.abelian_expr().size() > 1 &&
+				null != ctx.op && ctx.op.getText().length() > 0) {
+			//	| abelian_expr op=('<=' | '>=' | '<' | '>' | '==' | '!=') abelian_expr
+			final Token relationalOperator = ctx.op;
+	
+			final Expression rhs = parsingData_.popExpression();
+			final Expression lhs = parsingData_.popExpression();
+			lhs.setResultIsConsumed(true);	// is this right? FIXME
+			rhs.setResultIsConsumed(true);
+			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"Expression '", rhs.getText(), "' is not of the right type","");
+			}
+			
+			assert null != relationalOperator;
+			final String operationAsString = relationalOperator.getText();
+			expression = new RelopExpression(lhs, operationAsString, rhs);
+	
+			if (printProductionsDebug) {
+				System.err.print("boolean_expr : abelian_expr ");
+				System.err.print(operationAsString);
+				System.err.println(" abelian_expr");
+			}
+		
+		} else {
+			assert false;
+		}
+		
+		if (null != expression) {
+			// null check is error stumbling check
+			parsingData_.pushExpression(expression);
+		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
@@ -1792,6 +1910,70 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
+	@Override public void exitBoolean_product(KantParser.Boolean_productContext ctx) {
+		// : boolean_unary_op (BOOLEAN_MULOP boolean_unary_op)*
+		
+		Expression expression = null;
+		List<KantParser.Boolean_unary_opContext> unaryOp = ctx.boolean_unary_op();
+		assert null != unaryOp;
+		
+		if (null != unaryOp && unaryOp.size() == 1 && (null == ctx.BOOLEAN_MULOP() || 0 == ctx.BOOLEAN_MULOP().size())) {
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+			} else {
+				expression = new NullExpression();
+			}
+			
+			if (printProductionsDebug) {
+				System.err.println("boolean_product : boolean_unary_op ");
+			}
+		} else if (null != unaryOp && (unaryOp.size() > 1) && null != ctx.BOOLEAN_MULOP() &&  0 < ctx.BOOLEAN_MULOP().size()) {
+			// boolean_unary_op (BOOLEAN_MULOP boolean_unary_op)*
+			
+			final int booleanMulopSize = ctx.BOOLEAN_MULOP().size();
+			final Stack<Expression> exprStack = new Stack<Expression>();
+			for (int i = 0; i < booleanMulopSize; i++) {
+				if (parsingData_.currentExpressionExists()) {
+					final Expression expr2 = parsingData_.popExpression();
+					exprStack.push(expr2);
+				} else {
+					break;
+				}
+			}
+			
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+				for (int i = 0; i < booleanMulopSize; i++) {
+					final Expression expr2 = exprStack.pop();
+					final String operatorAsString = ctx.BOOLEAN_MULOP(i).getText();
+					expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+				}
+			} else {
+				expression = new NullExpression();
+			}
+			
+			
+			if (printProductionsDebug) {
+				System.err.print("boolean_product : boolean_unary_op ");
+				for (int i = 0; i < ctx.BOOLEAN_MULOP().size(); i++) {
+					System.err.print("`");
+					System.err.print(ctx.BOOLEAN_MULOP(i).getText());
+					System.err.print("' boolean_unary_op ");
+				}
+				System.err.println();
+			}
+		} else {
+			assert false;
+		}
+		
+		if (null != expression) {
+			// null check is error stumbling check
+			parsingData_.pushExpression(expression);
+		}
+		
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
 	@Override public void exitAbelian_unary_op(KantParser.Abelian_unary_opContext ctx) {
 		// :  ABELIAN_SUMOP abelian_atom
 		// |  LOGICAL_NEGATION abelian_atom
@@ -1810,6 +1992,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (printProductionsDebug) {
 				System.err.println("abelian_unary_op : '-' abelian_atom");
 			}
+		/*
 		} else if (null != ctx.LOGICAL_NEGATION()) {
 			//	| LOGICAL_NEGATION  abelian_atom
 			expression = parsingData_.popExpression();
@@ -1825,6 +2008,7 @@ public class Pass1Listener extends KantBaseListener {
 			if (printProductionsDebug) {
 				System.err.println("abelian_unary_op : '!' abelian_atom");
 			}
+		*/
 		} else {
 			if (parsingData_.currentExpressionExists()) {
 				// Only do it if it's there to protect against error stumbling.
@@ -1837,6 +2021,50 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		
+		
+		if (null != expression) {
+			// null check is error stumbling check
+			parsingData_.pushExpression(expression);
+		}
+		
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void exitBoolean_unary_op(KantParser.Boolean_unary_opContext ctx) {
+		// :  LOGICAL_NEGATION boolean_expr
+  		// |  boolean_atom
+		
+		Expression expression = null;
+		
+		if (null != ctx.LOGICAL_NEGATION()) {
+			//	| LOGICAL_NEGATION boolean_expr
+			
+			expression = parsingData_.popExpression();
+			final Type type = expression.type();
+			if (StaticScope.globalScope().lookupTypeDeclaration("boolean").canBeConvertedFrom(type)) {
+				;	// is O.K.
+			} else {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"Expression `", expression.getText(), "' is not of type boolean.", "");
+			}
+			expression = new UnaryAbelianopExpression(expression, "!");
+			
+			if (printProductionsDebug) {
+				System.err.println("boolean_unary_op : '!' boolean_expr");
+			}
+		} else {
+			// |  boolean_atom
+			
+			if (parsingData_.currentExpressionExists()) {
+				// Only do it if it's there to protect against error stumbling.
+				expression = parsingData_.popExpression();
+			} else {
+				expression = new NullExpression();
+			}
+			if (printProductionsDebug) {
+				System.err.println("boolean_unary_op : boolean_atom");
+			}
+		}
 		
 		if (null != expression) {
 			// null check is error stumbling check
@@ -2157,6 +2385,71 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
+	@Override public void enterBoolean_atom(KantParser.Boolean_atomContext ctx) {
+		// : constant
+		// JAVA_ID
+		// | null_expr
+		// | '(' boolean_expr ')'
+		
+        // nothing
+	}
+	
+	@Override public void exitBoolean_atom(KantParser.Boolean_atomContext ctx)
+	{
+		// : constant
+		// | null_expr
+		// | JAVA_ID
+		// | '(' boolean_expr ')'
+		
+		// All passes.
+		
+		Expression expression = null;
+		
+		if (null != ctx.null_expr()) {
+			// | null_expr
+			expression = parsingData_.popExpression();
+			
+			if (printProductionsDebug) {
+				System.err.print("abelian_atom : null_expr");
+			}
+		} else if (null != ctx.JAVA_ID() && (null == ctx.boolean_expr())) {
+			// | JAVA_ID
+			
+			expression = idExpr(ctx.JAVA_ID(), ctx.getStart());
+			if (printProductionsDebug) {
+				System.err.print("boolean_atom : JAVA_ID (");
+				System.err.print(ctx.JAVA_ID().getText());
+				System.err.println(")");
+			}
+		} else if (null != ctx.constant()) {
+			//	| constant
+			
+			// expression = Expression.makeConstantExpressionFrom(ctx.constant().getText());
+			// is on the stack. We now have a "constant : ..." production,
+			// so we don't make it here
+			expression = parsingData_.popExpression();
+			if (printProductionsDebug) {
+				System.err.println("boolean_atom : constant");
+			}
+		} else if (null != ctx.boolean_expr() && null == ctx.JAVA_ID()) {
+			//	| '(' boolean_expr ')'
+			expression = parsingData_.popExpression();
+			
+			if (printProductionsDebug) {
+				System.err.println("boolean_atom : '(' boolean_expr ')'");
+			}
+		} else {
+			assert false;
+		}
+		
+		if (null != expression) {
+			// null check is error stumbling check
+			parsingData_.pushExpression(expression);
+		}
+		
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
 	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
 		// Pass 1 version. Overridden in Pass 2
 		
@@ -2216,69 +2509,6 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override public void exitBoolean_expr(KantParser.Boolean_exprContext ctx)
-	{
-		// boolean_expr
-		// : boolean_expr BOOLEAN_MULOP expr                       
-		// | boolean_expr BOOLEAN_SUMOP expr
-		// | constant
-		// | abelian_expr
-		
-		Expression expression = null;
-		String operation = null;
-		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
-		
-		if (null != ctx.BOOLEAN_MULOP()) {
-			operation = ctx.BOOLEAN_MULOP().getText();
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
-			rhs.setResultIsConsumed(true);
-			lhs.setResultIsConsumed(true);
-			expression = new ProductExpression(lhs, operation, rhs, ctx.getStart(), this);
-			if (printProductionsDebug) {
-				System.err.print("boolean_expr : boolean_expr ");
-				System.err.print(operation);
-				System.err.println(" boolean_expr");
-			}
-		} else if (null != ctx.BOOLEAN_SUMOP()) {
-			operation = ctx.BOOLEAN_SUMOP().getText();
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
-			rhs.setResultIsConsumed(true);
-			lhs.setResultIsConsumed(true);
-			expression = new SumExpression(lhs, operation, rhs);
-			if (printProductionsDebug) {
-				System.err.print("boolean_expr : boolean_expr ");
-				System.err.print(operation);
-				System.err.println(" boolean_expr");
-			}
-		} else if (null != ctx.constant()) {
-			expression = parsingData_.popExpression();
-			expression.setResultIsConsumed(true);
-			if (printProductionsDebug) {
-				System.err.println("boolean_expr : constant ");
-			}
-		} else if (null != ctx.abelian_expr()) {
-			expression = parsingData_.popExpression();
-			expression.setResultIsConsumed(true);
-			if (printProductionsDebug) {
-				System.err.println("boolean_expr : abelian_expr ");
-			}
-		} else {
-			assert false;
-		}
-		
-		if ((expression.type().canBeConvertedFrom(booleanType)) || (expression.type().canBeConvertedFrom(booleanType))) {
-			;		// ok.
-		} else {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-					"Expression ", expression.getText(), " is not of type boolean.", "");
-		}
-		
-		parsingData_.pushExpression(expression);
-	}
-	
-
 	@Override public void enterBlock(KantParser.BlockContext ctx)
 	{
 		//	: '{' expr_and_decl_list '}'
@@ -4026,8 +4256,8 @@ public class Pass1Listener extends KantBaseListener {
 	protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
 		/* Nothing */
 	}
-	public Expression assignmentExpr(final Expression lhs, final String operator, final Expression rhs,
-			final KantParser.Abelian_exprContext ctx) {
+	public <ContextArgType extends ParserRuleContext> Expression assignmentExpr(final Expression lhs, final String operator, final Expression rhs,
+			final ContextArgType ctx) {
 		// abelian_expr ASSIGN expr
 		assert null != rhs;
 		assert null != lhs;

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -625,7 +625,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final String methodName = methodDeclaration.name();
 			if (methodName.equals("*") || methodName.equals("/") || methodName.equals("+") ||
 					 methodName.equals("-")) {
-				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				code.add(new RTDoubleClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodName));
 				assert code.size() > 0;
 				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
 				rtMethod.addCode(code);
@@ -665,7 +665,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final String methodName = methodDeclaration.name();
 			if (methodName.equals("*") || methodName.equals("/") || methodName.equals("+") ||
 					 methodName.equals("-")) {
-				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				code.add(new RTIntegerClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodName));
 				assert code.size() > 0;
 				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
 				rtMethod.addCode(code);
@@ -693,6 +693,34 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
+			/*
+			 * } else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			final String methodName = methodDeclaration.name();
+			if (methodName.equals("*") || methodName.equals("/") || methodName.equals("+") ||
+					 methodName.equals("-")) {
+				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
+				rtMethod.addCode(code);
+			} else {
+				// assert false;
+			}
+			 */
+		} else if (formalParameterList.count() == 2) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final List<RTCode> code = new ArrayList<RTCode>();
+			code.add(new RTBooleanClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodDeclaration.name()));
+			assert code.size() > 0;
+			addReturn(methodDeclaration, RetvalTypes.usingBool, code);
+			rtMethod.addCode(code);
 		} else {
 			assert false;
 		}

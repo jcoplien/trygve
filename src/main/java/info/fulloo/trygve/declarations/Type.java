@@ -1,7 +1,7 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -394,6 +394,10 @@ public abstract class Type implements ExpressionStackAPI
 				if (operator.equals("||")) retval = true;
 				else if (operator.equals("&&")) retval = true;
 				else if (operator.equals("^")) retval = true;
+			} else if (this.name().equals("String")) {
+				if (operator.equals("+")) retval = true;
+				else if (operator.equals("%")) retval = true;
+				else if (operator.equals("-")) retval = true;
 			}
 			return retval;
 		}
@@ -417,6 +421,10 @@ public abstract class Type implements ExpressionStackAPI
 				if (operator.equals("||")) retval = true;
 				else if (operator.equals("&&")) retval = true;
 				else if (operator.equals("^")) retval = true;
+			} else if (this.name().equals("String")) {
+				if (operator.equals("+")) retval = true;
+				else if (operator.equals("%")) retval = true;
+				else if (operator.equals("-")) retval = true;
 			}
 			return retval;
 		}

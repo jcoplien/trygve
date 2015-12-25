@@ -27,7 +27,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify

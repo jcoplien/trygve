@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.1 1.1
+ * Trygve IDE 1.1
  *   Copyright (c)2015 James O. Coplien
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1086,6 +1086,9 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			if (null != parameterNames) {
+				if (null == parameterTypeNames) {
+					assert null != parameterTypeNames;
+				}
 				final Iterator<String> typeNameIter = parameterTypeNames.iterator();
 				for (final String parameterName : parameterNames) {
 					assert typeNameIter.hasNext();
@@ -1427,6 +1430,13 @@ public abstract class RTExpression extends RTCode {
 					value = lhs.gt(rhs);
 				} else if (operator_.equals("!=")) {
 					value = !lhs.isEqualTo(rhs);
+				} else if (operator_.equals("&&")) {
+					// Inefficient — clean up. TODO.
+					value = ((RTBooleanObject)lhs.logicalAnd(rhs)).value();
+				} else if (operator_.equals("||")) {
+					value = ((RTBooleanObject)lhs.logicalOr(rhs)).value();
+				} else if (operator_.equals("^")) {
+					value = ((RTBooleanObject)lhs.logicalXor(rhs)).value();
 				} else {
 					assert false;
 				}
@@ -3610,6 +3620,12 @@ public abstract class RTExpression extends RTCode {
 					result = lhs.divideBy(rhs);
 				} else if (operator_.equals("%")) {
 					result = lhs.modulus(rhs);
+				} else if (operator_.equals("&&")) {
+					result = lhs.logicalAnd(rhs);
+				} else if (operator_.equals("||")) {
+					result = lhs.logicalOr(rhs);
+				} else if (operator_.equals("^")) {
+					result = lhs.logicalXor(rhs);
 				} else {
 					assert false;
 				}
