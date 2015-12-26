@@ -420,7 +420,7 @@ public class Pass1Listener extends Pass0Listener {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
 						"Duplicate template parameter name: ", type_name.name(), "", "");
 				currentTemplateDecl.addTypeParameter(new IdentifierExpression("$error$",
-						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_),
+						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_, ctx.getStart().getLine()),
 						numberOfActualParameters);
 			} else {
 				dupMap.put(type_name.name(), type_name.name());
@@ -452,7 +452,7 @@ public class Pass1Listener extends Pass0Listener {
 			baseClassType = (ClassType)rawBaseClassType; // may be null
 		}
 		final Type type = new TemplateParameterType(ctx.type_name(0).getText(), baseClassType);
-		final Expression type_name = new IdentifierExpression(ctx.type_name(0).getText(), type, scope);
+		final Expression type_name = new IdentifierExpression(ctx.type_name(0).getText(), type, scope, ctx.getStart().getLine());
 		parsingData_.pushExpression(type_name);
 		
 		if (printProductionsDebug) {
@@ -1660,6 +1660,7 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void exitAbelian_expr(KantParser.Abelian_exprContext ctx) {	
 		// : abelian_product (ABELIAN_SUMOP abelian_product)*
 		// | <assoc=right> abelian_expr ASSIGN expr
+		// | if_expr
 		
 		Expression expression = null;
 		
@@ -1716,6 +1717,13 @@ public class Pass1Listener extends Pass0Listener {
 			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
 			expression = this.assignmentExpr(lhs, ctx.ASSIGN().getText(), rhs, ctx);
 			if (printProductionsDebug) { System.err.println("abelian_expr : abelian_expr ASSIGN expr"); }
+		} else if (null != ctx.if_expr()) {
+			// | if_expr
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+			} else {
+				expression = new NullExpression();
+			}
 		} else {
 			assert false;
 		}
@@ -2015,7 +2023,7 @@ public class Pass1Listener extends Pass0Listener {
 			// ABELIAN_SUMOP abelian_atom
 			if (parsingData_.currentExpressionExists()) {
 				expression = parsingData_.popExpression();
-				expression = new UnaryAbelianopExpression(expression, ctx.ABELIAN_SUMOP().getText());
+				expression = new UnaryAbelianopExpression(expression, ctx.ABELIAN_SUMOP().getText(), this);
 			} else {
 				expression = new NullExpression();
 			}
@@ -2078,7 +2086,7 @@ public class Pass1Listener extends Pass0Listener {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
 						"Expression `", expression.getText(), "' is not of type boolean.", "");
 			}
-			expression = new UnaryAbelianopExpression(expression, "!");
+			expression = new UnaryAbelianopExpression(expression, "!", this);
 			
 			if (printProductionsDebug) {
 				System.err.println("boolean_unary_op : '!' boolean_expr");
@@ -2138,7 +2146,7 @@ public class Pass1Listener extends Pass0Listener {
 			final ObjectDeclaration tempVariableDecl = new ObjectDeclaration(tempName, newExpr.type(), newExpr.lineNumber());;
 			currentScope_.declareObject(tempVariableDecl);
 			
-			final IdentifierExpression tempVariable = new IdentifierExpression(tempName, newExpr.type(), currentScope_);
+			final IdentifierExpression tempVariable = new IdentifierExpression(tempName, newExpr.type(), currentScope_, newExpr.lineNumber());
 			
 			retval = new AssignmentExpression(tempVariable, "=", newExpr, newExpr.lineNumber(), this);
 		}
@@ -3325,7 +3333,7 @@ public class Pass1Listener extends Pass0Listener {
 				// Still need this, though old initialization framework is gone
 				objectDecls.add(objDecl);
 				
-				final IdentifierExpression lhs = new IdentifierExpression(objDecl.name(), declarationType, currentScope_);
+				final IdentifierExpression lhs = new IdentifierExpression(objDecl.name(), declarationType, currentScope_, lineNumber);
 				final AssignmentExpression initialization = new AssignmentExpression(lhs, "=", initializationExpression, identifier_list.getStart().getLine(), this);
 				intializationExpressionsToReturn.add(initialization);
 				
@@ -3676,7 +3684,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == enclosingMegaType) {
 				object = new NullExpression();
 			} else {
-				object = new IdentifierExpression("this", enclosingMegaType, nearestMethodScope);
+				object = new IdentifierExpression("this", enclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
 			}
 		}
 		assert null != object;
@@ -4046,7 +4054,7 @@ public class Pass1Listener extends Pass0Listener {
 			
 			// NOTE: This will also lump in references to Role identifiers
 			// They are distinguished by its enclosing scope
-			expression = new IdentifierExpression(idName, type, declaringScope);
+			expression = new IdentifierExpression(idName, type, declaringScope, ctxGetStart.getLine());
 		} else if (null != roleDecl) {
 			// Someone is invoking a role. Cool.
 			declaringScope = roleDecl.enclosingScope();
@@ -4054,7 +4062,7 @@ public class Pass1Listener extends Pass0Listener {
 			assert rawRoleType instanceof RoleType;
 			final RoleType roleType = (RoleType)rawRoleType;
 			if (this.isInsideMethodDeclaration(ctxJAVA_ID)) {
-				final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope);
+				final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope, ctxGetStart.getLine());
 				qualifier.setResultIsConsumed(true);
 				expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
 			} else {
@@ -4076,7 +4084,7 @@ public class Pass1Listener extends Pass0Listener {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 				
-			expression = new IdentifierExpression(idName, type, declaringScope);
+			expression = new IdentifierExpression(idName, type, declaringScope, ctxGetStart.getLine());
 		}
 		
 		assert null != expression;

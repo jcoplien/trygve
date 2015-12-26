@@ -85,7 +85,7 @@ public final class ListClass {
 			final TemplateDeclaration templateDecl = new TemplateDeclaration("List", newScope, /*Base Class*/ null, 0);
 			newScope.setDeclaration(templateDecl);
 			final Type T = new TemplateParameterType("T", null);
-			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope);
+			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, 0);
 			templateDecl.addTypeParameter(typeParamId, 1);
 			listType_ = new TemplateType("List", newScope, null);
 			templateDecl.setType(listType_);

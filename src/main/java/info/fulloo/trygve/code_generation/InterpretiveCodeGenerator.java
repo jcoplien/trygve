@@ -258,7 +258,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingInt:
 		case usingTemplate:
 		case usingString:
-			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
+			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
+					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
 					retval.type(), StaticScope.globalScope());
 		case none:
@@ -446,7 +447,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final int sizeOfCodeArray = printlnCode.size();
 		assert (sizeOfCodeArray > 0);
 		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
-		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(), methodDeclaration.enclosedScope());
+		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
+				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
 				self.type(), StaticScope.globalScope());
 		final StaticScope myScope = methodDeclaration.enclosedScope();

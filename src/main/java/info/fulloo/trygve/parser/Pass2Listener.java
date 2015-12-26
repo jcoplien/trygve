@@ -362,7 +362,7 @@ public class Pass2Listener extends Pass1Listener {
 				
 				final Type contextType = Expression.nearestEnclosingMegaTypeOf(roleDecl.enclosedScope());
 				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope);
+				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope, lineNumber);
 				final Expression roleNameInvocation = new QualifiedIdentifierExpression(currentContext, roleName, roleDecl.type());
 				expression = new RoleArrayIndexExpression(roleName, roleNameInvocation, indexExpr);
 			}
@@ -422,7 +422,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		final ActualArgumentList argList = new ActualArgumentList();
 		argList.addActualArgument(rightExpr);
-		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope());
+		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope(), ctxGetStart.getLine());
 		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
 		
@@ -520,7 +520,7 @@ public class Pass2Listener extends Pass1Listener {
 	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		// Apparently called only for constructor processing.
 		// The simple part. Add this.
-		final Expression self = new IdentifierExpression("t$his", type, scope);
+		final Expression self = new IdentifierExpression("t$his", type, scope, 0);
 		message.addActualThisParameter(self);
 	}
 	
@@ -552,7 +552,7 @@ public class Pass2Listener extends Pass1Listener {
 				return null;	// get out
 			}
 		} else if (null != nearestEnclosingMegaType) {
-			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope);
+			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
 		} else {
 			object = new NullExpression();
 		}
@@ -615,7 +615,7 @@ public class Pass2Listener extends Pass1Listener {
 				// Then it may be in the "required" declarations and is NOT a role method per se
 				isOKMethodSignature = true;
 			} else {
-				final Expression currentContext = new IdentifierExpression("current$context", wannabeContextType, nearestMethodScope);
+				final Expression currentContext = new IdentifierExpression("current$context", wannabeContextType, nearestMethodScope, ctxGetStart.getLine());
 				final ActualArgumentList saveArgumentList = message.argumentList().copy();
 				message.argumentList().addFirstActualParameter(currentContext);
 				currentContext.setResultIsConsumed(true);
@@ -1031,31 +1031,32 @@ public class Pass2Listener extends Pass1Listener {
 				// Probably better to make it a qualified identifier
 				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
-				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope);
+				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart.getLine());
 				retval = new QualifiedIdentifierExpression(self, idText, type);
 				
 				// Further checks
 				this.ensureNotDuplicatedInBaseClass(associatedDeclaration, idText, ctxGetStart.getLine());
 			} else {
-				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
+				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 			}
 			assert null != retval;
 		} else if (null != currentScope_.lookupClassDeclarationRecursive(idText)) {
 			// Could be a reference to a class itself (like System)
 			type = StaticScope.globalScope().lookupTypeDeclaration("Class");
 			declaringScope = StaticScope.globalScope();
-			retval = new IdentifierExpression(idText, type, declaringScope);
+			retval = new IdentifierExpression(idText, type, declaringScope, ctxGetStart.getLine());
 		} else if (null != (aRoleDecl = super.isRoleAssignmentWithinContext(idText))) {
 			type = aRoleDecl.type();
 			declaringScope = aRoleDecl.enclosingScope();
-			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
+			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
 				&& null != Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope()
 				&& null != (objectDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupObjectDeclarationRecursive(idText))) {
 			// done — get outta here
 			final IdentifierExpression self = new IdentifierExpression("this",		// name
 					Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
-					Expression.nearestEnclosingMethodScopeAround(currentScope_));	// scope where *declared*
+					Expression.nearestEnclosingMethodScopeAround(currentScope_),	// scope where *declared*
+					ctxGetStart.getLine());
 			self.setResultIsConsumed(true);
 			retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
 		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
@@ -1063,7 +1064,7 @@ public class Pass2Listener extends Pass1Listener {
 				&& null != (aRoleDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupRoleOrStagePropDeclarationRecursive(idText))) {
 			// done — get outta here
 			final IdentifierExpression currentContext = new IdentifierExpression("current$context", Expression.nearestEnclosingMegaTypeOf(aRoleDecl.enclosedScope()),
-					Expression.nearestEnclosingMethodScopeAround(currentScope_));
+					Expression.nearestEnclosingMethodScopeAround(currentScope_), ctxGetStart.getLine());
 			currentContext.setResultIsConsumed(true);
 			retval = new QualifiedIdentifierExpression(currentContext, idText, aRoleDecl.type());
 		} else {
@@ -1094,12 +1095,12 @@ public class Pass2Listener extends Pass1Listener {
 						type = possibleContextScope.lookupTypeDeclaration(idText);
 						declaringScope = roleDecl.enclosingScope();
 					}
-					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 				} else {
 					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
 							"' is not declared in scope `", currentScope_.name(), "'.", "");
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
-					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 				}
 			} else {
 				// Could be a base class reference
@@ -1161,7 +1162,7 @@ public class Pass2Listener extends Pass1Listener {
 					if (baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
 						final Type type = baseClassInstance.type();
 						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope);
+						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope, lineNumber);
 						self.setResultIsConsumed(true);
 						retval = new QualifiedIdentifierExpression(self, idName, type);
 					} else {

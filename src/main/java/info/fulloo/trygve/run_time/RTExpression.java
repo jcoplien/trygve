@@ -541,7 +541,7 @@ public abstract class RTExpression extends RTCode {
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
 					returnType, lineNumber_, isStatic_);
 			} else {
-				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope());
+				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope(), 0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
 						returnType, lineNumber_, isStatic_);
 			}
@@ -1105,9 +1105,13 @@ public abstract class RTExpression extends RTCode {
 			final ActualArgumentList argList = new ActualArgumentList();
 			final Type outType = StaticScope.globalScope().lookupTypeDeclaration(className);
 			assert null != enclosedMethodScope;
-			
+			final Declaration associatedDeclaration = null == enclosedMethodScope?
+																null: 
+																enclosedMethodScope.associatedDeclaration();
+			final int lineNumber = null == associatedDeclaration? 0: associatedDeclaration.lineNumber();
+					
 			if (false == isStatic) {
-				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope);
+				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope, lineNumber);
 				argList.addActualArgument(self);
 			}
 			
@@ -1121,7 +1125,8 @@ public abstract class RTExpression extends RTCode {
 					final String parameterTypeName = typeNameIter.next();
 					final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
 
-					final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType, enclosedMethodScope);
+					final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType,
+							enclosedMethodScope, lineNumber);
 					argList.addActualArgument(theArgument);
 				}
 			}
@@ -2157,7 +2162,7 @@ public abstract class RTExpression extends RTCode {
 				rTConstructor_ = null;
 			} else {
 				// compile it
-				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope);
+				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope, expr.lineNumber());
 				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber(),
 						false);
 				

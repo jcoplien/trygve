@@ -50,6 +50,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
+import info.fulloo.trygve.parser.Pass0Listener;
 import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTType;
@@ -246,9 +247,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class IdentifierExpression extends Expression
 	{
-		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared) {
+		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared,
+				final int lineNumber) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
 			scopeWhereDeclared_ = scopeWhereDeclared;
+			lineNumber_ = lineNumber;
 		}
 		@Override public String getText() {
 			return name();
@@ -259,8 +262,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public StaticScope scopeWhereDeclared() {
 			return scopeWhereDeclared_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
 		
 		private final StaticScope scopeWhereDeclared_;
+		private final int lineNumber_;
 	}
 	
 	public static class RelopExpression extends Expression
@@ -423,10 +430,19 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class UnaryAbelianopExpression extends Expression
 	{
-		public UnaryAbelianopExpression(Expression rhs, String operator) {
+		public UnaryAbelianopExpression(final Expression rhs, final String operator,
+				final Pass0Listener pass) {
 			// For unary operators, one or the other of lhs or rhs could be null
 			super(operator, rhs.type(), rhs.enclosingMegaType());
 			assert operator.equals("+") || operator.equals("-") || operator.equals("!");
+			final Type type = rhs.type();
+			if (type.hasUnaryOperator(operator)) {
+				;		// is O.K.
+			} else {
+				pass.errorHook5p2(ErrorType.Fatal, rhs.lineNumber(),
+						"The unary operator `" + operator,"' does not apply to type ",
+						type.getText(), ".");
+			}
 			rhs_ = rhs;
 			rhs_.setResultIsConsumed(true);
 			operator_ = operator;

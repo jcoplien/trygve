@@ -552,7 +552,7 @@ public abstract class Declaration implements BodyPart {
 						// Look up constructor in that base class
 						final String baseClassName = baseClass.name();
 						final ActualArgumentList actualArgumentList = new ActualArgumentList();
-						final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope);
+						final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope, lineNumber);
 						actualArgumentList.addActualArgument(self);
 						final StaticScope baseClassScope = baseClass.enclosedScope();
 						if (null != baseClassScope) {

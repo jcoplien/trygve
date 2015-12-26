@@ -114,7 +114,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof IdentifierExpression) {
 					final IdentifierExpression aParam = (IdentifierExpression)aParameter;
-					final IdentifierExpression newParameter = new IdentifierExpression(aParam.name(), newType, aParam.scopeWhereDeclared());
+					final IdentifierExpression newParameter = new IdentifierExpression(aParam.name(), newType, aParam.scopeWhereDeclared(), 0);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof QualifiedIdentifierExpression) {
 					final QualifiedIdentifierExpression aParam = (QualifiedIdentifierExpression)aParameter;
@@ -133,7 +133,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 				} else {
 					// Can always treat like an identifier and get by.
 					// It's really the type that matters.
-					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope());
+					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope(), 0);
 					retval.addActualArgument(newParameter);
 				}
 				

@@ -213,7 +213,6 @@ context Chord {
 
 /* GOLD:
 line 64: WARNING: Method declaration for `name' may hide method declared at line 157
-line 89: WARNING: Possible missing return statement.
 ___________________________________________________________
 Cm11
 Dsus

@@ -244,6 +244,7 @@ expr
 
 abelian_expr
 		: abelian_product (ABELIAN_SUMOP abelian_product)*
+		| if_expr
 		| <assoc=right> abelian_expr ASSIGN expr
 		;
 		

@@ -95,8 +95,8 @@ public final class MapClass {
 			newScope.setDeclaration(templateDecl);
 			final Type K = new TemplateParameterType("K", null);
 			final Type V = new TemplateParameterType("V", null);
-			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope);
-			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope);
+			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope, 0);
+			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope, 0);
 			templateDecl.addTypeParameter(keyTypeParamID, 2);
 			templateDecl.addTypeParameter(valueTypeParamID, 2);
 			mapType_ = new TemplateType("Map", newScope, null);

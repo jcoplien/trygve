@@ -371,6 +371,8 @@ public abstract class Type implements ExpressionStackAPI
 				else if (operator.equals("+")) retval = true;
 				else if (operator.equals("--")) retval = true;
 				else if (operator.equals("++")) retval = true;
+			} else if (this.name().equals("boolean")) {
+				if (operator.equals("!")) retval = true;
 			}
 			return retval;
 		}
