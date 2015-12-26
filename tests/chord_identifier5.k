@@ -71,8 +71,6 @@ context Chord {
             boolean hasDominant = dominant().length() > 0;
 
             String sus2 = "";
-            // NOTE: && doesn't work.
-            // No such operation '&&' on type boolean for argument boolean
             if(hasInterval(2.0) && hasDominant == false) { 
                 sus2 = "sus2";
                 if(isMinor()) sus2 = "add9";
@@ -80,14 +78,13 @@ context Chord {
             }
 
             String sus4 = "";
-            // NOTE: ! doesn't work, but maybe that's a feature?
             if(hasInterval(5.0) && !hasDominant) {
                 sus4 = "sus";
                 if(isMinor()) sus4 = "add11";
                 if(isMajor()) sus4 = "add11";
             }
 
-            // NOTE: This expression is a bit messy, but I think it should compile:
+            // NOTE: Expression cuts off sus2 and sus4 (see test output)
             return (if(isMinor()) "m" else "") + sus2 + sus4;
         }
 
@@ -103,7 +100,6 @@ context Chord {
             String highest = "";
             String maj7 = if(hasInterval(11.0)) "maj" else "";
 
-            // NOTE: Another &&
             if(hasInterval(7.0) && size() == 2) highest = "5";
             if(hasInterval(9.0)) highest = "6";
             if(hasInterval(10.0)) highest = "7";
@@ -129,7 +125,6 @@ context Chord {
             if (hasInterval(6.0)) augs.add("b5");
             if (hasInterval(8.0)) augs.add("#5");
             if (hasInterval(1.0)) augs.add("b9");
-            // NOTE: More && and !
             if (hasInterval(3.0) && isMinor() == false) augs.add("#9");
             if (hasInterval(4.0) && !isMajor()) augs.add("b11");
             if (hasInterval(8.0)) augs.add("b13");
@@ -202,20 +197,28 @@ context Chord {
     notes5.add(new Note("C#"));
     Chord chord5 = new Chord(notes5);
 
+    List<Note> notes6 = new List<Note>();
+    notes6.add(new Note("G"));
+    notes6.add(new Note("A"));
+    notes6.add(new Note("D"));
+    Chord chord6 = new Chord(notes6);
+
     System.out.println(chord.name());
     System.out.println(chord2.name());
     System.out.println(chord3.name());
     System.out.println(chord4.name());
     System.out.println(chord5.name());
+    System.out.println(chord6.name());
 }
 
 /* GOLD:
-line 64: WARNING: Method declaration for `name' may hide method declared at line 162
-line 92: WARNING: Possible missing return statement.
+line 64: WARNING: Method declaration for `name' may hide method declared at line 157
+line 89: WARNING: Possible missing return statement.
 ___________________________________________________________
 Cm11
-D
+Dsus
 Em7b5b9
 Fmaj9
 F#5
+Gsus2
 */
