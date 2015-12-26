@@ -101,6 +101,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression qualifier() {
 			return qualifier_;
 		}
+		@Override public int lineNumber() {
+			return qualifier_.lineNumber();
+		}
 		
 		private final Expression qualifier_;
 	}
@@ -127,6 +130,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public String operator() {
 			return operator_;
+		}
+		@Override public int lineNumber() {
+			return qualifier_.lineNumber();
 		}
 		
 		private final Expression qualifier_;
@@ -293,6 +299,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileRelopExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
 		
 		private final Expression lhs_, rhs_;
 		private final String operator_;
@@ -328,6 +337,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileBooleanExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
 		
 		private final Expression lhs_, rhs_;
 		private final String operator_;
@@ -361,6 +373,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileBinopExpression(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -397,6 +412,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public PreOrPost preOrPost() {
 			return preOrPost_;
 		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
 		
 		private final Expression lhs_;
 		private final String operator_;
@@ -426,6 +444,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileUnaryAbelianopExpression(this, operator_, scope, rtTypeDeclaration);
 		}
+		@Override public int lineNumber() {
+			return rhs_.lineNumber();
+		}
 		
 		private final Expression rhs_;
 		private final String operator_;
@@ -448,6 +469,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileDoubleCasterExpression(this, rtTypeDeclaration);
+		}
+		@Override public int lineNumber() {
+			return rhs_.lineNumber();
 		}
 		
 		private final Expression rhs_;
@@ -491,6 +515,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
 		}
 		
 		private Expression rhs_;
@@ -551,6 +578,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileNewArrayExpression(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
+		@Override public int lineNumber() {
+			return sizeExpression_.lineNumber();
 		}
 		
 		private final Type classOrContextType_;
@@ -652,6 +682,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public final String roleName() {
 			return roleName_;
 		}
+		@Override public int lineNumber() {
+			return roleNameInvocation_.lineNumber();
+		}
 		
 		private final Expression indexExpr_;
 		private final Expression roleNameInvocation_;
@@ -676,6 +709,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public Expression originalExpression() {
 			return expr_;
+		}
+		@Override public int lineNumber() {
+			return expr_.lineNumber();
 		}
 		
 		private final Expression expr_;
@@ -734,6 +770,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (null != elsePart_) {
 				elsePart_.setResultIsConsumed(tf);
 			}
+		}
+		@Override public int lineNumber() {
+			return conditional_.lineNumber();
 		}
 		
 		private final Expression conditional_, thenPart_, elsePart_;
@@ -887,6 +926,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String uniqueLabel() {
 			return label_;
 		}
+		@Override public int lineNumber() {
+			return test_.lineNumber();
+		}
 		
 		private Expression test_, body_;
 		
@@ -937,6 +979,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public String uniqueLabel() {
 			return label_;
 		}
+		@Override public int lineNumber() {
+			return test_.lineNumber();
+		}
 		
 		private Expression test_, body_;
 		
@@ -972,6 +1017,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public Constant expression() {
 			return constant_;
+		}
+		@Override public int lineNumber() {
+			return expressionAndDeclList_.lineNumber();
 		}
 		
 		private final Constant constant_;
@@ -1030,6 +1078,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				}
 			}
 			return retval;
+		}
+		@Override public int lineNumber() {
+			return expression_.lineNumber();
 		}
 		
 		private Map<Constant, SwitchBodyElement> indexedSwitchBodyElements_;
@@ -1163,6 +1214,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public String operator() {
 			return operator_;
 		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
 		
 		private final Expression lhs_, rhs_;
 		private final String operator_;
@@ -1217,6 +1271,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public String operator() {
 			return operator_;
 		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
 		
 		private Expression lhs_, rhs_;
 		private final String operator_;
@@ -1268,6 +1325,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public String operator() {
 			return operator_;
+		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
 		}
 		
 		private Expression lhs_;
@@ -1449,6 +1509,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression promotee() {
 			return promotee_;
 		}
+		@Override public int lineNumber() {
+			return promotee_.lineNumber();
+		}
+		
 		private final Expression promotee_;
 	}
 	
@@ -1471,6 +1535,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public String roleName() {
 			return enclosingRole_.name();
+		}
+		@Override public int lineNumber() {
+			return enclosingRole_.lineNumber();
 		}
 		
 		final private RoleDeclaration enclosingRole_;

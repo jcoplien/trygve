@@ -581,6 +581,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		@Override public String getText() {
+			return Integer.toString((int)foobar_);
+		}
 		
 		private long foobar_;
 	}
@@ -716,6 +719,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		@Override public String getText() {
+			return Double.toString((double)foobar_);
+		}
 		
 		final double EPSILON = 0.00001;
 		private double foobar_;
@@ -788,6 +794,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		@Override public String getText() {
+			return "\"" + foobar_ + "\"";
+		}
 
 		private String foobar_;
 	}
@@ -842,6 +851,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				answer = foobar_ ^ ((RTBooleanObject)other).foobar_;
 			}
 			return new RTBooleanObject(answer);
+		}
+		@Override public String getText() {
+			return foobar_? "true": "false";
 		}
 		
 		private boolean foobar_;

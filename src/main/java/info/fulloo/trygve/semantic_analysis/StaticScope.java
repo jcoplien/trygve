@@ -575,6 +575,17 @@ public class StaticScope {
 		}
 		return retval;
 	}
+	public void updateClassDeclaration(final ClassDeclaration decl) {
+		// Just update, in Passes 1-4, the declaration established
+		// in Pass 0. Don't change the identity of the declaration.
+		final String className = decl.name();
+		final ClassDeclaration existingDeclaration = classDeclarationDictionary_.get(className);
+		if (null == existingDeclaration) {
+			declareClass(decl);
+		} else {
+			existingDeclaration.updateWithDataFrom(decl);
+		}
+	}
 	
 	public void declareClass(final ClassDeclaration decl) {
 		final String className = decl.name();

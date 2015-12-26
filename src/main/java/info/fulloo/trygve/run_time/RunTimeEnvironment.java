@@ -280,6 +280,8 @@ public class RunTimeEnvironment {
 		return retval;
 	}
 	private void runnerPrefix(final RTCode code) {
+		assert null != code;		// put the check up here, out of the
+		                            // code we will be stepping through...
 		if (ConfigurationOptions.fullExecutionTrace()) {
 			if (null == code) {
 				System.err.format("> code == NULL\n");
@@ -325,17 +327,15 @@ public class RunTimeEnvironment {
 				} else if (code instanceof RTPostReturnProcessing) {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
 				} else if (code instanceof RTConstant) {
-					System.err.format(" for \"%s\"", ((RTConstant)code).toString());
+					System.err.format(" for \"%s\"", ((RTConstant)code).getText());
 				}
 				System.err.format("\n");
 			}
 		}
 	}
 	public RTCode runner(final RTCode code) {
-		RTCode retval = null;
 		runnerPrefix(code);
-		assert null != code;
-		retval = code.run();
+		RTCode retval = code.run();
 		return retval;
 	}
 	

@@ -63,6 +63,7 @@ public class ParseRun {
         		if (ConfigurationOptions.treewalkTraceEnabled()) {
         			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);
         		}
+        		this.pass0(parsingData, tree);
         		this.pass1(parsingData, tree);
         		this.pass2(parsingData, tree);
         		this.pass3(parsingData, tree);
@@ -87,6 +88,10 @@ public class ParseRun {
 	    	System.err.println("___________________________________________________________");
 	    	gui.console().redirectErr(java.awt.Color.RED, null);
 	    }
+	}
+
+	private void pass0(final ParsingData parsingData, final ParserRuleContext tree) {
+        ParseTreeWalker.DEFAULT.walk(new Pass0Listener(parsingData), tree);
 	}
 	
 	private void pass1(final ParsingData parsingData, final ParserRuleContext tree) {

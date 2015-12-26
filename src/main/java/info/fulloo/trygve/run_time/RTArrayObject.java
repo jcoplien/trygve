@@ -56,6 +56,10 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert false;
 		return null;
 	}
+	
+	@Override public String getText() {
+		return "<array>";
+	}
 	private int calculateIndexFrom(final RTObject theIndexObject) {
 		int theIndex = -1;
 		if (theIndexObject instanceof RTIntegerObject) {

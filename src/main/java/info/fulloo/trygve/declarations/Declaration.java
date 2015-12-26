@@ -215,6 +215,13 @@ public abstract class Declaration implements BodyPart {
 			templateDeclaration_ = null;
 			methodsHaveBodyParts_ = false;
 		}
+		public void updateWithDataFrom(final ClassDeclaration newerDeclaration) {
+			if (this != newerDeclaration) {
+				// Should be the same. Just double-check.
+				assert false;
+				;
+			}
+		}
 		public void setType(final Type t) {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;

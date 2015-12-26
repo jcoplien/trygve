@@ -66,7 +66,7 @@ class Account {
 }
 
 /* GOLD:
-line 24: Expression 'Amount' is not of the right type
+line 24: Expression 'current$context.Amount' is not of the right type
 line 25: Method `decreaseBalance' not declared in Role `SourceAccount'.
 line 35: Method `increaseBalance' not declared in Role `DestinationAccount'.
 ___________________________________________________________

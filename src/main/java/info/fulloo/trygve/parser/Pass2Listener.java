@@ -31,7 +31,6 @@ import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
-import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
@@ -98,8 +97,6 @@ public class Pass2Listener extends Pass1Listener {
 		return currentScope_.lookupClassDeclarationRecursive(name);
 	}
 	
-	@Override protected void createNewClassTypeSuitableToPass(ClassDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
-	}
 	@Override protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
 	}
 
@@ -1008,12 +1005,15 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public Expression idExpr(TerminalNode ctxJAVA_ID, Token ctxGetStart) {
 		// | JAVA_ID
 		// Special version for pass 2 and 3
+		
 		Type type = null;
 		Expression retval = null;
 		RoleDeclaration aRoleDecl = null;
 		StaticScope declaringScope = null;
 		final StaticScope globalScope = StaticScope.globalScope();
 		final String idText = ctxJAVA_ID.getText();
+		ObjectDeclaration objectDecl = null;
+		
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idText);
 		if (null != objdecl) {
 			type = objdecl.type();
@@ -1049,6 +1049,23 @@ public class Pass2Listener extends Pass1Listener {
 			type = aRoleDecl.type();
 			declaringScope = aRoleDecl.enclosingScope();
 			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope);
+		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
+				&& null != Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope()
+				&& null != (objectDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupObjectDeclarationRecursive(idText))) {
+			// done — get outta here
+			final IdentifierExpression self = new IdentifierExpression("this",		// name
+					Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+					Expression.nearestEnclosingMethodScopeAround(currentScope_));	// scope where *declared*
+			self.setResultIsConsumed(true);
+			retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
+		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
+				&& null != Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope()
+				&& null != (aRoleDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupRoleOrStagePropDeclarationRecursive(idText))) {
+			// done — get outta here
+			final IdentifierExpression currentContext = new IdentifierExpression("current$context", Expression.nearestEnclosingMegaTypeOf(aRoleDecl.enclosedScope()),
+					Expression.nearestEnclosingMethodScopeAround(currentScope_));
+			currentContext.setResultIsConsumed(true);
+			retval = new QualifiedIdentifierExpression(currentContext, idText, aRoleDecl.type());
 		} else {
 			final StaticScope possibleMethodName = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			final StaticScope possibleRoleScope = null == possibleMethodName? null: possibleMethodName.parentScope();
@@ -1165,13 +1182,6 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
 	}
 	
-	@Override protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
-		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(name);
-		assert null != contextDecl;  // maybe turn into an error message later
-		currentScope_ = contextDecl.enclosedScope();
-		assert null != currentScope_;	// maybe turn into an error message later
-		return contextDecl;
-	}
 	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
 		final ClassDeclaration newClass = currentScope_.lookupClassDeclarationRecursive(name);
 		final Type rawClass = newClass.type();
@@ -1179,15 +1189,6 @@ public class Pass2Listener extends Pass1Listener {
 		final ClassType classType = (ClassType)rawClass;
 		classType.updateBaseType(baseType);
 		return newClass;
-	}
-	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
-		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
-		return newTemplate;
-	}
-	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
-		final InterfaceDeclaration newInterface = currentScope_.lookupInterfaceDeclarationRecursive(name);
-		assert null != newInterface;
-		return newInterface;
 	}
 	@Override protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
 		/* Nothing */

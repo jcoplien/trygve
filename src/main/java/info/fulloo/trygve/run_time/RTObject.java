@@ -63,4 +63,5 @@ public interface RTObject extends RTStackable {
 	public void unenlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance);
 	public boolean equals(final RTObject other);
 	public int hashCode();
+	public String getText();
 }

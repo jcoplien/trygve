@@ -111,6 +111,7 @@ public class TestRunner {
 		"assert_in_roletest.k",
 		"moneytransfer_original.k",
 		"bool_op1.k",
+		"fractal1.k",
 		"fractal.k",
 		// "moneytransfer1.k",
 	};

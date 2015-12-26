@@ -42,6 +42,10 @@ public abstract class RTIterator implements RTObject {
 		return iterable.makeIterator();
 	}
 	
+	@Override public String getText() {
+		return "<iterator>";
+	}
+	
 	public static class RTArrayIterator extends RTIterator {
 		public RTArrayIterator(final RTIterable whatIAmIteratingOver) {
 			super();

@@ -54,7 +54,6 @@ import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
-import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
@@ -137,20 +136,9 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
-public class Pass1Listener extends KantBaseListener {
-	private boolean printProductionsDebug;
-	private boolean stackSnapshotDebug;
-	
+public class Pass1Listener extends Pass0Listener {
 	public Pass1Listener(final ParsingData parsingData) {
-		parsingData_ = parsingData;
-		
-		currentScope_ = parsingData_.globalScope();
-		currentContext_ = null;
-		variableGeneratorCounter_ = 101;
-		
-		currentRole_ = null;
-		currentInterface_ = null;
-		
+		super(parsingData);
 		printProductionsDebug = ConfigurationOptions.tracePass1();
 		stackSnapshotDebug = ConfigurationOptions.stackSnapshotDebug();
 	}
@@ -172,15 +160,6 @@ public class Pass1Listener extends KantBaseListener {
 	}
 	
 	// -----------------------------------------------------------------------------------
-	
-	@Override public void enterProgram(KantParser.ProgramContext ctx)
-	{
-		// : type_declaration_list main
-		// : type_declaration_list
-		
-		final TypeDeclarationList currentList = new TypeDeclarationList(ctx.getStart().getLine());
-		parsingData_.pushTypeDeclarationList(currentList);
-	}
 	
 	@Override public void exitProgram(KantParser.ProgramContext ctx)
 	{
@@ -301,6 +280,48 @@ public class Pass1Listener extends KantBaseListener {
 		}
 	}
 	
+	@Override protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
+		// Pass 1 - 4 version
+		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(name);
+		assert null != contextDecl;  // maybe turn into an error message later
+		currentScope_ = contextDecl.enclosedScope();
+		assert null != currentScope_;	// maybe turn into an error message later
+		return contextDecl;
+	}
+	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
+		// Pass 1 - 4 version
+		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
+		return newTemplate;
+	}
+	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
+		// Pass 1 - 4 version
+		final InterfaceDeclaration newInterface = currentScope_.lookupInterfaceDeclarationRecursive(name);
+		assert null != newInterface;
+		return newInterface;
+	}
+	
+	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
+		assert null != currentScope_;
+		ClassDeclaration newClass = StaticScope.globalScope().lookupClassDeclaration(name);
+		StaticScope classScope = null;
+		if (null == newClass) {
+			assert false;	// shouldn't be finding new classes in Pass 1...
+			classScope = new StaticScope(currentScope_);
+			newClass = this.lookupOrCreateNewClassDeclaration(name, classScope, rawBaseClass, lineNumber);
+			assert null != rawBaseClass;
+			final ClassType newClassType = new ClassType(name, classScope, (ClassType)rawBaseClass.type());
+
+			currentScope_.declareType(newClassType);
+			classScope.setDeclaration(newClass);
+			newClass.setType(newClassType);
+		} else {
+			currentScope_.updateClassDeclaration(newClass);
+			classScope = newClass.enclosedScope();
+		}
+		currentScope_ = classScope;
+		return newClass;
+	}
+	
 	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
 	{
 		// : 'context' JAVA_ID '{' context_body '}'
@@ -311,7 +332,7 @@ public class Pass1Listener extends KantBaseListener {
 		// | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
 		// | 'interface' JAVA_ID '{' interface_body '}'
 		
-		// One version serves all three passes
+		// One version serves passes 1 - 4
 		assert null != currentScope_;
 		final Declaration rawNewDeclaration = currentScope_.associatedDeclaration();
 		assert rawNewDeclaration instanceof TypeDeclaration;	
@@ -353,7 +374,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
 		// nothing on pass one
 	}
 	
@@ -920,14 +941,24 @@ public class Pass1Listener extends KantBaseListener {
 		//	: method_signature
 
 		final Declaration associatedDeclaration = currentScope_.parentScope().associatedDeclaration();
+		if (null == associatedDeclaration) {
+			assert null != associatedDeclaration;
+		}
 		final Type classOrRoleOrContextType = associatedDeclaration.type();
 		
 		boolean isRoleMethodInvocation = classOrRoleOrContextType instanceof RoleType;
 		
-		assert  classOrRoleOrContextType instanceof ClassType || 
+		if (classOrRoleOrContextType instanceof ClassType || 
 				isRoleMethodInvocation ||
 				classOrRoleOrContextType instanceof ContextType ||
-				classOrRoleOrContextType instanceof TemplateType;
+				classOrRoleOrContextType instanceof TemplateType) {
+			;
+		} else {
+			assert  classOrRoleOrContextType instanceof ClassType || 
+					isRoleMethodInvocation ||
+					classOrRoleOrContextType instanceof ContextType ||
+					classOrRoleOrContextType instanceof TemplateType;
+		}
 		
 		// Add declaration of "this" as a formal parameter
 		final ObjectDeclaration self = new ObjectDeclaration("this", classOrRoleOrContextType, ctx.getStart().getLine());
@@ -3065,73 +3096,7 @@ public class Pass1Listener extends KantBaseListener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	
-	
 	// --------------------------------------------------------------------------------------
-	
-	
-	
-    protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope, final ClassDeclaration rawBaseClass, final int lineNumber) {
-		if (null == rawBaseClass) {
-			assert null != rawBaseClass;
-		}
-    	return new ClassDeclaration(name, newScope, rawBaseClass, lineNumber);
-	}
-    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope, final TypeDeclaration rawBaseClass, final int lineNumber) {
-    	return new TemplateDeclaration(name, newScope, rawBaseClass, lineNumber);
-	}
-	protected void createNewClassTypeSuitableToPass(final ClassDeclaration newClass, final String name, final StaticScope newScope, final ClassType baseType) {
-		// Pass1 only
-		final ClassType newClassType = new ClassType(name, newScope, baseType);
-		currentScope_.declareType(newClassType);
-		newScope.setDeclaration(newClass);
-		newClass.setType(newClassType);
-	}
-	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name, final StaticScope newScope, final ClassType baseType) {
-		// Pass1 only
-		final TemplateType newTemplateType = new TemplateType(name, newScope, baseType);
-		currentScope_.declareType(newTemplateType);
-		newScope.setDeclaration(newTemplate);
-		newTemplate.setType(newTemplateType);
-	}
-	protected void createNewInterfaceTypeSuitableToPass(final InterfaceDeclaration newInterface, final String name, final StaticScope newScope) {
-		// Pass1 only
-		final InterfaceType newInterfaceType = new InterfaceType(name, newScope);
-		currentScope_.declareType(newInterfaceType);
-		newScope.setDeclaration(newInterface);
-		newInterface.setType(newInterfaceType);
-	}
-	
-	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
-		final RoleDeclaration requestedRole = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
-		if (null != requestedRole) {
-			currentRole_ = requestedRole;
-			
-			// The way parsing is designed, these things should
-			// be defined once on pass 1 and then referenced only
-			// on subsequent passes.
-			assert false;
-		} else {
-			final StaticScope rolesScope = new StaticRoleScope(currentScope_);
-			final RoleDeclaration roleDecl =
-					isRoleArray
-					   ? new RoleArrayDeclaration(roleName, rolesScope, currentContext_, lineNumber)
-					   : new RoleDeclaration(roleName, rolesScope, currentContext_, lineNumber);
-			rolesScope.setDeclaration(roleDecl);
-			
-			// declareRoleOrStageProp will also declare the name as an array handle
-			// if isRoleArray was set (in pass 2)
-			declareRoleOrStageProp(currentScope_, roleDecl, lineNumber);
-			
-			final RoleType roleType = new RoleType(roleName, rolesScope);
-			currentScope_.declareType(roleType);
-			
-			currentRole_ = roleDecl;
-			assert null != currentRole_;
-			currentRole_.setType(roleType);
-		}
-		// caller may reset currentScope - NOT us
-	}
 	
 	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
 		final Declaration rawDeclaration = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
@@ -3234,22 +3199,6 @@ public class Pass1Listener extends KantBaseListener {
 			}
 		}
 		return retval;
-	}
-	
-	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
-		assert null == currentInterface_;
-		assert null != currentScope_;
-		final StaticScope newScope = new StaticScope(currentScope_);
-		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
-		currentScope_.declareInterface(currentInterface_);
-		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);
-		
-		// currentScope_ is set by caller after return
-		return currentInterface_;
-	}
-	
-	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, final StaticScope scope, final int lineNumber) {
-		return new InterfaceDeclaration(name, scope, lineNumber);
 	}
 	
 	protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
@@ -3556,68 +3505,7 @@ public class Pass1Listener extends KantBaseListener {
 
 	// WARNING. Tricky code here
 	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
-	public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
-		s.declareRoleOrStageProp(roledecl);
-	}
-	
-	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
-	}
-	public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
-		/* nothing */
-	}
-	protected void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
-	}
-	public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
-		/* nothing */
-	}
-	protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
-		final StaticScope newScope = new StaticScope(currentScope_);
-		final ContextDeclaration contextDecl = new ContextDeclaration(name, newScope, currentContext_, lineNumber);
-		newScope.setDeclaration(contextDecl);
-		final Type rawObjectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
-		assert rawObjectType instanceof ClassType;
-		final ClassType objectType = (ClassType) rawObjectType;
-		final ContextType newContextType = new ContextType(name, newScope, objectType);
-		declareTypeSuitableToPass(currentScope_, newContextType);
-		contextDecl.setType(newContextType);
-		currentScope_.declareContext(contextDecl);
-		currentScope_ = newScope;
-		return contextDecl;
-	}
-	protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
-		assert null != currentScope_;
-		final StaticScope newScope = new StaticScope(currentScope_);
-		final ClassDeclaration newClass = this.lookupOrCreateNewClassDeclaration(name, newScope, rawBaseClass, lineNumber);
-		currentScope_.declareClass(newClass);
-		this.createNewClassTypeSuitableToPass(newClass, name, newScope, baseType);
-		currentScope_ = newScope;
-		return newClass;
-	}
-	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
-		assert null != currentScope_;
-		final StaticScope newScope = new StaticScope(currentScope_);
-		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, lineNumber);
-		newScope.setDeclaration(newTemplate);
-		currentScope_.declareTemplate(newTemplate);
-		this.createNewTemplateTypeSuitableToPass(newTemplate, name, newScope, (ClassType)baseType);
-		currentScope_ = newScope;
-		return newTemplate;
-	}
-	protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
-		scope.declareType(decl);
-	}
-	protected void declareObjectSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
-		final String objectIdentifier = objDecl.name();
-		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
-		if (null != existingDecl) {
-			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
-					objectIdentifier, "'", "");
-		} else {
-			scope.declareObject(objDecl);
-		}
-	}
+
 	protected void declareFormalParametersSuitableToPass(StaticScope scope, ObjectDeclaration objDecl) {
 		scope.declareObject(objDecl);
 	}
@@ -4397,14 +4285,4 @@ public class Pass1Listener extends KantBaseListener {
 	private void stackSnapshotDebug() {
 		parsingData_.stackSnapshotDebug();
 	}
-
-	
-	// ------------------------------------------------------------------------------------------------------- 
-	protected ContextDeclaration currentContext_;	// should probably be a stack for generality. FIXME
-	protected ParsingData parsingData_;
-	protected StaticScope currentScope_;
-	protected RoleDeclaration currentRole_;
-	protected InterfaceDeclaration currentInterface_;
-	private int variableGeneratorCounter_;
-    // -------------------------------------------------------------------------------------------------------
 }

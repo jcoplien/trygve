@@ -269,7 +269,7 @@ public abstract class RTExpression extends RTCode {
 			if (resultIsConsumed()) {
 				final RTNullObject nullObject = new RTNullObject();
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(nullObject);
-				setLastExpressionResult(nullObject);
+				setLastExpressionResult(nullObject, 0);
 			}
 			return super.nextCode();
 		}
@@ -277,14 +277,16 @@ public abstract class RTExpression extends RTCode {
 	public static class RTQualifiedIdentifier extends RTExpression {
 		public RTQualifiedIdentifier(final String name, final Expression expr, final RTType nearestEnclosingType) {
 			super();
-			part2_ = new RTQualifiedIdentifierPart2(name);
+			
+			lineNumber_ = expr.lineNumber();
+			part2_ = new RTQualifiedIdentifierPart2(name, lineNumber());
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
 			stringRep_ = qie.getText();
+			
 			qualifier_ = RTExpression.makeExpressionFrom(qie.qualifier(), nearestEnclosingType);
 			qualifier_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
-			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
@@ -302,8 +304,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		public static class RTQualifiedIdentifierPart2 extends RTExpression {
-			public RTQualifiedIdentifierPart2(final String name) {
+			public RTQualifiedIdentifierPart2(final String name, final int lineNumber) {
 				super();
+				lineNumber_ = lineNumber;
 				idName_ = name;
 				dynamicScope_ = null;
 			}
@@ -312,19 +315,36 @@ public abstract class RTExpression extends RTCode {
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (qualifier == null) {
 					// Run-time error
-					return null;
+					ErrorLogger.error(ErrorType.Runtime, lineNumber_, "INTERNAL Error: Unitialized reference to object `",
+									idName_, "'.", "");
+					return new RTHalt();
 				} else {
+					// What's this dynamicScope_ crap? Does anybody use it?
 					dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor -- increments ref count, don't worry
-					final RTObject value = qualifier.getObject(idName_);
+					RTObject value = qualifier.getObject(idName_);
+					
+					// Maybe getObject should handle Role lookup, dunno...
+					// We do it here
+					if (null == value && qualifier instanceof RTContextObject) {
+						final RTContextObject contextQualifier = (RTContextObject) qualifier;
+						value = contextQualifier.getRoleOrStagePropBinding(idName_);
+					}
+					
+					// NOTE: Value may be instance of RTNullObject.
+					
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
 					qualifier.decrementReferenceCount();
-					setLastExpressionResult(value);
+					setLastExpressionResult(value, lineNumber_);
 					return nextCode_;
 				}
+			}
+			public int lineNumber() {
+				return lineNumber_;
 			}
 			
 			private RTDynamicScope dynamicScope_;	// this should not be in a program element. FIXME.
 			private final String idName_;
+			private final int lineNumber_;
 		}
 		public int lineNumber() {
 			return lineNumber_;
@@ -341,6 +361,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTQualifiedIdentifierUnaryOp extends RTExpression {
 		public RTQualifiedIdentifierUnaryOp(final String name, final Expression expr, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			idName_ = name;
 			dynamicScope_ = null;
 			final QualifiedIdentifierExpressionUnaryOp qie = (QualifiedIdentifierExpressionUnaryOp) expr;
@@ -359,7 +380,7 @@ public abstract class RTExpression extends RTCode {
 			dynamicScope_ = new RTDynamicScope(this.name(), qualifier, null);	// cheesy constructor -- increments ref count, don't worry
 			final RTObject value = qualifier.performUnaryOpOnObjectNamed(idName_, operator_, preOrPost_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-			setLastExpressionResult(value);
+			setLastExpressionResult(value, lineNumber_);
 			qualifier.decrementReferenceCount();
 			return nextCode_;
 		}
@@ -372,6 +393,7 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		private final String idName_;
+		private final int lineNumber_;
 		private final RTExpression qualifier_;
 		private       RTDynamicScope dynamicScope_;
 		private final String operator_;
@@ -380,6 +402,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTClassMemberIdentifier extends RTExpression {
 		public RTClassMemberIdentifier(final String name, final Expression expr) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			idName_ = name;
 			
 			assert expr instanceof QualifiedClassMemberExpression;
@@ -396,7 +419,7 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTObject value = rTClass_.getStaticObject(idName_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-			setLastExpressionResult(value);
+			setLastExpressionResult(value, lineNumber_);
 			return nextCode_;
 		}
 		public RTDynamicScope dynamicScope() {
@@ -407,6 +430,7 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		private final String idName_;
+		private final int lineNumber_;
 		private final ClassType theClassItself_;
 		private RTClass rTClass_;
 	}
@@ -414,6 +438,7 @@ public abstract class RTExpression extends RTCode {
 		public RTClassMemberIdentifierUnaryOp(final String name, final Expression expr) {
 			super();
 			idName_ = name;
+			lineNumber_ = expr.lineNumber();
 			
 			assert expr instanceof QualifiedClassMemberExpressionUnaryOp;
 			final QualifiedClassMemberExpressionUnaryOp qcme = (QualifiedClassMemberExpressionUnaryOp) expr;
@@ -430,7 +455,7 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTObject value = rTClass_.performUnaryOpOnStaticObjectNamed(idName_, operator_, preOrPost_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-			setLastExpressionResult(value);
+			setLastExpressionResult(value, lineNumber_);
 			return nextCode_;
 		}
 		public RTDynamicScope dynamicScope() {
@@ -444,6 +469,7 @@ public abstract class RTExpression extends RTCode {
 		private ClassType theClassItself_;
 		private RTClass rTClass_;
 		private final String operator_;
+		private final int lineNumber_;
 		private final PreOrPost preOrPost_;
 	}
 	
@@ -1123,10 +1149,11 @@ public abstract class RTExpression extends RTCode {
 	public static class RTDupMessage extends RTExpression {
 		public RTDupMessage(final String name, final DupMessageExpression expr, final RTType enclosingMegaType) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			final Expression objectToClone = expr.objectToClone();
 			final List<BodyPart> intermediate = objectToClone.bodyParts();
 			objectToClone_ = bodyPartsToRTExpressionList(intermediate, enclosingMegaType);
-			part2_ = new RTDupMessagePart2(name);
+			part2_ = new RTDupMessagePart2(name, lineNumber_);
 			objectToClone_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
@@ -1147,12 +1174,14 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private final String name_;
+		private final int lineNumber_;
 		private final RTExpressionList objectToClone_;
 		private final RTDupMessagePart2 part2_;
 	}
 	public static class RTDupMessagePart2 extends RTExpression {
-		public RTDupMessagePart2(final String name) {
+		public RTDupMessagePart2(final String name, final int lineNumber) {
 			super();
+			lineNumber_ = lineNumber;
 			name_ = name;
 		}
 		
@@ -1163,7 +1192,7 @@ public abstract class RTExpression extends RTCode {
 			final RTObject clone = original.dup();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(clone);
 			original.decrementReferenceCount();
-			setLastExpressionResult(clone);
+			setLastExpressionResult(clone, lineNumber_);
 			return nextCode_;
 		}
 		
@@ -1172,6 +1201,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		final private String name_;
+		final private int lineNumber_;
 	};
 	
 	public static class RTIdentifier extends RTExpression {
@@ -1262,7 +1292,7 @@ public abstract class RTExpression extends RTCode {
 				// Maybe will fail if there is a nested declaration of an
 				// identifier in a Role method and it goes looking for
 				// it... Need some tests.
-				final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", scope);;
+				final RTObject self = RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				value = self.getObject(idName_);
 				if ((null == value) && (self instanceof RTContextObject)) {
 					final RTContextObject rTSelf = (RTContextObject)self;
@@ -1273,7 +1303,7 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-			setLastExpressionResult(value);
+			setLastExpressionResult(value, lineNumber_);
 			return nextCode_;
 		}
 		public RTDynamicScope dynamicScope() {
@@ -1299,7 +1329,7 @@ public abstract class RTExpression extends RTCode {
 		protected final String idName_;
 		protected StaticScope declaringScope_;
 		protected final boolean isLocal_;
-		private final int lineNumber_;
+		protected final int lineNumber_;
 	}
 	
 	public static class RTArrayIdentifier extends RTIdentifier {
@@ -1363,7 +1393,7 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-			setLastExpressionResult(value);
+			setLastExpressionResult(value, lineNumber_);
 			return nextCode_;
 		}
 	}
@@ -1409,6 +1439,7 @@ public abstract class RTExpression extends RTCode {
 		public static class RTRelopPart2 extends RTExpression {
 			public RTRelopPart2(final RelopExpression expr) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				operator_ = expr.operator();
 				setResultIsConsumed(expr.resultIsConsumed());
 			}
@@ -1443,7 +1474,7 @@ public abstract class RTExpression extends RTCode {
 				
 				final RTBooleanObject newBoolean = new RTBooleanObject(value);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(newBoolean);
-				setLastExpressionResult(newBoolean);
+				setLastExpressionResult(newBoolean, lineNumber_);
 				
 				rhs.decrementReferenceCount();
 				lhs.decrementReferenceCount();
@@ -1453,6 +1484,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String operator_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression lhs_, rhs_;
@@ -1462,6 +1494,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTBoolean extends RTExpression {
 		public RTBoolean(final BooleanExpression expr, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
 			operator_ = expr.operator();
@@ -1490,7 +1523,7 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTBooleanObject newBoolean = new RTBooleanObject(value);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(newBoolean);
-			setLastExpressionResult(newBoolean);
+			setLastExpressionResult(newBoolean, lineNumber_);
 			
 			rhs.decrementReferenceCount();
 			lhs.decrementReferenceCount();
@@ -1501,6 +1534,7 @@ public abstract class RTExpression extends RTCode {
 
 		private final RTExpression lhs_, rhs_;
 		private final String operator_;
+		private final int lineNumber_;
 	}
 	public static class RTBinop extends RTExpression {
 		public RTBinop(final BinopExpression expr, final RTType nearestEnclosingType) {
@@ -1525,6 +1559,7 @@ public abstract class RTExpression extends RTCode {
 		public static class RTBinopPart2 extends RTExpression {
 			public RTBinopPart2(final BinopExpression expr) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				operator_ = expr.operator();
 			}
 			@Override public RTCode run() {
@@ -1548,7 +1583,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-				setLastExpressionResult(value);
+				setLastExpressionResult(value, lineNumber_);
 				
 				lhs.decrementReferenceCount();
 				rhs.decrementReferenceCount();
@@ -1557,6 +1592,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String operator_;
+			private final int lineNumber_;
 		}
 		
 		private final RTBinopPart2 part2_;
@@ -1582,6 +1618,7 @@ public abstract class RTExpression extends RTCode {
 		public static class RTUnaryopWithSideEffectPart2 extends RTExpression {
 			public RTUnaryopWithSideEffectPart2(final UnaryopExpressionWithSideEffect expr) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				operator_ = expr.operator();
 				preOrPost_ = expr.preOrPost();
 				setResultIsConsumed(expr.resultIsConsumed());
@@ -1622,7 +1659,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-				setLastExpressionResult(value);
+				setLastExpressionResult(value, lineNumber_);
 				
 				lhs.decrementReferenceCount();
 				
@@ -1631,6 +1668,7 @@ public abstract class RTExpression extends RTCode {
 			
 			private final String operator_;
 			private final UnaryopExpressionWithSideEffect.PreOrPost preOrPost_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression lhs_;
@@ -1656,6 +1694,7 @@ public abstract class RTExpression extends RTCode {
 		public static class RTUnaryAbelianopPart2 extends RTExpression {
 			public RTUnaryAbelianopPart2(UnaryAbelianopExpression expr) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				operator_ = expr.operator();
 				setResultIsConsumed(expr.resultIsConsumed());
 			}
@@ -1675,7 +1714,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-				setLastExpressionResult(value);
+				setLastExpressionResult(value, lineNumber_);
 				
 				rhs.decrementReferenceCount();
 				
@@ -1683,6 +1722,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String operator_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression rhs_;
@@ -1760,9 +1800,10 @@ public abstract class RTExpression extends RTCode {
 		public static class RTAssignmentPart2 extends RTExpression {
 			public RTAssignmentPart2(final AssignmentExpression expr, final RTExpression rhs, final RTType nearestEnclosingType) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 				if (lhs_ instanceof RTQualifiedIdentifier) {
-					part2b_ = new RTAssignmentPart2B(lhs_);
+					part2b_ = new RTAssignmentPart2B(lhs_, lineNumber_);
 					part2b_.setResultIsConsumed(expr.resultIsConsumed());
 					lhs_.setNextCode(part2b_);
 				}
@@ -1844,10 +1885,9 @@ public abstract class RTExpression extends RTCode {
 					// it's all done within the "assign" method called above
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTArrayIndexExpressionUnaryOp) {
-					ErrorLogger.error(ErrorType.Internal, 0, "Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
+					ErrorLogger.error(ErrorType.Internal, 0, "INTERNAL Error: Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
 				} else {
-					// Odd. RTRole isn't processed here but appears to work...
-					assert false;	// to be implemented (RTRole, RTQualifiedClassMember, etc.)
+					assert false;
 				}
 				
 				dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
@@ -1863,7 +1903,7 @@ public abstract class RTExpression extends RTCode {
 				if (resultIsConsumed() == true) {
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);
 				}
-				setLastExpressionResult(rhs);
+				setLastExpressionResult(rhs, lineNumber_);
 				
 				rhs.decrementReferenceCount();	// because we initially popped it from the stack
 												// (the above pushStack increments it)
@@ -1959,8 +1999,9 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private static class RTAssignmentPart2B extends RTExpression {
-				public RTAssignmentPart2B(final RTExpression lhs) {
+				public RTAssignmentPart2B(final RTExpression lhs, final int lineNumber) {
 					super();
+					lineNumber_ = lineNumber;
 					lhs_ = lhs;
 				}
 				@Override public RTCode run() {
@@ -1985,7 +2026,7 @@ public abstract class RTExpression extends RTCode {
 						RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs_);
 					}
 					
-					setLastExpressionResult(rhs_);
+					setLastExpressionResult(rhs_, lineNumber_);
 					
 					rhs_.decrementReferenceCount();
 					
@@ -1997,11 +2038,13 @@ public abstract class RTExpression extends RTCode {
 				
 				private final RTExpression lhs_;
 				private RTObject rhs_;
+				private final int lineNumber_;
 			}
 			
 			private RTExpression lhs_;
 			private RTAssignmentPart2B part2b_;
 			private RTCode staticNextCode_;
+			private final int lineNumber_;
 		}
 		
 		public void setTemplateInstantiationInfo(final TemplateInstantiationInfo templateInstantiationInfo) {
@@ -2261,7 +2304,7 @@ public abstract class RTExpression extends RTCode {
 			// last expression before decrementing the reference count
 			// by our own "ownership" of the object here in this activation
 			// record
-			setLastExpressionResult(newlyCreatedObject);
+			setLastExpressionResult(newlyCreatedObject, lineNumber_);
 			
 			// The variable newlyCreatedObject is going out of scope
 			newlyCreatedObject.decrementReferenceCount();
@@ -2296,6 +2339,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTNewArray extends RTExpression {
 		public RTNewArray(final NewArrayExpression expr, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			final Type baseType = expr.baseType();
 			rTType_ = new RTArrayType(baseType, (ArrayType)expr.type());
 			sizeExpression_ = RTExpression.makeExpressionFrom( expr.sizeExpression(), nearestEnclosingType );
@@ -2313,7 +2357,7 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTArrayObject newArrayObjectToPush = new RTArrayObject(size, rTType_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(newArrayObjectToPush);
-			setLastExpressionResult(newArrayObjectToPush);
+			setLastExpressionResult(newArrayObjectToPush, lineNumber_);
 			sizeExpr.decrementReferenceCount();
 			
 			return nextCode_;
@@ -2325,6 +2369,7 @@ public abstract class RTExpression extends RTCode {
 		
 		private final RTExpression sizeExpression_;
 		private final RTArrayType rTType_;
+		private final int lineNumber_;
 	}
 	public static class RTArrayExpression extends RTExpression {
 		public RTArrayExpression(final ArrayExpression expr, final RTType nearestEnclosingType) {
@@ -2410,7 +2455,7 @@ public abstract class RTExpression extends RTCode {
 				return null;
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-			setLastExpressionResult(result);
+			setLastExpressionResult(result, lineNumber_);
 			
 			theIndex.decrementReferenceCount();
 			rawArrayBase.decrementReferenceCount();
@@ -2483,6 +2528,7 @@ public abstract class RTExpression extends RTCode {
 		public static class RTArrayIndexExpressionUnaryOpPart2 extends RTExpression {
 			public RTArrayIndexExpressionUnaryOpPart2(final ArrayIndexExpressionUnaryOp expr) {
 				super();
+				lineNumber_ = expr.lineNumber();
 				operation_ = expr.operation();
 				preOrPost_ = expr.preOrPost();
 			}
@@ -2493,7 +2539,7 @@ public abstract class RTExpression extends RTCode {
 				final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
 				result = arrayBase.performUnaryOpOnObject(theIndex, operation_, preOrPost_);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-				setLastExpressionResult(result);
+				setLastExpressionResult(result, lineNumber_);
 				
 				theIndex.decrementReferenceCount();
 				rawArrayBase.decrementReferenceCount();
@@ -2503,6 +2549,7 @@ public abstract class RTExpression extends RTCode {
 			
 			private final String operation_;
 			private final PreOrPost preOrPost_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression rTIndexExpression_;
@@ -2621,8 +2668,9 @@ public abstract class RTExpression extends RTCode {
 	private static class RTForTestRunner extends RTExpression {
 		public RTForTestRunner(final Expression testExpr, final RTExpression body, final RTPopDynamicScope popScope, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = testExpr.lineNumber();
 			test_ = RTExpression.makeExpressionFrom(testExpr, nearestEnclosingType);
-			part2_ = new RTForTestRunnerPart2(body, popScope);
+			part2_ = new RTForTestRunnerPart2(body, popScope, lineNumber_);
 			test_.setNextCode(part2_);
 		}
 		
@@ -2635,8 +2683,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private static class RTForTestRunnerPart2 extends RTExpression {
-			public RTForTestRunnerPart2(final RTExpression body, final RTPopDynamicScope popScope) {
+			public RTForTestRunnerPart2(final RTExpression body, final RTPopDynamicScope popScope, final int lineNumber) {
 				super();
+				lineNumber_ = lineNumber;
 				body_ = body;
 				popScope_ = popScope;
 			}
@@ -2654,7 +2703,7 @@ public abstract class RTExpression extends RTCode {
 					retval = popScope_;
 				}
 				
-				setLastExpressionResult(conditionalExpression);
+				setLastExpressionResult(conditionalExpression, lineNumber_);
 				
 				conditionalExpression.decrementReferenceCount();
 				
@@ -2662,10 +2711,12 @@ public abstract class RTExpression extends RTCode {
 			}
 			private final RTExpression body_;
 			private final RTPopDynamicScope popScope_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression test_;
 		private final RTForTestRunnerPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTForCommon extends RTExpression implements RTBreakableExpression {
@@ -2943,8 +2994,9 @@ public abstract class RTExpression extends RTCode {
 	private static class RTWhileTestRunner extends RTExpression {
 		public RTWhileTestRunner(final Expression testExpr, final RTExpression body, final RTExpression last, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = testExpr.lineNumber();
 			test_ = RTExpression.makeExpressionFrom(testExpr, nearestEnclosingType);
-			part2_ = new RTWhileTestRunnerPart2(body, last);
+			part2_ = new RTWhileTestRunnerPart2(body, last, lineNumber_);
 			test_.setNextCode(part2_);
 		}
 		
@@ -2957,8 +3009,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private static class RTWhileTestRunnerPart2 extends RTExpression {
-			public RTWhileTestRunnerPart2(final RTExpression body, final RTExpression last) {
+			public RTWhileTestRunnerPart2(final RTExpression body, final RTExpression last, final int lineNumber) {
 				super();
+				lineNumber_ = lineNumber;
 				body_ = body;
 				last_ = last;
 			}
@@ -2974,16 +3027,18 @@ public abstract class RTExpression extends RTCode {
 					retval = last_;
 				}
 				
-				setLastExpressionResult(conditionalExpression);
+				setLastExpressionResult(conditionalExpression, lineNumber_);
 				conditionalExpression.decrementReferenceCount();
 				
 				return retval;
 			}
 			
 			private final RTExpression body_, last_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression test_;
+		private final int lineNumber_;;
 		private final RTWhileTestRunnerPart2 part2_;
 	}
 	public static class RTWhile extends RTExpression implements RTBreakableExpression {
@@ -3061,6 +3116,7 @@ public abstract class RTExpression extends RTCode {
 				super();
 				body_ = body;
 				last_ = last;
+				lineNumber_ = testExpr.lineNumber();
 			}
 			
 			@Override public RTCode run() {
@@ -3074,13 +3130,14 @@ public abstract class RTExpression extends RTCode {
 					retval = last_;
 				}
 				
-				setLastExpressionResult(conditionalExpression);
+				setLastExpressionResult(conditionalExpression, lineNumber_);
 				conditionalExpression.decrementReferenceCount();
 				
 				return retval;
 			}
 			
 			private final RTExpression body_, last_;
+			private final int lineNumber_;
 		}
 		
 		private final RTExpression test_;
@@ -3372,12 +3429,13 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTConstant extends RTExpression implements RTObject {
-		public RTConstant() {
+		public RTConstant(final int lineNumber) {
 			super();
+			lineNumber_ = lineNumber;
 			rTExpr_ = null;
 		}
 		public RTConstant(final Constant expr) {
-			this();
+			this(expr.lineNumber());
 			if (expr instanceof StringConstant) {
 				rTExpr_ = new RTStringObject(((StringConstant)expr).value());
 			} else if (expr instanceof IntegerConstant) {
@@ -3399,7 +3457,7 @@ public abstract class RTExpression extends RTCode {
 			// WARNING: We dup this here, otherwise it could be bound to
 			// an identifier and potentially have its value changed!!!
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(rTExpr_.dup());
-			setLastExpressionResult(rTExpr_);
+			setLastExpressionResult(rTExpr_, lineNumber_);
 			return nextCode_;
 		}
 		@Override public RTObject performUnaryOpOnObjectNamed(final String idName, final String operator, final PreOrPost preOrPost_) {
@@ -3440,7 +3498,11 @@ public abstract class RTExpression extends RTCode {
 		@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {  assert false; }
 		@Override public boolean equals(final RTObject other) { assert false; return false; }
 		
+		public String getText() {
+			return rTExpr_.getText();
+		}
 		protected RTObject rTExpr_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTBreak extends RTExpression {
@@ -3545,6 +3607,7 @@ public abstract class RTExpression extends RTCode {
 		private static class RTSumPart2 extends RTExpression {
 			public RTSumPart2(final SumExpression expr) {
 				operator_ = expr.operator();
+				lineNumber_ = expr.lineNumber();
 				setResultIsConsumed(expr.resultIsConsumed());
 			}
 			@Override public RTCode run() {
@@ -3566,7 +3629,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-				setLastExpressionResult(result);
+				setLastExpressionResult(result, lineNumber_);
 				
 				lhs.decrementReferenceCount();
 				rhs.decrementReferenceCount();
@@ -3575,6 +3638,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String operator_;
+			private final int lineNumber_;
 		}
 		
 		private RTExpression lhs_, rhs_;
@@ -3608,6 +3672,7 @@ public abstract class RTExpression extends RTCode {
 		private static class RTProductPart2 extends RTExpression {
 			public RTProductPart2(final ProductExpression expr) {
 				operator_ = expr.operator();
+				lineNumber_ = expr.lineNumber();
 				setResultIsConsumed(expr.resultIsConsumed());
 			}
 			@Override public RTCode run() {
@@ -3631,7 +3696,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-				setLastExpressionResult(result);
+				setLastExpressionResult(result, lineNumber_);
 				
 				lhs.decrementReferenceCount();
 				rhs.decrementReferenceCount();
@@ -3640,6 +3705,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String operator_;
+			private final int lineNumber_;
 		}
 		
 		private RTExpression lhs_, rhs_;
@@ -3669,6 +3735,7 @@ public abstract class RTExpression extends RTCode {
 		private static class RTPowerPart2 extends RTExpression {
 			public RTPowerPart2(final PowerExpression expr) {
 				setResultIsConsumed(expr.resultIsConsumed());
+				lineNumber_ = expr.lineNumber();
 			}
 			@Override public RTCode run() {
 				RTObject result = null;
@@ -3677,13 +3744,15 @@ public abstract class RTExpression extends RTCode {
 				result = lhs.toThePowerOf(rhs);
 				
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
-				setLastExpressionResult(result);
+				setLastExpressionResult(result, lineNumber_);
 				
 				lhs.decrementReferenceCount();
 				rhs.decrementReferenceCount();
 				
 				return nextCode_;
 			}
+			
+			private final int lineNumber_;
 		}
 		
 		private RTExpression lhs_, rhs_;
@@ -3909,8 +3978,9 @@ public abstract class RTExpression extends RTCode {
 	public static class RTPromoteToDoubleExpr extends RTExpression {
 		public RTPromoteToDoubleExpr(final PromoteToDoubleExpr expr, final RTType nearestEnclosingType) {
 			super();
+			lineNumber_ = expr.lineNumber();
 			expr_ = RTExpression.makeExpressionFrom(expr.promotee(), nearestEnclosingType);
-			part2_ = new RTPromoteToDoubleExprPart2();
+			part2_ = new RTPromoteToDoubleExprPart2(lineNumber_);
 			expr_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
@@ -3930,10 +4000,12 @@ public abstract class RTExpression extends RTCode {
 		
 		private final RTExpression expr_;
 		private final RTPromoteToDoubleExprPart2 part2_;
+		private final int lineNumber_;
 	}
 	public static class RTPromoteToDoubleExprPart2 extends RTExpression {
-		public RTPromoteToDoubleExprPart2() {
+		public RTPromoteToDoubleExprPart2(final int lineNumber) {
 			super();
+			lineNumber_ = lineNumber;
 		}
 		
 		@Override public RTCode run() {
@@ -3945,12 +4017,14 @@ public abstract class RTExpression extends RTCode {
 				assert false;
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(object);
-			setLastExpressionResult(object);
+			setLastExpressionResult(object, lineNumber_);
 			
 			object.decrementReferenceCount();		// either way
 			
 			return nextCode_;
 		}
+		
+		private final int lineNumber_;
 	}
 	public static class RTIndexExpression extends RTExpression {
 		public RTIndexExpression(final IndexExpression indexExpression) {
@@ -4002,9 +4076,9 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	
-	protected static void setLastExpressionResult(final RTObject value) {
+	protected static void setLastExpressionResult(final RTObject value, final int lineNumber) {
 		if (null == value) {
-			ErrorLogger.error(ErrorType.Internal, "Internal expression evaluated to a NULL Java object", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "INTERNAL ERROR: Internal expression evaluated to a NULL Java object, line ", Integer.toString(lineNumber), ".", "");
 			assert null != value;
 		}
 		final RTObject previousLastResult = lastExpressionResult_;

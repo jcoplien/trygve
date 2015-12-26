@@ -136,6 +136,11 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return false;
 	}
+	@Override public String getText() {
+		assert false;
+		return "";
+	}
+	
 	
 	protected int referenceCount_;
 }
