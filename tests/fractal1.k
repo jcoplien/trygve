@@ -26,7 +26,6 @@ class ComplexNumber {
     }
 
     public String toString() {
-        // NOTE: Comparison with 0.0 and 0 returns false here
         String sign = if(im() >= 0) "+" else "";
         return real().toString() + sign + im().toString() + "im";
     }

@@ -26,7 +26,6 @@ class ComplexNumber {
     }
 
     public String toString() {
-        // NOTE: Silent error when comparing im() to 0 instead of 0.0
         String sign = if(im() >= 0.0) "+" else "";
         return real().toString() + sign + im().toString() + "im";
     }
@@ -57,7 +56,6 @@ class Julia {
     public ComplexNumber compute(ComplexNumber Z, ComplexNumber pos) const {
         ComplexNumber squared = Z.square();
         return new ComplexNumber(
-            // NOTE: Must add "this" to the "constant" calls:
             squared.real() + constant_.real(), 
             squared.im() + constant_.im()
         );
@@ -91,7 +89,6 @@ context Fractal {
                 int iterations = 0;
 
                 while(Z.abs() < 2.0) {
-                    // NOTE: Error when using Set here
                     Z = Set.compute(Z, pos);
                     iterations = iterations + 1;
                     if(iterations == maxIterations) break;
