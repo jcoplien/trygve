@@ -16,7 +16,7 @@ class Person {
 
 class Ordinal {
     public Ordinal(int order) {
-System.out.println(order)
+        System.out.println(order)
         assert(order >= 1 && order <= 12, 
             "'rdinals only supp'rt'd from one to twelve");
 
@@ -100,13 +100,18 @@ context TwelveDaysOfChristmas {
 
     stageprop Christmas {
         public String dayOfTheSeason(Date date) {
+            // NOTE: Incorrect dates
+            System.out.print(date.getYear()); System.out.print("-");
+            System.out.print(date.getMonth()+1); System.out.print("-");
+            System.out.println(date.getDate());
+
             // NOTE: Date::getTime could be useful here
             // https://docs.oracle.com/javase/7/docs/api/java/util/Date.html#getTime()
             int startDate = this.getDate();
-
-            // NOTE: It seems like this expression doesn't work
-            // Need to parenthesize the "if" expression for proper precedence
             int currentDate = date.getDate() + (if(date.getDate() < startDate)  31 else 0);
+
+            System.out.println(startDate);
+            System.out.println(currentDate);
 
             return new Ordinal(currentDate - startDate + 1).name();
         }
