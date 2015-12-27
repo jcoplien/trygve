@@ -132,7 +132,7 @@ context TwelveDaysOfChristmas {
         Giver = giver;
         Gifts = gifts;
         Receiver = receiver;
-        Christmas = new Date(2015, 12, 25);
+        Christmas = new Date(2015, 11, 25);
         Singers = System.out;
     }
 
