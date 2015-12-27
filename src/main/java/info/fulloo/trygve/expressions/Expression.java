@@ -91,6 +91,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public QualifiedIdentifierExpression(final Expression qualifier, final String id, final Type idType) {
 			super(id, idType, qualifier.enclosingMegaType());
 			qualifier_ = qualifier;
+			if (null == idType) {
+				assert null != idType;
+			}
 			qualifier_.setResultIsConsumed(true);
 		}
 		@Override public String getText() {

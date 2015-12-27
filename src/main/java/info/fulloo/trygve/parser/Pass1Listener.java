@@ -116,6 +116,7 @@ import info.fulloo.trygve.parser.KantParser.Abelian_productContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_unary_opContext;
 import info.fulloo.trygve.parser.KantParser.Argument_listContext;
 import info.fulloo.trygve.parser.KantParser.BlockContext;
+import info.fulloo.trygve.parser.KantParser.Boolean_exprContext;
 import info.fulloo.trygve.parser.KantParser.Compound_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Do_while_exprContext;
 import info.fulloo.trygve.parser.KantParser.ExprContext;
@@ -2236,11 +2237,11 @@ public class Pass1Listener extends Pass0Listener {
 			if (printProductionsDebug) {
 				System.err.println("abelian_atom : NEW JAVA_ID type_list '(' argument_list ')'");
 			}
-		} else if (null != ctx.abelian_atom() && null != ctx.JAVA_ID()) {
+		} else if (null == ctx.ABELIAN_INCREMENT_OP() && null != ctx.abelian_atom() && null != ctx.JAVA_ID()) {
 			//	| abelian_atom '.' JAVA_ID
+			// The following line DOES pop the expression stack
 			final ExpressionStackAPI rawExpression = this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
 			assert rawExpression instanceof Expression;
-			// The following line DOES pop the expression stack
 			expression = (Expression)rawExpression;
 			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
 		} else if (null != ctx.abelian_atom() && null != ctx.message()) {
@@ -3556,11 +3557,15 @@ public class Pass1Listener extends Pass0Listener {
 		} else {
 			final Expression object = (Expression)qualifier;
 			object.setResultIsConsumed(true);
-			final ObjectDeclaration odecl = object.type().enclosedScope().lookupObjectDeclarationRecursive(javaIdString);
+			ObjectDeclaration odecl = object.type().enclosedScope().lookupObjectDeclarationRecursive(javaIdString);
 		
 			if (null != odecl) {
 				type = odecl.type();
 				assert type != null;
+			} else {
+				// errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				// 	"Cannot find member `", javaIdString, "' of `", qualifier.toString(), "'.", "");
+				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 			
 			if (null != ctxABELIAN_INCREMENT_OP) {
@@ -4130,6 +4135,8 @@ public class Pass1Listener extends Pass0Listener {
 			} else if (walker instanceof For_exprContext) {
 				;
 			} else if (walker instanceof While_exprContext) {
+				;
+			} else if (walker instanceof Boolean_exprContext) {
 				;
 			} else {
 				assert false;

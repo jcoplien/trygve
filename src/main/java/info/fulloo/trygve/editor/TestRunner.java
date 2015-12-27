@@ -114,6 +114,7 @@ public class TestRunner {
 		"fractal1.k",
 		"fractal.k",
 		"exprtest1.k",
+		"money_transfer2.k",
 		// "moneytransfer1.k",
 	};
 	public static int numberOfTestCases() {

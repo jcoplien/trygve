@@ -415,6 +415,7 @@ public class Pass2Listener extends Pass1Listener {
 		// Certified Pass 2 version ;-)
 		final Type leftExprType = leftExpr.type(), rightExprType = rightExpr.type();
 		final Type resultType = leftExprType;
+
 		if (resultType.canBeConvertedFrom(rightExpr.type()) == false) {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Invalid operands to `" +
 					"", operationAsString, "' on type ", leftExpr.type().name(),
