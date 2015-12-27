@@ -26,8 +26,8 @@ class ComplexNumber {
     }
 
     public String toString() {
-        // NOTE: Silent error when comparing im() to 0 instead of 0.0
-        String sign = if(im() >= 0.0) "+" else "";
+        // NOTE: Comparison with 0.0 and 0 returns false here
+        String sign = if(im() >= 0) "+" else "";
         return real().toString() + sign + im().toString() + "im";
     }
 
@@ -62,19 +62,18 @@ context Fractal {
     }
 
     public void display() {
-        double alphax = 4.0 / width_;
-        double alphay = 4.0 / height_;
+        double dx = 4.0 / width_;
+        double dy = 4.0 / height_;
         int total = 0;
         int maxIterations = shades_.length() - 1;
 
-        for(double y = 2.0; y >= -2.0; y = y - alphay) {
-            for(double x = -2.0; x <= 2.0; x = x + alphax) {
+        for(double y = 2.0; y >= -2.0; y = y - dy) {
+            for(double x = -2.0; x <= 2.0; x = x + dx) {
                 ComplexNumber pos = new ComplexNumber(x, y);
                 ComplexNumber Z = pos;
                 int iterations = 0;
 
                 while(Z.abs() < 2.0) {
-                    // NOTE: Error when using Set here
                     Z = Set.compute(Z, pos);
                     iterations = iterations + 1;
                     if(iterations == maxIterations) break;
@@ -93,11 +92,13 @@ context Fractal {
 }
 
 {
+    System.out.println(new ComplexNumber(0.0, 3.0).toString());
     new Fractal(35, 18, new Mandelbrot()).display();
 }
 
 /* GOLD:
 ___________________________________________________________
+0.0+3.0im
                                    
           ................         
        ......................      
