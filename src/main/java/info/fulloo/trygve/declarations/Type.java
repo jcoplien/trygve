@@ -601,6 +601,9 @@ public abstract class Type implements ExpressionStackAPI
 			if (t instanceof StagePropType && t.name().equals(name())) {
 				// it's just one of us...
 				;
+			} else if (t.pathName().equals("Null")) {
+				// can always compare with Null
+				;
 			} else {
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 				for (final String methodName : requiredSelfSignatures.keySet()) {

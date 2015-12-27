@@ -119,6 +119,7 @@ public class TestRunner {
 		"exprtest1.k",
 		"money_transfer2.k",
 		"money_transfer.k",
+		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

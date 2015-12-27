@@ -16,6 +16,7 @@ class Person {
 
 class Ordinal {
     public Ordinal(int order) {
+System.out.println(order)
         assert(order >= 1 && order <= 12, 
             "'rdinals only supp'rt'd from one to twelve");
 
@@ -104,7 +105,8 @@ context TwelveDaysOfChristmas {
             int startDate = this.getDate();
 
             // NOTE: It seems like this expression doesn't work
-            int currentDate = date.getDate() + if(date.getDate() < startDate) then 31 else 0;
+            // Need to parenthesize the "if" expression for proper precedence
+            int currentDate = date.getDate() + (if(date.getDate() < startDate)  31 else 0);
 
             return new Ordinal(currentDate - startDate + 1).name();
         }
@@ -113,11 +115,9 @@ context TwelveDaysOfChristmas {
     }
 
     public TwelveDaysOfChristmas(Giver giver, Receiver receiver, Gifts gifts) {
-        // NOTE: Cannot test for null (Expression '<NULL>' is not of the right type)
         assert(giver != null, 
             "Certes elusive, a gift without a giv'r");
 
-        // NOTE: Cannot test for null
         assert(receiver != null, 
             "'tis still thy owneth gift, with nay one to receiveth it");
 

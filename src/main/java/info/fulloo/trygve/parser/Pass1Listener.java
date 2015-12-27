@@ -1812,7 +1812,8 @@ public class Pass1Listener extends Pass0Listener {
 			rhs.setResultIsConsumed(true);
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Expression '", rhs.getText(), "' is not of the right type","");
+						"Expression '" + rhs.getText(), "' is not of the right type (",
+						lhs.type().getText(), ").");
 			}
 			
 			assert null != relationalOperator;
@@ -1852,9 +1853,11 @@ public class Pass1Listener extends Pass0Listener {
 			final Expression lhs = parsingData_.popExpression();
 			lhs.setResultIsConsumed(true);	// is this right? FIXME
 			rhs.setResultIsConsumed(true);
+			
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Expression '", rhs.getText(), "' is not of the right type","");
+						"Expression '" + rhs.getText(), "' is not of the right type (",
+						lhs.type().getText(), ").");
 			}
 			
 			assert null != relationalOperator;
