@@ -89,7 +89,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		rhs.incrementReferenceCount();
 	}
 	
-	// I'm a little unhappy that these are copy-pasted. FIXME.
+	// I'm more than a little unhappy that these are copy-pasted. FIXME.
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
@@ -150,8 +150,19 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public boolean isEmpty() {
 		return theList_.isEmpty();
 	}
+	public boolean isValidIndex(final int i) {
+		return i < theList_.size() && i >= 0;
+	}
 	public RTObject get(final int i) {
-		return theList_.get(i);
+		RTObject retval;
+		if (i >= theList_.size()) {
+			ErrorLogger.error(ErrorType.Runtime, 0, "List index out-of-range: ",
+					Integer.toString(i), " on list of size ", Integer.toString(theList_.size()));
+			retval = null;
+		} else {
+			retval = theList_.get(i);
+		}
+		return retval;
 	}
 	public RTObject remove(final int i) {
 		return theList_.remove(i);

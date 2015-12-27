@@ -89,11 +89,11 @@ public class RTDateObject extends RTObjectCommon {
 		return dateType_;
 	}
 	public RTObject getYear() {
-		final int year = theDate_.get(Calendar.YEAR);
+		final int year = theDate_.get(Calendar.YEAR) + 1900;
 		return new RTIntegerObject(year);
 	}
 	public RTObject getMonth() {
-		final int month = theDate_.get(Calendar.MONTH);
+		final int month = theDate_.get(Calendar.MONTH) + 1;
 		return new RTIntegerObject(month);
 	}
 	public RTObject getDate() {
@@ -109,10 +109,10 @@ public class RTDateObject extends RTObjectCommon {
 		return new RTStringObject(string);
 	}
 	public void setYear(final RTObject year) {
-		theDate_.set(Calendar.YEAR, 1900 + (int)((RTIntegerObject)year).intValue());
+		theDate_.set(Calendar.YEAR, (int)((RTIntegerObject)year).intValue() - 1900);
 	}
 	public void setMonth(final RTObject month) {
-		theDate_.set(Calendar.MONTH, (int)((RTIntegerObject)month).intValue());
+		theDate_.set(Calendar.MONTH, (int)((RTIntegerObject)month).intValue() - 1);
 	}
 	public void setDate(final RTObject date) {
 		theDate_.set(Calendar.DATE, (int)((RTIntegerObject)date).intValue());
@@ -120,7 +120,7 @@ public class RTDateObject extends RTObjectCommon {
 	public void setDay(final RTObject day) {
 		theDate_.set(Calendar.DAY_OF_WEEK, (int)((RTIntegerObject)day).intValue());
 	}
-	public void ctor(RTObject date, RTObject month, RTObject year) {
+	public void ctor(final RTObject year, final RTObject month, final RTObject date) {
 		simpleCtor();
 		setYear(year);
 		setMonth(month);

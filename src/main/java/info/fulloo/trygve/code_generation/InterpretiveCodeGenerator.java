@@ -291,7 +291,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			listCode.add(new ListClass.RTAddCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get")) {
-			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope()));
+			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope(),
+					methodDeclaration.lineNumber()));
 			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("indexOf")) {
 			listCode.add(new ListClass.RTIndexOfCode(methodDeclaration.enclosedScope()));

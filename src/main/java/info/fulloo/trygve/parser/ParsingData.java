@@ -80,7 +80,7 @@ public class ParsingData {
 		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
 	}
 	
-	public void addBreakableExpression(String uniqueName, BreakableExpression breakableExpression) {
+	public void addBreakableExpression(final String uniqueName, final BreakableExpression breakableExpression) {
 		breakableExpressions_.put(uniqueName, breakableExpression);
 	}
 	public Map<String, BreakableExpression> breakableExpressions() {
@@ -88,7 +88,7 @@ public class ParsingData {
 	}
 	private Map<String, BreakableExpression> breakableExpressions_;
 	
-	public void addBreakableRTExpression(String uniqueName, RTBreakableExpression breakableExpression) {
+	public void addBreakableRTExpression(final String uniqueName, final RTBreakableExpression breakableExpression) {
 		breakableRTExpressions_.put(uniqueName, breakableExpression);
 	}
 	public Map<String, RTBreakableExpression> breakableRTExpressions() {
@@ -104,13 +104,13 @@ public class ParsingData {
 	public ActualArgumentList    currentArgumentList() { return argumentLists_.peek(); }
 	public void                     pushArgumentList(ActualArgumentList al) { argumentLists_.push(al); }
 	public ActualArgumentList        popArgumentList() { assert argumentLists_.size() > 0; return argumentLists_.pop(); }
-	public void                     pushDeclarationList(DeclarationList l) { declarationList_.push(l); }
+	public void                     pushDeclarationList(final DeclarationList l) { declarationList_.push(l); }
 	public DeclarationList           popDeclarationList() { return declarationList_.pop(); }
 	public FormalParameterList       popFormalParameterList() { assert formalParameterLists_.size() > 0; return formalParameterLists_.pop(); }
 	public FormalParameterList   currentFormalParameterList() { return formalParameterLists_.peek(); }
-	public void                     pushFormalParameterList(FormalParameterList pl) { formalParameterLists_.push(pl); }
+	public void                     pushFormalParameterList(final FormalParameterList pl) { formalParameterLists_.push(pl); }
 	public Message                   popMessage() { if (messages_.size() > 0) return messages_.pop(); else return null; }
-	public void                     pushMessage(Message m) { messages_.push(m); }
+	public void                     pushMessage(final Message m) { messages_.push(m); }
 
 	
 	private Stack<ActualArgumentList>   argumentLists_;
@@ -136,45 +136,45 @@ public class ParsingData {
 	public void 					pushBlockExpression(BlockExpression expr) { blockExpressionStack_.push(expr); }
 	public BlockExpression 		 currentBlockExpression() { return blockExpressionStack_.peek(); }
 	private Expression               popBreakableExpression() { return loopExpressionStack_.pop(); }
-	private void                    pushBreakableExpression(Expression e) { loopExpressionStack_.push(e); }
+	private void                    pushBreakableExpression(final Expression e) { loopExpressionStack_.push(e); }
 	public Expression            currentBreakableExpression() { return loopExpressionStack_.peek(); }
 	public ClassDeclaration 	     popClassDeclaration() { return classDeclarations_.pop(); }
 	public ClassDeclaration 	 currentClassDeclaration() { return classDeclarations_.peek(); }
 	public void 					pushClassDeclaration(ClassDeclaration cd) { classDeclarations_.push(cd); };
 	public DoWhileExpression  	     popDoWhileExpression() { popBreakableExpression(); return doWhileExpressionStack_.pop(); }
-	public void 				    pushDoWhileExpression(DoWhileExpression expr) { doWhileExpressionStack_.push(expr); pushBreakableExpression(expr); }
+	public void 				    pushDoWhileExpression(final DoWhileExpression expr) { doWhileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public DoWhileExpression 	 currentDoWhileExpression() { return doWhileExpressionStack_.peek(); }
 	public ExprAndDeclList			 popExprAndDecl() { return exprAndDeclListStack_.pop(); }
-	public void						pushExprAndDecl(ExprAndDeclList e) { exprAndDeclListStack_.push(e); }
+	public void						pushExprAndDecl(final ExprAndDeclList e) { exprAndDeclListStack_.push(e); }
 	public ExprAndDeclList	     currentExprAndDecl() { return exprAndDeclListStack_.peek(); }
 	public boolean               currentExprAndDeclExists() { return exprAndDeclListStack_.size() > 0; }
-	public void 					pushExpression(ExpressionStackAPI expression) { assert null != expression; expressions_.push(expression); }
+	public void 					pushExpression(final ExpressionStackAPI expression) { assert null != expression; expressions_.push(expression); }
 	public Expression               peekExpression() { return (Expression)expressions_.peek(); }
 	public boolean               currentExpressionExists() { return expressions_.size() > 0; }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
 	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
 	public ForExpression  			 popForExpression() { popBreakableExpression();  return forExpressionStack_.pop(); }
-	public void 					pushForExpression(ForExpression expr) { forExpressionStack_.push(expr); pushBreakableExpression(expr); }
+	public void 					pushForExpression(final ForExpression expr) { forExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public ForExpression 		 currentForExpression() { return forExpressionStack_.peek(); }
-	public void 					pushMethodSignature(MethodSignature m) { methodSignatureStack_.push(m); }
+	public void 					pushMethodSignature(final MethodSignature m) { methodSignatureStack_.push(m); }
 	public MethodSignature 		 currentMethodSignature() { return methodSignatureStack_.peek(); }
 	public MethodSignature 			 popMethodSignature() { return methodSignatureStack_.pop(); }
-	public void                     pushSwitchExpr(SwitchExpression sw) { switchExpressionStack_.push(sw); pushBreakableExpression(sw); }
+	public void                     pushSwitchExpr(final SwitchExpression sw) { switchExpressionStack_.push(sw); pushBreakableExpression(sw); }
 	public SwitchExpression		     popSwitchExpr() { popBreakableExpression(); return switchExpressionStack_.pop(); }
 	public SwitchExpression      currentSwitchExpr() { return switchExpressionStack_.peek(); }
 	public TemplateDeclaration 	     popTemplateDeclaration() { return templateDeclarations_.pop(); }	
 	public TemplateDeclaration 	 currentTemplateDeclaration() { return templateDeclarations_.peek(); }
-	public void 					pushTemplateDeclaration(TemplateDeclaration td) { templateDeclarations_.push(td); };
-	public void					    pushTypeDeclarationList(TypeDeclarationList decl) { typeDeclarationListStack_.push(decl); }
+	public void 					pushTemplateDeclaration(final TemplateDeclaration td) { templateDeclarations_.push(td); };
+	public void					    pushTypeDeclarationList(final TypeDeclarationList decl) { typeDeclarationListStack_.push(decl); }
 	public TypeDeclarationList		 popTypeDeclarationList() { return typeDeclarationListStack_.pop(); }
 	public TypeDeclarationList   currentTypeDeclarationList() { return typeDeclarationListStack_.peek(); }
 	public TypeDeclarationList   currentTemplateInstantiationList() { return templateInstantationList_; }
-	public void                     pushTypeNameList(ArrayList<String> los) { typeNameListStack_.push(los); }
+	public void                     pushTypeNameList(final ArrayList<String> los) { typeNameListStack_.push(los); }
     public ArrayList<String>         popTypeNameList() { return typeNameListStack_.pop(); }
     public ArrayList<String>     currentTypeNameList() { return typeNameListStack_.peek(); }
     public boolean               currentWhileExpressionExists() { return whileExpressionStack_.size() > 0; }
     public WhileExpression  		 popWhileExpression() { popBreakableExpression(); return whileExpressionStack_.pop(); }
-	public void 					pushWhileExpression(WhileExpression expr) { whileExpressionStack_.push(expr); pushBreakableExpression(expr); }
+	public void 					pushWhileExpression(final WhileExpression expr) { whileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public WhileExpression 		 currentWhileExpression() { return whileExpressionStack_.peek(); }
 	public Expression            nearestContinuableLoop() {
 		                             Expression retval = null;

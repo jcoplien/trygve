@@ -1849,9 +1849,18 @@ public class Pass1Listener extends Pass0Listener {
 			//	| abelian_expr op=('<=' | '>=' | '<' | '>' | '==' | '!=') abelian_expr
 			final Token relationalOperator = ctx.op;
 	
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
-			lhs.setResultIsConsumed(true);	// is this right? FIXME
+			Expression rhs = null, lhs = null;
+			if (parsingData_.currentExpressionExists()) {
+				rhs = parsingData_.popExpression();
+			} else {
+				rhs = new NullExpression();
+			}
+			if (parsingData_.currentExpressionExists()) {
+				lhs = parsingData_.popExpression();
+			} else {
+				lhs = new NullExpression();
+			}
+			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
 			
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
@@ -2800,8 +2809,14 @@ public class Pass1Listener extends Pass0Listener {
 			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);
 		} else if ((null != ctx.trivial_object_decl()) && (ctx.expr().size() == 2)) {
 			//  | 'for' '(' trivial_object_decl ':' expr ')' expr
+			
+			Expression thingToIncrementOver = null;
 			final Expression body = parsingData_.popExpression();
-			final Expression thingToIncrementOver = parsingData_.popExpression();
+			if (parsingData_.currentExpressionExists()) {
+				thingToIncrementOver = parsingData_.popExpression();
+			} else {
+				thingToIncrementOver = new NullExpression();
+			}
 			expression = parsingData_.popForExpression();
 			
 			final List<ParseTree> children = ctx.trivial_object_decl().children;

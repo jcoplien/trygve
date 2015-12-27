@@ -16,6 +16,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;  
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTListObject;
@@ -233,8 +234,9 @@ public final class ListClass {
 		}
 	}
 	public static class RTGetCode extends RTListCommon {
-		public RTGetCode(final StaticScope enclosingMethodScope) {
+		public RTGetCode(final StaticScope enclosingMethodScope, final int lineNumber) {
 			super("List", "get", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
+			lineNumber_ = lineNumber;
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode pc = null;
@@ -242,18 +244,30 @@ public final class ListClass {
 			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == argument) {
-				ErrorLogger.error(ErrorType.Runtime,  0, "Use of uninitialized list value, or index out of range.", "", "", "");
-				pc = null;	// halt instruction
+				ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+						"Use of uninitialized list value, or index out of range.", "", "", "");
+				pc = new RTHalt();	// halt instruction
 			} else {
-				final RTObject result = theListObject.get((int)argument.intValue());
+				RTObject result = null;
+				if (theListObject.isValidIndex((int)argument.intValue())) {
+					result = theListObject.get((int)argument.intValue());
 
-				addRetvalTo(activationRecord);
-				activationRecord.setObject("ret$val", result);
-				
-				pc = super.nextCode();
+					addRetvalTo(activationRecord);
+					activationRecord.setObject("ret$val", result);
+					
+					pc = super.nextCode();
+				} else {
+					ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+							"List.get(): List index out-of-range: ",
+							Integer.toString((int)argument.intValue()),
+							" on list of size ", Integer.toString(theListObject.size()));
+					pc = new RTHalt();
+				}
 			}
 			return pc;
 		}
+		
+		private final int lineNumber_;
 	}
 	public static class RTIndexOfCode extends RTListCommon {
 		public RTIndexOfCode(final StaticScope enclosingMethodScope) {

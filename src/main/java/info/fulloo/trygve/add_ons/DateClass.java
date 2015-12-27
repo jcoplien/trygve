@@ -96,9 +96,11 @@ public final class DateClass {
 			ObjectDeclaration year = new ObjectDeclaration("year", integerType, 0),
 					         month = new ObjectDeclaration("month", integerType, 0),
 					          date = new ObjectDeclaration("date", integerType, 0);
-			formals.addFormalParameter(year);
-			formals.addFormalParameter(month);
+			
 			formals.addFormalParameter(date);
+			formals.addFormalParameter(month);
+			formals.addFormalParameter(year);
+			
 			formals.addFormalParameter(self);
 			
 			StaticScope methodScope = new StaticScope(dateType_.enclosedScope());
@@ -198,10 +200,10 @@ public final class DateClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
-			final RTIntegerObject date = (RTIntegerObject)activationRecord.getObject("year");
+			final RTIntegerObject year = (RTIntegerObject)activationRecord.getObject("year");
 			final RTIntegerObject month = (RTIntegerObject)activationRecord.getObject("month");
-			final RTIntegerObject year = (RTIntegerObject)activationRecord.getObject("date");
-			theDateObject.ctor(date, month, year);
+			final RTIntegerObject date = (RTIntegerObject)activationRecord.getObject("date");
+			theDateObject.ctor(year, month, date);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(this);
 			return super.nextCode();
 		}

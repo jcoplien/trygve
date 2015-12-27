@@ -16,7 +16,6 @@ class Person {
 
 class Ordinal {
     public Ordinal(int order) {
-System.out.println(order)
         assert(order >= 1 && order <= 12, 
             "'rdinals only supp'rt'd from one to twelve");
 
