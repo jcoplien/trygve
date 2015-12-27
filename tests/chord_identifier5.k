@@ -11,12 +11,15 @@ class Note {
     public double position() const {
         double pos = 0.0;
         if(name_ == "C")  pos = 1.0;
+        if(name_ == "B#") pos = 1.0;
         if(name_ == "C#") pos = 2.0;
         if(name_ == "Db") pos = 2.0;
         if(name_ == "D")  pos = 3.0;
         if(name_ == "D#") pos = 4.0;
         if(name_ == "Eb") pos = 4.0;
         if(name_ == "E")  pos = 5.0;
+        if(name_ == "Fb") pos = 5.0;
+        if(name_ == "E#") pos = 6.0;
         if(name_ == "F")  pos = 6.0;
         if(name_ == "F#") pos = 7.0;
         if(name_ == "Gb") pos = 7.0;
@@ -27,6 +30,7 @@ class Note {
         if(name_ == "A#") pos = 11.0;
         if(name_ == "Bb") pos = 11.0;
         if(name_ == "B")  pos = 12.0;
+        if(name_ == "Cb") pos = 12.0;
         return pos;
     }
 
@@ -84,7 +88,6 @@ context Chord {
                 if(isMajor()) sus4 = "add11";
             }
 
-            // NOTE: Expression cuts off sus2 and sus4 (see test output)
             return (if(isMinor()) "m" else "") + sus2 + sus4;
         }
 
@@ -93,7 +96,8 @@ context Chord {
         }
 
         private boolean isMinor() {
-            return hasInterval(3.0)
+            // NOTE: This expression doesn't work
+            return hasInterval(3.0) && !hasInterval(4.0);
         }
 
         public String dominant() {
@@ -203,16 +207,25 @@ context Chord {
     notes6.add(new Note("D"));
     Chord chord6 = new Chord(notes6);
 
+    List<Note> notes7 = new List<Note>();
+    notes7.add(new Note("Cb"));
+    notes7.add(new Note("D"));
+    notes7.add(new Note("Eb"));
+    notes7.add(new Note("A"));
+    notes7.add(new Note("Ab"));
+    Chord chord7 = new Chord(notes7);
+
     System.out.println(chord.name());
     System.out.println(chord2.name());
     System.out.println(chord3.name());
     System.out.println(chord4.name());
     System.out.println(chord5.name());
     System.out.println(chord6.name());
+    System.out.println(chord7.name());
 }
 
 /* GOLD:
-line 64: WARNING: Method declaration for `name' may hide method declared at line 157
+line 68: WARNING: Method declaration for `name' may hide method declared at line 162
 ___________________________________________________________
 Cm11
 Dsus
@@ -220,4 +233,5 @@ Em7b5b9
 Fmaj9
 F#5
 Gsus2
+Cb13#9
 */
