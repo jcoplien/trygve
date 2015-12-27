@@ -58,32 +58,33 @@ context TwelveDaysOfChristmas {
         public void pause() {
             System.out.println();
         }
-        public void pauseAtGift(String gift, int order) {
-            // The beautiful rings deserve a longer pause
-            if(gift == "five gold rings") {
-                sing(";"); pause();
-                return;
-            }
+        public void singAboutGift(String gift, int order) {
+            sing(gift);
 
-            // The partridge ends the verse.
-            if(gift == "a partridge in a pear tree") {
-                sing("."); pause();
-                return;
-            }
+            switch(gift) {
+                // The beautiful rings deserve a longer pause
+                case "five gold rings":
+                    sing(";"); pause();
+                    break;
 
-            // End second last gift with "and" to complete the sentence
-            if(gift == "two turtle doves") {
-                pause(); sing("and ");
-                return;
-            }
+                // The partridge ends the verse.
+                case "a partridge in a pear tree":
+                    sing("."); pause();
+                    break;
 
-            // Anything else, separate with a comma and
-            // a newline for every three gifts.
-            if(gift != "a partridge in a pear tree") {
-                sing(", ");
-                // The order is backwards in the song, so it needs to be reversed.
-                if((11-order) % 3 == 0) pause();
-                return;
+                // End second last gift with "and" to complete the sentence
+                case "two turtle doves":
+                    pause(); sing("and ");
+                    break;
+
+                // Anything else, separate with a comma and
+                // a pause for every three gifts.
+                default:
+                    sing(", ");
+                    // The order is backwards in the song, 
+                    // so it needs to be reversed.
+                    if((11-order) % 3 == 0) pause();
+                    break;
             }
         }        
     } requires {
@@ -147,11 +148,8 @@ context TwelveDaysOfChristmas {
             Singers.pause();
 
             for(int i = day; i > 0; i = i - 1) {
-                String gift = Gifts.get(i-1);
-                Singers.sing(gift);
-                Singers.pauseAtGift(gift, i);
+                Singers.singAboutGift(Gifts.get(i-1), i);
             }
-
             Singers.pause();
         }
     }
