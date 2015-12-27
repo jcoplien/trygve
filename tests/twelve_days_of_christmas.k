@@ -52,32 +52,37 @@ context TwelveDaysOfChristmas {
     }
 
     stageprop Singers {
-        public void sing(String text) {
-            System.out.print(text);
+        public void sing(String lyrics) {
+            System.out.print(lyrics);
         }
-        public void rest() {
+        public void pause() {
             System.out.println();
         }
-        public void pause(String gift, int order) {
-            // The beautiful rings deserve a pause
+        public void pauseAtGift(String gift, int order) {
+            // The beautiful rings deserve a longer pause
             if(gift == "five gold rings") {
-                System.out.println(";");
+                sing(";"); pause();
+                return;
+            }
+
+            // The partridge ends the verse.
+            if(gift == "a partridge in a pear tree") {
+                sing("."); pause();
                 return;
             }
 
             // End second last gift with "and" to complete the sentence
-            if(order == 2) {
-                System.out.println();
-                System.out.print("and ");
+            if(gift == "two turtle doves") {
+                pause(); sing("and ");
                 return;
             }
 
             // Anything else, separate with a comma and
             // a newline for every three gifts.
             if(gift != "a partridge in a pear tree") {
-                System.out.print(", ");
+                sing(", ");
                 // The order is backwards in the song, so it needs to be reversed.
-                if((11-order) % 3 == 0) System.out.println();
+                if((11-order) % 3 == 0) pause();
                 return;
             }
         }        
@@ -93,7 +98,7 @@ context TwelveDaysOfChristmas {
 
     stageprop Christmas {
 /*
-        public String dayOnSeason(Date date) {
+        public String dayOfTheSeason(Date date) {
             // NOTE: Date::getTime would be useful here
             // https://docs.oracle.com/javase/7/docs/api/java/util/Date.html#getTime()
             int startDate = this.getDate();
@@ -132,24 +137,22 @@ context TwelveDaysOfChristmas {
     public void carol() {
         for(int day = 1; day <= 12; day = day + 1) {
             Date currentDate = new Date(2015, 11, day+24);
-            //String ordinal = Christmas.dayOnSeason(currentDate);
+            //String ordinal = Christmas.dayOfTheSeason(currentDate);
             String ordinal = new Ordinal(day).name();
 
             Singers.sing(
                 "On the " + ordinal + " day of Christmas " +
                 Giver.name() + " gave to " + Receiver.name()
             );
-            Singers.rest();
+            Singers.pause();
 
             for(int i = day; i > 0; i = i - 1) {
                 String gift = Gifts.get(i-1);
                 Singers.sing(gift);
-                Singers.pause(gift, i);
+                Singers.pauseAtGift(gift, i);
             }
 
-            Singers.sing(".");
-            Singers.rest();
-            Singers.rest();
+            Singers.pause();
         }
     }
 }
