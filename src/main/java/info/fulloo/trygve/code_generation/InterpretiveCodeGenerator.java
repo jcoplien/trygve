@@ -302,6 +302,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("isEmpty")) {
 			listCode.add(new ListClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("remove")) {
+			if (methodDeclaration.returnType().name().equals("int")) {
+				listCode.add(new ListClass.RTRemoveICode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else {
+				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingTemplate;
+			}
 		} else {
 			assert false;	// error message instead? Should be caught earlier
 			retvalType = RetvalTypes.undefined;

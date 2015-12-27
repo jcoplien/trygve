@@ -101,6 +101,10 @@ public final class ListClass {
 			
 			declareListMethod("indexOf", intType, "element", T);
 			
+			declareListMethod("remove", intType, "element", T);
+			
+			declareListMethod("remove", T, "element", booleanType);
+			
 			declareListMethod("contains", booleanType, "element", T);
 			
 			declareListMethod("size", intType, null, null);
@@ -173,6 +177,42 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 			theListObject.add(rawElement);
+			return super.nextCode();
+		}
+	}
+	public static class RTRemoveICode extends RTListCommon {
+		public RTRemoveICode(final StaticScope enclosingMethodScope) {
+			super("List", "remove", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTObject rawIndex = activationRecord.getObject("theIndex");
+			assert rawIndex instanceof RTIntegerObject;
+			final RTIntegerObject integerIndex = (RTIntegerObject) rawIndex;
+			final long theIndex = integerIndex.intValue();
+			final RTObject result = theListObject.remove((int)theIndex);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTRemoveTCode extends RTListCommon {
+		public RTRemoveTCode(final StaticScope enclosingMethodScope) {
+			super("List", "remove", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTObject rawElement = activationRecord.getObject("element");
+
+			final boolean bResult = theListObject.remove(rawElement);
+			final RTObject result = new RTBooleanObject(bResult);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
 			return super.nextCode();
 		}
 	}

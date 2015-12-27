@@ -198,9 +198,9 @@ public final class DateClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
-			final RTIntegerObject year = (RTIntegerObject)activationRecord.getObject("year");
+			final RTIntegerObject date = (RTIntegerObject)activationRecord.getObject("year");
 			final RTIntegerObject month = (RTIntegerObject)activationRecord.getObject("month");
-			final RTIntegerObject date = (RTIntegerObject)activationRecord.getObject("date");
+			final RTIntegerObject year = (RTIntegerObject)activationRecord.getObject("date");
 			theDateObject.ctor(date, month, year);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(this);
 			return super.nextCode();

@@ -150,10 +150,16 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public boolean isEmpty() {
 		return theList_.isEmpty();
 	}
-	public RTObject get(int i) {
+	public RTObject get(final int i) {
 		return theList_.get(i);
 	}
-	public void add(RTObject element) {
+	public RTObject remove(final int i) {
+		return theList_.remove(i);
+	}
+	public boolean remove(final RTObject o) {
+		return theList_.remove(o);
+	}
+	public void add(final RTObject element) {
 		theList_.add(element);
 	}
 	public void ctor() {
