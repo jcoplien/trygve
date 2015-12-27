@@ -98,9 +98,8 @@ context TwelveDaysOfChristmas {
     }
 
     stageprop Christmas {
-/*
         public String dayOfTheSeason(Date date) {
-            // NOTE: Date::getTime would be useful here
+            // NOTE: Date::getTime could be useful here
             // https://docs.oracle.com/javase/7/docs/api/java/util/Date.html#getTime()
             int startDate = this.getDate();
 
@@ -109,13 +108,11 @@ context TwelveDaysOfChristmas {
 
             return new Ordinal(currentDate - startDate + 1).name();
         }
-*/
     } requires {
         int getDate() const;
     }
 
     public TwelveDaysOfChristmas(Giver giver, Receiver receiver, Gifts gifts) {
-/*
         // NOTE: Cannot test for null (Expression '<NULL>' is not of the right type)
         assert(giver != null, 
             "Certes elusive, a gift without a giv'r");
@@ -123,7 +120,6 @@ context TwelveDaysOfChristmas {
         // NOTE: Cannot test for null
         assert(receiver != null, 
             "'tis still thy owneth gift, with nay one to receiveth it");
-*/
 
         assert(gifts.size() == 12, 
             "Thither shouldst be twelve presents f'r each day of christmas");
@@ -138,8 +134,8 @@ context TwelveDaysOfChristmas {
     public void carol() {
         for(int day = 1; day <= 12; day = day + 1) {
             Date currentDate = new Date(2015, 11, day+24);
-            //String ordinal = Christmas.dayOfTheSeason(currentDate);
-            String ordinal = new Ordinal(day).name();
+            String ordinal = Christmas.dayOfTheSeason(currentDate);
+//            String ordinal = new Ordinal(day).name();
 
             Singers.sing(
                 "On the " + ordinal + " day of Christmas " +
