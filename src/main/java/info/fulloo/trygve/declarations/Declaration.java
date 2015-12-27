@@ -40,6 +40,8 @@ import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.BreakExpression;
+import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.parser.Pass1Listener;
@@ -762,8 +764,24 @@ public abstract class Declaration implements BodyPart {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		private boolean ignoreBodyPartForReturnValue(final BodyPart bodyPart) {
+			return  bodyPart instanceof BreakExpression ||
+					bodyPart instanceof ContinueExpression;
+		}
 		@Override public Type type() {
-			return StaticScope.globalScope().lookupTypeDeclaration("void");
+			Type retval = StaticScope.globalScope().lookupTypeDeclaration("void");	// default
+			// Used to be void. Now, return the type of the
+			// last expression in the block, except for a
+			// few that we ignore
+			// return StaticScope.globalScope().lookupTypeDeclaration("void");
+			final List<BodyPart> bodyParts = bodyParts();
+			for (final BodyPart bodyPart : bodyParts) {
+				final Type bodyPartType = bodyPart.type();
+				if (ignoreBodyPartForReturnValue(bodyPart) == false) {
+					retval = bodyPartType;
+				}
+			}
+			return retval;
 		}
 		@Override public String getText() {
 			final StringBuffer stringBuffer = new StringBuffer();

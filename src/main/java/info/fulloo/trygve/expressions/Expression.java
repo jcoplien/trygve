@@ -1040,6 +1040,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return expressionAndDeclList_.lineNumber();
 		}
+		@Override public Type type() {
+			return expressionAndDeclList_.type();
+		}
+		public boolean hasNoBody() {
+			final List<BodyPart> bodyParts = expressionAndDeclList_.bodyParts();
+			boolean retval = bodyParts.size() == 0;
+			return retval;
+		}
 		
 		private final Constant constant_;
 		private final boolean isDefault_;
@@ -1056,6 +1064,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (null != parsingData) {
 				parsingData.addBreakableExpression(label_, this);
 			}
+			expressionType_ = StaticScope.globalScope().lookupTypeDeclaration("void");
 		}
 		public void addSwitchBodyElement(final SwitchBodyElement element) {
 			final Constant constant = element.isDefault()? null: element.constant();
@@ -1101,12 +1110,20 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return expression_.lineNumber();
 		}
+		@Override public Type type() {
+			assert null != expressionType_;
+			return expressionType_;
+		}
+		public void setExpressionType(final Type t) {
+			expressionType_ = t;
+		}
 		
 		private Map<Constant, SwitchBodyElement> indexedSwitchBodyElements_;
 		private List<SwitchBodyElement> orderedSwitchBodyElements_;
 		private Expression expression_;
 		private final String label_;
 		private boolean hasDefault_;
+		private Type expressionType_;
 	}
 	
 	public static class BreakExpression extends Expression

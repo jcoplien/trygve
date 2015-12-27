@@ -610,8 +610,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			return retval;
 		}
 		@Override public boolean gt(final RTObject another) {
-			if ((another instanceof RTDoubleObject) == false) return false;
-			else return foobar_ > ((RTDoubleObject)another).doubleValue();
+			final RTDoubleObject anotherAsDouble = RTClass.makeDouble(another);
+			return foobar_ > anotherAsDouble.doubleValue();
 		}
 		@Override public RTObject plus(final RTObject other) {
 			double result = 0.0;

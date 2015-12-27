@@ -2961,6 +2961,7 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void exitSwitch_expr(KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
+		// One version serves passes 1 - 4
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
 		
 		// Set all the goodies. The body is already taken care of.
@@ -2971,14 +2972,44 @@ public class Pass1Listener extends Pass0Listener {
 	
 		final Expression expressionToSwitchOn = switchExpression.switchExpression();
 		if (null != expressionToSwitchOn) {
+			Type potentialSwitchExpressionType = null;
 			final Type switchExpressionType = expressionToSwitchOn.type();
-			for (SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
+			boolean stillEvaluating = true;
+			for (final SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
+				// See if all case body expressions are of the same type
+				if (null == potentialSwitchExpressionType && stillEvaluating) {
+					potentialSwitchExpressionType = aCase.type();
+				}
+				
+				if (stillEvaluating) {
+					final String caseTypePathName = aCase.type().pathName();
+					if (caseTypePathName.equals("void")) {
+						// it could be because there is no
+						// expression to go with the case statement.
+						// If so, don't let it upset things.
+						if (aCase.hasNoBody()) {
+							stillEvaluating = true;
+						} else {
+							stillEvaluating = caseTypePathName.equals("void");
+						}
+					} else {
+						stillEvaluating = caseTypePathName.equals(potentialSwitchExpressionType.pathName());
+					}
+				}
+				
+				// Make sure that all case test expressions are of type of switch expression
 				if (aCase.isDefault()) continue;
 				if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Case statement with expression of type `",
 							aCase.type().name(), "' is incompatible with switch expression of type `",
 							switchExpressionType.name(), "'.", "");
 				}
+			}
+			
+			if (stillEvaluating) {		// then we maade it through all the cases!
+				// We have a consistent expression type since all case
+				// statements yield the same type
+				switchExpression.setExpressionType(potentialSwitchExpressionType);
 			}
 		}
 		

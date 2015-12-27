@@ -59,6 +59,7 @@ public class TestRunner {
 		"arraydup.k",
 		"simpleincrement.k",
 		"switchtest.k",
+		"switch_test2.k",
 		"unaryop1.k",
 		"trygve2.k",
 		"trygve3.k",
@@ -108,14 +109,16 @@ public class TestRunner {
 		"chord_identifier4.k",
 		"chord_identifier4_original.k",
 		"chord_identifier5.k",
+		"chord_identifier6.k",
 		"assert_in_roletest.k",
 		"moneytransfer_original.k",
 		"bool_op1.k",
+		"fractal0.k",
 		"fractal1.k",
 		"fractal.k",
 		"exprtest1.k",
 		"money_transfer2.k",
-		// "moneytransfer1.k",
+		"money_transfer.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

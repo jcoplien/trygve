@@ -185,6 +185,18 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		
 		return retval;
 	}
+	
+	public static RTDoubleObject makeDouble(final RTObject object) {
+		RTDoubleObject retval = null;
+		if (object instanceof RTDoubleObject) {
+			retval = (RTDoubleObject)object;
+		} else if (object instanceof RTIntegerObject) {
+			retval = new RTDoubleObject((double)((RTIntegerObject)object).intValue());
+		} else {
+			assert false;
+		}
+		return retval;
+	}
 
 	public static class RTObjectClass extends RTClass {
 		public RTObjectClass(final TypeDeclaration associatedType) {
@@ -515,17 +527,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
 				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 			}
-			private RTDoubleObject makeDouble(final RTObject object) {
-				RTDoubleObject retval = null;
-				if (object instanceof RTDoubleObject) {
-					retval = (RTDoubleObject)object;
-				} else if (object instanceof RTIntegerObject) {
-					retval = new RTDoubleObject((double)((RTIntegerObject)object).intValue());
-				} else {
-					assert false;
-				}
-				return retval;
-			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
@@ -534,7 +535,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable rhs = dynamicScope.getObject("rhs");
 				final RTDoubleObject selfObject = (RTDoubleObject)self;
 				final double selfValue = selfObject.doubleValue();
-				final RTDoubleObject rhsObject = makeDouble((RTObject)rhs);
+				final RTDoubleObject rhsObject = RTClass.makeDouble((RTObject)rhs);
 				final double rhsValue = rhsObject.doubleValue();
 				
 				final String operator = this.methodSelectorName();
