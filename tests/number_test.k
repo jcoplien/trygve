@@ -1,40 +1,24 @@
 context NumberTest {
-    role Number {
-        public void noop() {}
-    } requires {
+    role Number {} requires {
         void add(int i);
         int get(int i);
         int size();
     }
 
     public NumberTest(int [] intArray) {
-        // Need to create a temp list here, cannot assign directly to the Role
-        // List<int> temp = new List<int>();
         Number = new List<int>();
+        for(int i : intArray) Number.add(i);
 
-        for(int i : intArray) {
-            // Cannot use Number.add(i), parser error
-            Number.add(i);
-        }
-
-        // The follow line gives error:
-        // Exception in thread "AWT-EventQueue-0" javalangAssertionError
-      System.out.println(Number.size());
+        System.out.println(Number.size());
     }
 
     public int sum() {
-        int s = 0;
-        // A temp assignment works for printing the size
-        // int size = Number.size();
         System.out.println(Number.size());
 
-        // Cannot use Number.size() in the for expression
-        for(int i = 0; i <= Number.size(); i++) {
-            // Cannot use Number.get in any way here, parser error
-            int num = Number.get(i);
-            s = s + num;
+        int s = 0;
+        for(int i = 0; i < Number.size(); i++) {
+            s = s + Number.get(i);
         }
-
         return s;
     }
 }
@@ -51,5 +35,5 @@ context NumberTest {
 ___________________________________________________________
 4
 4
-line 0: List.get(): List index out-of-range: 4 on list of size 4
+10
 */
