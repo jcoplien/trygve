@@ -262,6 +262,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
 					retval.type(), StaticScope.globalScope());
+			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+			break;
 		case none:
 			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
 			break;

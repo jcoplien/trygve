@@ -177,6 +177,8 @@ return_type
 
 method_name
         : JAVA_ID
+        | ABELIAN_SUMOP
+		| ABELIAN_MULOP
         ;
 
 access_qualifier

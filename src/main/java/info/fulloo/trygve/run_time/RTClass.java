@@ -39,6 +39,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBigIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
@@ -193,7 +194,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		} else if (object instanceof RTIntegerObject) {
 			retval = new RTDoubleObject((double)((RTIntegerObject)object).intValue());
 		} else {
-			assert false;
+			// Return it and handle failure at a higher level
+			// assert false;
 		}
 		return retval;
 	}
@@ -623,6 +625,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				super("double", operation, "other", "double", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				RTCode retval = null;
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
 				final RTStackable self = dynamicScope.getObject("this");
@@ -631,18 +634,29 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTDoubleObject selfObject = (RTDoubleObject)self;
 				final double selfValue = selfObject.doubleValue();
 				final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
-				final double otherValue = otherObject.doubleValue();
+				if (null == otherObject) {
+					final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
+					ErrorLogger.error(ErrorType.Runtime, 0,
+							"Attempt to access uninitialized double in argument to `",
+							"compareTo'; calling context may be `",
+							parentScope.name(), "'.");
+					retval = new RTHalt();
+				} else {
+					final double otherValue = otherObject.doubleValue();
+					
+					int iResult = 0;
+					if (selfValue > otherValue) iResult = 1;
+					else if (selfValue < otherValue) iResult = -1;
+					
+					final RTIntegerObject result = new RTIntegerObject(iResult);
+	
+					addRetvalTo(dynamicScope);
+					dynamicScope.setObject("ret$val", result);
+					
+					retval = super.nextCode();
+				}
 				
-				int iResult = 0;
-				if (selfValue > otherValue) iResult = 1;
-				else if (selfValue < otherValue) iResult = -1;
-				
-				final RTIntegerObject result = new RTIntegerObject(iResult);
-
-				addRetvalTo(dynamicScope);
-				dynamicScope.setObject("ret$val", result);
-				
-				return super.nextCode();
+				return retval;
 			}
 		}
 		

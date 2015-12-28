@@ -119,6 +119,7 @@ public class TestRunner {
 		"exprtest1.k",
 		"money_transfer2.k",
 		"money_transfer.k",
+		"money_transfer3.k",
 		"date_test.k",
 		"number_test0.k",
 		"number_test1.k",

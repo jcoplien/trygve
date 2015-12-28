@@ -624,6 +624,22 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
+		public boolean canBeLhsOfBinaryOperator(final String operator) {
+			// This is a bit dicey — it really should be type-checked
+			// by the caller as well. This doesn't amount to much more
+			// than a syntactic check, since Roles have a decidely macro-
+			// like behaviour to them..
+			//
+			// Check out caller: Pass2Listener.binopTypeCheck(Expression, String, Expression, Token) line: 441	
+
+			boolean retval;
+			if (operator.equals("+") || operator.equals("-") ||operator.equals("/") ||operator.equals("*")) {
+				retval = true;
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 	}
 	
 	public static class ArrayType extends Type implements IndexableType {
