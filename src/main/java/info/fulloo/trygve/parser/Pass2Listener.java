@@ -595,9 +595,14 @@ public class Pass2Listener extends Pass1Listener {
 				methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversion(
 					message.selectorName(), message.argumentList(), false);
 			}
-			assert null != methodDeclaration;
-			methodSignature = methodDeclaration.signature();
-			isOKMethodSignature = null != methodSignature;
+			if (null == methodDeclaration) {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						"Cannot find declaration of ", object.name() + ".", message.selectorName(),
+						".");
+			} else {
+				methodSignature = methodDeclaration.signature();
+				isOKMethodSignature = null != methodSignature;
+			}
 		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
 			if (wannabeContextType instanceof RoleType) {
@@ -1173,7 +1178,7 @@ public class Pass2Listener extends Pass1Listener {
 				} else {
 					final ClassDeclaration nextBaseClassDeclaration = baseClassDeclaration.baseClassDeclaration();
 					if (null == nextBaseClassDeclaration) {
-						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol ", idName, " cannot be found.", "");
+						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol `", idName, "' cannot be found.", "");
 					} else {
 						// Recur
 						retval = this.lookToBaseClassForHelp(idName, lineNumber, nextBaseClassDeclaration.enclosedScope());

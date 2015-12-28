@@ -84,6 +84,9 @@ public class ReturnStatementAudit {
 					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
 							retExpr.type().getText(), " when no return value was expected.", "");
 				}
+			} else if (null == retExpr.type()) {
+				pass_.errorHook5p2(ErrorType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",
+						"Please read nearby error messages carefully.", "", "");
 			} else if (returnType_.canBeConvertedFrom(retExpr.type()) == false) {
 				if (null == retExpr.returnExpression()) {
 					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Return statement with no return type cannot be converted to expected type of ",
@@ -96,7 +99,8 @@ public class ReturnStatementAudit {
 			}
 		}
 		if (somethingFollowedReturn_ && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement.", "", "", "");
+			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement. ", 
+					"Do you need to parenthesize the return expression?", "", "");
 		}
 		if (0 == returnExpressions_.size() && null != returnType_ && (false == returnType_.name().equals("void"))) {
 			pass_.errorHook5p2(ErrorType.Fatal, lineNumber_, "Missing return statement.", "", "", "");

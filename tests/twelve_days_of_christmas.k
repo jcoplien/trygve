@@ -23,19 +23,22 @@ class Ordinal {
     }
 
     public String name() const {
-        String name = "";
-        if(order_ == 1)  name = "first";
-        if(order_ == 2)  name = "second";
-        if(order_ == 3)  name = "third";
-        if(order_ == 4)  name = "fourth";
-        if(order_ == 5)  name = "fifth";
-        if(order_ == 6)  name = "sixth";
-        if(order_ == 7)  name = "seventh";
-        if(order_ == 8)  name = "eighth";
-        if(order_ == 9)  name = "ninth";
-        if(order_ == 10) name = "tenth";
-        if(order_ == 11) name = "eleventh";
-        if(order_ == 12) name = "twelveth";        
+        String name =
+             switch (order_) {
+                  case 1:  "first"; break;
+                  case 2:  "second"; break;
+                  case 3:  "third"; break;
+                  case 4:  "fourth"; break;
+                  case 5:  "fifth"; break;
+                  case 6:  "sixth"; break;
+                  case 7:  "seventh"; break;
+                  case 8:  "eighth"; break;
+                  case 9:  "ninth"; break;
+                  case 10: "tenth";  break;
+                  case 11: "eleventh"; break;
+                  case 12: "twelveth"; break;
+                  default: "error"
+             } 
         return name;
     }
 
@@ -83,7 +86,7 @@ context TwelveDaysOfChristmas {
                     sing(", ");
                     // The order is backwards in the song, 
                     // so it needs to be reversed.
-                    if((11-order) % 3 == 0) pause();
+                    if((12-order) % 3 == 0) pause();
                     break;
             }
         }        
@@ -100,17 +103,17 @@ context TwelveDaysOfChristmas {
     stageprop Christmas {
         public String dayOfTheSeason(Date date) {
             // NOTE: Incorrect dates
-            System.out.print(date.getYear()); System.out.print("-");
-            System.out.print(date.getMonth()+1); System.out.print("-");
-            System.out.println(date.getDate());
+            // System.out.print(date.getYear()).print("-")
+            //           .print(date.getMonth()).print("-")
+            //           .println(date.getDate());
 
             // NOTE: Date::getTime could be useful here
             // https://docs.oracle.com/javase/7/docs/api/java/util/Date.html#getTime()
             int startDate = this.getDate();
-            int currentDate = date.getDate() + (if(date.getDate() < startDate)  31 else 0);
+            int currentDate = date.getDate() + (if (date.getDate() < startDate) 31 else 0);
 
-            System.out.println(startDate);
-            System.out.println(currentDate);
+            // System.out.println(startDate);
+            // System.out.println(currentDate);
 
             return new Ordinal(currentDate - startDate + 1).name();
         }
@@ -131,13 +134,13 @@ context TwelveDaysOfChristmas {
         Giver = giver;
         Gifts = gifts;
         Receiver = receiver;
-        Christmas = new Date(2015, 11, 25);
+        Christmas = new Date(2015, 12, 25);
         Singers = System.out;
     }
 
     public void carol() {
-        for(int day = 1; day <= 12; day = day + 1) {
-            Date currentDate = new Date(2015, 11, day+24);
+        for(int day = 1; day <= 12; day++) {
+            Date currentDate = new Date(2015, 12, day+24);
             String ordinal = Christmas.dayOfTheSeason(currentDate);
 //            String ordinal = new Ordinal(day).name();
 
@@ -169,7 +172,7 @@ context TwelveDaysOfChristmas {
     gifts.add("seven swans a-swimming");
     gifts.add("eight maids a-milking");
     gifts.add("nine ladies dancing");
-    gifts.add("ten lords a-leping");
+    gifts.add("ten lords a-leaping");
     gifts.add("eleven pipers piping");
     gifts.add("twelve drummers drumming");
 
@@ -178,7 +181,6 @@ context TwelveDaysOfChristmas {
 
 /* GOLD:
 ___________________________________________________________
-
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.
 
@@ -187,59 +189,72 @@ two turtle doves
 and a partridge in a pear tree.
 
 On the third day of Christmas my true love gave to me
-three french hens, two turtle doves
+three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the fourth day of Christmas my true love gave to me
-four calling birds, three french hens, two turtle doves
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the fifth day of Christmas my true love gave to me
 five gold rings;
-four calling birds, three french hens, two turtle doves
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the sixth day of Christmas my true love gave to me
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the seventh day of Christmas my true love gave to me
-seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
-On the eigth day of Christmas my true love gave to me
-eight maids a-milking, seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+On the eighth day of Christmas my true love gave to me
+eight maids a-milking, seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the ninth day of Christmas my true love gave to me
-nine ladies dancing, eight maids a-milking, seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+nine ladies dancing, 
+eight maids a-milking, seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the tenth day of Christmas my true love gave to me
-ten lords a-leping,
-nine ladies dancing, eight maids a-milking, seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+ten lords a-leaping, nine ladies dancing, 
+eight maids a-milking, seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
 On the eleventh day of Christmas my true love gave to me
-eleven pipers piping, ten lords a-leping,
-nine ladies dancing, eight maids a-milking, seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+eleven pipers piping, ten lords a-leaping, nine ladies dancing, 
+eight maids a-milking, seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 
-On the twelfth day of Christmas my true love gave to me
-twelve drummers drumming, eleven pipers piping, ten lords a-leping,
-nine ladies dancing, eight maids a-milking, seven swans a-swimming,
-six geese a-laying, five gold rings;
-four calling birds, three french hens, two turtle doves
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, 
+eleven pipers piping, ten lords a-leaping, nine ladies dancing, 
+eight maids a-milking, seven swans a-swimming, six geese a-laying, 
+five gold rings;
+four calling birds, three french hens, 
+two turtle doves
 and a partridge in a pear tree.
 */

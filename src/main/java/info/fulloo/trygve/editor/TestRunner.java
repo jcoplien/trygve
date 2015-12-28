@@ -120,8 +120,9 @@ public class TestRunner {
 		"money_transfer2.k",
 		"money_transfer.k",
 		"date_test.k",
-		"number_test.k",
-		// "twelve_days_of_christmas.k",
+		"number_test0.k",
+		"number_test1.k",
+		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -182,6 +183,7 @@ public class TestRunner {
 			}
 			final String firstFailure = failures_.get(0);
 			loadFile(firstFailure);
+			gui_.setFileNameField("tests/" + firstFailure);
 		}
 	}
 	private void loadFile(final String filename) {

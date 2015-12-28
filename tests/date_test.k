@@ -8,6 +8,14 @@ class DateTest {
                 .print(", month=").print(month)
                 .print(", date=").print(date)
                 .println()
+      newDate  = new Date(2015, 12, 32);
+      year = newDate.getYear()
+      month = newDate.getMonth()
+      date = newDate.getDate()
+      System.out.print("year=").print(year)
+                .print(", month=").print(month)
+                .print(", date=").print(date)
+                .println()
       }
 }
 
@@ -16,4 +24,5 @@ class DateTest {
 /* GOLD:
 ___________________________________________________________
 year=2015, month=12, date=25
+year=2016, month=1, date=1
 */

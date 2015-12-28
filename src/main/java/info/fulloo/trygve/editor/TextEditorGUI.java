@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/date_test.k";
+	private final static String defaultFile = "tests/twelve_days_of_christmas.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.1.8";
+    final String TrygveVersion = "1.1.9";
     
     
     /** Creates new form TextEditorGUI */
@@ -274,6 +274,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         });
         
         fileSystemTextField.setText(defaultFile);
+        saveFileButton.setEnabled(true);
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 fileSystemTextFieldActionPerformed(evt);
@@ -567,6 +568,7 @@ private void loadMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
             this.editPane.setText(stringBuilder.toString());
             this.fileName = fileChooser.getSelectedFile();
             fileSystemTextField.setText(this.fileName.getAbsolutePath());
+            saveFileButton.setEnabled(true);
         }
         catch (IOException ioe) {
             this.editPane.setText("Pardon. Can't open file. Please contact with: pkrawczak@gmail.com");
@@ -608,6 +610,7 @@ public void wwwButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
     
     this.editPane.setText(urlTest.getSite(url));
     this.fileSystemTextField.setText("");
+    saveFileButton.setEnabled(false);
 }//GEN-LAST:event_wwwButtonActionPerformed
 
 public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
@@ -622,6 +625,7 @@ public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) 
         reader.close();
         this.editPane.setText(stringBuilder.toString());
         this.fileName = new File(pathName);
+        saveFileButton.setEnabled(true);
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
@@ -702,6 +706,11 @@ public String getFileNameField() {
 }
 public void setFileNameField(String fileName) {
 	fileSystemTextField.setText(fileName);
+	if (fileName.length() > 0) {
+		saveFileButton.setEnabled(true);
+	} else {
+		saveFileButton.setEnabled(false);
+	}
 }
 public void setWWWFileNameField(String fileName) {
 	urlTextField.setText(fileName);

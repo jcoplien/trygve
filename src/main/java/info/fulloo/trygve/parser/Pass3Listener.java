@@ -125,9 +125,11 @@ public class Pass3Listener extends Pass2Listener {
 			} else if (methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
 				;
 			} else {
-				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression '", expressionReturned.getText(),
-						" of type ", expressionReturned.type().getText(),
-						" is not compatible with declared return type ", methodDecl.returnType().getText());
+				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(),
+						"Return expression `" + expressionReturned.getText(),
+						"`' of type `", expressionReturned.type().getText(),
+						"' is not compatible with declared return type `",
+						methodDecl.returnType().getText(), "'.");
 				expressionReturned = new NullExpression();
 			}
 		}

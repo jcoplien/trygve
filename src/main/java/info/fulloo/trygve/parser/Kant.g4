@@ -305,7 +305,6 @@ boolean_atom
 		| '(' boolean_expr ')'
         ;
 
-
 message
         : <assoc=right> JAVA_ID '(' argument_list ')'
         ;

@@ -1684,7 +1684,9 @@ public abstract class RTExpression extends RTCode {
 			super();
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
 			part2_ = new RTUnaryAbelianopPart2(expr);
-			rhs_.setNextCode(part2_);
+			if (null != rhs_) {		// stumbling check
+				rhs_.setNextCode(part2_);
+			}
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 		}

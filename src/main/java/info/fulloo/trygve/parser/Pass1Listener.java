@@ -1621,7 +1621,7 @@ public class Pass1Listener extends Pass0Listener {
 				}
 				assert null != expression.type().pathName();
 				if (expression.type().pathName().equals("void")) {
-					assert false;	// may never happen anyhooo
+					assert true;	// tests/chord_identifier7.k
 					expression = new TopOfStackExpression();
 				}
 			}
@@ -2762,8 +2762,13 @@ public class Pass1Listener extends Pass0Listener {
 			}
 		} else if ((null == ctx.JAVA_ID()) && (null != ctx.object_decl()) && (ctx.expr().size() == 3)) {
 			//  | 'for' '(' object_decl expr ';' expr ')' expr
-			final Expression body = parsingData_.popExpression();
-			final Expression increment = parsingData_.popExpression();
+			
+			final Expression body = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
+			final Expression increment = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
 			final Expression conditional = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
 					new NullExpression();
