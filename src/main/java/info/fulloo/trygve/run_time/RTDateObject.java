@@ -141,6 +141,15 @@ public class RTDateObject extends RTObjectCommon {
 		}
 		return retval;
 	}
+	@Override public int compareTo(final Object other) {
+		int retval = 0;
+		if (other instanceof RTDateObject) {
+			retval = theDate_.compareTo(((RTDateObject)other).theDate_);
+		} else {
+			assert false;
+		}
+		return retval;
+	}
 	
 	private Calendar theDate_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;

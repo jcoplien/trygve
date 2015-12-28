@@ -393,6 +393,35 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTCompareToCode extends RTIntegerCommon {
+			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("int", operation, "other", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTIntegerObject;
+				final RTStackable other = dynamicScope.getObject("other");
+				assert other instanceof RTIntegerObject;
+				final RTIntegerObject selfObject = (RTIntegerObject)self;
+				final long selfValue = selfObject.intValue();
+				final RTIntegerObject otherObject = (RTIntegerObject)other;
+				final long otherValue = otherObject.intValue();
+				
+				long iRetval = 0;
+				if (selfValue > otherValue) iRetval = 1;
+				else if (selfValue < otherValue) iRetval = -1;
+				
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("int"); }
@@ -458,6 +487,35 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTCompareToCode extends RTBigIntegerCommon {
+			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("int", operation, "other", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTIntegerObject;
+				final RTStackable other = dynamicScope.getObject("other");
+				assert other instanceof RTIntegerObject;
+				final RTIntegerObject selfObject = (RTIntegerObject)self;
+				final long selfValue = selfObject.intValue();
+				final RTIntegerObject otherObject = (RTIntegerObject)other;
+				final long otherValue = otherObject.intValue();
+				
+				long iRetval = 0;
+				if (selfValue > otherValue) iRetval = 1;
+				else if (selfValue < otherValue) iRetval = -1;
+				
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("Integer"); }
@@ -525,7 +583,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		public static class RTBinaryOpCode extends RTDoubleCommon {
 			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
-				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+				super("double", operation, "rhs", "double", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				assert myEnclosedScope instanceof RTDynamicScope;
@@ -556,6 +614,33 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 
 				addRetvalTo(dynamicScope);
 				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		public static class RTCompareToCode extends RTDoubleCommon {
+			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("double", operation, "other", "double", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTDoubleObject;
+				final RTStackable rhs = dynamicScope.getObject("other");
+				final RTDoubleObject selfObject = (RTDoubleObject)self;
+				final double selfValue = selfObject.doubleValue();
+				final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
+				final double otherValue = otherObject.doubleValue();
+				
+				int iResult = 0;
+				if (selfValue > otherValue) iResult = 1;
+				else if (selfValue < otherValue) iResult = -1;
+				
+				final RTIntegerObject result = new RTIntegerObject(iResult);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", result);
 				
 				return super.nextCode();
 			}
@@ -735,6 +820,30 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTCompareToCode extends RTStringCommon {
+			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("String", operation, asList("other"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTStringObject;
+				final RTStackable otherObject = dynamicScope.getObject("other");
+				final RTStringObject selfObject = (RTStringObject)self;
+				final String selfValue = selfObject.stringValue();
+				final String otherValue = ((RTStringObject)otherObject).stringValue();
+				
+				final int iResult = selfValue.compareTo(otherValue);
+				
+				final RTDoubleObject result = new RTDoubleObject(iResult);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", result);
+				
+				return super.nextCode();
+			}
+		}
 		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
@@ -821,8 +930,42 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					iRetval = selfValue || rhsValue;
 				} else if (operator.equals("^")) {
 					iRetval = selfValue ^ rhsValue;
+				} else if (operator.equals("==")) {
+					iRetval = selfValue == rhsValue;
+				} else if (operator.equals("!=")) {
+					iRetval = selfValue != rhsValue;
 				}
 				final RTBooleanObject retval = new RTBooleanObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		public static class RTCompareToCode extends RTBooleanCommon {
+			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
+				super("boolean", operation, "other", "boolean", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTBooleanObject;
+				final RTStackable other = dynamicScope.getObject("other");
+				assert other instanceof RTBooleanObject;
+				final RTBooleanObject selfObject = (RTBooleanObject)self;
+				final boolean selfValue = selfObject.value();
+				final RTBooleanObject otherObject = (RTBooleanObject)other;
+				final boolean otherValue = otherObject.value();
+				
+				int iRetval = 0;
+				
+				if (selfValue == otherValue) iRetval = 0;
+				else if (selfValue == false) iRetval = -1;
+				else iRetval = 1;
+				
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
 
 				addRetvalTo(dynamicScope);
 				dynamicScope.setObject("ret$val", retval);

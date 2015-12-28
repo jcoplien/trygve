@@ -48,7 +48,7 @@ import java.util.List;
 
 public final class DateClass {
 	private static void singleSimpleFunctionSetup(final String methodSelector,
-			final ObjectDeclaration parameter) {
+			final ObjectDeclaration parameter, final String returnTypeName) {
 		final FormalParameterList formals = new FormalParameterList();
 
 		if (null != parameter) {
@@ -63,8 +63,14 @@ public final class DateClass {
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector,
 				methodScope, dateType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
-		final Type integerType = StaticScope.globalScope().lookupTypeDeclaration("int");
-		methodDecl.setReturnType(integerType);
+		Type returnType = null;
+		if (null != returnTypeName) {
+			returnType = StaticScope.globalScope().lookupTypeDeclaration(returnTypeName);
+			methodDecl.setReturnType(returnType);
+		} else {
+			returnType = StaticScope.globalScope().lookupTypeDeclaration("void");
+		}
+		methodDecl.setReturnType(returnType);
 		methodDecl.signature().setHasConstModifier(true);
 		dateType_.enclosedScope().declareMethod(methodDecl);
 	}
@@ -121,14 +127,15 @@ public final class DateClass {
 			methodDecl.signature().setHasConstModifier(false);
 			dateType_.enclosedScope().declareMethod(methodDecl);
 			
-			singleSimpleFunctionSetup("getYear", null);
-			singleSimpleFunctionSetup("setYear", new ObjectDeclaration("year", integerType, 0));
-			singleSimpleFunctionSetup("getMonth", null);
-			singleSimpleFunctionSetup("setMonth", new ObjectDeclaration("month", integerType, 0));
-			singleSimpleFunctionSetup("getDate", null);
-			singleSimpleFunctionSetup("setDate", new ObjectDeclaration("date", integerType, 0));
-			singleSimpleFunctionSetup("getDay", null);
-			singleSimpleFunctionSetup("setDay", new ObjectDeclaration("day", integerType, 0));
+			singleSimpleFunctionSetup("getYear", null, "int");
+			singleSimpleFunctionSetup("setYear", new ObjectDeclaration("year", integerType, 0), null);
+			singleSimpleFunctionSetup("getMonth", null, "int");
+			singleSimpleFunctionSetup("setMonth", new ObjectDeclaration("month", integerType, 0), null);
+			singleSimpleFunctionSetup("getDate", null, "int");
+			singleSimpleFunctionSetup("setDate", new ObjectDeclaration("date", integerType, 0), null);
+			singleSimpleFunctionSetup("getDay", null, "int");
+			singleSimpleFunctionSetup("setDay", new ObjectDeclaration("day", integerType, 0), null);
+			singleSimpleFunctionSetup("compareTo", new ObjectDeclaration("other", dateType_, 0), "int");
 			
 			formals = new FormalParameterList();
 			self = new ObjectDeclaration("this", dateType_, 0);
@@ -329,6 +336,25 @@ public final class DateClass {
 			
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", string);
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTCompareToCode extends RTDateCommon {
+		public RTCompareToCode(final StaticScope enclosingMethodScope) {
+			super("Date", "compareTo", "other", "Date", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
+			final RTObject rawOther = activationRecord.getObject("other");
+			assert rawOther instanceof RTDateObject;
+			final RTDateObject other = (RTDateObject) rawOther;
+			final int rawResult = theDateObject.compareTo(other);
+			final RTIntegerObject result = new RTIntegerObject(rawResult);
+
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
 			
 			return super.nextCode();
 		}

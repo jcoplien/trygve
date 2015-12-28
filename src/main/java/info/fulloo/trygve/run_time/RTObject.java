@@ -36,6 +36,8 @@ public interface RTObject extends RTStackable {
 	public RTType rTType();
 	public boolean isEqualTo(final Object another);
 	public boolean gt(final RTObject another);
+	public int compareTo(final Object other);
+	public boolean equals(final RTObject other);
 	public RTObject plus(final RTObject other);
 	public RTObject minus(final RTObject other);
 	public RTObject times(final RTObject other);
@@ -61,7 +63,6 @@ public interface RTObject extends RTStackable {
 	public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance);
 	public void enlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance);
 	public void unenlistAsStagePropPlayerForContext(final String stagePropName, RTContextObject contextInstance);
-	public boolean equals(final RTObject other);
 	public int hashCode();
 	public String getText();
 }

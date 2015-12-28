@@ -3484,6 +3484,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
 		@Override public boolean isEqualTo(final Object another) { return rTExpr_.isEqualTo(another); }
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }
+		@Override public int compareTo(final Object another) { return rTExpr_.compareTo(another); }
 		@Override public RTObject plus(final RTObject other) { return rTExpr_.plus(other); }
 		@Override public RTObject minus(final RTObject other) { return rTExpr_.minus(other); }
 		@Override public RTObject logicalAnd(final RTObject other) { assert false; return null; }

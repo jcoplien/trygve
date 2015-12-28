@@ -514,6 +514,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					retvalType = RetvalTypes.undefined;
 					assert false;
 				}
+			} else if (argumentType.name().equals("Date")) {
+				if (methodDeclaration.name().equals("compareTo")) {
+					getSomethingInDateCode.add(new DateClass.RTCompareToCode(methodDeclaration.enclosedScope()));
+					retvalType = RetvalTypes.usingInt;
+				} else {
+					retvalType = RetvalTypes.undefined;
+					assert false;
+				}
 			} else {
 				retvalType = RetvalTypes.undefined;
 				assert false;
@@ -584,6 +592,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (methodDeclaration.name().equals("contains")) {
 				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingBool;
+			} else if (methodDeclaration.name().equals("compareTo")) {
+				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
 			} else {
 				retvalType = RetvalTypes.undefined;
 				assert false;
@@ -640,6 +651,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert code.size() > 0;
 				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
 				rtMethod.addCode(code);
+			} else if (methodName.equals("compareTo")) {
+				code.add(new RTDoubleClass.RTCompareToCode(methodDeclaration.enclosedScope(), methodName));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingInt, code);
+				rtMethod.addCode(code);
 			} else {
 				// assert false;
 			}
@@ -679,6 +695,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				code.add(new RTIntegerClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodName));
 				assert code.size() > 0;
 				addReturn(methodDeclaration, RetvalTypes.usingDouble, code);
+				rtMethod.addCode(code);
+			} else if (methodName.equals("compareTo")) {
+				code.add(new RTIntegerClass.RTCompareToCode(methodDeclaration.enclosedScope(), methodName));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingInt, code);
 				rtMethod.addCode(code);
 			} else {
 				// assert false;
@@ -725,13 +746,24 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (formalParameterList.count() == 2) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			final String methodName = methodDeclaration.name();
+			final RTMethod rtMethod = new RTMethod(methodName, methodDeclaration);
 			final List<RTCode> code = new ArrayList<RTCode>();
-			code.add(new RTBooleanClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodDeclaration.name()));
-			assert code.size() > 0;
-			addReturn(methodDeclaration, RetvalTypes.usingBool, code);
-			rtMethod.addCode(code);
+			if (methodName.equals("||") || methodName.equals("&&") ||
+					methodName.equals("^") || methodName.equals("==") || methodName.equals("!=")) {
+				rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+				code.add(new RTBooleanClass.RTBinaryOpCode(methodDeclaration.enclosedScope(), methodDeclaration.name()));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingBool, code);
+				rtMethod.addCode(code);
+			} else if (methodName.equals("compareTo")) {
+				code.add(new RTBooleanClass.RTCompareToCode(methodDeclaration.enclosedScope(), methodName));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingInt, code);
+				rtMethod.addCode(code);
+			} else {
+				assert false;
+			}
 		} else {
 			assert false;
 		}
