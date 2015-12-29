@@ -27,8 +27,19 @@ dependencies {
 }
 
 task antlr(type: Exec) {
-    commandLine 'java',
-        '-jar', './lib/antlr-4.5.1-complete.jar',
-        '-o', 'src/main/generated/info/fulloo/trygve/parser',
-        'src/main/java/info/fulloo/trygve/parser/Kant.g4'
+    workingDir 'src/main/java'
+
+    if (System.getProperty('os.name').toLowerCase().contains('windows') ||
+        System.getProperty('os.name').toLowerCase().contains('Windows') ) {
+        commandLine 'java',
+            '-Dline.separator=\n',
+            '-jar', "$rootProject.projectDir\\lib\\antlr-4.5.1-complete.jar",
+            '-o', "$rootProject.projectDir\\src\\main\\generated",
+            'info\\fulloo\\trygve\\parser\\Kant.g4'
+    } else {
+        commandLine 'java',
+            '-jar', "$rootProject.projectDir/lib/antlr-4.5.1-complete.jar",
+            '-o', "$rootProject.projectDir/src/main/generated",
+            'info/fulloo/trygve/parser/Kant.g4'
+    }
 }
