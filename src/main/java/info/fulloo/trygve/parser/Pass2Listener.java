@@ -427,16 +427,22 @@ public class Pass2Listener extends Pass1Listener {
 		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
 		
-		final MethodDeclaration mdecl = enclosedScope.lookupMethodDeclarationWithConversion(operationAsString, argList, false);
+		MethodDeclaration mdecl = enclosedScope.lookupMethodDeclarationWithConversion(operationAsString, argList, false);
 		if (null == mdecl) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "No such operation '", operationAsString, "' on type ",
-					resultType.name(), " for argument ", rightExpr.type().name());
+			mdecl = enclosedScope.lookupMethodDeclarationRecursive(operationAsString, argList, false);
+			if (null == mdecl) {
+				mdecl = enclosedScope.lookupMethodDeclarationIgnoringRoleStuff(operationAsString, argList);
+				if (null == mdecl) {
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "No such operation `", operationAsString, "' on type `",
+							resultType.name(), "' for argument `" + rightExpr.type().name(), "'.");
+				}
+			}
 		}
 		if (leftExprType.canBeLhsOfBinaryOperator(operationAsString) && rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
 			;	// o.k.
 		} else {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation '", operationAsString, "' cannot be applied to type ",
-					resultType.name(), " for argument ", rightExpr.type().name());
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type ``",
+					resultType.name(), "' for argument `", rightExpr.type().name() + "'.");
 		}
 	}
 	

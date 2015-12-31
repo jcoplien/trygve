@@ -37,6 +37,10 @@ public class RTCommonRunTimeCrap implements RTObject {
 		assert false;
 		return false;
 	}
+	@Override public int compareTo(final Object another) {
+		assert false;
+		return 0;
+	}
 	@Override public RTObject plus(final RTObject other) {
 		assert false;
 		return null;

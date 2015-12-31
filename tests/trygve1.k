@@ -49,7 +49,7 @@ context TransferMoney {
 { TransferMoney transaction = new TransferMoney() transferMoney.amethod() }
 
 /* GOLD:
-line 6:16 no viable alternative at input 'class MyClass {\n   public MyClass() { }\n   public String b() { }\n   public void increaseBalanceBy(int a) {\n   }\n   private void *'
+line 6:17 no viable alternative at input 'class MyClass {\n   public MyClass() { }\n   public String b() { }\n   public void increaseBalanceBy(int a) {\n   }\n   private void *pointer_'
 line 49: Missing main expression.
 ___________________________________________________________
 */

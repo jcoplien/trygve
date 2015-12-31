@@ -1248,6 +1248,11 @@ public abstract class RTExpression extends RTCode {
 			if (null != declaringScope_) {
 				final Declaration associatedDeclaration = declaringScope_.associatedDeclaration();
 				isLocal_ = (null == associatedDeclaration) || !(associatedDeclaration instanceof TypeDeclaration);
+				if (name.equals("t$his") || name.equals("ret$val") || name.equals("current$context")) {
+					if (!isLocal_) {
+						assert isLocal_;
+					}
+				}
 			} else {
 				// Just plug in some reasonable values
 				// We come here only if there is an error upstream, so
@@ -1290,7 +1295,14 @@ public abstract class RTExpression extends RTCode {
 						final RTDynamicScope parentScope = activationRecord.nearestEnclosingScopeDeclaring(idName_);
 						value = null == parentScope? null: parentScope.getObject(idName_);
 					}
-					assert null != value;
+					if (null == value) {
+						ErrorLogger.error(ErrorType.Internal, lineNumber_,
+								"RUNTIME: Unknown run-time error around source line ",
+								Integer.toString(lineNumber_),
+								" associated with `", idName_,
+								"'. Check other error messages.", "");
+						return new RTHalt();
+					}
 				}
 			} else {
 				// WARNING. This is a bit presumptuous and needs work. TODO.
@@ -3484,6 +3496,7 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTType rTType() { return rTExpr_.rTType(); }
 		@Override public boolean isEqualTo(final Object another) { return rTExpr_.isEqualTo(another); }
 		@Override public boolean gt(final RTObject another) { return rTExpr_.gt(another); }
+		@Override public int compareTo(final Object another) { return rTExpr_.compareTo(another); }
 		@Override public RTObject plus(final RTObject other) { return rTExpr_.plus(other); }
 		@Override public RTObject minus(final RTObject other) { return rTExpr_.minus(other); }
 		@Override public RTObject logicalAnd(final RTObject other) { assert false; return null; }
@@ -3863,8 +3876,12 @@ public abstract class RTExpression extends RTCode {
 				
 				// Step 3. Put the return value back on the stack.
 				if (resultIsConsumed()) {
-					RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
-					returnValue.decrementReferenceCount();	// (from the stack pop above)
+					if (null != returnValue) {		// stumbling check
+						RunTimeEnvironment.runTimeEnvironment_.pushStack(returnValue);
+						returnValue.decrementReferenceCount();	// (from the stack pop above)
+					} else {
+						return new RTHalt();
+					}
 				}
 			} else {
 				// There is no R-value on the stack: just get the return address
@@ -4086,14 +4103,14 @@ public abstract class RTExpression extends RTCode {
 	protected static void setLastExpressionResult(final RTObject value, final int lineNumber) {
 		if (null == value) {
 			ErrorLogger.error(ErrorType.Internal, "INTERNAL ERROR: Internal expression evaluated to a NULL Java object, line ", Integer.toString(lineNumber), ".", "");
-			assert null != value;
+		} else {
+			final RTObject previousLastResult = lastExpressionResult_;
+			value.incrementReferenceCount();
+			if (null != previousLastResult) {
+				previousLastResult.decrementReferenceCount();
+			}
+			lastExpressionResult_ = value;
 		}
-		final RTObject previousLastResult = lastExpressionResult_;
-		value.incrementReferenceCount();
-		if (null != previousLastResult) {
-			previousLastResult.decrementReferenceCount();
-		}
-		lastExpressionResult_ = value;
 	}
 	public static final RTObject lastExpressionResult() {
 		return lastExpressionResult_;

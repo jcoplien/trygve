@@ -123,6 +123,7 @@ import info.fulloo.trygve.parser.KantParser.ExprContext;
 import info.fulloo.trygve.parser.KantParser.Expr_and_decl_listContext;
 import info.fulloo.trygve.parser.KantParser.For_exprContext;
 import info.fulloo.trygve.parser.KantParser.Identifier_listContext;
+import info.fulloo.trygve.parser.KantParser.If_exprContext;
 import info.fulloo.trygve.parser.KantParser.MessageContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
@@ -1179,6 +1180,8 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		// method_name
 		//	: JAVA_ID
+		//  | ABELIAN_MULOP
+		//  | ABELIAN_SUMOP
 
 		/* nothing */
 	}
@@ -2280,7 +2283,9 @@ public class Pass1Listener extends Pass0Listener {
 			final Token ctxGetStart = ctx.getStart();
 			final MessageContext ctxMessage = ctx.message();
 			expression = this.newExpr(ctxChildren, ctxGetStart, sizeExprCtx, ctxMessage);
-			expression = checkNakedNew(expression);
+			if (expression instanceof NullExpression == false) {
+				expression = checkNakedNew(expression);
+			}
 			
 			if (printProductionsDebug) {
 				System.err.print("expr : ");
@@ -4191,6 +4196,8 @@ public class Pass1Listener extends Pass0Listener {
 			} else if (walker instanceof While_exprContext) {
 				;
 			} else if (walker instanceof Boolean_exprContext) {
+				;
+			} else if (walker instanceof If_exprContext) {
 				;
 			} else {
 				assert false;

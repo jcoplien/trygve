@@ -47,6 +47,8 @@ import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.RoleType;
+import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
@@ -1236,7 +1238,26 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return retval;
 		}
 		@Override public Type type() {
-			return lhs_.type();
+			Type retval = lhs_.type();		// most of the time it will be this
+			if (lhs_.type() instanceof RoleType || lhs_.type() instanceof StagePropType) {
+				final Type type = lhs_.type();
+				if (null != type) {
+					final StaticScope typesScope = type.enclosedScope();
+					if (null != typesScope) {
+						final ActualArgumentList argumentList = new ActualArgumentList();
+						argumentList.addActualArgument(rhs_);
+						final Expression self = new IdentifierExpression("t$his", type, type.enclosedScope(), lhs_.lineNumber());
+						argumentList.addFirstActualParameter(self);
+						
+						final MethodDeclaration methodDecl =
+								typesScope.lookupMethodDeclarationIgnoringParameter(operator_, argumentList, "this");
+						
+						// Found it. Return type is type of this method.
+						retval = methodDecl.returnType();
+					}
+				}
+			}
+			return retval;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileSumExpression(this, methodDeclaration, rtTypeDeclaration, scope);

@@ -39,6 +39,7 @@ public final class RTDynamicScope extends RTObjectCommon {
 		// So far this is used only for debugging
 		methodSelector_ = methodSelector;
 		parentScope_ = parentScope;
+		name_ =  null != methodSelector? methodSelector: "unknown";
 	}
 	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope) {
 		super((RTType)null);
@@ -47,6 +48,10 @@ public final class RTDynamicScope extends RTObjectCommon {
 		
 		// So far this is used only for debugging
 		methodSelector_ = methodSelector;
+		name_ = null != methodSelector? methodSelector_:
+		           (null != parentScope)?
+		        		   "subscope of " + parentScope.name():
+		        		   "unknown";
 		
 		parentScope_ = parentScope;
 	}
@@ -160,10 +165,13 @@ public final class RTDynamicScope extends RTObjectCommon {
 		
 		return retval;
 	}
+	public String name() {
+		return name_;
+	}
 		
 	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
+	private final String name_;
 	
-	@SuppressWarnings("unused")
 	private String methodSelector_;
 }

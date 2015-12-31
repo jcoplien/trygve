@@ -57,6 +57,13 @@ public abstract class RTIterator implements RTObject {
 		public boolean isThereANext() {
 			return currentIndex_ < arraySize_;
 		}
+		public int compareTo(final Object rawOther) {
+			int retval = 0;
+			final RTArrayIterator other = ((RTArrayIterator)rawOther);
+			if (currentIndex_ < other.currentIndex_) retval = -1;
+			else if (currentIndex_ > other.currentIndex_) retval = 1;
+			return retval;
+		}
 		public RTObject next() {
 			final RTIntegerObject theIndexObject = new RTIntegerObject(currentIndex_);
 			assert currentIndex_ < arraySize_;
@@ -83,14 +90,21 @@ public abstract class RTIterator implements RTObject {
 			listSize_ = whatIAmIteratingOver_.size();
 			currentIndex_ = 0;
 		}
-		public boolean isThereANext() {
+		@Override public boolean isThereANext() {
 			return currentIndex_ < listSize_;
 		}
-		public RTObject next() {
+		@Override public int compareTo(final Object rawOther) {
+			int retval = 0;
+			final RTArrayIterator other = ((RTArrayIterator)rawOther);
+			if (currentIndex_ < other.currentIndex_) retval = -1;
+			else if (currentIndex_ > other.currentIndex_) retval = 1;
+			return retval;
+		}
+		@Override public RTObject next() {
 			assert currentIndex_ < listSize_;
 			return whatIAmIteratingOver_.get(currentIndex_);
 		}
-		public void advance() {
+		@Override public void advance() {
 			currentIndex_++;
 		}
 		@Override public boolean equals(final RTObject other) {

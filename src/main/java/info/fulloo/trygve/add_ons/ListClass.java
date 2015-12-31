@@ -318,6 +318,7 @@ public final class ListClass {
 			return super.nextCode();
 		}
 	}
+	
 
 	public static List<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;

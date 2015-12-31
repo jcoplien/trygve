@@ -185,6 +185,10 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		final RTObject retval = new RTBooleanObject(rawRetval);
 		return retval;
 	}
+	public int compareTo(final RTObject other) {
+		assert false;
+		return 0;
+	}
 	
 	private final List<RTObject> theList_;
 	private final Type baseType_;

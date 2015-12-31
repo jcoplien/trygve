@@ -324,6 +324,18 @@ public class RTArrayObject implements RTObject, RTIterable {
 		}
 		return retval;
 	}
+	@Override public int compareTo(final Object other) {
+		int retval = 0;
+		if (this.equals(other)) {
+			retval = 0;
+		} else if (size() < ((RTArrayObject)other).size()) {
+			retval = -1;
+		} else {
+			retval = 1;
+		}
+		
+		return retval;
+	}
 	
 	private final RTObject [] theArray_;
 	private final Type baseType_;
