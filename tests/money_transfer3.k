@@ -29,7 +29,8 @@ context TransferMoney {
             // I'll eventually change this so the compiler
             // translates a ">" call to the appropriate
             // compareTo code
-            if ( Amount.compareTo(this.getBalance()) > 0 ) {
+            // if ( Amount.compareTo(this.getBalance()) > 0 ) {
+            if ( Amount > this.getBalance() ) {
                 assert(false, "Insufficient funds");
             }
             this.decreaseBalance(Amount + 0.0);
@@ -78,5 +79,5 @@ class Account {
 
 /* GOLD:
 ___________________________________________________________
-Line 33: Assertion failed: Insufficient funds
+Line 34: Assertion failed: Insufficient funds
 */

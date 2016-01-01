@@ -289,6 +289,45 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return retval;
 			}
 		}
+		public static class RTConvertCompareToToBooleanCode extends RTSimpleObjectMethodsCommon {
+			public RTConvertCompareToToBooleanCode(final StaticScope enclosingMethodScope) {
+				super("compareTo$toBoolean",
+						RTMessage.buildArguments("Object", "compareTo$toBoolean",
+										asList("code", "operator"),
+										asList("int", "String"),
+										enclosingMethodScope, true),
+						StaticScope.globalScope().lookupTypeDeclaration("boolean"),
+						Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), true);
+			}
+			@Override public RTCode run() {
+				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTIntegerObject theIntegerCodeObject = (RTIntegerObject)activationRecord.getObject("code");
+				final RTStringObject theOperatorStringObject = (RTStringObject)activationRecord.getObject("operator");
+
+				final long integerCode = theIntegerCodeObject.intValue();
+				final String operator = theOperatorStringObject.stringValue();
+				
+				boolean rawRetval = false;
+				
+				switch ((int)integerCode) {
+				case -1:
+					rawRetval = (operator.equals("<") || operator.equals("<=")); break;
+				case 0:
+					rawRetval = (operator.equals("<=") || operator.equals(">=") || operator.equals("==")); break;
+				case 1:
+					rawRetval = (operator.equals(">") || operator.equals(">=")); break;
+				default:
+					assert false;
+				}
+				
+				final RTBooleanObject result = new RTBooleanObject(rawRetval);
+				
+				addRetvalTo(activationRecord);
+				activationRecord.setObject("ret$val", result);
+				
+				return super.nextCode();
+			}
+		}
 		public static class RTHalt extends RTObjectCommon {
 			public RTHalt() {
 				super("Object", "halt");

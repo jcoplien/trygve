@@ -595,7 +595,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingBool;
 			} else if (methodDeclaration.name().equals("compareTo")) {
-				code.add(new RTStringClass.RTContainsCode(methodDeclaration.enclosedScope()));
+				code.add(new RTStringClass.RTCompareToCode(methodDeclaration.enclosedScope(), methodDeclaration.name()));
 				retvalType = RetvalTypes.usingInt;
 			} else {
 				retvalType = RetvalTypes.undefined;
@@ -792,9 +792,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
-			if (methodDeclaration.name().equals("assert")) {
+			final String methodName = methodDeclaration.name();
+			if (methodName.equals("assert")) {
 				code.add(new RTObjectClass.RTAssertCodeMinimal(methodDeclaration.enclosedScope()));
 				assert code.size() > 0;
+				rtMethod.addCode(code);
+			} else if (methodName.equals("compareTo$toBoolean")) {
+				code.add(new RTObjectClass.RTConvertCompareToToBooleanCode(methodDeclaration.enclosedScope()));
+				assert code.size() > 0;
+				addReturn(methodDeclaration, RetvalTypes.usingInt, code);
 				rtMethod.addCode(code);
 			} else {
 				assert false;

@@ -53,7 +53,6 @@ public class Pass0Listener extends KantBaseListener {
 		
 		currentScope_ = parsingData_.globalScope();
 		currentContext_ = null;
-		variableGeneratorCounter_ = 101;
 		
 		currentRole_ = null;
 		currentInterface_ = null;
@@ -344,7 +343,6 @@ public class Pass0Listener extends KantBaseListener {
 	protected StaticScope currentScope_;
 	protected RoleDeclaration currentRole_;
 	protected InterfaceDeclaration currentInterface_;
-	protected int variableGeneratorCounter_;
 	protected boolean printProductionsDebug;
 	protected boolean stackSnapshotDebug;
     // -------------------------------------------------------------------------------------------------------

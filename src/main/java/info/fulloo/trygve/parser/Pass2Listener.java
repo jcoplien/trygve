@@ -221,7 +221,7 @@ public class Pass2Listener extends Pass1Listener {
 					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
 				}
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "'.", "");
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
 			}
 		}
 		// +++++++++++++++++++++++++
@@ -438,7 +438,8 @@ public class Pass2Listener extends Pass1Listener {
 				}
 			}
 		}
-		if (leftExprType.canBeLhsOfBinaryOperator(operationAsString) && rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
+		if (leftExprType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rightExprType) &&
+				rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
 			;	// o.k.
 		} else {
 			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type ``",

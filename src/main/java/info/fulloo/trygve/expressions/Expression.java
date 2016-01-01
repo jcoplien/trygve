@@ -61,7 +61,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
 public abstract class Expression implements BodyPart, ExpressionStackAPI {
-	public static Expression makeConstantExpressionFrom(String s) {
+	public static Expression makeConstantExpressionFrom(final String s) {
 		return Constant.makeConstantExpressionFrom(s);
 	}
 	
@@ -197,6 +197,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public MessageExpression(final Expression object, final Message message,
 				final Type type, final int lineNumber, final boolean isStatic) {
 			super(message.selectorName(), type, message.enclosingMegaType());
+			
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
@@ -1213,6 +1214,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileExpressionList(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
+		
+		// Used in Pass1Listener.java
+		@Override public void setType(final Type t) {
+			super.setType(t);
 		}
 		
 		private List<Expression> expressions_;

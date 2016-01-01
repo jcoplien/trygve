@@ -9,24 +9,27 @@ class Note {
     }
 
     public double position() const {
-        double pos = 0.0;
-        if(name_ == "C")  pos = 1.0;
-        if(name_ == "C#") pos = 2.0;
-        if(name_ == "Db") pos = 2.0;
-        if(name_ == "D")  pos = 3.0;
-        if(name_ == "D#") pos = 4.0;
-        if(name_ == "Eb") pos = 4.0;
-        if(name_ == "E")  pos = 5.0;
-        if(name_ == "F")  pos = 6.0;
-        if(name_ == "F#") pos = 7.0;
-        if(name_ == "Gb") pos = 7.0;
-        if(name_ == "G")  pos = 8.0;
-        if(name_ == "G#") pos = 9.0;
-        if(name_ == "Ab") pos = 9.0;
-        if(name_ == "A")  pos = 10.0;
-        if(name_ == "A#") pos = 11.0;
-        if(name_ == "Bb") pos = 11.0;
-        if(name_ == "B")  pos = 12.0;
+        double pos =
+             switch (name_) {
+                  case "C":  1.0; break;
+                  case "C#":
+                  case "Db": 2.0; break;
+                  case "D":  3.0; break;
+                  case "D#":
+                  case "Eb": 4.0; break;
+                  case "E":  5.0; break;
+                  case "F":  6.0; break;
+                  case "F#":
+                  case "Gb": 7.0; break;
+                  case "G":  8.0; break;
+                  case "G#":
+                  case "Ab": 9.0; break;
+                  case "A": 10.0; break;
+                  case "A#":
+                  case "Bb": 11.0; break
+                  case "B":  12.0; break;
+                  default:    0.0
+             }
         return pos;
     }
 
@@ -212,7 +215,7 @@ context Chord {
 }
 
 /* GOLD:
-line 64: WARNING: Method declaration for `name' may hide method declared at line 157
+line 67: WARNING: Method declaration for `name' may hide method declared at line 160
 ___________________________________________________________
 Cm11
 Dsus

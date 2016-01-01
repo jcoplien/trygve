@@ -123,6 +123,7 @@ public class TestRunner {
 		"date_test.k",
 		"number_test0.k",
 		"number_test1.k",
+		"role_and_double_test.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
@@ -144,6 +145,8 @@ public class TestRunner {
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
+		System.out.flush();
+		System.err.flush();
 		String testResults = gui_.errorPanelContents();
 		String lastTestResults = testResults;
 		passCounter_ = failCounter_ = 0;
@@ -156,6 +159,10 @@ public class TestRunner {
 			System.err.flush();
 			testResults = gui_.errorPanelContents();
 			checkTestResults(lastTestResults, testResults);
+			
+			System.out.flush();
+			System.err.flush();
+			
 			lastTestResults = gui_.errorPanelContents();
 		}
 		
@@ -219,6 +226,43 @@ public class TestRunner {
 			}
 		}
 	}
+	
+	private String canonize(final char c) {
+		String retval = String.valueOf(c);
+		switch (c) {
+		case '\n': retval = "\\n"; break;
+		case '\r': retval = "\\r"; break;
+		case '\t': retval = "\\t"; break;
+		}
+		return retval;
+	}
+	
+	private void analyzeFailure(final String s1, final String s2) {
+		/*
+		if (s1.equals(s2)) {
+			return;
+		} else {
+			int s1Length = s1.length(), s2Length = s2.length();
+			int shortest = Integer.min(s1Length, s2Length);
+			for (int i = 0; i < shortest; i++) {
+				if (s1.charAt(i) == s2.charAt(i)) {
+					continue;
+				} else {
+					int j = i, counter = 0;
+					while (j < shortest && counter < 10) {
+						char c1 = s1.charAt(j), c2 = s2.charAt(j);
+						String sc1 = canonize(c1);
+						String sc2 = canonize(c2);
+						System.err.format("%d: '%s' '%s'\n", j, sc1, sc2);
+						counter++;
+						j++;
+					}
+					break;
+				}
+			}
+		}
+		*/
+	}
 
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
 		final String testResults = thisTestResults(lastTestResults, rawTestResults);
@@ -235,6 +279,7 @@ public class TestRunner {
 			gui_.console().redirectErr(java.awt.Color.BLUE, null);
 			failCounter_++;
 			failures_.add(currentTestName_);
+			analyzeFailure(testResults, goldContents);
 		}
 	}
 

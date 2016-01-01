@@ -161,7 +161,7 @@ public final class DateClass {
 					null == parameterTypeName? null: asList(parameterTypeName),
 					enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 		}
-		public RTCode run() {
+		@Override public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
 			// until the RTReturn statement processes it, and everything
 			// else has been popped into the activation record by

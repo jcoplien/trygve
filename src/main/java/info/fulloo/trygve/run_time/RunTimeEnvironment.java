@@ -37,6 +37,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTAssignment;
+import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTAssignmentPart2;
 import info.fulloo.trygve.run_time.RTExpression.RTConstant;
 import info.fulloo.trygve.run_time.RTExpression.RTIdentifier;
 import info.fulloo.trygve.run_time.RTExpression.RTIf;
@@ -297,6 +298,8 @@ public class RunTimeEnvironment {
 					lineNumber = Integer.toString(((RTIdentifier)code).lineNumber()) + ".";
 				} else if (code instanceof RTAssignment) {
 					lineNumber = Integer.toString(((RTAssignment)code).lineNumber()) + ".";
+				} else if (code instanceof RTAssignmentPart2) {
+					lineNumber = Integer.toString(((RTAssignmentPart2)code).lineNumber()) + ".";
 				} else if (code instanceof RTNew) {
 					lineNumber = Integer.toString(((RTNew)code).lineNumber()) + ".";
 				} else if (code instanceof RTIf) {
@@ -328,6 +331,8 @@ public class RunTimeEnvironment {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
 				} else if (code instanceof RTConstant) {
 					System.err.format(" for \"%s\"", ((RTConstant)code).getText());
+				} else if (code instanceof RTAssignmentPart2) {
+					System.err.format(" (\"%s\")", ((RTAssignmentPart2)code).getText());
 				}
 				System.err.format("\n");
 			}

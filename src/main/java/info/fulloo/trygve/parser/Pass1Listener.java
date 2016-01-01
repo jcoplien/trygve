@@ -73,6 +73,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
 import info.fulloo.trygve.expressions.Constant.BooleanConstant;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
@@ -1740,6 +1741,158 @@ public class Pass1Listener extends Pass0Listener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
+	private Expression handleRelopCall(final Expression lhs,
+			final String operationAsString, final Expression rhs, int lineNumber) {
+		assert lhs.type() instanceof RoleType;
+
+		Expression expression = null;
+		ActualArgumentList argumentList = new ActualArgumentList();
+		argumentList.addActualArgument(rhs);
+		final RoleType roleType = (RoleType)lhs.type();
+		assert null != roleType;
+		final Expression self = new IdentifierExpression("t$his", roleType, currentScope_,	// just this? GNU!!
+				lhs.lineNumber());
+		argumentList.addFirstActualParameter(self);
+
+		final MethodDeclaration methodDecl = rhs.type().enclosedScope().
+				lookupMethodDeclarationIgnoringParameter(operationAsString, argumentList, "this");
+		if (null == methodDecl) {
+			// There is an invocation of a boolean operator on a Role
+			// or Stage Prop. Since Roles are inherently untyped,
+			// they don't know how to do relops. And for right now
+			// we don't allow users to define relops, since doing it
+			// consistently is hard... We do, however, allow them to
+			// define a compareTo method in the Java Comparable interface
+			// tradition. We've already pre-checked above whether it
+			// has one. Let's check again:
+			
+			if (roleType.hasCompareToOrHasOperatorForArgOfType(operationAsString, rhs.type())) {
+				// O.K., it does. Generate code that will call
+				// compareTo on the users' behalf
+				
+				// Nice constants
+				final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+				final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
+				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				
+				// The final result
+				ExpressionList expressionList = null;
+				
+				// Generate some temporaries
+				String variableNameForOperatorString, variableNameForCompareToResult;
+				variableNameForOperatorString = "parseTemp$" + Integer.toString(kantParserVariableGeneratorCounter_);
+				kantParserVariableGeneratorCounter_++;
+				variableNameForCompareToResult = "parseTemp$" + Integer.toString(kantParserVariableGeneratorCounter_);
+				kantParserVariableGeneratorCounter_++;
+				
+				final ObjectDeclaration variableForOperatorStringDecl = new ObjectDeclaration(variableNameForOperatorString, stringType, lineNumber);
+				currentScope_.declareObject(variableForOperatorStringDecl);
+				final ObjectDeclaration variableForCompareToResultDecl = new ObjectDeclaration(variableNameForCompareToResult, stringType, lineNumber);
+				currentScope_.declareObject(variableForCompareToResultDecl);
+				
+				final IdentifierExpression operatorString = new IdentifierExpression(variableNameForOperatorString, stringType,
+						currentScope_, lineNumber);
+				final IdentifierExpression compareToResult = new IdentifierExpression(variableNameForCompareToResult, intType,
+						currentScope_, lineNumber);
+				
+				// Get an expression for the operator string
+				final Expression operatorStringExpression = Constant.makeConstantExpressionFrom(
+						"\"" + operationAsString + "\"");
+				operatorStringExpression.setResultIsConsumed(true);
+				
+				// Assign the operator string into its expression
+				final AssignmentExpression assignOpString = new AssignmentExpression(
+						operatorString, "=", operatorStringExpression, lineNumber, this);
+				assignOpString.setResultIsConsumed(false);
+				expressionList = new ExpressionList(assignOpString, enclosingMegaType);
+			
+				// Set up the argument list for the call to "compareTo".
+				// If we got here it should be in the "requires" section
+				// of the Role definition
+				argumentList = new ActualArgumentList();
+				argumentList.addActualArgument(rhs);
+				argumentList.addFirstActualParameter(lhs);
+				
+				final Message compareToMessage = new Message("compareTo", argumentList, lineNumber, enclosingMegaType);
+				compareToMessage.setReturnType(intType);
+				
+				// Are we in a Role or just in a Context?
+				// (Probably unnecessary, but it keeps a tidy house early)
+				IdentifierExpression qualifier = null;
+				if (null != currentScope_.lookupObjectDeclaration("current$context")) {
+					// In another Role — get the Context pointer
+					// to qualify *this* Role
+					qualifier = new IdentifierExpression("current$context", currentContext_.type(),
+							currentScope_, lineNumber);
+				} else {
+					// We're at the Context level — just use "this"
+					qualifier = new IdentifierExpression("this", currentContext_.type(),
+							currentScope_, lineNumber);
+				}
+					
+				final QualifiedIdentifierExpression newLhs = new QualifiedIdentifierExpression(qualifier, lhs.name(), lhs.type());
+				newLhs.setResultIsConsumed(true);
+				
+				// The compareTo message is applied to its first own
+				// argument - in this case, lhs
+				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false);
+				expression.setResultIsConsumed(true);
+				
+				// Assign result of compareTo
+				final AssignmentExpression assignCompareTo = new AssignmentExpression(
+						compareToResult, "=", expression, lineNumber, this);
+				assignCompareTo.setResultIsConsumed(false);
+				expressionList.addExpression(assignCompareTo);
+				
+				final ActualArgumentList paramListToConverter = new ActualArgumentList();
+				
+				paramListToConverter.addActualArgument(compareToResult);
+				paramListToConverter.addActualArgument(operatorString);
+				
+				final Message convertMessage = new Message("compareTo$toBoolean", paramListToConverter, lineNumber, enclosingMegaType);
+				convertMessage.setReturnType(booleanType);
+				
+				// Because Roles are bound to objects — and knowledge of their classes —
+				// only at run time, we can't put compareTo$toBoolean in the Role
+				// scope. It's a static, so it can live anywhere. It could live in
+				// Class or Object but that's a bit of an overly broad scope for
+				// it. We could just clone a declaration of it in every scope where
+				// there is a converTo method. But that doesn't allow end users to
+				// create their own types with convertTo methods in the interest
+				// of making the built-in relational operators work for them. So
+				// we put it up in Object. Looking it up through rhs should work.
+				final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+				final Expression classObjectExpression = new IdentifierExpression("Object", objectType,
+						StaticScope.globalScope(), lineNumber);
+				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
+						lineNumber, true);
+				expression.setResultIsConsumed(true);
+
+				// This sucks. Expression lists usually take the first seed
+				// argument as the type of the list. Override it.
+				expressionList.setType(booleanType);
+				expressionList.setResultIsConsumed(true);
+				expressionList.addExpression(expression);
+				
+				expression = expressionList;
+			} else {
+				// This was kind of the last chance. We've probably
+				// already given the user some diagnostics. Now let's
+				// give her some advice.
+				errorHook6p2(ErrorType.Fatal, lineNumber,
+						"To use `", operationAsString + "' on Role `",
+						lhs.name(), "' you must declare a comapreTo(",
+						rhs.type().name() + " argument",
+						") operation in the `requires' section of " +  lhs.name());
+				expression = new NullExpression();
+			}
+		} else {
+			expression = new RelopExpression(lhs, operationAsString, rhs);
+		}
+		return expression;
+	}
+	
 	@Override public void exitBoolean_expr(KantParser.Boolean_exprContext ctx) {	
 		// : boolean_product (ABELIAN_SUMOP abelian_product)*
 		// | boolean_expr op=('&&' | '||' | '^' ) boolean_expr
@@ -1748,6 +1901,7 @@ public class Pass1Listener extends Pass0Listener {
 		// | <assoc=right> boolean_expr ASSIGN expr
 		
 		Expression expression = null;
+		final int lineNumber = ctx.getStart().getLine();
 		
 		if ((null != ctx.abelian_expr() && ctx.abelian_expr().size() == 1) && (null != ctx.boolean_expr()) &&
 				(null == ctx.boolean_expr() || ctx.boolean_expr().size() == 0) && null == ctx.ASSIGN()) {
@@ -1814,7 +1968,7 @@ public class Pass1Listener extends Pass0Listener {
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"Expression '" + rhs.getText(), "' is not of the right type (",
 						lhs.type().getText(), ").");
 			}
@@ -1867,14 +2021,46 @@ public class Pass1Listener extends Pass0Listener {
 			rhs.setResultIsConsumed(true);
 			
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"Expression '" + rhs.getText(), "' is not of the right type (",
 						lhs.type().getText(), ").");
 			}
 			
 			assert null != relationalOperator;
 			final String operationAsString = relationalOperator.getText();
-			expression = new RelopExpression(lhs, operationAsString, rhs);
+			
+			final Type lhsType = lhs.type(), rhsType = rhs.type();
+			if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
+				;	// O.K.
+			} else {
+				errorHook5p2(ErrorType.Fatal, lineNumber,
+						"You may not apply '" + operationAsString, "' to objects of type `",
+						lhs.type().getText(), "'.");
+			}
+			
+			if (rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
+				;	// O.K.
+			} else if (rhs instanceof NullExpression) {
+				;	// can always compare with NULL
+			} else {
+				errorHook5p2(ErrorType.Fatal, lineNumber,
+						"You may not use an object of type '" + rhs.type().getText(), "' as an argument to `",
+						operationAsString, "'.");
+			}
+			
+			if (lhs.type() instanceof RoleType) {
+				// We may need to convert the operator
+				// to a call of compareTo
+				if ((operationAsString.equals("==") || operationAsString.equals("!="))
+						&& rhs.type().pathName().equals("Null")) {
+					// Comparing to NULL is O.K...  for now....
+					expression = new RelopExpression(lhs, operationAsString, rhs);
+				} else {
+					expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
+				}
+			} else {
+				expression = new RelopExpression(lhs, operationAsString, rhs);
+			}
 	
 			if (printProductionsDebug) {
 				System.err.print("boolean_expr : abelian_expr ");
@@ -2157,8 +2343,8 @@ public class Pass1Listener extends Pass0Listener {
 			// Pass4Listener check above is so we do this only once,
 			// avoiding multiple declarations of the temporary
 			// variable
-			final String tempName = "temp$" + variableGeneratorCounter_;
-			variableGeneratorCounter_++;
+			final String tempName = "temp$" + parsingData_.variableGeneratorCounter_;
+			parsingData_.variableGeneratorCounter_++;
 			final ObjectDeclaration tempVariableDecl = new ObjectDeclaration(tempName, newExpr.type(), newExpr.lineNumber());;
 			currentScope_.declareObject(tempVariableDecl);
 			
@@ -2988,7 +3174,7 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void exitSwitch_expr(KantParser.Switch_exprContext ctx)
 	{
-		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
+		// : 'switch' '(' expr ')' '{' ( switch_body )* '}'
 		// One version serves passes 1 - 4
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
 		
@@ -3004,35 +3190,41 @@ public class Pass1Listener extends Pass0Listener {
 			final Type switchExpressionType = expressionToSwitchOn.type();
 			boolean stillEvaluating = true;
 			for (final SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
+				String caseTypePathName = null;
+				
 				// See if all case body expressions are of the same type
 				if (null == potentialSwitchExpressionType && stillEvaluating) {
-					potentialSwitchExpressionType = aCase.type();
-				}
-				
-				if (stillEvaluating) {
-					final String caseTypePathName = aCase.type().pathName();
-					if (caseTypePathName.equals("void")) {
-						// it could be because there is no
-						// expression to go with the case statement.
-						// If so, don't let it upset things.
-						if (aCase.hasNoBody()) {
-							stillEvaluating = true;
-						} else {
-							stillEvaluating = caseTypePathName.equals("void");
-						}
-					} else {
-						stillEvaluating = caseTypePathName.equals(potentialSwitchExpressionType.pathName());
+					if (aCase.hasNoBody() == false) {
+						potentialSwitchExpressionType = aCase.type();
 					}
 				}
 				
-				// Make sure that all case test expressions are of type of switch expression
-				if (aCase.isDefault()) continue;
-				if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
-					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Case statement with expression of type `",
-							aCase.type().name(), "' is incompatible with switch expression of type `",
-							switchExpressionType.name(), "'.", "");
+				if (null != potentialSwitchExpressionType) {
+					if (stillEvaluating) {
+						caseTypePathName = aCase.type().pathName();
+						if (caseTypePathName.equals("void")) {
+							// it could be because there is no
+							// expression to go with the case statement.
+							// If so, don't let it upset things.
+							if (aCase.hasNoBody()) {
+								stillEvaluating = true;
+							} else {
+								stillEvaluating = caseTypePathName.equals("void");
+							}
+						} else {
+							stillEvaluating = caseTypePathName.equals(potentialSwitchExpressionType.pathName());
+						}
+					}
+					
+					// Make sure that all case test expressions are of type of switch expression
+					if (aCase.isDefault()) continue;
+					if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
+						errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
+								aCase.type().name(), "' is incompatible with switch expression of type `",
+								switchExpressionType.name(), "'.", "");
+					}
 				}
-			}
+			}	/* for */
 			
 			if (stillEvaluating) {		// then we maade it through all the cases!
 				// We have a consistent expression type since all case
@@ -3528,7 +3720,8 @@ public class Pass1Listener extends Pass0Listener {
 			
 			// They go in reverse order...
 			if (newFormalParameter.name().equals("this")) {
-				formalParameterName = "_error" + String.valueOf(variableGeneratorCounter_);
+				formalParameterName = "_error" + String.valueOf(parsingData_.variableGeneratorCounter_);
+				parsingData_.variableGeneratorCounter_++;
 				newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
 			}
 			parsingData_.currentFormalParameterList().addFormalParameter(newFormalParameter);
@@ -4361,4 +4554,6 @@ public class Pass1Listener extends Pass0Listener {
 	private void stackSnapshotDebug() {
 		parsingData_.stackSnapshotDebug();
 	}
+	
+	public static int kantParserVariableGeneratorCounter_ = 101;
 }

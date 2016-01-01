@@ -85,6 +85,11 @@ public abstract class Type implements ExpressionStackAPI
 		// false for all but class types
 		return false;
 	}
+	public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
+		// Type
+		assert false;
+		return false;
+	}
 	public String pathName() {
 		// pathName is just a unique String for this type. We
 		// generate it as the linear catenation of the names
@@ -211,6 +216,22 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public final List<InterfaceType> interfaceTypes() {
 			return interfaceTypes_;
+		}
+		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
+			// ClassType
+			assert true;		// tests/new_luhnvalidation.k
+			boolean retval = false;
+			if (this.type().canBeConvertedFrom(type)) {
+				retval = true;
+			} else {
+				// Can always compare with null
+				if (operator.equals("==") && type.pathName().equals("Null")) {
+					retval = true;
+				} else if (operator.equals("!=") && type.pathName().equals("Null")) {
+					retval = true;
+				}
+			}
+			return retval;
 		}
 		
 		private List<InterfaceType> interfaceTypes_;
@@ -376,15 +397,27 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		@Override public boolean canBeLhsOfBinaryOperator(final String operator) {
+		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
+			// Built-in type
+			assert true;
 			boolean retval = false;
-			if (this.name().equals("int") || this.name().equals("Integer")) {
+			if (type instanceof RoleType == false &&
+					type instanceof StagePropType == false &&
+					this.type().canBeConvertedFrom(type) == false) {
+				retval = false;
+			} else if (this.name().equals("int") || this.name().equals("Integer")) {
 				if (operator.equals("-")) retval = true;
 				else if (operator.equals("+")) retval = true;
 				else if (operator.equals("*")) retval = true;
 				else if (operator.equals("/")) retval = true;
 				else if (operator.equals("%")) retval = true;
 				else if (operator.equals("**")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("==")) retval = true;
+				else if (operator.equals("!=")) retval = true;
 			} else if (this.name().equals("double") || this.name().equals("Double")) {
 				if (operator.equals("-")) retval = true;
 				else if (operator.equals("+")) retval = true;
@@ -392,14 +425,34 @@ public abstract class Type implements ExpressionStackAPI
 				else if (operator.equals("/")) retval = true;
 				else if (operator.equals("%")) retval = false;
 				else if (operator.equals("**")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("==")) retval = true;
+				else if (operator.equals("!=")) retval = true;
 			} else if (this.name().equals("boolean")) {
 				if (operator.equals("||")) retval = true;
 				else if (operator.equals("&&")) retval = true;
 				else if (operator.equals("^")) retval = true;
+				else if (operator.equals("==")) retval = true;
+				else if (operator.equals("!=")) retval = true;
 			} else if (this.name().equals("String")) {
 				if (operator.equals("+")) retval = true;
 				else if (operator.equals("%")) retval = true;
 				else if (operator.equals("-")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("==")) retval = true;
+				else if (operator.equals("!=")) retval = true;
+			} else {
+				// == and != are always Ok to test against NULL
+				if (type.pathName().equals("Null")) {
+					if (operator.equals("==")) retval = true;
+					else if (operator.equals("!=")) retval = true;
+				}
 			}
 			return retval;
 		}
@@ -412,6 +465,12 @@ public abstract class Type implements ExpressionStackAPI
 				else if (operator.equals("/")) retval = true;
 				else if (operator.equals("%")) retval = true;
 				else if (operator.equals("**")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals("!=")) retval = true;
+				else if (operator.equals("==")) retval = true;
 			} else if (this.name().equals("double") || this.name().equals("Double")) {
 				if (operator.equals("-")) retval = true;
 				else if (operator.equals("+")) retval = true;
@@ -419,14 +478,28 @@ public abstract class Type implements ExpressionStackAPI
 				else if (operator.equals("/")) retval = true;
 				else if (operator.equals("%")) retval = false;
 				else if (operator.equals("**")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals("!=")) retval = true;
+				else if (operator.equals("==")) retval = true;
 			} else if (this.name().equals("boolean")) {
 				if (operator.equals("||")) retval = true;
 				else if (operator.equals("&&")) retval = true;
 				else if (operator.equals("^")) retval = true;
+				else if (operator.equals("!=")) retval = true;
+				else if (operator.equals("==")) retval = true;
 			} else if (this.name().equals("String")) {
 				if (operator.equals("+")) retval = true;
 				else if (operator.equals("%")) retval = true;
 				else if (operator.equals("-")) retval = true;
+				else if (operator.equals("<=")) retval = true;
+				else if (operator.equals(">=")) retval = true;
+				else if (operator.equals("<")) retval = true;
+				else if (operator.equals(">")) retval = true;
+				else if (operator.equals("!=")) retval = true;
+				else if (operator.equals("==")) retval = true;
 			}
 			return retval;
 		}
@@ -507,6 +580,18 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
+		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
+			// RoleType
+			assert true;
+			boolean retval;
+			if (operator.equals(">") || operator.equals(">=") || operator.equals("<") || operator.equals("<=") ||
+					operator.equals("==") || operator.equals("!=")) {
+				retval = this.hasCompareToOrHasOperatorForArgOfType(operator, type);
+			} else {
+				retval = false;
+			}
+			return retval;
+		}
 		@Override public String name() {
 			return name_;
 		}
@@ -532,6 +617,25 @@ public abstract class Type implements ExpressionStackAPI
 		public boolean isArray() {
 			return associatedDeclaration_ instanceof RoleArrayDeclaration ||
 				   associatedDeclaration_ instanceof StagePropArrayDeclaration;
+		}
+		public boolean hasCompareToOrHasOperatorForArgOfType(final String operator, final Type rhs) {
+			boolean retval = false;
+			final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+			for (final String methodName : requiredSelfSignatures.keySet()) {
+				if (methodName.equals("compareTo") || methodName.equals(operator)) {
+					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
+					final FormalParameterList formalParameters = rolesSignature.formalParameterList();
+					if (formalParameters.count() > 1) {
+						final ObjectDeclaration wannabeRhsArg = formalParameters.parameterAtPosition(1);
+						final Type argType = wannabeRhsArg.type();
+						if (rhs.pathName().equals(argType.pathName())) {
+							retval = true;
+							break;
+						}
+					}
+				}
+			}
+			return retval;
 		}
 		
 		protected final String name_;
@@ -624,19 +728,26 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		public boolean canBeLhsOfBinaryOperator(final String operator) {
+		
+		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type rhsType) {
 			// This is a bit dicey — it really should be type-checked
 			// by the caller as well. This doesn't amount to much more
 			// than a syntactic check, since Roles have a decidely macro-
 			// like behaviour to them..
 			//
 			// Check out caller: Pass2Listener.binopTypeCheck(Expression, String, Expression, Token) line: 441	
-
+			// StageProp Type
+			assert true;	// money_transfer3.k
 			boolean retval;
-			if (operator.equals("+") || operator.equals("-") ||operator.equals("/") ||operator.equals("*")) {
+			if (operator.equals("+") || operator.equals("-") || operator.equals("/") || operator.equals("*")) {
 				retval = true;
 			} else {
-				retval = false;
+				if (hasCompareToOrHasOperatorForArgOfType(operator, rhsType) && operator.equals(">") || operator.equals("<") || operator.equals(">=") ||
+						operator.equals("<=") || operator.equals("!=") || operator.equals("==")) {
+					retval = true;
+				} else {
+					retval = false;
+				}
 			}
 			return retval;
 		}
@@ -731,9 +842,6 @@ public abstract class Type implements ExpressionStackAPI
 	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
 	
 	public boolean hasUnaryOperator(final String operator) {
-		return false;
-	}
-	public boolean canBeLhsOfBinaryOperator(final String operator) {
 		return false;
 	}
 	public boolean canBeRhsOfBinaryOperator(final String operator) {

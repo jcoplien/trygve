@@ -484,7 +484,6 @@ public abstract class RTExpression extends RTCode {
 		}
 		public RTMessage(final String name, final MessageExpression messageExpr, final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
 			super();
-			
 			methodSelectorName_ = messageExpr.name();
 
 			templateInstantiationInfo_ = null == scope? null : scope.templateInstantiationInfo();
@@ -524,7 +523,7 @@ public abstract class RTExpression extends RTCode {
 				final Type enclosingMegaType, final boolean isStatic) {
 			super();
 			methodSelectorName_ = name;
-			
+
 			// for built-in methods like System.out.print, List
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
@@ -645,6 +644,7 @@ public abstract class RTExpression extends RTCode {
 			// Should look up method in the receiver's scope
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTMethod methodDecl = null;
+
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// Then self is an object playing the Role (with rTType an instance of RTClass)
 				// Get the current RTContext (must be in self of current activation record)
@@ -716,7 +716,7 @@ public abstract class RTExpression extends RTCode {
 					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
 							methodSelectorName_, "' on a null Java object", "");
 					return null;
-					//assert null != rTTypeOfSelf;
+					// assert null != rTTypeOfSelf;
 				}
 				
 				final ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
@@ -754,6 +754,8 @@ public abstract class RTExpression extends RTCode {
 							}
 						}
 						if (null == methodDecl) {
+							// One last try - look it up in Object
+							methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
 							assert null != methodDecl;
 						}
 					}
@@ -890,6 +892,9 @@ public abstract class RTExpression extends RTCode {
 			Type typeOfThisParameterToMethod = null;
 			if (this.isStatic()) {
 				// There is no "this" on the stack for static method calls
+				if (null == this.messageExpr_) {
+					assert null != this.messageExpr_;
+				}
 				final Expression classNameExpression = this.messageExpr_.objectExpression();
 				assert classNameExpression instanceof IdentifierExpression;
 				final String className = classNameExpression.name();
@@ -918,7 +923,6 @@ public abstract class RTExpression extends RTCode {
 			
 			// Get the method declaration by looking it up in the receiver's scope
 			// Null return on error (e.g., attempting to invoke a method on a null object)
-			
 			final RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToMethod, indexForThisExtraction, self);
 			
 			// While we're at it, see if we're calling the real assert. It
@@ -929,7 +933,11 @@ public abstract class RTExpression extends RTCode {
 					final MethodDeclaration originalMethodDeclaration = methodDecl.methodDeclaration();
 					if (null != originalMethodDeclaration) {
 						final StaticScope methodScope = originalMethodDeclaration.enclosedScope();
-						final String typePathName = methodScope.associatedDeclaration().type().pathName();
+						final StaticScope declaringScope = null == methodScope? null: methodScope.parentScope();
+						final Declaration associatedDeclaration = null == declaringScope? null:
+												declaringScope.associatedDeclaration();
+						final String typePathName = null == associatedDeclaration? " ":
+							associatedDeclaration.type().pathName();
 						if (typePathName.equals("Object.")) {
 							isBuiltInAssert_ = true;
 						}
@@ -1150,7 +1158,7 @@ public abstract class RTExpression extends RTCode {
 		private final boolean isStatic_;
 		private boolean isBuiltInAssert_;
 	}
-	
+
 	public static class RTDupMessage extends RTExpression {
 		public RTDupMessage(final String name, final DupMessageExpression expr, final RTType enclosingMegaType) {
 			super();
@@ -1826,6 +1834,7 @@ public abstract class RTExpression extends RTCode {
 					part2b_.setResultIsConsumed(expr.resultIsConsumed());
 					lhs_.setNextCode(part2b_);
 				}
+				gettableText_ = expr.getText();
 			}
 			@Override public RTCode run() {
 				// RHS processing takes place in RTAssignment, because it may take
@@ -2060,10 +2069,18 @@ public abstract class RTExpression extends RTCode {
 				private final int lineNumber_;
 			}
 			
+			public String getText() {
+				return gettableText_;
+			}
+			public int lineNumber() {
+				return lineNumber_;
+			}
+			
 			private RTExpression lhs_;
 			private RTAssignmentPart2B part2b_;
 			private RTCode staticNextCode_;
 			private final int lineNumber_;
+			private final String gettableText_;
 		}
 		
 		public void setTemplateInstantiationInfo(final TemplateInstantiationInfo templateInstantiationInfo) {

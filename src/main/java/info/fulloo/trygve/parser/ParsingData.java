@@ -78,6 +78,8 @@ public class ParsingData {
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
 		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
+		
+		variableGeneratorCounter_ = 101;
 	}
 	
 	public void addBreakableExpression(final String uniqueName, final BreakableExpression breakableExpression) {
@@ -229,4 +231,5 @@ public class ParsingData {
 			}
 		}
 	}
+	public int variableGeneratorCounter_;
 }
