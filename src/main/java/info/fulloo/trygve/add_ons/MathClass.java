@@ -65,7 +65,7 @@ public final class MathClass {
 				methodScope, mathType_, Public, 0, true);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
-		methodDecl.signature().setHasConstModifier(true);
+		methodDecl.setHasConstModifier(true);
 		mathType_.enclosedScope().declareMethod(methodDecl);
 	}
 

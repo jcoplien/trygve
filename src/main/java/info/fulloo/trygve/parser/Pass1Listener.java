@@ -1016,7 +1016,7 @@ public class Pass1Listener extends Pass0Listener {
 		
 		// Keep the stack clean
 		final MethodSignature methodSignatureInProgress = parsingData_.popMethodSignature();
-		currentMethod.signature().setHasConstModifier(methodSignatureInProgress.hasConstModifier());
+		currentMethod.setHasConstModifier(methodSignatureInProgress.hasConstModifier());
 		
 		parsingData_.popFormalParameterList();	// hope this is the right place
 		parsingData_.popExprAndDecl();  // Move to Context, Role, Class, StageProp productions???

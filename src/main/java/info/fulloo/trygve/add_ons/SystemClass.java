@@ -62,7 +62,7 @@ public final class SystemClass {
 		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
-		methodDecl.signature().setHasConstModifier(true);
+		methodDecl.setHasConstModifier(true);
 		printStreamType_.enclosedScope().declareMethod(methodDecl);
 		methodDecl.setReturnType(printStreamType_);
 	}

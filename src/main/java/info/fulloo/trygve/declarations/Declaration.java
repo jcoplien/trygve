@@ -479,6 +479,9 @@ public abstract class Declaration implements BodyPart {
 			this.commonInit(myEnclosedScope, signature.returnType(),
 					signature.accessQualifier(), lineNumber);
 		}
+		public void setHasConstModifier(final boolean tf) {
+			signature_.setHasConstModifier(tf);
+		}
 		private void commonInit(final StaticScope myEnclosedScope, final Type returnType,
 				final AccessQualifier accessQualifier, final int lineNumber) {
 			if (null== myEnclosedScope) {

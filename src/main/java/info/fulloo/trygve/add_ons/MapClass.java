@@ -74,7 +74,7 @@ public final class MapClass {
 		MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
-		methodDecl.signature().setHasConstModifier(false);
+		methodDecl.setHasConstModifier(false);
 		mapType_.enclosedScope().declareMethod(methodDecl);
 	}
 	public static void setup() {
