@@ -321,9 +321,9 @@ public class Pass2Listener extends Pass1Listener {
 
 	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
-		// JAVA_ID '(' argument_list ')'
+		// method_name '(' argument_list ')'
 		// Certified Pass 2 version ;-)
-		final String selectorName = ctx.JAVA_ID().getText();
+		final String selectorName = ctx.method_name().getText();
 		final long lineNumber = ctx.getStart().getLine();
 		
 		// This is definitely Pass 2 stuff.

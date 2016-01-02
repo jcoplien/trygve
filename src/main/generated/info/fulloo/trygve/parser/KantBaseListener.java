@@ -1,4 +1,4 @@
-// Generated from src/main/java/info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
+// Generated from info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
 
     package info.fulloo.trygve.parser;
 

@@ -2750,9 +2750,9 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
-		// 	| JAVA_ID '(' argument_list ')'
+		// 	| message_name '(' argument_list ')'
 		
-		final String selectorName = ctx.JAVA_ID().getText();
+		final String selectorName = ctx.method_name().getText();
 		
 		// Leave argument list processing to Pass 2...
 		
@@ -2766,7 +2766,7 @@ public class Pass1Listener extends Pass0Listener {
 		ActualArgumentList argumentList = parsingData_.popArgumentList();
 		
 		if (printProductionsDebug) {
-			System.err.print("message : JAVA_ID '(' argument_list ')' (");
+			System.err.print("message : message_name '(' argument_list ')' (");
 			System.err.print(selectorName);
 			System.err.println(")");
 		}

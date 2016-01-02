@@ -308,7 +308,7 @@ boolean_atom
         ;
 
 message
-        : <assoc=right> JAVA_ID '(' argument_list ')'
+        : <assoc=right> method_name '(' argument_list ')'
         ;
 
 block

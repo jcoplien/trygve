@@ -1,8 +1,8 @@
-// Generated from src/main/java/info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
+// Generated from info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
 
     package info.fulloo.trygve.parser;
 
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.atn.*; 
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.*;
@@ -3235,6 +3235,7 @@ public class KantParser extends Parser {
 			case NEW:
 			case NULL:
 			case ABELIAN_SUMOP:
+			case ABELIAN_MULOP:
 			case ABELIAN_INCREMENT_OP:
 			case JAVA_ID:
 				{
@@ -3438,8 +3439,8 @@ public class KantParser extends Parser {
 		enterRule(_localctx, 72, RULE_abelian_unary_op);
 		try {
 			setState(695);
-			switch (_input.LA(1)) {
-			case ABELIAN_SUMOP:
+			switch ( getInterpreter().adaptivePredict(_input,55,_ctx) ) {
+			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(692);
@@ -3448,23 +3449,13 @@ public class KantParser extends Parser {
 				abelian_atom(0);
 				}
 				break;
-			case T__13:
-			case STRING:
-			case INTEGER:
-			case FLOAT:
-			case BOOLEAN:
-			case NEW:
-			case NULL:
-			case ABELIAN_INCREMENT_OP:
-			case JAVA_ID:
+			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(694);
 				abelian_atom(0);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -4179,7 +4170,9 @@ public class KantParser extends Parser {
 	}
 
 	public static class MessageContext extends ParserRuleContext {
-		public TerminalNode JAVA_ID() { return getToken(KantParser.JAVA_ID, 0); }
+		public Method_nameContext method_name() {
+			return getRuleContext(Method_nameContext.class,0);
+		}
 		public Argument_listContext argument_list() {
 			return getRuleContext(Argument_listContext.class,0);
 		}
@@ -4204,7 +4197,7 @@ public class KantParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(822);
-			match(JAVA_ID);
+			method_name();
 			setState(823);
 			match(T__13);
 			setState(824);
@@ -4322,6 +4315,7 @@ public class KantParser extends Parser {
 			case NEW:
 			case NULL:
 			case ABELIAN_SUMOP:
+			case ABELIAN_MULOP:
 			case LOGICAL_NEGATION:
 			case ABELIAN_INCREMENT_OP:
 			case JAVA_ID:
@@ -5456,7 +5450,7 @@ public class KantParser extends Parser {
 		"\u0337\5j\66\2\u0330\u0337\7?\2\2\u0331\u0337\5h\65\2\u0332\u0333\7\20"+
 		"\2\2\u0333\u0334\5N(\2\u0334\u0335\7\21\2\2\u0335\u0337\3\2\2\2\u0336"+
 		"\u032f\3\2\2\2\u0336\u0330\3\2\2\2\u0336\u0331\3\2\2\2\u0336\u0332\3\2"+
-		"\2\2\u0337U\3\2\2\2\u0338\u0339\7?\2\2\u0339\u033a\7\20\2\2\u033a\u033b"+
+		"\2\2\u0337U\3\2\2\2\u0338\u0339\5\62\32\2\u0339\u033a\7\20\2\2\u033a\u033b"+
 		"\5l\67\2\u033b\u033c\7\21\2\2\u033cW\3\2\2\2\u033d\u033e\7\4\2\2\u033e"+
 		"\u033f\5.\30\2\u033f\u0340\7\5\2\2\u0340\u0344\3\2\2\2\u0341\u0342\7\4"+
 		"\2\2\u0342\u0344\7\5\2\2\u0343\u033d\3\2\2\2\u0343\u0341\3\2\2\2\u0344"+

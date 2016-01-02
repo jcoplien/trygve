@@ -1,4 +1,4 @@
-// Generated from src/main/java/info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
+// Generated from info/fulloo/trygve/parser/Kant.g4 by ANTLR 4.5.1
 
     package info.fulloo.trygve.parser;
 
@@ -13,7 +13,7 @@ public interface KantListener extends ParseTreeListener {
 	 * Enter a parse tree produced by {@link KantParser#program}.
 	 * @param ctx the parse tree
 	 */
-	void enterProgram(KantParser.ProgramContext ctx);
+	void enterProgram(KantParser.ProgramContext ctx); 
 	/**
 	 * Exit a parse tree produced by {@link KantParser#program}.
 	 * @param ctx the parse tree
