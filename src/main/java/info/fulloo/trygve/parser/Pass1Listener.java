@@ -1668,6 +1668,7 @@ public class Pass1Listener extends Pass0Listener {
 		// | if_expr
 		
 		Expression expression = null;
+		final int lineNumber = ctx.getStart().getLine();
 		
 		if (null != ctx.abelian_product() && ctx.abelian_product().size() > 1 && null != ctx.ABELIAN_SUMOP()) {
 			//	| abelian_expr op=('+' | '-') abelian_expr
@@ -1685,8 +1686,28 @@ public class Pass1Listener extends Pass0Listener {
 				for (int i = 0; i < abelianSumopSize; i++) {
 					final Expression expr2 = exprStack.pop();
 					final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
-					expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
-				}
+					
+					// WAIT: What if the type has implemented its
+					// own version of '+' or '-'?
+					final ActualArgumentList params = new ActualArgumentList();
+					params.addActualArgument(expr2);
+					params.addFirstActualParameter(expression);
+					final MethodDeclaration myOperatorFunc =
+							expression.type().enclosedScope().lookupMethodDeclarationWithConversion(operatorAsString, params, false);
+					if (null != myOperatorFunc) {
+						// This dude or dudette has defined their own
+						// operator. Arrange a full-blown method call
+						// to handle it
+						final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+						expression.setResultIsConsumed(true);
+						expr2.setResultIsConsumed(true);
+						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false);
+					} else {
+						// No need to set x.setResultIsConsumed for the two operands,
+						// because the SumExpression constructor does it.
+						expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+					}
+				}	
 			} else {
 				expression = new NullExpression();
 			}

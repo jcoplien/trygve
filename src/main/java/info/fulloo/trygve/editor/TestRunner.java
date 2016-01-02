@@ -124,6 +124,7 @@ public class TestRunner {
 		"number_test0.k",
 		"number_test1.k",
 		"role_and_double_test.k",
+		"complex1.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
@@ -227,6 +228,7 @@ public class TestRunner {
 		}
 	}
 	
+	/*
 	private String canonize(final char c) {
 		String retval = String.valueOf(c);
 		switch (c) {
@@ -236,6 +238,7 @@ public class TestRunner {
 		}
 		return retval;
 	}
+	*/
 	
 	private void analyzeFailure(final String s1, final String s2) {
 		/*

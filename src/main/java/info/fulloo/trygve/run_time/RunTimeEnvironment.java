@@ -48,6 +48,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTQualifiedIdentifier;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -176,14 +177,15 @@ public class RunTimeEnvironment {
 	public RTStackable popDownToFramePointer() {
 		RTStackable retval = null;
 		final int stackSize = stack.size();
-		int framePointer = (framePointers_.pop()).value();
+		final int framePointer = (framePointers_.pop()).value();
 		if (framePointer > stackSize) {
 			ErrorLogger.error(ErrorType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
 		while (stack.size() > framePointer) {
-			stack.pop();
+			@SuppressWarnings("unused")
+			final RTStackable popped = stack.pop();	// save value here for debugging only
 		}
 		retval = stack.peek();
 		return retval;
@@ -354,6 +356,8 @@ public class RunTimeEnvironment {
 			System.err.format(":  %s", element.getClass().getSimpleName());
 			if (element instanceof RTIntegerObject) {
 				System.err.format(" (\"%d\")", ((RTIntegerObject)element).intValue());
+			} else if (element instanceof RTDoubleObject) {
+				System.err.format(" (\"%f\")", ((RTDoubleObject)element).doubleValue());
 			} else if (element instanceof RTStringObject) {
 				System.err.format(" (\"%s\")", ((RTStringObject)element).stringValue());
 			} else if (element instanceof RTBooleanObject) {
@@ -362,6 +366,8 @@ public class RunTimeEnvironment {
 				System.err.format(" (\"%s\")", ((RTContextObject)element).rTType().name());
 			} else if (element instanceof RTRole) {
 				System.err.format(" (\"%s\")", ((RTRole)element).name());
+			} else if (element instanceof RTPostReturnProcessing) {
+				System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
 			}
 			if (topFramePointer == i-1) {
 				System.err.format(" <== frame pointer (%d)", i+1);

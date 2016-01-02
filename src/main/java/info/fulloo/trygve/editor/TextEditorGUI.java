@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/role_and_double_test.k";
+	private final static String defaultFile = "tests/complex1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.1.11";
+    final String TrygveVersion = "1.1.12";
     
     
     /** Creates new form TextEditorGUI */
@@ -266,7 +266,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
 
-        urlTextField.setText("http://fulloo.info/Examples/TrygveExamples/switchtest.k");
+        urlTextField.setText("http://fulloo.info/Examples/TrygveExamples/complex1.k");
         urlTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 urlTextFieldActionPerformed(evt);

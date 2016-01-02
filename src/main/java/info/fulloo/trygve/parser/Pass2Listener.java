@@ -438,11 +438,21 @@ public class Pass2Listener extends Pass1Listener {
 				}
 			}
 		}
-		if (leftExprType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rightExprType) &&
+		
+		// First, check "overloading"
+		final ActualArgumentList argumentList = new ActualArgumentList();
+		argumentList.addActualArgument(rightExpr);
+		argumentList.addFirstActualParameter(leftExpr);
+		final MethodDeclaration checkMethodOverload =
+				leftExprType.enclosedScope().lookupMethodDeclarationWithConversion(operationAsString, argumentList, false);
+		
+		if (null != checkMethodOverload) {
+			;	// then the class overloads the operator. O.K.
+		} else if (leftExprType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rightExprType) &&
 				rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
 			;	// o.k.
 		} else {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type ``",
+			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type `",
 					resultType.name(), "' for argument `", rightExpr.type().name() + "'.");
 		}
 	}

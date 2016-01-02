@@ -151,7 +151,7 @@ public abstract class Type implements ExpressionStackAPI
 			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
-			boolean retval = t.name().equals(name());
+			boolean retval = t.pathName().equals(pathName());
 			if (!retval) {
 				if (t.name().equals("Null")) {
 					retval = true;
