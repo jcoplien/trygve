@@ -256,6 +256,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared,
 				final int lineNumber) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
+
 			scopeWhereDeclared_ = scopeWhereDeclared;
 			lineNumber_ = lineNumber;
 		}
@@ -1058,11 +1059,13 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	}
 	
 	public static class SwitchExpression extends Expression implements BreakableExpression {
-		public SwitchExpression(final ParsingData parsingData, final Type enclosingMegaType) {
+		public SwitchExpression(final ParsingData parsingData, final Type enclosingMegaType,
+				final StaticScope enclosedScope) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			indexedSwitchBodyElements_ = new LinkedHashMap<Constant, SwitchBodyElement>();
 			orderedSwitchBodyElements_ = new ArrayList<SwitchBodyElement>();
 			expression_ = null;
+			enclosedScope_ = enclosedScope;
 			label_ = this.forgeLabel();
 			if (null != parsingData) {
 				parsingData.addBreakableExpression(label_, this);
@@ -1120,6 +1123,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public void setExpressionType(final Type t) {
 			expressionType_ = t;
 		}
+		public StaticScope enclosedScope() {
+			return enclosedScope_;
+		}
 		
 		private Map<Constant, SwitchBodyElement> indexedSwitchBodyElements_;
 		private List<SwitchBodyElement> orderedSwitchBodyElements_;
@@ -1127,6 +1133,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final String label_;
 		private boolean hasDefault_;
 		private Type expressionType_;
+		private final StaticScope enclosedScope_;
 	}
 	
 	public static class BreakExpression extends Expression

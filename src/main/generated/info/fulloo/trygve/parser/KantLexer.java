@@ -29,7 +29,7 @@ public class KantLexer extends Lexer {
 		ABELIAN_SUMOP=53, ABELIAN_MULOP=54, MINUS=55, PLUS=56, LT=57, GT=58, LOGICAL_NEGATION=59, 
 		ABELIAN_INCREMENT_OP=60, JAVA_ID=61, INLINE_COMMENT=62, C_COMMENT=63, 
 		WHITESPACE=64, ASSIGN=65;
-	public static String[] modeNames = {
+	public static String[] modeNames = { 
 		"DEFAULT_MODE"
 	};
 

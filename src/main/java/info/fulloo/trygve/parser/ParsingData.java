@@ -107,6 +107,7 @@ public class ParsingData {
 	public void                     pushArgumentList(ActualArgumentList al) { argumentLists_.push(al); }
 	public ActualArgumentList        popArgumentList() { assert argumentLists_.size() > 0; return argumentLists_.pop(); }
 	public void                     pushDeclarationList(final DeclarationList l) { declarationList_.push(l); }
+	public boolean               currentDeclarationListExists() { return declarationList_.size() > 0; }
 	public DeclarationList           popDeclarationList() { return declarationList_.pop(); }
 	public FormalParameterList       popFormalParameterList() { assert formalParameterLists_.size() > 0; return formalParameterLists_.pop(); }
 	public FormalParameterList   currentFormalParameterList() { return formalParameterLists_.peek(); }
@@ -139,6 +140,7 @@ public class ParsingData {
 	public BlockExpression 		 currentBlockExpression() { return blockExpressionStack_.peek(); }
 	private Expression               popBreakableExpression() { return loopExpressionStack_.pop(); }
 	private void                    pushBreakableExpression(final Expression e) { loopExpressionStack_.push(e); }
+	public boolean               currentBreakableExpressionExists() { return loopExpressionStack_.size() > 0; }
 	public Expression            currentBreakableExpression() { return loopExpressionStack_.peek(); }
 	public ClassDeclaration 	     popClassDeclaration() { return classDeclarations_.pop(); }
 	public ClassDeclaration 	 currentClassDeclaration() { return classDeclarations_.peek(); }
@@ -154,7 +156,10 @@ public class ParsingData {
 	public Expression               peekExpression() { return (Expression)expressions_.peek(); }
 	public boolean               currentExpressionExists() { return expressions_.size() > 0; }
 	public ExpressionStackAPI     popRawExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; return expressions_.pop(); }
-	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null; final Expression retval = (Expression)expressions_.pop(); assert retval instanceof Expression; return retval; }
+	public Expression                popExpression() { assert expressions_.size() > 0; assert expressions_.peek() != null;
+													   final ExpressionStackAPI rawRetval = expressions_.pop();
+													   final Expression retval = (Expression)rawRetval;
+													   assert retval instanceof Expression; return retval; }
 	public ForExpression  			 popForExpression() { popBreakableExpression();  return forExpressionStack_.pop(); }
 	public void 					pushForExpression(final ForExpression expr) { forExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public ForExpression 		 currentForExpression() { return forExpressionStack_.peek(); }

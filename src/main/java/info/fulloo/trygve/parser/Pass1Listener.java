@@ -60,6 +60,7 @@ import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -942,6 +943,7 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		// method_decl_hook
 		//	: method_signature
+		final int lineNumber = ctx.getStart().getLine();
 
 		final Declaration associatedDeclaration = currentScope_.parentScope().associatedDeclaration();
 		if (null == associatedDeclaration) {
@@ -964,7 +966,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		// Add declaration of "this" as a formal parameter
-		final ObjectDeclaration self = new ObjectDeclaration("this", classOrRoleOrContextType, ctx.getStart().getLine());
+		final ObjectDeclaration self = new ObjectDeclaration("this", classOrRoleOrContextType, lineNumber);
 		parsingData_.currentFormalParameterList().addFormalParameter(self);
 		
 		if (isRoleMethodInvocation) {
@@ -975,7 +977,7 @@ public class Pass1Listener extends Pass0Listener {
 				final StaticScope scope = contextType.enclosedScope();
 				contextType = Expression.nearestEnclosingMegaTypeOf(scope.parentScope());
 			}
-			final ObjectDeclaration currentContext = new ObjectDeclaration("current$context", contextType, ctx.getStart().getLine());
+			final ObjectDeclaration currentContext = new ObjectDeclaration("current$context", contextType, lineNumber);
 			parsingData_.currentFormalParameterList().addFormalParameter(currentContext);
 		}
 		
@@ -1119,7 +1121,12 @@ public class Pass1Listener extends Pass0Listener {
 			expr = parsingData_.popExpression();
 		}
 		if (null != ctx.object_decl()) {
-			object_decl = parsingData_.popDeclarationList();
+			// stumbling check
+			if (parsingData_.currentDeclarationListExists()) {
+				object_decl = parsingData_.popDeclarationList();
+			} else {
+				object_decl = null;
+			}
 		}
 		if (null != expr && null != object_decl) {
 			currentExprAndDecl.addBodyPart(expr);
@@ -1184,7 +1191,8 @@ public class Pass1Listener extends Pass0Listener {
 		//  | ABELIAN_MULOP
 		//  | ABELIAN_SUMOP
 
-		/* nothing */
+		/* nothing — it's pure text, so we just do text processing */
+		/* in the productions that depend on this one. */
 	}
 	
 	@Override public void exitAccess_qualifier(KantParser.Access_qualifierContext ctx)
@@ -1221,6 +1229,7 @@ public class Pass1Listener extends Pass0Listener {
 		// One semantic routine serves all three passes
 
 		final int lineNumber = ctx.getStart().getLine();
+		
 		final KantParser.Access_qualifierContext accessQualifierContext = ctx.access_qualifier();
 		final String accessQualifierString = accessQualifierContext != null? accessQualifierContext.getText(): "";
 		AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
@@ -1251,11 +1260,11 @@ public class Pass1Listener extends Pass0Listener {
 		
 		final Declaration associatedDeclaration = currentScope_.associatedDeclaration();
 		if (associatedDeclaration instanceof StagePropDeclaration) {
-			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorType.Fatal, lineNumber, "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else if (associatedDeclaration instanceof RoleDeclaration) {
-			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorType.Fatal, lineNumber, "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else {
@@ -1332,7 +1341,7 @@ public class Pass1Listener extends Pass0Listener {
 			}
 			
 			for (final ObjectDeclaration aDecl : declaredObjectDeclarations) {
-				this.nameCheck(aDecl.name(), ctx.getStart().getLine());
+				this.nameCheck(aDecl.name(), lineNumber);
 			}
 		}
 
@@ -1557,6 +1566,7 @@ public class Pass1Listener extends Pass0Listener {
 	    //  | RETURN
 	    
 		Expression expression = null;
+		final int lineNumber = ctx.getStart().getLine();
 		
 		if (null != ctx.abelian_expr()) {
 			if (parsingData_.currentExpressionExists()) {
@@ -1591,13 +1601,20 @@ public class Pass1Listener extends Pass0Listener {
 			if (printProductionsDebug) { System.err.println("expr : switch_expr"); }
 		} else if (null != ctx.BREAK()) {
 			final long nestingLevelInsideBreakable = nestingLevelInsideBreakable(ctx.BREAK());
-			final Expression currentBreakableExpression = parsingData_.currentBreakableExpression();
+			Expression currentBreakableExpression = null;
+			if (parsingData_.currentBreakableExpressionExists()) {
+				currentBreakableExpression = parsingData_.currentBreakableExpression();
+			}
 			if (null == currentBreakableExpression) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "There is no switch or loop statement to break", "", "", "");
 			} else if (nestingLevelInsideBreakable == -1) {
 				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "The break statement is not in the scope of any switch or loop statement", "", "", "");
 			}
-			expression = new BreakExpression(ctx.getStart().getLine(), currentBreakableExpression, nestingLevelInsideBreakable);
+			if (null != currentBreakableExpression) {
+				expression = new BreakExpression(ctx.getStart().getLine(), currentBreakableExpression, nestingLevelInsideBreakable);
+			} else {
+				expression = new NullExpression();
+			}
 			if (printProductionsDebug) { System.err.print("expr : BREAK (nesting level is "); System.err.print(nestingLevelInsideBreakable); System.err.println(")"); }
 		} else if (null != ctx.CONTINUE()) {
 			final long nestingLevelInsideBreakable = nestingLevelInsideBreakableForContinue(ctx.CONTINUE());
@@ -2380,6 +2397,7 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		//  abelian_expr         
 		//  | NEW message
+		//	| NEW type_name
         //	| NEW type_name '[' expr ']'
 		//  | NEW JAVA_ID type_list '(' argument_list ')'
 		//  | abelian_atom '.' JAVA_ID
@@ -2400,6 +2418,7 @@ public class Pass1Listener extends Pass0Listener {
 		
 		// All passes. EXPLICITLY INVOKED FROM PASS 4
 		
+		final int lineNumber = ctx.getStart().getLine();
 		Expression expression = null;
 		
 		if (null != ctx.NEW() && null != ctx.type_list() && null != ctx.argument_list()) {
@@ -2411,7 +2430,7 @@ public class Pass1Listener extends Pass0Listener {
 			final String JAVA_ID = ctx.JAVA_ID().getText();
 			final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(JAVA_ID);
 			if (null == templateDeclaration) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"Cannot find template ", JAVA_ID, "", "");
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 				expression = new NullExpression();
@@ -2428,27 +2447,27 @@ public class Pass1Listener extends Pass0Listener {
 				final String compoundTypeName = typeNameBuffer.toString();
 				type = currentScope_.lookupTypeDeclarationRecursive(compoundTypeName);
 				if (null == type) {
-					type = this.lookupOrCreateTemplateInstantiation(JAVA_ID, typeParameterNameList, ctx.getStart().getLine());
+					type = this.lookupOrCreateTemplateInstantiation(JAVA_ID, typeParameterNameList, lineNumber);
 					if (null == type) {
-						errorHook5p2(ErrorType.Internal, ctx.getStart().getLine(),
+						errorHook5p2(ErrorType.Internal, lineNumber,
 							"Cannot find template instantiation ", compoundTypeName, "", "");
 						type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					}
 				}
 				
 				final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-				final Message message = new Message(compoundTypeName, argument_list, ctx.getStart().getLine(), enclosingMegaType);
-				final NewExpression newExpr = new NewExpression(type, message, ctx.getStart().getLine(), enclosingMegaType);
-				ctorCheck(type, message, ctx.getStart().getLine());
+				final Message message = new Message(compoundTypeName, argument_list, lineNumber, enclosingMegaType);
+				final NewExpression newExpr = new NewExpression(type, message, lineNumber, enclosingMegaType);
+				ctorCheck(type, message, lineNumber);
 				addSelfAccordingToPass(type, message, currentScope_);
 				expression = newExpr;
 			}
 			
 			final MethodDeclaration constructor = type.enclosedScope().lookupMethodDeclaration(JAVA_ID, argument_list, false);
 			if (null != constructor) {
-				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), ctx.getStart().getLine());
+				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
 				if (isAccessible == false) {
-					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					errorHook6p2(ErrorType.Fatal, lineNumber,
 							"Cannot access constructor `", constructor.signature().getText(),
 							"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 				}
@@ -2472,7 +2491,7 @@ public class Pass1Listener extends Pass0Listener {
 			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom());
 			
 			if (null == expression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"No match for call: ", ctx.abelian_atom().getText(), ".", ctx.message().getText());
 				expression = new NullExpression();
 			}
@@ -2485,11 +2504,12 @@ public class Pass1Listener extends Pass0Listener {
 			// NEW type_name '[' expr ']'
 			
 			final KantParser.ExprContext sizeExprCtx = (null == ctx.expr())? null:
-														((ctx.expr().size() == 0)? null: ctx.expr(0));
+															((ctx.expr().size() == 0)? null: ctx.expr(0));
 			final List<ParseTree> ctxChildren = ctx.children;
 			final Token ctxGetStart = ctx.getStart();
 			final MessageContext ctxMessage = ctx.message();
 			expression = this.newExpr(ctxChildren, ctxGetStart, sizeExprCtx, ctxMessage);
+			
 			if (expression instanceof NullExpression == false) {
 				expression = checkNakedNew(expression);
 			}
@@ -2587,7 +2607,6 @@ public class Pass1Listener extends Pass0Listener {
 			
 			// The fidelity of this varies according to how much
 			// type information we have at hand
-			final int lineNumber = ctx.getStart().getLine();
 			expression = processIndexExpression(rawArrayBase, indexExpr, lineNumber);
 			
 			if (printProductionsDebug) {
@@ -2743,17 +2762,26 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void enterMessage(KantParser.MessageContext ctx)
 	{
-		// JAVA_ID '(' argument_list ')'
+		// 	: method_name '(' argument_list ')'
+		//  | type_name '(' argument_list ')'
 		
 		parsingData_.pushArgumentList(new ActualArgumentList());
 	}
 	
 	@Override public void exitMessage(KantParser.MessageContext ctx)
 	{
-		// 	| message_name '(' argument_list ')'
+		// 	: method_name '(' argument_list ')'
+		//  | type_name '(' argument_list ')'
 		
-		final String selectorName = ctx.method_name().getText();
-		
+		String selectorName = null;
+		if (null != ctx.method_name()) {
+			selectorName = ctx.method_name().getText();
+		} else if (null != ctx.type_name()) {
+			final ExpressionStackAPI typeName = parsingData_.popRawExpression();
+			selectorName = typeName.name();
+		} else {
+			assert false;
+		}		
 		// Leave argument list processing to Pass 2...
 		
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
@@ -2777,13 +2805,16 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		//	: '{' expr_and_decl_list '}'
         //	| '{' '}'
+		
+		final int lineNumber = ctx.getStart().getLine();
+		
 		// Set up the block
 		currentScope_ = new StaticScope(currentScope_, true);
-		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart().getLine());
+		final ExprAndDeclList newList = new ExprAndDeclList(lineNumber);
 		parsingData_.pushExprAndDecl(newList);
 
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		final BlockExpression blockExpression = new BlockExpression(ctx.getStart().getLine(), newList, currentScope_, enclosingMegaType);
+		final BlockExpression blockExpression = new BlockExpression(lineNumber, newList, currentScope_, enclosingMegaType);
 		currentScope_.setDeclaration(null);	/// hmmm....
 		
 		parsingData_.pushBlockExpression(blockExpression);
@@ -2795,6 +2826,7 @@ public class Pass1Listener extends Pass0Listener {
         //	| '{' '}'
 		// Just for balance. Do something with this later.
 		// And we pop it in any case, because we pushed it unconditionally above
+		
 		@SuppressWarnings("unused")
 		final ExprAndDeclList exprAndDeclList = parsingData_.popExprAndDecl();
 		final BlockExpression expression = parsingData_.popBlockExpression();
@@ -2884,6 +2916,9 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void exitTrivial_object_decl(KantParser.Trivial_object_declContext ctx) {
 		// trivial_object_decl : compound_type_name JAVA_ID
+		
+		final int lineNumber = ctx.getStart().getLine();
+		
 		final String idName = ctx.JAVA_ID().getText();
 		
 		final Compound_type_nameContext compound_type_name = ctx.compound_type_name();
@@ -2900,13 +2935,13 @@ public class Pass1Listener extends Pass0Listener {
 			final String secondModifier = children.get(2).getText();
 			if (firstModifier.equals("[") && secondModifier.equals("]")) {
 				// Is an array declaration
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"An array declaration is not appropriate for this context", "",
 						"", "");
 			}
 		}
 		
-		this.nameCheck(idName, ctx.getStart().getLine());
+		this.nameCheck(idName, lineNumber);
 		
 		Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 		if (null == type) {
@@ -2946,6 +2981,7 @@ public class Pass1Listener extends Pass0Listener {
 		//  | 'for' '(' trivial_object_decl ':' expr ')' expr
 		
 		ForExpression expression = null;
+		final int lineNumber = ctx.getStart().getLine();
 		
 		if ((null == ctx.JAVA_ID()) && (null == ctx.object_decl()) && (null == ctx.trivial_object_decl())
 				&& (ctx.expr().size() == 4)) {
@@ -2964,7 +3000,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type conditionalType = conditional.type();
 			
 			if (conditionalType.name().equals("boolean") == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
 						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(initializer, falseExpr, increment, body);
@@ -2993,7 +3029,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type conditionalType = conditional.type();
 			
 			if (conditionalType.name().equals("boolean") == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
 						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(null, falseExpr, increment, body);
@@ -3008,7 +3044,7 @@ public class Pass1Listener extends Pass0Listener {
 			final String JAVA_IDasString = ctx.JAVA_ID().getText();
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Loop identifier `", JAVA_IDasString,
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
 						"' is not declared", "");
 			}
 			expression = parsingData_.popForExpression();
@@ -3019,7 +3055,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type typeIncrementingOver = thingToIncrementOver.type();
 			if (typeIncrementingOver instanceof ArrayType == false &&
 					typeIncrementingOver.name().startsWith("List<") == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}
 			
@@ -3045,7 +3081,7 @@ public class Pass1Listener extends Pass0Listener {
 			// final String JAVA_IDasString = ctx.JAVA_ID().getText();
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclaration(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Loop identifier `", JAVA_IDasString,
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
 						"' is not declared", " (strange error)");
 			}
 			
@@ -3055,7 +3091,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type typeIncrementingOver = thingToIncrementOver.type();
 			if (typeIncrementingOver instanceof ArrayType == false &&
 					typeIncrementingOver.name().startsWith("List<") == false) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Expression `", thingToIncrementOver.getText(),
+				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}
 					
@@ -3188,8 +3224,12 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void enterSwitch_expr(KantParser.Switch_exprContext ctx)
 	{
 		// : 'switch' '(' expr ')' '{'  ( switch_body )* '}'
+		
+		currentScope_ = new StaticScope(currentScope_, true);
+		
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		final SwitchExpression switchExpression = new SwitchExpression(parsingDataArgumentAccordingToPass(), enclosingMegaType);
+		final SwitchExpression switchExpression = new SwitchExpression(parsingDataArgumentAccordingToPass(), enclosingMegaType,
+				currentScope_);
 		parsingData_.pushSwitchExpr(switchExpression);
 	}
 	
@@ -3197,6 +3237,7 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		// : 'switch' '(' expr ')' '{' ( switch_body )* '}'
 		// One version serves passes 1 - 4
+		
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
 		
 		// Set all the goodies. The body is already taken care of.
@@ -3211,8 +3252,6 @@ public class Pass1Listener extends Pass0Listener {
 			final Type switchExpressionType = expressionToSwitchOn.type();
 			boolean stillEvaluating = true;
 			for (final SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
-				String caseTypePathName = null;
-				
 				// See if all case body expressions are of the same type
 				if (null == potentialSwitchExpressionType && stillEvaluating) {
 					if (aCase.hasNoBody() == false) {
@@ -3222,7 +3261,7 @@ public class Pass1Listener extends Pass0Listener {
 				
 				if (null != potentialSwitchExpressionType) {
 					if (stillEvaluating) {
-						caseTypePathName = aCase.type().pathName();
+						final String caseTypePathName = aCase.type().pathName();
 						if (caseTypePathName.equals("void")) {
 							// it could be because there is no
 							// expression to go with the case statement.
@@ -3247,15 +3286,17 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}	/* for */
 			
-			if (stillEvaluating) {		// then we maade it through all the cases!
+			if (stillEvaluating) {		// then we made it through all the cases!
 				// We have a consistent expression type since all case
 				// statements yield the same type
 				switchExpression.setExpressionType(potentialSwitchExpressionType);
 			}
-		}
+		} /* if */
+		
+		currentScope_ = currentScope_.parentScope();
 		
 		if (printProductionsDebug) {
-			System.err.println("switch_expr : 'switch' '(' expr ')' '{'  ( switch_body )* '}'");
+			System.err.println("switch_expr : 'switch' '(' expr ')' '{' ( switch_body )* '}'");
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
@@ -3264,7 +3305,6 @@ public class Pass1Listener extends Pass0Listener {
 	{
 		// : ( 'case' constant | 'default' ) ':' expr_and_decl_list
 		
-		currentScope_ = new StaticScope(currentScope_, true);
 		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart().getLine());
 		parsingData_.pushExprAndDecl(newList);
 	}
@@ -3305,7 +3345,6 @@ public class Pass1Listener extends Pass0Listener {
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		final SwitchBodyElement switchBodyElement = new SwitchBodyElement(constant, isDefault, expr_and_decl_list, enclosingMegaType);
 		parsingData_.currentSwitchExpr().addSwitchBodyElement(switchBodyElement);
-		currentScope_ = currentScope_.parentScope();
 		
 		if (printProductionsDebug) {
 			System.err.println("switch_body : ( 'case' constant | 'default' ) ':' expr_and_decl_list");
@@ -3881,7 +3920,8 @@ public class Pass1Listener extends Pass0Listener {
 			// : 'new' message
 			final String classOrContextName = message.selectorName(); // I know -- kludge ...
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(classOrContextName);
-			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false) {
+			if ((type instanceof ClassType) == false && (type instanceof ContextType) == false
+					&& (type instanceof BuiltInType) == false) {
 				if (type instanceof TemplateParameterType) {
 					// then it's Ok
 					expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);

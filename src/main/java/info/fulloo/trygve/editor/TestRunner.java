@@ -125,6 +125,7 @@ public class TestRunner {
 		"number_test1.k",
 		"role_and_double_test.k",
 		"complex1.k",
+		"disk1.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

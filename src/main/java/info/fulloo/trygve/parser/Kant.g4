@@ -309,6 +309,7 @@ boolean_atom
 
 message
         : <assoc=right> method_name '(' argument_list ')'
+        | <assoc=right> type_name '(' argument_list ')'
         ;
 
 block

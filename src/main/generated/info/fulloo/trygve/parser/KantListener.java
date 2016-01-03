@@ -2,7 +2,7 @@
 
     package info.fulloo.trygve.parser;
 
-import org.antlr.v4.runtime.tree.ParseTreeListener;
+import org.antlr.v4.runtime.tree.ParseTreeListener; 
 
 /**
  * This interface defines a complete listener for a parse tree produced by
@@ -13,7 +13,7 @@ public interface KantListener extends ParseTreeListener {
 	 * Enter a parse tree produced by {@link KantParser#program}.
 	 * @param ctx the parse tree
 	 */
-	void enterProgram(KantParser.ProgramContext ctx); 
+	void enterProgram(KantParser.ProgramContext ctx);
 	/**
 	 * Exit a parse tree produced by {@link KantParser#program}.
 	 * @param ctx the parse tree

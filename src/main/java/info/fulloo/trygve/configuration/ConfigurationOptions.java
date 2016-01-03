@@ -45,6 +45,9 @@ public class ConfigurationOptions {
 	public static boolean runtimeStackTrace() {
 		return false;
 	}
+	public static boolean activationRecordStackTrace() {
+		return false;
+	}
 	
 	static {
 		  boolean assertsEnabled = false;

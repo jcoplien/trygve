@@ -252,13 +252,27 @@ public class RunTimeEnvironment {
 		// its first use, so we don't increment
 		// element.incrementReferenceCount();
 		dynamicScopes.push(element);
+		if (ConfigurationOptions.activationRecordStackTrace()) {
+			printDynamicScopeStack();
+		}
 	}
 	public RTDynamicScope popDynamicScope() {
 		final RTDynamicScope retval = dynamicScopes.pop();
 		
+		if (ConfigurationOptions.activationRecordStackTrace()) {
+			printDynamicScopeStack();
+		}
+		
 		// We don't decrement the reference count here; that is handled
 		// elsewhere (see, e.g., RTReturn>>run())
 		return retval;
+	}
+	private void printDynamicScopeStack() {
+		System.err.format("vvvvvvvvvvvvvvvvvvvvvv\n");
+		for (final RTDynamicScope aScope : dynamicScopes) {
+			System.err.format("%s\n", aScope.name());
+		}
+		System.err.format("^^^^^^^^^^^^^^^^^^^^^^\n");
 	}
 	public RTDynamicScope currentDynamicScope() {
 		return dynamicScopes.peek();

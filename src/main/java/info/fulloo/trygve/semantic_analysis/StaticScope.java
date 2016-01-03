@@ -582,8 +582,10 @@ public class StaticScope {
 		String retval = null;
 		if (associatedDeclaration_ != null) {
 			retval = associatedDeclaration_.name();
+		} else if (this == globalScope_) {
+			retval = "<global scope>";
 		} else {
-			retval = "*unknown*";
+			retval = "<unknown>";
 		}
 		assert retval != null;
 		return retval;

@@ -24,6 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -3317,14 +3318,30 @@ public abstract class RTExpression extends RTCode {
 			part2_ = new RTSwitchPart2(expr, this);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 			
+			lineNumber_ = expr.lineNumber();
+			
 			RTCode lastAdded = null;
-			last_ = new RTNullExpression();
+			
+			// A switch statement opens a new activation record.
+			// The last thing that the "switch block" should do is to close
+			// that scope
+			last_ = new RTPopDynamicScope();
+			
+			// Copy from the compiler data, the local variable names
+			// declared in the "Block" scope
+			objectDeclarations_ = new LinkedHashMap<String, RTType>();
+			
+			for (final ObjectDeclaration objectDecl : expr.enclosedScope().objectDeclarations()) {
+				final RTType objectType = null;	 // sigh...
+				objectDeclarations_.put(objectDecl.name(), objectType);
+			}
+
 			cases_ = new LinkedHashMap<RTObject, RTExpressionList>();
 			defaultCase_ = null;
 			switchStack_.push(this);
 			switchExpression_ = RTExpression.makeExpressionFrom(expr.switchExpression(), enclosingType);
 			orderedSwitchBodyElements_ = expr.orderedSwitchBodyElements();
-			for (SwitchBodyElement caseOrDefault : orderedSwitchBodyElements_) {
+			for (final SwitchBodyElement caseOrDefault : orderedSwitchBodyElements_) {
 				final Constant caseValue = caseOrDefault.constant();
 				RTObject rTCaseValue = null;
 				if (null != caseValue) {
@@ -3372,6 +3389,17 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		@Override public RTCode run() {
+			final RTDynamicScope dynamicScope = new RTDynamicScope("switch @ line " + Integer.toString(lineNumber_),
+					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+			
+			// Declare local variables
+			for (Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
+				final String objectName = iter.getKey();
+				final RTType type = iter.getValue();
+				dynamicScope.addObjectDeclaration(objectName, type);
+			}
+			
+			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope);
 			final RTCode retval = RunTimeEnvironment.runTimeEnvironment_.runner(switchExpression_);
 			assert null != retval;
 			return retval;
@@ -3459,9 +3487,11 @@ public abstract class RTExpression extends RTCode {
 		private RTCode last_;
 		private List<SwitchBodyElement> orderedSwitchBodyElements_;
 		private Map<RTObject, RTExpressionList> cases_;
+		private HashMap<String, RTType> objectDeclarations_;
 		private RTExpressionList defaultCase_;
 		private final String label_;
 		private final RTSwitchPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTConstant extends RTExpression implements RTObject {
@@ -3543,7 +3573,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTBreak extends RTExpression {
-		public RTBreak(BreakExpression expr) {
+		public RTBreak(final BreakExpression expr) {
 			super();
 			parsingData_ = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 			final BreakableExpression associatedLoop = expr.loop();
@@ -3958,7 +3988,7 @@ public abstract class RTExpression extends RTCode {
 			
 			// Copy from the compiler data, the local variable names
 			// declared in the Block scope
-			for (ObjectDeclaration objectDecl : expr.scope().objectDeclarations()) {
+			for (final ObjectDeclaration objectDecl : expr.scope().objectDeclarations()) {
 				final RTType objectType = null;	 // sigh...
 				objectDeclarations_.put(objectDecl.name(), objectType);
 			}
@@ -3978,6 +4008,8 @@ public abstract class RTExpression extends RTCode {
 			
 			last_ = new RTNullExpression();
 			rTBlockBody_.addExpression(last_);
+			
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			// Get the first node from the body, run it,
@@ -3990,7 +4022,8 @@ public abstract class RTExpression extends RTCode {
 			// final RTCode nextCode = initializations_.size() > 0? initializations_.get(0): rTBlockBody_;
 			final RTCode nextCode = rTBlockBody_;
 			
-			final RTDynamicScope dynamicScope = new RTDynamicScope("block", RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+			final RTDynamicScope dynamicScope = new RTDynamicScope("block @ line " + Integer.toString(lineNumber_),
+					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope);
 			
 			// Declare local variables
@@ -4012,6 +4045,7 @@ public abstract class RTExpression extends RTCode {
 		private Map<String, RTType> objectDeclarations_;
 		private RTPopDynamicScope popScope_;
 		private RTNullExpression last_;
+		private int lineNumber_;
 		
 		private RTPushEvaluationResult evaluationResult_;
 	}
