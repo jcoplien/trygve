@@ -2,7 +2,7 @@ package info.fulloo.trygve.code_generation;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -143,6 +144,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		typeDeclarationList = ListClass.typeDeclarationList();	// "List"
 		compileDeclarations(typeDeclarationList);
+
+		typeDeclarationList = SetClass.typeDeclarationList();	// "Set"
+		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = MathClass.typeDeclarationList();	// "Math"
 		compileDeclarations(typeDeclarationList);
@@ -176,6 +180,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		globalScope.printContextMethodDecls();
 	}
 	private void compileDeclarations(final List<TypeDeclaration> typeDeclarationList) {
+		if (null == typeDeclarationList) {
+			assert null != typeDeclarationList;
+		}
 		for (final TypeDeclaration a : typeDeclarationList) {
 			if (a instanceof ContextDeclaration) {
 				this.compileContext((ContextDeclaration)a);
@@ -285,6 +292,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final List<RTCode> listCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("List")) {
 			listCode.add(new ListClass.RTListCtorCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("Set")) {
+			listCode.add(new SetClass.RTSetCtorCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("size")) {
 			listCode.add(new ListClass.RTSizeCode(methodDeclaration.enclosedScope()));

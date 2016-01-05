@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1606,12 +1606,12 @@ public class Pass1Listener extends Pass0Listener {
 				currentBreakableExpression = parsingData_.currentBreakableExpression();
 			}
 			if (null == currentBreakableExpression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "There is no switch or loop statement to break", "", "", "");
+				errorHook5p2(ErrorType.Fatal, lineNumber, "There is no switch or loop statement to break", "", "", "");
 			} else if (nestingLevelInsideBreakable == -1) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "The break statement is not in the scope of any switch or loop statement", "", "", "");
+				errorHook5p2(ErrorType.Fatal, lineNumber, "The break statement is not in the scope of any switch or loop statement", "", "", "");
 			}
 			if (null != currentBreakableExpression) {
-				expression = new BreakExpression(ctx.getStart().getLine(), currentBreakableExpression, nestingLevelInsideBreakable);
+				expression = new BreakExpression(lineNumber, currentBreakableExpression, nestingLevelInsideBreakable);
 			} else {
 				expression = new NullExpression();
 			}
@@ -1621,11 +1621,11 @@ public class Pass1Listener extends Pass0Listener {
 			final Expression currentContinuableExpression = parsingData_.nearestContinuableLoop();
 			assert currentContinuableExpression instanceof SwitchExpression == false;
 			if (null == currentContinuableExpression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "There is no loop statement to continue", "", "", "");
+				errorHook5p2(ErrorType.Fatal, lineNumber, "There is no loop statement to continue", "", "", "");
 			} else if (nestingLevelInsideBreakable == -1) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "The continue statement is not in the scope of any loop statement", "", "", "");
+				errorHook5p2(ErrorType.Fatal, lineNumber, "The continue statement is not in the scope of any loop statement", "", "", "");
 			}
-			expression = new ContinueExpression(ctx.getStart().getLine(), currentContinuableExpression, nestingLevelInsideBreakable);
+			expression = new ContinueExpression(lineNumber, currentContinuableExpression, nestingLevelInsideBreakable);
 			if (printProductionsDebug) { System.err.println("expr : CONTINUE"); }
 		} else if (null != ctx.RETURN()) {
 			// The expression being returned is popped from
@@ -1654,7 +1654,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			assert null != nearestEnclosingMegaType;
 			if (expression instanceof ReturnExpression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorType.Fatal, lineNumber,
 						"You may not return another `return' expression.", "", "", "");
 				expression = new NullExpression();
 			}
@@ -4377,15 +4377,20 @@ public class Pass1Listener extends Pass0Listener {
 			// Someone is invoking a role. Cool.
 			declaringScope = roleDecl.enclosingScope();
 			final Type rawRoleType = declaringScope.lookupTypeDeclaration(idName);	// Type$RoleType
-			assert rawRoleType instanceof RoleType;
-			final RoleType roleType = (RoleType)rawRoleType;
-			if (this.isInsideMethodDeclaration(ctxJAVA_ID)) {
-				final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope, ctxGetStart.getLine());
-				qualifier.setResultIsConsumed(true);
-				expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
+			if (null != rawRoleType) {	// stumbling check
+				assert rawRoleType instanceof RoleType;
+				final RoleType roleType = (RoleType)rawRoleType;
+				if (this.isInsideMethodDeclaration(ctxJAVA_ID)) {
+					final IdentifierExpression qualifier = new IdentifierExpression("this", roleType, nearestEnclosingMethodScope, ctxGetStart.getLine());
+					qualifier.setResultIsConsumed(true);
+					expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
+				} else {
+					errorHook5p2(ErrorType.Unimplemented, ctxGetStart.getLine(),
+							"Static initializers for Roles are unimplemented.", "", "", "");
+					expression = new NullExpression();
+				}
 			} else {
-				errorHook5p2(ErrorType.Unimplemented, ctxGetStart.getLine(),
-						"Static initializers for Roles are unimplemented.", "", "", "");
+				expression = new NullExpression();
 			}
 		} else {
 			final ClassDeclaration cdecl = currentScope_.lookupClassDeclarationRecursive(idName);
@@ -4483,6 +4488,7 @@ public class Pass1Listener extends Pass0Listener {
 		assert null != lhs;
 		
 		final Token ctxGetStart = ctx.getStart();
+		final int lineNumber = ctxGetStart.getLine();
 			
 		final Type lhsType = lhs.type(), rhsType = rhs.type();
 		
@@ -4491,60 +4497,60 @@ public class Pass1Listener extends Pass0Listener {
 		tf = null != rhsType;
 		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
 			if (((RoleType)lhsType).isArray()) {
-				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), ctx.getStart().getLine(), this);
+				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), lineNumber, this);
 			} else {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
-		} else if (null != lhsType){
-			tf = lhsType.canBeConvertedFrom(rhsType, ctx.getStart().getLine(), this);
+		} else if (null != lhsType && null != rhsType) {
+			tf = lhsType.canBeConvertedFrom(rhsType, lineNumber, this);
 		} else {
 			tf = false;
 		}
 		
 		if (lhs.name().equals("this")) {
-			errorHook5p2(ErrorType.Noncompliant, ctx.getStart().getLine(),
+			errorHook5p2(ErrorType.Noncompliant, lineNumber,
 					"You're on your own here.", "", "", "");
 		}
 		
 		if (lhs.name().equals("index")) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+			errorHook5p2(ErrorType.Fatal, lineNumber,
 					"`index' is a reserved word which is a read-only property of a Role vector element,",
 					" and may not be assigned.", "", "");
 		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
 			if (lhsType.canBeConvertedFrom(baseType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
 						((ArrayType)rhsType).baseType().name(), ":", "");
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
 		} else if (lhsType instanceof RoleType && null != rhsType) {
 			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(), "' cannot be played by object of type `", rhsType.name(), "':", "");
-				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(), "' cannot be played by object of type `", rhsType.name(), "':", "");
+				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhsType.name(), "' is incompatible with expression type `", rhsType.name(), "'.", "");
+			errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhsType.name(), "' is incompatible with expression type `", rhsType.name(), "'.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType && anotherLhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of `", lhs.getText(),
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
 		} else if (lhs instanceof RoleArrayIndexExpression) {
 			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Role `", lhsType.name(),
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(),
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
-				this.reportMismatchesWith(ctxGetStart.getLine(), (RoleType)lhsType, rhsType);
+				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
 				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Can assign only to an identifier, qualified identifier, or vector element.", "", "", "");
+			errorHook5p2(ErrorType.Fatal, lineNumber, "Can assign only to an identifier, qualified identifier, or vector element.", "", "", "");
 		}
 		
 		rhs.setResultIsConsumed(true);
-		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs, ctx.getStart().getLine(), this);
+		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs, lineNumber, this);
 		checkForAssignmentViolatingConstness(retval, ctx.getStart());
 		
 		return retval;

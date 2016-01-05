@@ -2,7 +2,7 @@ package info.fulloo.trygve.declarations;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,6 +51,10 @@ public abstract class Type implements ExpressionStackAPI
 		enclosedScope_ = enclosedScope;
 		staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
 		staticObjects_ = new LinkedHashMap<String, RTCode>();
+		lineNumber_ = null != enclosedScope?
+					(null != enclosedScope.associatedDeclaration()?
+							enclosedScope.associatedDeclaration().lineNumber(): 0):
+					0;
 	}
 	public StaticScope enclosedScope() {
 		return enclosedScope_;
@@ -151,6 +155,9 @@ public abstract class Type implements ExpressionStackAPI
 			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
+			if (null == t || null == t.pathName() || null == pathName()) {
+				assert false;
+			}
 			boolean retval = t.pathName().equals(pathName());
 			if (!retval) {
 				if (t.name().equals("Null")) {
@@ -897,8 +904,12 @@ public abstract class Type implements ExpressionStackAPI
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, null,
 				HierarchySelector.ThisClassOnly);
 	}
+	public int lineNumber() {
+		return lineNumber_;
+	}
 	
 	protected StaticScope enclosedScope_;
 	protected Map<String, ObjectDeclaration> staticObjectDeclarationDictionary_;
 	protected Map<String, RTCode> staticObjects_;
+	private final int lineNumber_;
 }

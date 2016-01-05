@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,4 +27,5 @@ public interface RTBreakableExpression {
 	public RTCode last();
 	public RTCode breakExit();
 	public RTCode continueHook();
+	public boolean resultIsConsumed();
 }

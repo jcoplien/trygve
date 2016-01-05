@@ -23,23 +23,52 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
-import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-public class RTDateObject extends RTObjectCommon {
-	public RTDateObject(final RTType dateType) {
-		super(dateType);	// 
-		dateType_ = dateType;	// e.g. an instance of RTClass
+import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTIterator.RTSetIterator;
+
+public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable {
+	public RTSetObject(final RTType setType) {
+		super(setType);	// 
+		setType_ = setType;	// e.g. an instance of RTClass
+		baseType_ = null;
+		theSet_ = new HashSet<RTObject>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
-
-	// I'm a little unhappy that these are copy-pasted. FIXME.
+	
+	public Type baseType() {
+		return baseType_;
+	}
+	public RTObject getObject(final RTObject theIndexObject) {
+		assert false;
+		return null;
+	}
+	public int size() {
+		return theSet_.size();
+	}
+	@Override public int hashCode() {
+		return theSet_.hashCode();
+	}
+	@Override public boolean equals(final Object other) {
+		boolean retval = true;
+		if (other instanceof RTSetObject) {
+			retval = theSet_.equals(((RTSetObject)other).theSet_);
+		} else {
+			retval = false;
+		}
+		return retval;
+	}
+	
+	// I'm more than a little unhappy that these are copy-pasted. FIXME.
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
@@ -75,83 +104,52 @@ public class RTDateObject extends RTObjectCommon {
 		assert false;
 		return null;
 	}
-	private RTDateObject(final Calendar theDate, final RTType dateType) {
-		super(dateType);
-		theDate_ = (Calendar)theDate.clone();
-		dateType_ = dateType;
+	private RTSetObject(final Set<RTObject> theSet, final Type baseType, final RTType setType) {
+		super(setType);
+		theSet_ = new HashSet<RTObject>();
+		baseType_ = baseType;
+		setType_ = setType;
+		theSet_.addAll(theSet);
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
+	public RTIterator makeIterator() {
+		final RTIterator retval = new RTSetIterator(this);
+		return retval;
+	}
 	@Override public RTObject dup() {
-		final RTDateObject retval = new RTDateObject(theDate_, dateType_);
+		final RTSetObject retval = new RTSetObject(theSet_, baseType_, setType_);
 		return retval;
 	}
 	@Override public RTType rTType() {
-		return dateType_;
-	}
-	public RTObject getYear() {
-		final int year = theDate_.get(Calendar.YEAR) + 1900;
-		return new RTIntegerObject(year);
-	}
-	public RTObject getMonth() {
-		final int month = theDate_.get(Calendar.MONTH) + 1;
-		return new RTIntegerObject(month);
-	}
-	public RTObject getDate() {
-		final int date = theDate_.get(Calendar.DATE);
-		return new RTIntegerObject(date);
-	}
-	public RTObject getDay() {
-		final int day = theDate_.get(Calendar.DAY_OF_WEEK);
-		return new RTIntegerObject(day);
-	}
-	public RTObject toStringCall() {
-		final String string = theDate_.toString();
-		return new RTStringObject(string);
-	}
-	public void setYear(final RTObject year) {
-		theDate_.set(Calendar.YEAR, (int)((RTIntegerObject)year).intValue() - 1900);
-	}
-	public void setMonth(final RTObject month) {
-		theDate_.set(Calendar.MONTH, (int)((RTIntegerObject)month).intValue() - 1);
-	}
-	public void setDate(final RTObject date) {
-		theDate_.set(Calendar.DATE, (int)((RTIntegerObject)date).intValue());
-	}
-	public void setDay(final RTObject day) {
-		theDate_.set(Calendar.DAY_OF_WEEK, (int)((RTIntegerObject)day).intValue());
-	}
-	public void ctor(final RTObject year, final RTObject month, final RTObject date) {
-		simpleCtor();
-		setYear(year);
-		setMonth(month);
-		setDate(date);
-	}
-	public void simpleCtor() {
-		theDate_ = Calendar.getInstance();
-	}
-	@Override public int hashCode() {
-		return theDate_.hashCode();
-	}
-	@Override public boolean equals(final Object other) {
-		boolean retval = true;
-		if (other instanceof RTDateObject) {
-			retval = theDate_.equals(((RTDateObject)other).theDate_);
-		} else {
-			retval = false;
-		}
-		return retval;
-	}
-	@Override public int compareTo(final Object other) {
-		int retval = 0;
-		if (other instanceof RTDateObject) {
-			retval = theDate_.compareTo(((RTDateObject)other).theDate_);
-		} else {
-			assert false;
-		}
-		return retval;
+		return setType_;
 	}
 	
-	private Calendar theDate_;
+	public boolean isEmpty() {
+		return theSet_.isEmpty();
+	}
+	public boolean isValidIndex(final int i) {
+		return i < theSet_.size() && i >= 0;
+	}
+	public boolean remove(final RTObject o) {
+		return theSet_.remove(o);
+	}
+	public void add(final RTObject element) {
+		theSet_.add(element);
+	}
+	public void ctor() {
+	}
+	public RTObject contains(final RTObject element) {
+		final boolean rawRetval = theSet_.contains(element);
+		final RTObject retval = new RTBooleanObject(rawRetval);
+		return retval;
+	}
+	public int compareTo(final RTObject other) {
+		assert false;
+		return 0;
+	}
+	
+	private final Set<RTObject> theSet_;
+	private final Type baseType_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
-	private final RTType dateType_;
+	private final RTType setType_;
 }

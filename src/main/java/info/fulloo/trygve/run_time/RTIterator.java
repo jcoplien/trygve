@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@ package info.fulloo.trygve.run_time;
 
 import java.util.Map;
 
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
@@ -83,7 +85,7 @@ public abstract class RTIterator implements RTObject {
 	}
 	
 	public static class RTListIterator extends RTIterator {
-		public RTListIterator(RTIterable whatIAmIteratingOver) {
+		public RTListIterator(final RTIterable whatIAmIteratingOver) {
 			super();
 			assert whatIAmIteratingOver instanceof RTListObject;
 			whatIAmIteratingOver_ = (RTListObject)whatIAmIteratingOver;
@@ -115,6 +117,44 @@ public abstract class RTIterator implements RTObject {
 		private final RTListObject whatIAmIteratingOver_;
 		private int currentIndex_;
 		private final int listSize_;
+	}
+	
+	public static class RTSetIterator extends RTIterator {
+		public RTSetIterator(final RTIterable whatIAmIteratingOver) {
+			super();
+			assert whatIAmIteratingOver instanceof RTSetObject;
+			whatIAmIteratingOver_ = (RTSetObject)whatIAmIteratingOver;
+			setSize_ = whatIAmIteratingOver_.size();
+			currentIndex_ = 0;
+		}
+		@Override public boolean isThereANext() {
+			return currentIndex_ < setSize_;
+		}
+		@Override public int compareTo(final Object rawOther) {
+			int retval = 0;
+			final RTArrayIterator other = ((RTArrayIterator)rawOther);
+			if (currentIndex_ < other.currentIndex_) retval = -1;
+			else if (currentIndex_ > other.currentIndex_) retval = 1;
+			return retval;
+		}
+		@Override public RTObject next() {
+			ErrorLogger.error(ErrorType.Unimplemented, "Unimplemented: Set iterators",
+					"", "", "");
+			// assert currentIndex_ < listSize_;
+			// return whatIAmIteratingOver_.get(currentIndex_);
+			return null;
+		}
+		@Override public void advance() {
+			currentIndex_++;
+		}
+		@Override public boolean equals(final RTObject other) {
+			assert false;
+			return false;
+		}
+		
+		private final RTSetObject whatIAmIteratingOver_;
+		private int currentIndex_;
+		private final int setSize_;
 	}
 
 	@Override public RTObject getObject(String name) { assert false; return null; }

@@ -63,14 +63,14 @@ class Julia {
 }
 
 context Fractal {
-    stageprop Set {} requires {
+    stageprop TheSet {} requires {
         ComplexNumber compute(ComplexNumber Z, ComplexNumber pos) const;
     }
 
-    public Fractal(int width, int height, Set set) {
+    public Fractal(int width, int height, TheSet set) {
         width_ = width;
         height_ = height;
-        Set = set;
+        TheSet = set;
 
         // Thanks for the shades: http://larc.unt.edu/ian/art/ascii/shader/
         shades_ = " .:*I$VFNM";
@@ -89,7 +89,7 @@ context Fractal {
                 int iterations = 0;
 
                 while(Z.abs() < 2.0) {
-                    Z = Set.compute(Z, pos);
+                    Z = TheSet.compute(Z, pos);
                     iterations = iterations + 1;
                     if(iterations == maxIterations) break;
                 }

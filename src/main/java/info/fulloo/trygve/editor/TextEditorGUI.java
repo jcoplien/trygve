@@ -7,7 +7,7 @@ package info.fulloo.trygve.editor;
  * Created on 1 wrzesień 2008, 22:00
  * 
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/twelve_days_of_christmas.k";
+	private final static String defaultFile = "tests/hanoi.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.1.14";
+    final String TrygveVersion = "1.1.15";
     
     
     /** Creates new form TextEditorGUI */
@@ -65,7 +65,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(TrygveVersion);
-    	System.out.println(". Copyright (c)2015 James O. Coplien.");
+    	System.out.println(". Copyright (c)2016 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
@@ -632,6 +632,8 @@ public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) 
     }
 
     this.fileName = new File(pathName);
+    
+    saveFileButton.setEnabled(true);
 }//GEN-LAST:event_openFileButtonActionPerformed
 
 public boolean compiledWithoutError() {

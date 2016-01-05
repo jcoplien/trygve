@@ -16,12 +16,10 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
-import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;  
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
-import info.fulloo.trygve.run_time.RTListObject;
+import info.fulloo.trygve.run_time.RTSetObject;
 import info.fulloo.trygve.run_time.RTObject;
-import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
@@ -51,7 +49,7 @@ import static java.util.Arrays.asList;
  * Jim Coplien at jcoplien@gmail.com
  */
 
-public final class ListClass {
+public final class SetClass {
 	private static void declareListMethod(final String methodSelector, final Type returnType,
 			final String paramName,
 			final Type paramType) {
@@ -81,28 +79,22 @@ public final class ListClass {
 		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
 		assert null != booleanType;
 		
-		if (null == globalScope.lookupTypeDeclaration("List")) {
+		if (null == globalScope.lookupTypeDeclaration("Set")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("List", newScope, /*Base Class*/ null, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Set", newScope, /*Base Class*/ null, 0);
 			newScope.setDeclaration(templateDecl);
 			final Type T = new TemplateParameterType("T", null);
 			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, 0);
 			templateDecl.addTypeParameter(typeParamId, 1);
-			listType_ = new TemplateType("List", newScope, null);
+			listType_ = new TemplateType("Set", newScope, null);
 			templateDecl.setType(listType_);
 			typeDeclarationList_.add(templateDecl);
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			declareListMethod("List", listType_, null, null);
+			declareListMethod("Set", listType_, null, null);
 			
 			declareListMethod("add", voidType, "element", T);
-			
-			declareListMethod("get", T, "theIndex", integerType);
-			
-			declareListMethod("indexOf", intType, "element", T);
-			
-			declareListMethod("remove", intType, "element", T);
 			
 			declareListMethod("remove", T, "element", booleanType);
 			
@@ -118,8 +110,8 @@ public final class ListClass {
 		}
 	}
 	
-	public static class RTListCommon extends RTMessage {
-		public RTListCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
+	public static class RTSetCommon extends RTMessage {
+		public RTSetCommon(final String className, final String methodName, final String parameterName, String parameterTypeName,
 				final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, 
 					null == parameterName? null: asList(parameterName),
@@ -157,56 +149,37 @@ public final class ListClass {
 			}
 		}
 	}
-	public static class RTListCtorCode extends RTListCommon {
-		public RTListCtorCode(final StaticScope enclosingMethodScope) {
-			super("List", "List", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTSetCtorCode extends RTSetCommon {
+		public RTSetCtorCode(final StaticScope enclosingMethodScope) {
+			super("Set", "Set", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			theListObject.ctor();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(this);
 			return super.nextCode();
 		}
 	}
-	public static class RTAddCode extends RTListCommon {
+	public static class RTAddCode extends RTSetCommon {
 		public RTAddCode(final StaticScope enclosingMethodScope) {
-			super("List", "add", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Set", "add", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 			theListObject.add(rawElement);
 			return super.nextCode();
 		}
 	}
-	public static class RTRemoveICode extends RTListCommon {
-		public RTRemoveICode(final StaticScope enclosingMethodScope) {
-			super("List", "remove", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTObject rawIndex = activationRecord.getObject("theIndex");
-			assert rawIndex instanceof RTIntegerObject;
-			final RTIntegerObject integerIndex = (RTIntegerObject) rawIndex;
-			final long theIndex = integerIndex.intValue();
-			final RTObject result = theListObject.remove((int)theIndex);
-			
-			addRetvalTo(activationRecord);
-			activationRecord.setObject("ret$val", result);
-			
-			return super.nextCode();
-		}
-	}
-	public static class RTRemoveTCode extends RTListCommon {
+	public static class RTRemoveTCode extends RTSetCommon {
 		public RTRemoveTCode(final StaticScope enclosingMethodScope) {
-			super("List", "remove", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
+			super("Set", "remove", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("boolean"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 
 			final boolean bResult = theListObject.remove(rawElement);
@@ -217,13 +190,13 @@ public final class ListClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTSizeCode extends RTListCommon {
+	public static class RTSizeCode extends RTSetCommon {
 		public RTSizeCode(final StaticScope enclosingMethodScope) {
-			super("List", "size", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("Set", "size", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final int rawResult = theListObject.size();
 			final RTIntegerObject result = new RTIntegerObject(rawResult);
 			
@@ -233,67 +206,15 @@ public final class ListClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTGetCode extends RTListCommon {
-		public RTGetCode(final StaticScope enclosingMethodScope, final int lineNumber) {
-			super("List", "get", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
-			lineNumber_ = lineNumber;
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
-			RTCode pc = null;
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			if (null == argument) {
-				ErrorLogger.error(ErrorType.Runtime, lineNumber_,
-						"Use of uninitialized list value, or index out of range.", "", "", "");
-				pc = new RTHalt();	// halt instruction
-			} else {
-				RTObject result = null;
-				if (theListObject.isValidIndex((int)argument.intValue())) {
-					result = theListObject.get((int)argument.intValue());
-
-					addRetvalTo(activationRecord);
-					activationRecord.setObject("ret$val", result);
-					
-					pc = super.nextCode();
-				} else {
-					ErrorLogger.error(ErrorType.Runtime, lineNumber_,
-							"List.get(): List index out-of-range: ",
-							Integer.toString((int)argument.intValue()),
-							" on list of size ", Integer.toString(theListObject.size()));
-					pc = new RTHalt();
-				}
-			}
-			return pc;
-		}
-		
-		private final int lineNumber_;
-	}
-	public static class RTIndexOfCode extends RTListCommon {
-		public RTIndexOfCode(final StaticScope enclosingMethodScope) {
-			super("List", "indexOf", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTStackable stackableArgument = activationRecord.getObject("element");
-			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
-			final RTObject result = theListObject.indexOf(argument);
-			
-			addRetvalTo(activationRecord);
-			activationRecord.setObject("ret$val", result);
-			
-			return super.nextCode();
-		}
-	}
-	public static class RTContainsCode extends RTListCommon {
+	
+	public static class RTContainsCode extends RTSetCommon {
 		public RTContainsCode(final StaticScope enclosingMethodScope) {
-			super("List", "contains", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("Set", "contains", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject argument = activationRecord.getObject("element");
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final RTObject result = (RTObject)theListObject.contains(argument);
 			
 			addRetvalTo(activationRecord);
@@ -302,13 +223,13 @@ public final class ListClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTIsEmptyCode extends RTListCommon {
+	public static class RTIsEmptyCode extends RTSetCommon {
 		public RTIsEmptyCode(final StaticScope enclosingMethodScope) {
-			super("List", "isEmpty", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("Set", "isEmpty", "element", "T", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final boolean rawResult = theListObject.isEmpty();
 			final RTBooleanObject result = new RTBooleanObject(rawResult);
 			

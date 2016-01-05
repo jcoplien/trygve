@@ -2,7 +2,7 @@ package info.fulloo.trygve.semantic_analysis;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -174,6 +175,7 @@ public class StaticScope {
 			
 			SystemClass.setup();
 			ListClass.setup();
+			SetClass.setup();
 			MathClass.setup();
 			DateClass.setup();
 		}
@@ -847,10 +849,10 @@ public class StaticScope {
 	public void declareType(final Type typeDecl) {
 		final String typeName = typeDecl.name();
 		if (typeDeclarationDictionary_.containsKey(typeName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of type ", typeName, " in ", name());
+			ErrorLogger.error(ErrorType.Fatal, typeDecl.lineNumber(), "Multiple definitions of type ", typeName, " in ", name());
 		} else {
 			if (this.lookupTypeDeclarationRecursive(typeName) != null) {
-				ErrorLogger.error(ErrorType.Fatal, "Type declaration of ", typeName, " might hide declaration in enclosing scope", "");
+				ErrorLogger.error(ErrorType.Fatal, typeDecl.lineNumber(), "Type declaration of `", typeName, "' might hide declaration in enclosing scope", "");
 			} else {
 				typeDeclarationDictionary_.put(typeName, typeDecl);
 			}

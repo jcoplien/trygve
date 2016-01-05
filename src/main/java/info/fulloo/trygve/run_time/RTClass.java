@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -260,7 +260,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					assert msgArg instanceof RTStringObject;
 					final RTStringObject stringObject = (RTStringObject)msgArg;
 					final String msg = stringObject.stringValue();
-					System.err.format("Line %d: Assertion failed: %s\n", lineNumber.intValue(), msg);
+					System.err.format("Line %d: Assertion failed: %s", lineNumber.intValue(), msg);
+					System.err.println();
 				}
 				final RTCode retval = tf? super.nextCode(): new RTHalt();
 				return retval;
@@ -283,7 +284,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTBooleanObject booleanObject = (RTBooleanObject)tfArg;
 				final boolean tf = booleanObject.value();
 				if (!tf) {
-					System.err.format("Line %d: Assertion failed.\n", lineNumber.intValue());
+					System.err.format("Line %d: Assertion failed.", lineNumber.intValue());
+					System.err.println();
 				}
 				final RTCode retval = tf? super.nextCode(): new RTHalt();
 				return retval;

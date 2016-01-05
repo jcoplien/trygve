@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -2245,6 +2245,8 @@ public abstract class RTExpression extends RTCode {
 				}
 			} else if (classType_.name().startsWith("List<")) {
 				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
+			} else if (classType_.name().startsWith("Set<")) {
+				newlyCreatedObject = new RTSetObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().startsWith("Map<")) {
 				newlyCreatedObject = new RTMapObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().equals("Date")) {
@@ -3592,7 +3594,7 @@ public abstract class RTExpression extends RTCode {
 				firstIter_ = false;
 			}
 			
-			if (this.resultIsConsumed()) {
+			if (associatedBreakable_.resultIsConsumed()) {
 				// Put the last expression on the stack
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(lastExpressionResult_);
 			}

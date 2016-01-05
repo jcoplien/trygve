@@ -5,7 +5,7 @@ import java.util.List;
 
 /*
  * Trygve IDE 1.1
- *   Copyright (c)2015 James O. Coplien
+ *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ public class TestRunner {
 		"simpleincrement.k",
 		"switchtest.k",
 		"switch_test2.k",
+		"return_switches.k",
 		"unaryop1.k",
 		"trygve2.k",
 		"trygve3.k",
@@ -126,6 +127,7 @@ public class TestRunner {
 		"role_and_double_test.k",
 		"complex1.k",
 		"disk1.k",
+		"hanoi.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
