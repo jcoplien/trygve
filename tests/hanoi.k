@@ -22,7 +22,6 @@ class Rod {
     public Disk get(int index) {
         String disk = disks_.substring(index, index+1);
 
-        // NOTE: Stack corruption error here
         return switch(disk) {
             case "1": new Disk(1); break;
             case "2": new Disk(2); break;
