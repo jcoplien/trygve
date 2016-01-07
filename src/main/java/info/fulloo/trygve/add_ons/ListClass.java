@@ -54,7 +54,7 @@ import static java.util.Arrays.asList;
 public final class ListClass {
 	private static void declareListMethod(final String methodSelector, final Type returnType,
 			final String paramName,
-			final Type paramType) {
+			final Type paramType, final boolean isConst) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		
 		final FormalParameterList formals = new FormalParameterList();
@@ -68,7 +68,7 @@ public final class ListClass {
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
-		methodDecl.setHasConstModifier(false);
+		methodDecl.setHasConstModifier(isConst);
 		listType_.enclosedScope().declareMethod(methodDecl);
 	}
 	public static void setup() {
@@ -94,23 +94,23 @@ public final class ListClass {
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			declareListMethod("List", listType_, null, null);
+			declareListMethod("List", listType_, null, null, false);
 			
-			declareListMethod("add", voidType, "element", T);
+			declareListMethod("add", voidType, "element", T, false);
 			
-			declareListMethod("get", T, "theIndex", integerType);
+			declareListMethod("get", T, "theIndex", integerType, true);
 			
-			declareListMethod("indexOf", intType, "element", T);
+			declareListMethod("indexOf", intType, "element", T, true);
 			
-			declareListMethod("remove", intType, "element", T);
+			declareListMethod("remove", booleanType, "element", T, false);
 			
-			declareListMethod("remove", T, "element", booleanType);
+			declareListMethod("remove", T, "theIndex", intType, false);
 			
-			declareListMethod("contains", booleanType, "element", T);
+			declareListMethod("contains", booleanType, "element", T, true);
 			
-			declareListMethod("size", intType, null, null);
+			declareListMethod("size", intType, null, null, true);
 			
-			declareListMethod("isEmpty", booleanType, null, null);
+			declareListMethod("isEmpty", booleanType, null, null, true);
 			
 			// Declare the type
 			globalScope.declareType(listType_);

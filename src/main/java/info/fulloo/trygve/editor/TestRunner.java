@@ -121,6 +121,7 @@ public class TestRunner {
 		"money_transfer2.k",
 		"money_transfer.k",
 		"money_transfer3.k",
+		"matt_money_xfer.k",
 		"date_test.k",
 		"number_test0.k",
 		"number_test1.k",
@@ -128,6 +129,7 @@ public class TestRunner {
 		"complex1.k",
 		"disk1.k",
 		"hanoi.k",
+		"hanoi2.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
@@ -191,7 +193,8 @@ public class TestRunner {
 			gui_.setFileNameField(saveFileNameField);
 		} else {
 			for (final String failure : failures_) {
-				System.err.format("\t%s\n", failure);
+				System.err.format("\t%s", failure);
+				System.err.println();
 			}
 			final String firstFailure = failures_.get(0);
 			loadFile(firstFailure);

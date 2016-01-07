@@ -4202,27 +4202,30 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Role `", roleDecl.name() + "'.");
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+						"' not declared in Role `", roleDecl.name() + "'.");
 				if (message.lineNumber() < roleDecl.lineNumber()) {
 					final MethodSignature enclosingMethod = parsingData_.currentMethodSignature();
 					if (null != enclosingMethod) {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
-								"' befor the definition of method `", enclosingMethod.getText() + "'.");
+								"' before the definition of method `", enclosingMethod.getText() + "'.");
 					} else {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
-							"' befor the invocation of `", methodSelectorName+ "'.");
+							"' before the invocation of `", methodSelectorName+ "'.");
 					}
 				}
 			}
 		} else if (null != contextDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in Context ", contextDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+						"' not declared in Context ", contextDecl.name());
 			}
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in interface ", interfaceDecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+						"' not declared in interface ", interfaceDecl.name());
 			}
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
@@ -4233,7 +4236,9 @@ public class Pass1Listener extends Pass0Listener {
 				if (null == mdecl) {
 					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversion(methodSelectorName, actualArgumentList, false);
 					if (null == mdecl) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find static method `" + methodSelectorName,
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+								"Cannot find static method `" + methodSelectorName
+								+ actualArgumentList.selflessGetText(),
 							"' of class `", object.name(), "'.");
 					}
 				}

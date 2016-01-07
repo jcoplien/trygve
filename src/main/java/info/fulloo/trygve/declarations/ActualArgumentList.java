@@ -67,6 +67,29 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		retval = stringBuffer.toString();
 		return retval;
 	}
+	public String selflessGetText() {
+		// Used mainly for error reporting, where we
+		// want to hide the declaration of self. And
+		// we generate types here rather than expressions
+		String retval = "";
+		final int l = count();
+		final StringBuffer stringBuffer = new StringBuffer();
+		stringBuffer.append("(");
+		final int afterSelfIndex = 1;
+		for (int i = afterSelfIndex; i < l; i++) {
+			final Expression e = (Expression)parameterAtIndex(i);
+			final Type t = e.type();
+			if (null == t) {
+				stringBuffer.append("NULL");
+			} else {
+				stringBuffer.append(t.getText());
+			}
+			if (i < l-1) stringBuffer.append(", ");
+		}
+		stringBuffer.append(")");
+		retval = stringBuffer.toString();
+		return retval;
+	}
 	public void addFirstActualParameter(final Expression e) {
 		insertAtStart(e);
 	}

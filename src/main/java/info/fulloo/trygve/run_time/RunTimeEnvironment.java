@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -299,11 +300,12 @@ public class RunTimeEnvironment {
 	private void runnerPrefix(final RTCode code) {
 		assert null != code;		// put the check up here, out of the
 		                            // code we will be stepping through...
+		final PrintStream stream = System.err;
 		if (ConfigurationOptions.fullExecutionTrace()) {
 			if (null == code) {
-				System.err.format("> code == NULL\n");
+				stream.format("> code == NULL\n");
 			} else if (null == code.getClass()) {
-				System.err.format("> *code == NULL\n");
+				stream.format("> *code == NULL\n");
 			} else {
 				String lineNumber = "   ";
 				if (code instanceof RTMessage) {
@@ -329,28 +331,28 @@ public class RunTimeEnvironment {
 					}
 				}
 				
-				System.err.format("> %4s  %s", lineNumber, code.getClass().getSimpleName());
+				stream.format("> %4s  %s", lineNumber, code.getClass().getSimpleName());
 				
 				if (code instanceof RTMessage) {
-					System.err.format(" \"%s\"", ((RTMessage)code).methodSelectorName());
+					stream.format(" \"%s\"", ((RTMessage)code).methodSelectorName());
 				} else if (code instanceof RTMethod) {
-					System.err.format(" \"%s\"", ((RTMethod)code).methodDeclaration().getText());
+					stream.format(" \"%s\"", ((RTMethod)code).methodDeclaration().getText());
 				} else if (code instanceof RTNew) {
-					System.err.format(" \"%s\"", ((RTNew)code).toString());
+					stream.format(" \"%s\"", ((RTNew)code).toString());
 				} else if (code instanceof RTIdentifier) {
-					System.err.format(" \"%s\"", ((RTIdentifier)code).name());
+					stream.format(" \"%s\"", ((RTIdentifier)code).name());
 				} else if (code instanceof RTReturn) {
-					System.err.format(" from \"%s\"", ((RTReturn)code).methodName());
+					stream.format(" from \"%s\"", ((RTReturn)code).methodName());
 				} else if (code instanceof RTQualifiedIdentifier) {
-					System.err.format(" from \"%s\"", ((RTQualifiedIdentifier)code).getText());
+					stream.format(" from \"%s\"", ((RTQualifiedIdentifier)code).getText());
 				} else if (code instanceof RTPostReturnProcessing) {
-					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
+					stream.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
 				} else if (code instanceof RTConstant) {
-					System.err.format(" for \"%s\"", ((RTConstant)code).getText());
+					stream.format(" for \"%s\"", ((RTConstant)code).getText());
 				} else if (code instanceof RTAssignmentPart2) {
-					System.err.format(" (\"%s\")", ((RTAssignmentPart2)code).getText());
+					stream.format(" (\"%s\")", ((RTAssignmentPart2)code).getText());
 				}
-				System.err.format("\n");
+				stream.format("\n");
 			}
 		}
 	}

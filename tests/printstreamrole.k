@@ -19,7 +19,7 @@ context C1 {
 }
 
 /* GOLD:
-line 7: Method `println' not declared in Role `log'.
-line 7: 	Try moving the declaration of `log' befor the definition of method `C1()'.
+line 7: Method `println(String)' not declared in Role `log'.
+line 7: 	Try moving the declaration of `log' before the definition of method `C1()'.
 ___________________________________________________________
 */

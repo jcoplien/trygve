@@ -590,7 +590,10 @@ public class Pass2Listener extends Pass1Listener {
 									
 		Message message = parsingData_.popMessage();
 		
-		assert null != message;
+		if (null == message) {
+			return new NullExpression();		// yuk. refactor.
+		}
+		
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
@@ -713,7 +716,9 @@ public class Pass2Listener extends Pass1Listener {
 								null;
 					if (null == methodDeclaration) {
 						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "' not declared in class ", classObjectType.name());
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
+								message.getText(),
+								"' not declared in class ", classObjectType.name());
 						return null;		// punt
 					} else {
 						methodSignature = methodDeclaration.signature();
@@ -789,7 +794,8 @@ public class Pass2Listener extends Pass1Listener {
 		if (null == methodDeclaration && isOKMethodSignature == false) {
 			final String methodSelectorName = message.selectorName();
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
-					methodSelectorName, "' not declared in class ", "classname (dubious error — see other messages)");
+					methodSelectorName + message.argumentList().getText(),
+					"' not declared in class ", "classname (dubious error — see other messages)");
 		}
 		
 		assert null != returnType;

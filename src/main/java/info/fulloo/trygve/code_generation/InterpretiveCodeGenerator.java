@@ -293,9 +293,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (methodDeclaration.name().equals("List")) {
 			listCode.add(new ListClass.RTListCtorCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
-		} else if (methodDeclaration.name().equals("Set")) {
-			listCode.add(new SetClass.RTSetCtorCode(methodDeclaration.enclosedScope()));
-			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("size")) {
 			listCode.add(new ListClass.RTSizeCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingInt;
@@ -318,11 +315,46 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("remove")) {
 			if (methodDeclaration.returnType().name().equals("int")) {
 				listCode.add(new ListClass.RTRemoveICode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingInt;
+				retvalType = RetvalTypes.usingBool;
 			} else {
 				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingTemplate;
 			}
+		} else {
+			assert false;	// error message instead? Should be caught earlier
+			retvalType = RetvalTypes.undefined;
+		}
+		
+		addReturn(methodDeclaration, retvalType, listCode);
+		
+		rtMethod.addCode(listCode);
+	}
+	private void processSetMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		RetvalTypes retvalType;
+		
+		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtListTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> listCode = new ArrayList<RTCode>();
+		if (methodDeclaration.name().equals("Set")) {
+			listCode.add(new SetClass.RTSetCtorCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("size")) {
+			listCode.add(new SetClass.RTSizeCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingInt;
+		} else if (methodDeclaration.name().equals("add")) {
+			listCode.add(new SetClass.RTAddCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("contains")) {
+			listCode.add(new SetClass.RTContainsCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("isEmpty")) {
+			listCode.add(new SetClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("remove")) {
+			listCode.add(new SetClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingTemplate;
 		} else {
 			assert false;	// error message instead? Should be caught earlier
 			retvalType = RetvalTypes.undefined;
@@ -842,6 +874,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().startsWith("Set<")) {
+				processSetMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("Map<")) {
 				processMapMethodDefinition(methodDeclaration, typeDeclaration);

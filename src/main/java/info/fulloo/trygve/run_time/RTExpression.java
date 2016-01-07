@@ -3038,7 +3038,6 @@ public abstract class RTExpression extends RTCode {
 			part2_ = new RTWhileTestRunnerPart2(body, last, lineNumber_);
 			test_.setNextCode(part2_);
 		}
-		
 		@Override public RTCode run() {
 			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
 		}

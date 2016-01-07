@@ -50,9 +50,9 @@ import static java.util.Arrays.asList;
  */
 
 public final class SetClass {
-	private static void declareListMethod(final String methodSelector, final Type returnType,
+	private static void declareSetMethod(final String methodSelector, final Type returnType,
 			final String paramName,
-			final Type paramType) {
+			final Type paramType, final boolean isConst) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		
 		final FormalParameterList formals = new FormalParameterList();
@@ -66,7 +66,7 @@ public final class SetClass {
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
-		methodDecl.setHasConstModifier(false);
+		methodDecl.setHasConstModifier(isConst);
 		listType_.enclosedScope().declareMethod(methodDecl);
 	}
 	public static void setup() {
@@ -92,17 +92,17 @@ public final class SetClass {
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			declareListMethod("Set", listType_, null, null);
+			declareSetMethod("Set", listType_, null, null, false);
 			
-			declareListMethod("add", voidType, "element", T);
+			declareSetMethod("add", voidType, "element", T, false);
 			
-			declareListMethod("remove", T, "element", booleanType);
+			declareSetMethod("remove", booleanType, "element", T, false);
 			
-			declareListMethod("contains", booleanType, "element", T);
+			declareSetMethod("contains", booleanType, "element", T, true);
 			
-			declareListMethod("size", intType, null, null);
+			declareSetMethod("size", intType, null, null, true);
 			
-			declareListMethod("isEmpty", booleanType, null, null);
+			declareSetMethod("isEmpty", booleanType, null, null, true);
 			
 			// Declare the type
 			globalScope.declareType(listType_);

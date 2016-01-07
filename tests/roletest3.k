@@ -59,8 +59,8 @@ class Consumer {
 
 /* GOLD:
 line 2: Declaration of `manufacture' in Role1 would create multiple methods of the same name in the same object.
-line 14: Method `manufacture' not declared in Role `Role1'.
-line 18: Method `manufacture' not declared in Role `Role1'.
+line 14: Method `manufacture()' not declared in Role `Role1'.
+line 18: Method `manufacture()' not declared in Role `Role1'.
 line 34: WARNING: Both class `Maker' and Role `Role1' contain the same method signature `manufacture()'. This results in several methods of the same name in the same object and may not behave as you expected.
 ___________________________________________________________
 */

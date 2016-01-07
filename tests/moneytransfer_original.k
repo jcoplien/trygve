@@ -68,7 +68,7 @@ class Account {
 /* GOLD:
 line 24: Expression 'current$context.Amount' is not of the right type (double).
 line 24: You may not use an object of type 'Amount' as an argument to `>='.
-line 25: Method `decreaseBalance' not declared in Role `SourceAccount'.
-line 35: Method `increaseBalance' not declared in Role `DestinationAccount'.
+line 25: Method `decreaseBalance(Amount)' not declared in Role `SourceAccount'.
+line 35: Method `increaseBalance(Amount)' not declared in Role `DestinationAccount'.
 ___________________________________________________________
 */

@@ -176,7 +176,6 @@ context TwelveDaysOfChristmas {
 
 /* GOLD:
 ___________________________________________________________
-
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.
 
