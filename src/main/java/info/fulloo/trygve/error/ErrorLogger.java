@@ -32,7 +32,8 @@ public class ErrorLogger {
 		System.err.print(s1);
 		System.err.print(s2);
 		System.err.print(s3);
-		System.err.println(s4);
+		System.err.print(s4);
+		System.err.println();
 	}
 	public static void error(final ErrorType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4) {
 		updateCounts(errorType);
@@ -51,7 +52,8 @@ public class ErrorLogger {
 		System.err.print(s3);
 		System.err.print(s4);
 		System.err.print(s5);
-		System.err.println(s6);
+		System.err.print(s6);
+		System.err.println();
 	}
 	public static void resetCounts() {
 		numberOfFatalErrors_ = 0;

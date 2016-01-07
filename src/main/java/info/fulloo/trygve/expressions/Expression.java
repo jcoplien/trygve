@@ -505,11 +505,24 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass1Listener parser) {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
+			
 			lhs_ = lhs;
 			rhs_ = rhs;
 			lineNumber_ = lineNumber;
 			doTrivialConversions(parser);
 			rhs_.setResultIsConsumed(true);
+			
+			if (lhs instanceof IdentifierExpression && rhs instanceof IdentifierExpression) {
+				final Type lhsType = lhs.type(), rhsType = rhs.type();
+				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
+					if (lhsType.pathName().equals(rhsType.pathName())) {
+						parser.errorHook6p2(ErrorType.Warning, lhs.lineNumber(),
+								"WARNING: Initialization does not create a new instance. Both `", lhs.name(),
+								"' and `" + rhs.name(), "' will refer to the same object. Use `",
+								rhs.name(), ".clone' to create a separate instance.");
+					}
+				}
+			}
 		}
 		private void doTrivialConversions(final Pass1Listener parser) {
 			// Should be pathnames. FIXME (easy fix).

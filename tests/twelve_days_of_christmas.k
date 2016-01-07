@@ -175,7 +175,9 @@ context TwelveDaysOfChristmas {
 }
 
 /* GOLD:
+line 162: WARNING: Initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
 ___________________________________________________________
+
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.
 

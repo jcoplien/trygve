@@ -4555,6 +4555,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		rhs.setResultIsConsumed(true);
+
 		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs, lineNumber, this);
 		checkForAssignmentViolatingConstness(retval, ctx.getStart());
 		

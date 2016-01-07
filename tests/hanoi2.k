@@ -107,6 +107,7 @@ class TowerOfHanoi {
 }
 
 /* GOLD:
+line 67: WARNING: Initialization does not create a new instance. Both `i' and `disks' will refer to the same object. Use `disks.clone' to create a separate instance.
 ___________________________________________________________
 |321
 |
