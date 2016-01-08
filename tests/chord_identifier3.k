@@ -125,7 +125,7 @@ context Chord {
 /* GOLD:
 line 53: WARNING: Substituting double object for `LowNote.position()' in assignment to `lowPos'.
 line 54: WARNING: Substituting double object for `HighNote.position()' in assignment to `highPos'.
-line 70: WARNING: Method declaration for `name' may hide method declared at line 105
+line 70: WARNING: Script declaration for `name' may hide method declared at line 105
 line 62: WARNING: Substituting double object for `octaveOffset' for call to method `+' at line 62
 ___________________________________________________________
 lowPos=6.0, highPos=11.0

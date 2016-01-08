@@ -30,7 +30,7 @@ class WhileTest {
 }
 
 /* GOLD:
-line 17: WARNING: Initialization does not create a new instance. Both `aDeclaration' and `hours' will refer to the same object. Use `hours.clone' to create a separate instance.
+line 17: WARNING: Assignment / initialization does not create a new instance. Both `aDeclaration' and `hours' will refer to the same object. Use `hours.clone' to create a separate instance.
 ___________________________________________________________
 Started.
 2 1 5   4 3 2 6   5 4 3 7   6 5 4 8   7 6 5 9   8 7 6 10   9 8 7 11   10 9 8 12   11 10 9 13   12 11 10 14   13 12 11 15   14 13 12 16   15 14 13 17   16 15 14 18   17 16 15 19   18 17 16 20   

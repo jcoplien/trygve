@@ -517,7 +517,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
 					if (lhsType.pathName().equals(rhsType.pathName())) {
 						parser.errorHook6p2(ErrorType.Warning, lhs.lineNumber(),
-								"WARNING: Initialization does not create a new instance. Both `", lhs.name(),
+								"WARNING: Assignment / initialization does not create a new instance. Both `", lhs.name(),
 								"' and `" + rhs.name(), "' will refer to the same object. Use `",
 								rhs.name(), ".clone' to create a separate instance.");
 					}

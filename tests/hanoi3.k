@@ -21,6 +21,7 @@ class Rod {
     public String toString() const { 
         String output = "";
         for(Disk d : disks_) {
+            // NOTE: Error after removing a disk and accessing it. (see moveDiskTo)
             output = output + d.size().toString();
         }
         return output;
@@ -47,6 +48,8 @@ class Rod {
     public void moveDiskTo(Rod to) {        
         assert(disks_.size() > 0, "Tried to remove a disk from an empty rod.");
         Disk topDisk = disks_.remove(disks_.size()-1);
+        // NOTE: accessing topDisk.size() gives runtime error
+        // System.out.println(topDisk.size());
         to.add(topDisk);
     }
 
@@ -64,7 +67,7 @@ class TowerOfHanoi {
         dest_ = new Rod();
         moves = 0;
 
-        int i = disks;
+        int i = disks.clone();
         while(i > 0) {
            source_.add(new Disk(i--));
         } 
@@ -79,7 +82,7 @@ class TowerOfHanoi {
         System.out.println("|" + source_.toString());
         System.out.println("|" + spare_.toString());
         System.out.println("|" + dest_.toString());
-        System.out.println();;
+        System.out.println();
     }
 
     public void move(int disk, Rod source, Rod dest, Rod spare) {
@@ -107,10 +110,38 @@ class TowerOfHanoi {
 }
 
 /* GOLD:
-line 67: WARNING: Assignment / initialization does not create a new instance. Both `i' and `disks' will refer to the same object. Use `disks.clone' to create a separate instance.
 ___________________________________________________________
 |321
 |
 |
-Line 87: Assertion failed.
+
+|32
+|
+|1
+
+|3
+|2
+|1
+
+|3
+|21
+|
+
+|
+|21
+|3
+
+|1
+|2
+|3
+
+|1
+|
+|32
+
+|
+|
+|321
+
+Completed in 7 moves.
 */

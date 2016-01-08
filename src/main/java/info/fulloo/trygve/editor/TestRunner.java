@@ -130,6 +130,7 @@ public class TestRunner {
 		"disk1.k",
 		"hanoi.k",
 		"hanoi2.k",
+		"hanoi3.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

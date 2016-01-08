@@ -4037,7 +4037,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == mdecl) {
 				// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
 				// skip it - we'll barked at the user in pass 2
-				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in class ", className);
+				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName, "' not declared in class ", className);
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			} else {
 				type = mdecl.returnType();
@@ -4127,12 +4127,14 @@ public class Pass1Listener extends Pass0Listener {
 					// Ingore parameters as in Pass 1. We may not find a match with a template type...
 					mdecl = classDecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, actualArgumentList, true);
 					if (null == mdecl) {
-						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-								"' not declared in class `", classDecl.name(), "'", "");
+						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+								methodSelectorName + actualArgumentList.selflessGetText(),
+								"' not declared in class `", classDecl.name(), "'.", "");
 					}
 				} else {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-							"' not declared in class `", classDecl.name(), "'", "");
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+							methodSelectorName + actualArgumentList.selflessGetText(),
+							"' not declared in class `", classDecl.name(), "'.", "");
 				}
 			}
 			
@@ -4202,7 +4204,7 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in Role `", roleDecl.name() + "'.");
 				if (message.lineNumber() < roleDecl.lineNumber()) {
 					final MethodSignature enclosingMethod = parsingData_.currentMethodSignature();
@@ -4218,13 +4220,13 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (null != contextDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in Context ", contextDecl.name());
 			}
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in interface ", interfaceDecl.name());
 			}
 		} else if (objectTypeName.equals("Class")) {
@@ -4237,7 +4239,7 @@ public class Pass1Listener extends Pass0Listener {
 					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversion(methodSelectorName, actualArgumentList, false);
 					if (null == mdecl) {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-								"Cannot find static method `" + methodSelectorName
+								"Cannot find static script `" + methodSelectorName
 								+ actualArgumentList.selflessGetText(),
 							"' of class `", object.name(), "'.");
 					}

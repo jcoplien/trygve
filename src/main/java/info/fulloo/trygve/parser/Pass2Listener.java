@@ -793,8 +793,8 @@ public class Pass2Listener extends Pass1Listener {
 		
 		if (null == methodDeclaration && isOKMethodSignature == false) {
 			final String methodSelectorName = message.selectorName();
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
-					methodSelectorName + message.argumentList().getText(),
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+					methodSelectorName + message.argumentList().selflessGetText(),
 					"' not declared in class ", "classname (dubious error — see other messages)");
 		}
 		

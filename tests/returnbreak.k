@@ -56,7 +56,7 @@ context Chord {
 }
 
 /* GOLD:
-line 18: WARNING: Method declaration for `name' may hide method declared at line 40
+line 18: WARNING: Script declaration for `name' may hide method declared at line 40
 ___________________________________________________________
 13
 i=0

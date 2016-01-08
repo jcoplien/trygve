@@ -82,7 +82,7 @@ class Currency {
 }
 
 /* GOLD:
-line 30: Method `decreaseBalance(Amount)' not declared in Role `SourceAccount'.
-line 39: Method `increaseBalance(Amount)' not declared in Role `DestinationAccount'.
+line 30: Script `decreaseBalance(Amount)' not declared in Role `SourceAccount'.
+line 39: Script `increaseBalance(Amount)' not declared in Role `DestinationAccount'.
 ___________________________________________________________
 */

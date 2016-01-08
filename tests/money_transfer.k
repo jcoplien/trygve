@@ -66,7 +66,7 @@ class LedgerEntry
 }
 
 /* GOLD:
-line 27: WARNING: Method declaration for `getBalance' may hide method declared at line 18
+line 27: WARNING: Script declaration for `getBalance' may hide method declared at line 18
 ___________________________________________________________
 30.0
 */

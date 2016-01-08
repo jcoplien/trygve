@@ -830,7 +830,7 @@ public class StaticScope {
 						} else {
 							ErrorLogger.error(ErrorType.Warning,
 									decl.lineNumber(),
-									"WARNING: Method declaration for `",
+									"WARNING: Script declaration for `",
 									decl.name(),
 									"' may hide method declared at line ",
 									String.valueOf(aDecl.lineNumber()));

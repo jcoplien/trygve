@@ -313,11 +313,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			listCode.add(new ListClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingBool;
 		} else if (methodDeclaration.name().equals("remove")) {
-			if (methodDeclaration.returnType().name().equals("int")) {
-				listCode.add(new ListClass.RTRemoveICode(methodDeclaration.enclosedScope()));
+			if (methodDeclaration.returnType().name().equals("boolean")) {
+				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingBool;
 			} else {
-				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
+				listCode.add(new ListClass.RTRemoveICode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingTemplate;
 			}
 		} else {
