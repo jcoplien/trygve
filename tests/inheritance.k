@@ -1,6 +1,6 @@
 class ABaseClass {
    public ABaseClass(int intArgument) {
-      storage_ = intArgument;
+      storage_ = intArgument.clone;
    }
    public String toString() {
       return "ABaseClass" + "xyz"

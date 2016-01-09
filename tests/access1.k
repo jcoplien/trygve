@@ -20,12 +20,12 @@ context c1 {
    }
    role c1r2 {
       public void c1r2f1() {
-         int j = cl1o.cl1o1;
+         int j = cl1o.cl1o1.clone;
       }
       void c1r2f2(cl1 cl1o) {
-         int i1 = cl1o.cl1o1;
-         int i1 = cl1o.cl1o2;
-         int k = cl1o.cl1o1;
+         int i1 = cl1o.cl1o1.clone;
+         int i1 = cl1o.cl1o2.clone;
+         int k = cl1o.cl1o1.clone;
       }
    }
    private role clr3 {

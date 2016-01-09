@@ -1,6 +1,6 @@
 class Note {
     public Note(String name) {
-        name_ = name;
+        name_ = name.clone;
         assert(position() > 0.0, "Invalid note: " + name);
     }
 

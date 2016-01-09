@@ -1,6 +1,6 @@
 class Polynomial {
 		public Polynomial(double a, double b, double c) {
-			a_ = a; b_ = b; c_ = c
+			a_ = a.clone; b_ = b.clone; c_ = c.clone
 		}
 		private double four_a_c() {
 			return 4.0 * a_ * c_;

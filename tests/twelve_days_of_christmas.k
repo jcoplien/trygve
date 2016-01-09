@@ -175,9 +175,10 @@ context TwelveDaysOfChristmas {
 }
 
 /* GOLD:
-line 162: WARNING: Initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
+line 7: WARNING: Assignment / initialization does not create a new instance. Both `name_' and `name' will refer to the same object. Use `name.clone' to create a separate instance.
+line 22: WARNING: Assignment / initialization does not create a new instance. Both `order_' and `order' will refer to the same object. Use `order.clone' to create a separate instance.
+line 162: WARNING: Assignment / initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
 ___________________________________________________________
-
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.
 
@@ -209,7 +210,7 @@ six geese a-laying, five gold rings;
 four calling birds, three french hens, two turtle doves
 and a partridge in a pear tree.
 
-On the eigth day of Christmas my true love gave to me
+On the eighth day of Christmas my true love gave to me
 eight maids a-milking, seven swans a-swimming,
 six geese a-laying, five gold rings;
 four calling birds, three french hens, two turtle doves
@@ -222,7 +223,7 @@ four calling birds, three french hens, two turtle doves
 and a partridge in a pear tree.
 
 On the tenth day of Christmas my true love gave to me
-ten lords a-leping,
+ten lords a-leaping,
 nine ladies dancing, eight maids a-milking, seven swans a-swimming,
 six geese a-laying, five gold rings;
 four calling birds, three french hens, two turtle doves
@@ -235,8 +236,8 @@ six geese a-laying, five gold rings;
 four calling birds, three french hens, two turtle doves
 and a partridge in a pear tree.
 
-On the twelfth day of Christmas my true love gave to me
-twelve drummers drumming, eleven pipers piping, ten lords a-leping,
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords a-leaping,
 nine ladies dancing, eight maids a-milking, seven swans a-swimming,
 six geese a-laying, five gold rings;
 four calling birds, three french hens, two turtle doves

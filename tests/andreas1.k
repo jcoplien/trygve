@@ -1,6 +1,6 @@
 class Digit {
     public Digit(int digit) {
-        this.digit_ = digit; // Gives the error below, removing "this" makes it work
+        this.digit_ = digit.clone; // Gives the error below, removing "this" makes it work
     }
 
     public int digit() {

@@ -1,5 +1,5 @@
 class Note {
-    public Note(String name) { name_ = name; }
+    public Note(String name) { name_ = name.clone; }
     public int position() const { return 10; }
     private String name_;
 }

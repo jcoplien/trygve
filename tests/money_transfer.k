@@ -46,8 +46,8 @@ class LedgerEntry
     private double amount_;
 
     public LedgerEntry(String message, double amount) {
-        message_ = message;
-        amount_ = amount;
+        message_ = message.clone;
+        amount_ = amount.clone;
     }
     
     public String getMessage() {

@@ -233,31 +233,37 @@ public class StaticScope {
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("-", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("*", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("**", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("/", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
+		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("%", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);

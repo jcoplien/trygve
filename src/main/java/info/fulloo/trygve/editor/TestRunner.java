@@ -130,6 +130,7 @@ public class TestRunner {
 		"disk1.k",
 		"hanoi.k",
 		"hanoi2.k",
+		"hanoi2.5.k",
 		"hanoi3.k",
 		"twelve_days_of_christmas.k",
 	};
@@ -235,7 +236,7 @@ public class TestRunner {
 		}
 	}
 	
-	/*
+	/**/
 	private String canonize(final char c) {
 		String retval = String.valueOf(c);
 		switch (c) {
@@ -245,10 +246,10 @@ public class TestRunner {
 		}
 		return retval;
 	}
-	*/
+	/**/
 	
 	private void analyzeFailure(final String s1, final String s2) {
-		/*
+		/**/
 		if (s1.equals(s2)) {
 			return;
 		} else {
@@ -271,7 +272,7 @@ public class TestRunner {
 				}
 			}
 		}
-		*/
+		/**/
 	}
 
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {

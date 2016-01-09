@@ -1,9 +1,10 @@
 class Complex {
    public Complex(double realPart, double imaginaryPart) {
-      realPart_ = realPart;  imaginaryPart_ = imaginaryPart
+      realPart_ = realPart.clone;
+      imaginaryPart_ = imaginaryPart.clone
    }
    public Complex(double realPart) {
-      realPart_ = realPart
+      realPart_ = realPart.clone;
       imaginaryPart_ = 0.0
    }
    public Complex() { realPart_ = imaginaryPart_ = 0.0 }

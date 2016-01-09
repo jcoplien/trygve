@@ -512,17 +512,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			doTrivialConversions(parser);
 			rhs_.setResultIsConsumed(true);
 			
-			if (lhs instanceof IdentifierExpression && rhs instanceof IdentifierExpression) {
-				final Type lhsType = lhs.type(), rhsType = rhs.type();
-				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
-					if (lhsType.pathName().equals(rhsType.pathName())) {
-						parser.errorHook6p2(ErrorType.Warning, lhs.lineNumber(),
-								"WARNING: Assignment / initialization does not create a new instance. Both `", lhs.name(),
-								"' and `" + rhs.name(), "' will refer to the same object. Use `",
-								rhs.name(), ".clone' to create a separate instance.");
-					}
-				}
-			}
+			identifierBindingCheck(lhs, rhs, parser);
 		}
 		private void doTrivialConversions(final Pass1Listener parser) {
 			// Should be pathnames. FIXME (easy fix).
@@ -535,6 +525,28 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 								"");
 						rhs_ = new DoubleCasterExpression(rhs_);
 						rhs_.setResultIsConsumed(true);
+					}
+				}
+			}
+		}
+		private boolean isIdentifierExpression(final Expression e) {
+			boolean retval = false;
+			if (e instanceof IdentifierExpression) {
+				retval = true;
+			} else if (e instanceof QualifiedIdentifierExpression) {
+				retval = true;
+			}
+			return retval;
+		}
+		private void identifierBindingCheck(final Expression lhs, final Expression rhs, final Pass1Listener parser) {
+			if (isIdentifierExpression(lhs) && isIdentifierExpression(rhs)) {
+				final Type lhsType = lhs.type(), rhsType = rhs.type();
+				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
+					if (lhsType.pathName().equals(rhsType.pathName())) {
+						parser.errorHook6p2(ErrorType.Warning, lhs.lineNumber(),
+								"WARNING: Assignment / initialization does not create a new instance. Both `", lhs.name(),
+								"' and `" + rhs.name(), "' will refer to the same object. Use `",
+								rhs.name(), ".clone' to create a separate instance.");
 					}
 				}
 			}
