@@ -22,6 +22,8 @@ class Test {
 { Test test = new Test()  test.test("+-=") }
 
 /* GOLD:
+line 3: WARNING: Assignment / initialization does not create a new instance. Both `i_' and `i' will refer to the same object. Use `i.clone' to create a separate instance.
+line 8: WARNING: Assignment / initialization does not create a new instance. Both `s_' and `s' will refer to the same object. Use `s.clone' to create a separate instance.
 ___________________________________________________________
 
 hello world

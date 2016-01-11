@@ -12,8 +12,23 @@ class Rod {
         disks_ = new List<Disk>();
     }
 
+    public Rod(List<Disk> disks) {
+        disks_ = disks;
+    }
+
+    public int numberOfDisks() const { return disks_.size(); }
+
     public String toString() const { 
         String output = "";
+        for(Disk d : disks_) {
+            // NOTE: Error after removing a disk and accessing it. (see moveDiskTo)
+            output = output + d.size().toString();
+        }
+        return output;
+    }
+
+    public String toString2() const { 
+        String output = "> ";
         for(Disk d : disks_) {
             output = output + d.size().toString();
         }
@@ -33,6 +48,8 @@ class Rod {
     public void moveDiskTo(Rod to) {        
         assert(disks_.size() > 0, "Tried to remove a disk from an empty rod.");
         Disk topDisk = disks_.remove(disks_.size()-1);
+        // NOTE: accessing topDisk.size() gives runtime error
+        // System.out.println(topDisk.size());
         to.add(topDisk);
     }
 
@@ -50,19 +67,18 @@ class TowerOfHanoi {
         dest_ = new Rod();
         moves = 0;
 
-        // Need to call clone, since there are no value types.
         int i = disks.clone();
         while(i > 0) {
            source_.add(new Disk(i--));
         } 
 
-        printDisks();
+        print();
         move(disks, source_, dest_, spare_);
 
         System.out.println("Completed in " + moves.toString() + " moves.");
     }
 
-    public void printDisks() {
+    public void print() {
         System.out.println("|" + source_.toString());
         System.out.println("|" + spare_.toString());
         System.out.println("|" + dest_.toString());
@@ -71,10 +87,16 @@ class TowerOfHanoi {
 
     public void move(int disk, Rod source, Rod dest, Rod spare) {
         moves++;
-        if(disk > 1) move(disk-1, source, spare, dest);
-        source.moveDiskTo(dest);
-        printDisks();
-        if(disk > 1) move(disk-1, spare, dest, source);
+        assert (moves < 10); 	// safety valve, or you will loop forever
+        if(disk == 1) {
+            source.moveDiskTo(dest);
+            print();
+        } else {
+            move(disk-1, source, spare, dest);
+            source.moveDiskTo(dest);
+            print();
+            move(disk-1, spare, dest, source);
+        }
     }
 
     private int moves;
@@ -89,6 +111,7 @@ class TowerOfHanoi {
 
 /* GOLD:
 ___________________________________________________________
+
 |321
 |
 |

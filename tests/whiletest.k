@@ -1,11 +1,11 @@
 class Base {
   public Base(int i) {
-    i_ = i;
+    i_ = i.clone();
     s_ = ""
   }
   public Base(String s) {
    i_ = 0;
-   s_ = s
+   s_ = s.clone()
   }
   int i_;
   String s_;

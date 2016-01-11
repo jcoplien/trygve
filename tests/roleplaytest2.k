@@ -31,7 +31,7 @@ context Context2 {
 
 class AnObject {
    public AnObject(int id) {
-      id_ = id;
+      id_ = id.clone;
       System.out.print("AnObject::AnObject(");
       System.out.print(id);
       System.out.println(")");

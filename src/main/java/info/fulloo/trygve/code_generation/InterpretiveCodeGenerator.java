@@ -94,10 +94,8 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.run_time.RTClass;
-import info.fulloo.trygve.run_time.RTClass.RTStringClass;
-import info.fulloo.trygve.run_time.RTClass.RTDoubleClass;
-import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
-import info.fulloo.trygve.run_time.RTClass.RTBooleanClass;
+import info.fulloo.trygve.run_time.RTClass.RTSystemClass;
+import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
@@ -216,8 +214,18 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private void compileClass(final ClassDeclaration classDeclaration) {
 		if (null == RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(classDeclaration.name())) {
 			if (classDeclaration.enclosingScope() == StaticScope.globalScope()) {
+				RTClass rTClassDeclaration = null;
+				
+				// Some classes have special hooks. For example, SystemClass has two statics
+				// (System.err and System.out) that need to be initialized. We use the
+				// postSetupInitializtion method to do that, and it is overridden
+				// in RTSystemClass
+				if (classDeclaration.type().pathName().equals("System.")) {
+					rTClassDeclaration = new RTSystemClass(classDeclaration);
+				} else {
 				// Kludge. But it's direct, and effective.
-				final RTClass rTClassDeclaration = new RTClass(classDeclaration);
+					rTClassDeclaration = new RTClass(classDeclaration);
+				}
 				RunTimeEnvironment.runTimeEnvironment_.addTopLevelClass(classDeclaration.name(), rTClassDeclaration);
 			}
 		}

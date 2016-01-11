@@ -1,6 +1,6 @@
 class Disk {
     public Disk(int size) {
-        size_ = size;
+        size_ = size.clone;
     }
 
     public int size() const { return size_ }

@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -186,6 +187,9 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		
 		return retval;
 	}
+	
+	public void postSetupInitializtion() { }	// mainly for use in initializing statics
+												// of built-in types (like System)
 	
 	public static RTDoubleObject makeDouble(final RTObject object) {
 		RTDoubleObject retval = null;
@@ -1032,6 +1036,35 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("boolean"); }
+	}
+	
+	public static class RTSystemClass extends RTClass {
+		public RTSystemClass(final TypeDeclaration associatedType) {
+			super(associatedType);
+		}
+		public static class RTPrintStreamInfo extends RTObjectCommon {
+			public RTPrintStreamInfo(final PrintStream printStream) {
+				super((RTType)null);
+				printStream_ = printStream;
+			}
+			public PrintStream printStream() {
+				return printStream_;
+			}
+			
+			private final PrintStream printStream_;
+		}
+		@Override public void postSetupInitializtion() {
+			// Lookup "out" and "err" and set them up
+			final RTObject out = nameToStaticObjectMap_.get("out");
+			RTPrintStreamInfo printStreamInfo = new RTPrintStreamInfo(System.out);
+			out.addObjectDeclaration("printStreamInfo", null);
+			out.setObject("printStreamInfo", printStreamInfo);
+			
+			final RTObject err = nameToStaticObjectMap_.get("err");
+			printStreamInfo = new RTPrintStreamInfo(System.err);
+			err.addObjectDeclaration("printStreamInfo", null);
+			err.setObject("printStreamInfo", printStreamInfo);
+		}
 	}
 	
 	private final Map<String, RTContext> stringToContextDeclMap_;

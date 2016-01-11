@@ -210,6 +210,7 @@ public class RunTimeEnvironment {
 	private void handleMetaInits() {
 		for (final RTClass aRunTimeClass : allClassList_) {
 			aRunTimeClass.metaInit();
+			aRunTimeClass.postSetupInitializtion();
 		}
 	}
 	public void addToListOfAllClasses(final RTClass aClass) {

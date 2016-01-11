@@ -24,7 +24,7 @@ context Context1 {
 
 class AClass {
    public AClass(int i) {
-      i_ = i;
+      i_ = i.clone;
    }
    public void classFunc() {
       int [] intarray;

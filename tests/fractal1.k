@@ -2,8 +2,8 @@ class ComplexNumber {
     private ComplexNumber constant_;
 
     public ComplexNumber(double real, double im) {
-        real_ = real;
-        im_ = im;
+        real_ = real.clone;
+        im_ = im.clone;
     }
 
     public double real() const {
@@ -52,8 +52,8 @@ context Fractal {
     }
 
     public Fractal(int width, int height, TheSet set) {
-        width_ = width;
-        height_ = height;
+        width_ = width.clone;
+        height_ = height.clone;
         TheSet = set;
 
         // Thanks for the shades: http://larc.unt.edu/ian/art/ascii/shader/
