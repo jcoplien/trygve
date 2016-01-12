@@ -1043,7 +1043,7 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	*/
 
-	@Override public Expression idExpr(TerminalNode ctxJAVA_ID, Token ctxGetStart) {
+	@Override public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// | JAVA_ID
 		// Special version for pass 2 and 3
 		
@@ -1080,6 +1080,34 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 			}
+			
+			
+			// We don't want Role scope to be able to access symbols at
+			// Context scope. Do a specific check for that and issue
+			// a noncompliance warning
+			
+			final StaticScope currentProcScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+			if (null != currentProcScope) {
+				final MethodDeclaration currentMethod = (MethodDeclaration)currentProcScope.associatedDeclaration();
+				
+				// Is it a Role method?
+				final StaticScope methodsEnclosingScope = currentMethod.enclosingScope();
+				final Declaration enclosingMegaTypeDeclaration = methodsEnclosingScope.associatedDeclaration();
+				if (enclosingMegaTypeDeclaration instanceof RoleDeclaration) {
+					final Declaration symbolsEnclosingMegaType = declaringScope.associatedDeclaration();
+					if (symbolsEnclosingMegaType instanceof ContextDeclaration) {
+						// Then there is code within the Role method accessing a symbol
+						// in the surrounding Context. Maybe a no-no.
+						errorHook6p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+								"NONCOMPLIANT: Attempt to access Context member `", idText,
+								"' from within scope of Role script `",
+								enclosingMegaTypeDeclaration.name() + "." + currentMethod.name(),
+								"'. Roles may not directly access Context data. ",
+								" Consider binding the Context to one of its own Roles instead.");
+					}
+				}
+			}
+			
 			assert null != retval;
 		} else if (null != currentScope_.lookupClassDeclarationRecursive(idText)) {
 			// Could be a reference to a class itself (like System)

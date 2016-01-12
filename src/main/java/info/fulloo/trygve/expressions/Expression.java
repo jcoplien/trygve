@@ -58,6 +58,7 @@ import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RTExpression.*;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public abstract class Expression implements BodyPart, ExpressionStackAPI {
@@ -1290,8 +1291,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 						final MethodDeclaration methodDecl =
 								typesScope.lookupMethodDeclarationIgnoringParameter(operator_, argumentList, "this");
 						
-						// Found it. Return type is type of this method.
-						retval = methodDecl.returnType();
+						if (null != methodDecl) {	// stumbling check
+							// Found it. Return type is type of this method.
+							retval = methodDecl.returnType();
+						} else {
+							retval = StaticScope.globalScope().lookupTypeDeclaration("void");
+						}
 					}
 				}
 			}
