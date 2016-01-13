@@ -132,6 +132,8 @@ public class TestRunner {
 		"hanoi2.k",
 		"hanoi2.5.k",
 		"hanoi3.k",
+		"context_role_bug1.k",
+		"natt_20160112.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

@@ -28,6 +28,7 @@ import java.util.List;
 import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
+import info.fulloo.trygve.mylibrary.Unescape_perl_string;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -70,7 +71,8 @@ public abstract class Constant extends Expression {
 			expression = new BooleanConstant(false);
 	    } else if (l > 1 && s.charAt(0) == '"' && s.charAt(l-1) == '"') {
 			final String subString = s.substring(1, l-1);
-			expression = new StringConstant(subString);
+			final String parsedString = Unescape_perl_string.unescape_perl_string(subString);
+			expression = new StringConstant(parsedString);
 		} else if (l == 3 && s.charAt(0) == '\'' && s.charAt(2) == '\'') {
 			expression = new CharacterConstant(s.charAt(1));
 		} else if (l > 0 && isInteger(s)) {

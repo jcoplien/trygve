@@ -220,7 +220,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			} else if (nameToStagePropBindingMap_.containsKey(name)) {
 				retval = nameToStagePropBindingMap_.get(name);
 			} else {
-				assert false;
+				retval = null;
 			}
 			return retval;
 		}

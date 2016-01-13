@@ -2535,6 +2535,7 @@ public class Pass1Listener extends Pass0Listener {
 			//	| JAVA_ID
 			
 			expression = idExpr(ctx.JAVA_ID(), ctx.getStart());
+
 			if (printProductionsDebug) {
 				System.err.print("abelian_atom : JAVA_ID (");
 				System.err.print(ctx.JAVA_ID().getText());
@@ -4337,7 +4338,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		return retval;
 	}
-	public Expression idExpr(TerminalNode ctxJAVA_ID, Token ctxGetStart) {
+	public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// Pass 1 version
 		final StaticScope globalScope = StaticScope.globalScope();
 		Expression expression = null;

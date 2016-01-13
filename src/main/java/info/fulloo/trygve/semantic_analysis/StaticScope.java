@@ -238,35 +238,41 @@ public class StaticScope {
 		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
+		methodDecl.setHasConstModifier(true);
 		intScope.declareMethod(methodDecl);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("-", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("*", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("**", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("/", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
 		methodDecl = new MethodDeclaration("%", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
@@ -277,6 +283,7 @@ public class StaticScope {
 		formals.addFormalParameter(self);
 		methodDecl = new MethodDeclaration("compareTo", methodScope, intType, Public, 0, false);
 		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
@@ -1317,7 +1324,7 @@ public class StaticScope {
 			return retval;
 		}
 		public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
-				String paramToIgnore) {
+				final String paramToIgnore) {
 			MethodDeclaration retval = super.lookupMethodDeclarationIgnoringParameter(methodSelector, parameterList,
 					 paramToIgnore);
 			if (null == retval) {

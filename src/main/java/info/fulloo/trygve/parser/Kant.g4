@@ -370,11 +370,60 @@ argument_list
 
 // Lexer rules
 
-STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
+fragment
+OctalDigit
+    :   [0-7]
+    ;
+    
+fragment
+HexDigit
+    :   [0-9a-fA-F]
+    ;
+
+//-----------------------
+
+
+// STRING : '"' ( ~'"' | '\\' '"' )* '"' ;
+
+STRING
+    :   '"' StringCharacters? '"'
+    ;
+fragment
+StringCharacters
+    :   StringCharacter+
+    ;
+fragment
+StringCharacter
+    :   ~["\\]
+    |   EscapeSequence
+    ;
+// §3.10.6 Escape Sequences for Character and String Literals
+fragment
+EscapeSequence
+    :   '\\' [btnfr"'\\]
+    |   OctalEscape
+    |   UnicodeEscape
+    ;
+
+fragment
+OctalEscape
+    :   '\\' OctalDigit
+    |   '\\' OctalDigit OctalDigit
+    |   '\\' ZeroToThree OctalDigit OctalDigit
+    ;
+
+fragment
+UnicodeEscape
+    :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
+    ;
+
+fragment
+ZeroToThree
+    :   [0-3]
+    ;
 
 INTEGER : ('1' .. '9')+ ('0' .. '9')* | '0';
 
-// FLOAT : (('1' .. '9')* | '0') '.' ('0' .. '9')* ;
 FLOAT : (('1' .. '9')+ ('0' .. '9')* | '0') '.' ('0' .. '9')* ;
 
 BOOLEAN : 'true' | 'false' ;
