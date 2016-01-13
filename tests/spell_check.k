@@ -15,7 +15,6 @@ Based on the following use case:
 */
 
 ///////////////////////////////////////
-
 class TextBuffer {
     public TextBuffer() {
         buffer_ = "";
@@ -37,7 +36,6 @@ class TextBuffer {
 }
 
 ///////////////////////////////////////
-
 context TextSelection {
     stageprop Text {} requires {
         String getText() const;
@@ -64,7 +62,6 @@ context TextSelection {
 }
 
 ///////////////////////////////////////
-
 context TextFile {
     role Buffer {} requires {
         String getText() const;
@@ -92,12 +89,31 @@ context TextFile {
 //        return this;
     }
 
-    public String getText() { return Buffer.getText(); }
+    public String getText() const { return Buffer.getText(); }
 }
 
 ///////////////////////////////////////
+// An inverted dictionary. Anything not in it is considered correctly spelled.
+class SimpleDictionary {
+    public SimpleDictionary() {}
 
+    public List<String> suggestSpelling(String word) const {
+        assert(word.length() > 0, "Cannot use an empty String for spelling suggestions.");
+        List<String> output = new List<String>();
+
+        switch(word) {
+            case "a-milking":
+                output.add("milking");
+                break;
+        }
+
+        return output;
+    }
+}
+
+///////////////////////////////////////
 context SpellCheck {
+    /////////////////////////////////////////
     role SpellChecker {
         public String nextWord() {
             if(Text.isFinished()) return "";
@@ -112,7 +128,7 @@ context SpellCheck {
                 advancePosition();
             }
 
-            while(isAlphabetic(next)) {                              
+            while(isAlphabetic(next)) {
                 output = output + next;
                 if(Text.isFinished()) return output;
                 next = Text.currentCharacter();
@@ -123,7 +139,7 @@ context SpellCheck {
         }
 
         // Sorry, English only...
-        private boolean isAlphabetic(String character) const {
+        private boolean isAlphabetic(String character) {
             assert(character.length() == 1, "character string length not equal to one.");
             return character == "-" || 
                    (character >= "a" && character <= "z") ||
@@ -134,28 +150,58 @@ context SpellCheck {
         void advancePosition();
     }
 
-    role Text {
+    /////////////////////////////////////////
+    stageprop Text {
         public String currentCharacter() {
             int pos = SpellChecker.currentPosition();
             return getText().substring(pos, pos+1);
         }
-        public boolean isFinished() const {
+        public boolean isFinished() {
             return SpellChecker.currentPosition() >= getText().length();
         }
     } requires {
         String getText() const;
     }
 
+    /////////////////////////////////////////
+    stageprop Dictionary {
+        public void checkSpelling(String word) {
+            List<String> suggestions = suggestSpelling(word);
+
+            // NOTE: This statement creates an infinite loop in test()!
+            if(suggestions.size() == 0) {
+                System.out.println("OK: " + word);
+                return;
+            }
+
+            String joined = "";
+            int end = suggestions.size()-1;
+            for(int i = 0; i <= end; i++) {
+                joined = joined + suggestions.get(i);
+                if(i < end) joined = joined + ", ";
+            }
+            System.out.println(word + " -> [" + joined + "]");
+        }
+    } requires {
+        List<String> suggestSpelling(String word) const;
+    }
+
+    /////////////////////////////////////////
+
     public SpellCheck(Text text) {
         currentPos_ = 0;
         Text = text;
         SpellChecker = this;
+        Dictionary = new SimpleDictionary();
     }
 
     public void test() {
         String word = SpellChecker.nextWord();
-        while(word.length() > 0) {
-            System.out.println(word);
+        int i = 0;
+        while(word.length() > 0 && i++ < 100) {
+            System.out.print(word + " at ");
+            System.out.println(SpellChecker.currentPosition());
+            Dictionary.checkSpelling(word);
             word = SpellChecker.nextWord();
         }
     }
