@@ -48,8 +48,8 @@ context TextSelection {
         assert(start <= end, "End selection position less than start position.");
 
         Text = text;
-        start_ = start;
-        end_ = end;
+        start_ = start.clone;
+        end_ = end.clone;
     }
 
     public String getText() const { 
@@ -79,12 +79,12 @@ context TextFile {
     public void load(String filename) {
         if(filename == "twelve_days_of_christmas.txt") {            
             Buffer.clear();
-            Buffer.add("On the twelveth day of Christmas my true love gave to me ");
-            Buffer.add("twelve drummers drumming, eleven pipers piping, ten lords a-leaping, ");
-            Buffer.add("nine ladies dancing, eight maids a-milking, seven swans a-swimming, ");
-            Buffer.add("six geese a-laying, five gold rings; ");
-            Buffer.add("four calling birds, three french hens, two turtle doves ");
-            Buffer.add("and a partridge in a pear tree.");
+            Buffer.add("On the twelveth day of Christmas my true love gave to me\n");
+            Buffer.add("twelve drummers drumming, eleven pipers piping, ten lords a-leaping,\n");
+            Buffer.add("nine ladies dancing, eight maids a-milking, seven swans a-swimming,\n");
+            Buffer.add("six geese a-laying, five gold rings;\n");
+            Buffer.add("four calling birds, three french hens, two turtle doves\n");
+            Buffer.add("and a partridge in a pear tree.\n");
         } else {
             assert(false, 
                 "File '" + filename + "' not found (try 'twelve_days_of_christmas.txt')");
@@ -98,59 +98,72 @@ context TextFile {
 ///////////////////////////////////////
 
 context SpellCheck {
-    role Text {
-        public boolean isFinished() const {
-            return currentPos_ >= getText().length();
-        }
-
-        // Sorry, English only...
-        private boolean isAlphabetic(String character) const {
-            assert(character.length() == 1);
-            return character == "-" || 
-                   (character >= "a" && character <= "z") ||
-                   (character >= "A" && character <= "Z");
-        }
-
-        private String nextCharacter() {
-            // NOTE: Will this postfix "trick" work? Untested...
-            return getText().substring(currentPos_, ++currentPos_);
-        }
-
+    role SpellChecker {
         public String nextWord() {
-            // NOTE: Cannot call isFinished, runtime error
-            assert(!isFinished(), "Already parsed text");
+            if(Text.isFinished()) return "";
 
             String output = "";
-            // NOTE: Cannot call nextCharacter, runtime error
-            String next = nextCharacter();
+            String next = Text.currentCharacter();
+            advancePosition();
 
             while(!isAlphabetic(next)) {
-                if(isFinished()) return output;
-                next = nextCharacter();
+                if(Text.isFinished()) return output;
+                next = Text.currentCharacter();
+                advancePosition();
             }
 
             while(isAlphabetic(next)) {                              
                 output = output + next;
-                if(isFinished()) return output;
-                next = nextCharacter();
+                if(Text.isFinished()) return output;
+                next = Text.currentCharacter();
+                advancePosition();
             }
 
             return output;
+        }
+
+        // Sorry, English only...
+        private boolean isAlphabetic(String character) const {
+            assert(character.length() == 1, "character string length not equal to one.");
+            return character == "-" || 
+                   (character >= "a" && character <= "z") ||
+                   (character >= "A" && character <= "Z");
+        }
+    } requires {
+        int currentPosition() const;
+        void advancePosition();
+    }
+
+    role Text {
+        public String currentCharacter() {
+            int pos = SpellChecker.currentPosition();
+            return getText().substring(pos, pos+1);
+        }
+        public boolean isFinished() const {
+            return SpellChecker.currentPosition() >= getText().length();
         }
     } requires {
         String getText() const;
     }
 
     public SpellCheck(Text text) {
-        Text = text;
         currentPos_ = 0;
+        Text = text;
+        SpellChecker = this;
     }
 
     public void test() {
-        System.out.println(Text.nextWord());
+        String word = SpellChecker.nextWord();
+        while(word.length() > 0) {
+            System.out.println(word);
+            word = SpellChecker.nextWord();
+        }
     }
 
-    int currentPos_;
+    private int currentPosition() const { return currentPos_; }
+    private void advancePosition() { ++currentPos_; }
+
+    private int currentPos_;
 }
 
 ///// Entrypoint //////////////////////////////////////////////////
