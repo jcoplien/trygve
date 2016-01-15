@@ -20,38 +20,57 @@ class TextBuffer {
         buffer_ = "";
     }
 
+    public TextBuffer(String text) {
+        buffer_ = text.clone;
+    }
+
     public void add(String text) {
         buffer_ = buffer_ + text;
     }
 
-    // TODO: insert(String text, int position)
+    public void insert(String text, int position) {
+        splice(position, position, text);
+    }
+
+    public void splice(int startIndex, int endIndex, String text) {
+        assert(endIndex >= startIndex, "endIndex less than startIndex");
+        buffer_ = buffer_.substring(0, startIndex) + 
+                  text + 
+                  buffer_.substring(endIndex, buffer_.length());
+    }
 
     public void clear() {
         buffer_ = "";
     }
 
     public String getText() const { return buffer_; }
+    public int length() const { return buffer_.length(); }
 
     private String buffer_;
 }
 
 ///////////////////////////////////////
 context TextSelection {
-    stageprop Text {} requires {
+    role Buffer {} requires {
         String getText() const;
+        void splice(int startPos, int endPos, String text);
     }
 
-    public TextSelection(Text text, int start, int end) {
+    public TextSelection(Buffer text, int start, int end) {
         assert(start >= 0, "Invalid start select position: " + start.toString());
         assert(start <= end, "End selection position less than start position.");
 
-        Text = text;
+        Buffer = text;
         start_ = start.clone;
         end_ = end.clone;
     }
 
     public String getText() const { 
-        return Text.getText().substring(start_, end_); 
+        return Buffer.getText().substring(start_, end_); 
+    }
+
+    public void splice(int startPos, int endPos, String text) { 
+        Buffer.splice(start_ + startPos, start_ + endPos, text);
     }
 
     public int start() const { return start_; }
@@ -66,6 +85,7 @@ context TextFile {
     role Buffer {} requires {
         String getText() const;
         void add(String text);
+        void splice(int startPos, int endPos, String text);
         void clear();
     }
 
@@ -90,6 +110,10 @@ context TextFile {
     }
 
     public String getText() const { return Buffer.getText(); }
+
+    public void splice(int startPos, int endPos, String text) { 
+        Buffer.splice(startPos, endPos, text); 
+    }
 }
 
 ///////////////////////////////////////
@@ -104,6 +128,18 @@ class SimpleDictionary {
         switch(word) {
             case "a-milking":
                 output.add("milking");
+                break;
+
+            case "a-leaping":
+                output.add("leaping");
+                break;
+
+            case "a-swimming":
+                output.add("swimming");
+                break;
+
+            case "a-laying":
+                output.add("laying");
                 break;
         }
 
@@ -138,6 +174,10 @@ context SpellCheck {
             return output;
         }
 
+        private void advancePosition() { 
+            setPosition(currentPosition() + 1);
+        }
+
         // Sorry, English only...
         private boolean isAlphabetic(String character) {
             assert(character.length() == 1, "character string length not equal to one.");
@@ -147,11 +187,11 @@ context SpellCheck {
         }
     } requires {
         int currentPosition() const;
-        void advancePosition();
+        void setPosition(int pos);
     }
 
     /////////////////////////////////////////
-    stageprop Text {
+    role Text {
         public String currentCharacter() {
             int pos = SpellChecker.currentPosition();
             return getText().substring(pos, pos+1);
@@ -161,6 +201,7 @@ context SpellCheck {
         }
     } requires {
         String getText() const;
+        void splice(int startIndex, int endIndex, String text);
     }
 
     /////////////////////////////////////////
@@ -168,19 +209,15 @@ context SpellCheck {
         public void checkSpelling(String word) {
             List<String> suggestions = suggestSpelling(word);
 
-            // NOTE: This statement creates an infinite loop in test()!
-            if(suggestions.size() == 0) {
-                System.out.println("OK: " + word);
-                return;
-            }
+            if(suggestions.size() > 0) {
+                // TODO: User input and selection
+                int pos = SpellChecker.currentPosition();
+                int oldWordPos = pos - word.length() - 1;
+                int newPos = oldWordPos + suggestions.get(0).length() + 1;
 
-            String joined = "";
-            int end = suggestions.size()-1;
-            for(int i = 0; i <= end; i++) {
-                joined = joined + suggestions.get(i);
-                if(i < end) joined = joined + ", ";
+                Text.splice(oldWordPos, oldWordPos + word.length(), "[" + suggestions.get(0) + "]");
+                SpellChecker.setPosition(newPos);
             }
-            System.out.println(word + " -> [" + joined + "]");
         }
     } requires {
         List<String> suggestSpelling(String word) const;
@@ -195,19 +232,18 @@ context SpellCheck {
         Dictionary = new SimpleDictionary();
     }
 
-    public void test() {
+    public void spellCheck() {
         String word = SpellChecker.nextWord();
-        int i = 0;
+        int i = 0; // safety
         while(word.length() > 0 && i++ < 100) {
-            System.out.print(word + " at ");
-            System.out.println(SpellChecker.currentPosition());
+//            System.out.println("*** " + word);
             Dictionary.checkSpelling(word);
             word = SpellChecker.nextWord();
         }
     }
 
     private int currentPosition() const { return currentPos_; }
-    private void advancePosition() { ++currentPos_; }
+    private void setPosition(int pos) { currentPos_ = pos.clone; }
 
     private int currentPos_;
 }
@@ -217,8 +253,36 @@ context SpellCheck {
 {
     TextFile file = new TextFile();
     file.load("twelve_days_of_christmas.txt");
-    new SpellCheck(file).test();
+
+    TextSelection selection = new TextSelection(file, 105, 181);
+
+    new SpellCheck(selection).spellCheck();
+    System.out.println(file.getText());
+
+    new SpellCheck(file).spellCheck();
+    System.out.println(file.getText());
 }
+
+/*
+    TextBuffer b = new TextBuffer();
+    System.out.println(b.getText()); // (empty)
+    b.insert("Test", 0);
+    System.out.println(b.getText()); // Test
+    b.insert("ing", 4);
+    System.out.println(b.getText()); // Testing
+    b.insert("X", 4);
+    System.out.println(b.getText()); // TestXing
+    b.insert("Start", 0);
+    System.out.println(b.getText()); // StartTestXing
+    b.insert("End", b.length());
+    System.out.println(b.getText()); // StartTestXingEnd
+    b.splice(9, 10, "");
+    System.out.println(b.getText()); // StartTestingEnd
+    b.splice(0, 5, "1");
+    System.out.println(b.getText()); // 1TestingEnd
+    b.splice(8, b.length(), "2");
+    System.out.println(b.getText()); // 1Testing2
+*/
 
 /* GOLD:
 ___________________________________________________________
