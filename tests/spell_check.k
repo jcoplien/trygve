@@ -21,19 +21,27 @@ class TextBuffer {
     }
 
     public TextBuffer(String text) {
+        assert(text != null, "text was null");
         buffer_ = text.clone;
     }
 
     public void add(String text) {
+        assert(text != null, "text was null");
         buffer_ = buffer_ + text;
     }
 
     public void insert(String text, int position) {
+        assert(text != null, "text was null");
+        assert(position >= 0, "position was less than 0");
+
         splice(position, position, text);
     }
 
     public void splice(int startIndex, int endIndex, String text) {
-        assert(endIndex >= startIndex, "endIndex less than startIndex");
+        assert(startIndex >= 0, "startIndex was less than 0");
+        assert(endIndex >= startIndex, "endIndex was less than startIndex");
+        assert(text != null, "text was null");
+
         buffer_ = buffer_.substring(0, startIndex) + 
                   text + 
                   buffer_.substring(endIndex, buffer_.length());
@@ -56,11 +64,11 @@ context TextSelection {
         void splice(int startPos, int endPos, String text);
     }
 
-    public TextSelection(Buffer text, int start, int end) {
+    public TextSelection(Buffer buffer, int start, int end) {
         assert(start >= 0, "Invalid start select position: " + start.toString());
         assert(start <= end, "End selection position less than start position.");
 
-        Buffer = text;
+        Buffer = buffer;
         start_ = start.clone;
         end_ = end.clone;
     }
@@ -69,8 +77,12 @@ context TextSelection {
         return Buffer.getText().substring(start_, end_); 
     }
 
-    public void splice(int startPos, int endPos, String text) { 
-        Buffer.splice(start_ + startPos, start_ + endPos, text);
+    public void splice(int startIndex, int endIndex, String text) {
+        assert(startIndex >= 0, "startIndex was less than 0");
+        assert(endIndex >= startIndex, "endIndex was less than startIndex");
+        assert(text != null, "text was null");
+
+        Buffer.splice(start_ + startIndex, start_ + endIndex, text);
     }
 
     public int start() const { return start_; }
@@ -106,13 +118,16 @@ context TextFile {
             assert(false, 
                 "File '" + filename + "' not found (try 'twelve_days_of_christmas.txt')");
         }
-//        return this;
     }
 
     public String getText() const { return Buffer.getText(); }
 
-    public void splice(int startPos, int endPos, String text) { 
-        Buffer.splice(startPos, endPos, text); 
+    public void splice(int startIndex, int endIndex, String text) { 
+        assert(startIndex >= 0, "startIndex was less than 0");
+        assert(endIndex >= startIndex, "endIndex was less than startIndex");
+        assert(text != null, "text was null");
+
+        Buffer.splice(startIndex, endIndex, text); 
     }
 }
 
@@ -122,7 +137,9 @@ class SimpleDictionary {
     public SimpleDictionary() {}
 
     public List<String> suggestSpelling(String word) const {
+        assert(word != null, "word was null.");
         assert(word.length() > 0, "Cannot use an empty String for spelling suggestions.");
+
         List<String> output = new List<String>();
 
         switch(word) {
@@ -207,8 +224,9 @@ context SpellCheck {
     /////////////////////////////////////////
     stageprop Dictionary {
         public void checkSpelling(String word) {
-            List<String> suggestions = suggestSpelling(word);
+            assert(word != null, "word was null.");
 
+            List<String> suggestions = suggestSpelling(word);
             if(suggestions.size() > 0) {
                 // TODO: User input and selection
                 int pos = SpellChecker.currentPosition();
@@ -236,7 +254,6 @@ context SpellCheck {
         String word = SpellChecker.nextWord();
         int i = 0; // safety
         while(word.length() > 0 && i++ < 100) {
-//            System.out.println("*** " + word);
             Dictionary.checkSpelling(word);
             word = SpellChecker.nextWord();
         }
@@ -251,40 +268,42 @@ context SpellCheck {
 ///// Entrypoint //////////////////////////////////////////////////
 
 {
+    // Load and print the original file
     TextFile file = new TextFile();
     file.load("twelve_days_of_christmas.txt");
+    System.out.println(file.getText());
 
+    // Spell check a selection and print it
     TextSelection selection = new TextSelection(file, 105, 181);
-
     new SpellCheck(selection).spellCheck();
     System.out.println(file.getText());
 
+    // Spell check the whole file and print it
     new SpellCheck(file).spellCheck();
     System.out.println(file.getText());
 }
 
-/*
-    TextBuffer b = new TextBuffer();
-    System.out.println(b.getText()); // (empty)
-    b.insert("Test", 0);
-    System.out.println(b.getText()); // Test
-    b.insert("ing", 4);
-    System.out.println(b.getText()); // Testing
-    b.insert("X", 4);
-    System.out.println(b.getText()); // TestXing
-    b.insert("Start", 0);
-    System.out.println(b.getText()); // StartTestXing
-    b.insert("End", b.length());
-    System.out.println(b.getText()); // StartTestXingEnd
-    b.splice(9, 10, "");
-    System.out.println(b.getText()); // StartTestingEnd
-    b.splice(0, 5, "1");
-    System.out.println(b.getText()); // 1TestingEnd
-    b.splice(8, b.length(), "2");
-    System.out.println(b.getText()); // 1Testing2
-*/
-
 /* GOLD:
 ___________________________________________________________
-On
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords a-leaping,
+nine ladies dancing, eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords [leaping],
+nine ladies dancing, eight maids [milking], seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords [leaping],
+nine ladies dancing, eight maids [milking], seven swans [swimming],
+six geese [laying], five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
 */
