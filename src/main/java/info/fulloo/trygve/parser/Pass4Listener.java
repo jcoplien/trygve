@@ -26,6 +26,7 @@ package info.fulloo.trygve.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
@@ -35,6 +36,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public class Pass4Listener extends Pass3Listener {
 	public Pass4Listener(final ParsingData parsingData) {
 		super(parsingData);
+		printProductionsDebug = ConfigurationOptions.tracePass4();
 	}
 	
 	@Override public void exitAbelian_atom(KantParser.Abelian_atomContext ctx) {
