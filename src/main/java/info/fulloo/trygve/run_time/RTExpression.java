@@ -501,7 +501,14 @@ public abstract class RTExpression extends RTCode {
 			messageExpr_ = messageExpr;
 			final Message message = messageExpr_.message();
 			actualParameters_ = message.argumentList();
-			expressionsCountInArguments_ = new int [actualParameters_.count()];
+			
+			final int actualParametersCount = actualParameters_.count();
+			if (0 < actualParametersCount) {
+				expressionsCountInArguments_ = new int [actualParametersCount];
+			} else {
+				expressionsCountInArguments_ = new int[1];	// we insert a dummy
+			}
+			
 			lineNumber_ = messageExpr.lineNumber();
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
@@ -637,7 +644,8 @@ public abstract class RTExpression extends RTCode {
 					// the base class of all Role-players -- Object -- and look there.
 					final ClassDeclaration classObject = StaticScope.globalScope().lookupClassDeclaration("Object");
 					final StaticScope classObjectScope = classObject.enclosedScope();
-					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+							/* conversionAllowed = */ false);
 				}
 			}
 			return retval;
@@ -923,7 +931,11 @@ public abstract class RTExpression extends RTCode {
 				final String ithParameterName = ithParameter.name();
 				final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
 				activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
-				final RTObject anArgument = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if (rawArgument instanceof RTObject == false) {
+					assert rawArgument instanceof RTObject;
+				}
+				final RTObject anArgument = (RTObject)rawArgument;
 				assert null != anArgument;
 				activationRecord.setObject(ithParameterName, anArgument);
 				anArgument.decrementReferenceCount();	// not on the stack any more
@@ -966,7 +978,7 @@ public abstract class RTExpression extends RTCode {
 					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
 				}
 			}
-			assert indexForThisExtraction < actualParameters_.count();
+			assert indexForThisExtraction < actualParameters_.count() || 0 == actualParameters_.count();
 			
 			final ActualArgumentList argList = actualParameters_;
 			Expression thisDeclaration = null;
@@ -1134,46 +1146,62 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTCode myNextCode = nextCode();
 			RTCode retval = myNextCode, previous = null;
-			for (int i = 0; i < actualParameters_.count(); i++) {
-				final Object anObjectArgument = actualParameters_.argumentAtPosition(i);
-				assert null != anObjectArgument && anObjectArgument instanceof Expression;
-				Expression anArgument = (Expression)anObjectArgument;
-				
-				final ObjectDeclaration formalParameter = actualMethodFormals.parameterAtPosition(i);
-				final Type formalParameterType = null == formalParameter
-						? StaticScope.globalScope().lookupTypeDeclaration("void")
-						: formalParameter.type();
-				final Type anArgumentType = anArgument.type();
-				
-				// null check is for error stumbling.  should be pathName check. FIXME.
-				if (null != anArgumentType && false == formalParameterType.name().equals(anArgumentType.name()) && 0 != i) {
-					if (false == formalParameterType.isBaseClassOf(anArgumentType)) {
-						if (formalParameterType.canBeConvertedFrom(anArgument.type())) {
-							anArgument = this.promoteArgToType(anArgument, formalParameterType, methodName, lineNumber);
+			final int actualParametersCount = actualParameters_.count();
+			if (0 < actualParametersCount) {
+				for (int i = 0; i < actualParametersCount; i++) {
+					final Object anObjectArgument = actualParameters_.argumentAtPosition(i);
+					assert null != anObjectArgument && anObjectArgument instanceof Expression;
+					Expression anArgument = (Expression)anObjectArgument;
+					
+					final ObjectDeclaration formalParameter = actualMethodFormals.parameterAtPosition(i);
+					final Type formalParameterType = null == formalParameter
+							? StaticScope.globalScope().lookupTypeDeclaration("void")
+							: formalParameter.type();
+					final Type anArgumentType = anArgument.type();
+					
+					// null check is for error stumbling.  should be pathName check. FIXME.
+					if (null != anArgumentType && false == formalParameterType.name().equals(anArgumentType.name()) && 0 != i) {
+						if (false == formalParameterType.isBaseClassOf(anArgumentType)) {
+							if (formalParameterType.canBeConvertedFrom(anArgument.type())) {
+								anArgument = this.promoteArgToType(anArgument, formalParameterType, methodName, lineNumber);
+							}
 						}
 					}
+					
+					// Can be null on error conditions
+					final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
+					
+					if (i < 0 || i >= expressionsCountInArguments_.length) {
+						assert i >= 0 && i < expressionsCountInArguments_.length;
+					}
+					
+					if (null != rtCodePointer) { 	// can happen with programmer errors
+						expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
+						rtCodePointer.setNextCode(null);		// just neatness
+						if (0 == i) {
+							previous = retval = rtCodePointer;
+						} else {
+							previous.setNextCode(rtCodePointer);
+							previous = rtCodePointer;
+						}
+					} else {
+						retval =  null;		// no need to carry run-time forward
+						previous = null;	// more safety for below
+					}
 				}
+			} else {
+				// Special kludge when argument push is zero
+				// (e.g., Math.random()). Handle boundary conditions
+				// with a pseudo push
+				Expression anArgument = new NullExpression();
 				
 				// Can be null on error conditions
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
 				
-				if (i < 0 || i >= expressionsCountInArguments_.length) {
-					assert i >= 0 && i < expressionsCountInArguments_.length;
-				}
-				
-				if (null != rtCodePointer) { 	// can happen with programmer errors
-					expressionsCountInArguments_[i] = expressionsInExpression(rtCodePointer);
-					rtCodePointer.setNextCode(null);		// just neatness
-					if (0 == i) {
-						previous = retval = rtCodePointer;
-					} else {
-						previous.setNextCode(rtCodePointer);
-						previous = rtCodePointer;
-					}
-				} else {
-					retval =  null;		// no need to carry run-time forward
-					previous = null;	// more safety for below
-				}
+				assert (null != rtCodePointer);
+				expressionsCountInArguments_[0] = expressionsInExpression(rtCodePointer);
+				rtCodePointer.setNextCode(null);		// just neatness
+				previous = retval = rtCodePointer;
 			}
 			
 			if (null != previous) {

@@ -96,8 +96,14 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					
 					final Type actualsType = actuals.typeOfParameterAtPosition(i);
 					final Type formalsType = formals.typeOfParameterAtPosition(i);
+					final String actualsTypePathname = null == actualsType? "$wrong$": actualsType.pathName();	// these two are mainly
+					final String formalsTypePathname = null == formalsType? "!Wrong!": formalsType.pathName();	//	for debugging
 					if (null == actualsType || null == formalsType) {
 						retval = false;
+					} else if (actualsTypePathname.equals(formalsTypePathname)) {
+						// This is a big of a kludge but was necessary to get things
+						// to work comparing two different String instantiations. FIXME?
+						continue;
 					} else if (actualsType.enclosedScope() == formalsType.enclosedScope()) {
 						continue;
 					} else if (formalsType.isBaseClassOf(actualsType)) {

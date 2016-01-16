@@ -30,6 +30,9 @@ public class ConfigurationOptions {
 	public static boolean tracePass1() {
 		return false;
 	}
+	public static boolean tracePass4() {
+		return false;
+	}
 	public static boolean stackSnapshotDebug() {
 		return false;
 	}

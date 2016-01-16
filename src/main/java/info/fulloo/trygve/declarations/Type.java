@@ -155,19 +155,24 @@ public abstract class Type implements ExpressionStackAPI
 			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
+			boolean retval = false;
 			if (null == t || null == t.pathName() || null == pathName()) {
 				assert false;
-			}
-			boolean retval = t.pathName().equals(pathName());
-			if (!retval) {
-				if (t.name().equals("Null")) {
-					retval = true;
-				} else if (t instanceof ClassType || t instanceof ContextType) {
-					final ClassOrContextType classyT = (ClassOrContextType)t;
-					for (ClassType aBase = classyT.baseClass(); null != aBase; aBase = aBase.baseClass()) {
-						if (aBase.name().equals(name())) {
-							retval = true;
-							break;
+			} else if (name().equals("Object")) {
+				// anything can be converted to Object
+				retval = true;
+			} else {
+				retval = t.pathName().equals(pathName());
+				if (!retval) {
+					if (t.name().equals("Null")) {
+						retval = true;
+					} else if (t instanceof ClassType || t instanceof ContextType) {
+						final ClassOrContextType classyT = (ClassOrContextType)t;
+						for (ClassType aBase = classyT.baseClass(); null != aBase; aBase = aBase.baseClass()) {
+							if (aBase.name().equals(name())) {
+								retval = true;
+								break;
+							}
 						}
 					}
 				}
@@ -542,22 +547,22 @@ public abstract class Type implements ExpressionStackAPI
 			super(scope);
 			name_ = name;
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type t) {
+		public void reportMismatchesWith(final int lineNumber, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
-			if (t instanceof RoleType && t.name().equals(name())) {
+			if (type instanceof RoleType && type.name().equals(name())) {
 				// it's just one of us...
 				;
 			} else {
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
-				for (String methodName : requiredSelfSignatures.keySet()) {
+				for (final String methodName : requiredSelfSignatures.keySet()) {
 					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
 					final MethodSignature signatureForMethodSelector =
-							t.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
+							type.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t", rolesSignature.name(), " needed by role ", name(),
-								" does not appear in interface of ", t.name());
+						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`", rolesSignature.name(), "' needed by Role `", name(),
+								"' does not appear in interface of `", type.name() + "'.");
 					}
 				}
 			}
@@ -568,19 +573,40 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
-			boolean retval = true;
+
+			boolean retval = false;
 			if (t instanceof RoleType && t.name().equals(name())) {
 				// it's just one of us...
-				;
+				retval = true;
 			} else {
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				retval = true;
 				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
 					final String methodName = entry.getKey();
 					final MethodSignature rolesSignature = entry.getValue();
 					final MethodSignature signatureForMethodSelector =
 							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
-						retval = false;
+						// See if RHS is itself a Role / StageProp, and compare
+						if (t instanceof RoleType || t instanceof StagePropType) {
+							final RoleType otherAsRole = (RoleType)t;
+							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
+							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+								retval = true;
+								break;
+							} else {
+								retval = false;
+								break;
+							}
+						} else {
+							retval = false;
+							break;
+						}
+					} else {
+						retval = true;
 						break;
 					}
 				}
@@ -606,7 +632,7 @@ public abstract class Type implements ExpressionStackAPI
 			associatedDeclaration_ = roleDecl;
 		}
 		public RoleDeclaration associatedDeclaration() {
-			assert false;	// ever called?
+			assert true;	// ever called? yes.
 			return associatedDeclaration_;
 		}
 		@Override public Type type() {
@@ -653,22 +679,46 @@ public abstract class Type implements ExpressionStackAPI
 		public StagePropType(final String name, final StaticScope scope) {
 			super(name, scope);
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type t) {
+		public void reportMismatchesWith(final int lineNumber, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
-			if (t instanceof StagePropType && t.name().equals(name())) {
+			if (type instanceof StagePropType && type.name().equals(name())) {
 				// it's just one of us...
 				;
 			} else {
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
-				for (String methodName : requiredSelfSignatures.keySet()) {
+				for (final String methodName : requiredSelfSignatures.keySet()) {
 					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
 					final MethodSignature signatureForMethodSelector =
-							t.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
+							type.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
+					boolean retval = true;
 					if (null == signatureForMethodSelector) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t", rolesSignature.name(), " needed by role ", name(),
-								" does not appear in interface of ", t.name());
+						// See if RHS is itself a Role / StageProp, and compare
+						if (type instanceof RoleType || type instanceof StagePropType) {
+							final RoleType otherAsRole = (RoleType)type;
+							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
+							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
+									retval = true;
+									break;
+								} else {
+									retval = false;
+								}
+							} else {
+								retval = false;
+							}
+						} else {
+							retval = false;
+						}
+						if (false == retval) {
+							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`", rolesSignature.name(), "' needed by Stage Prop `", name(),
+								"' does not appear in interface of `", type.name() + "'.");
+							break;
+						}
 					}
 				}
 			}
@@ -690,8 +740,28 @@ public abstract class Type implements ExpressionStackAPI
 					final MethodSignature signatureForMethodSelector =
 							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
-						retval = false;
-						break;
+						// See if RHS is itself a Role / StageProp, and compare
+						if (t instanceof RoleType || t instanceof StagePropType) {
+							final RoleType otherAsRole = (RoleType)t;
+							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
+							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
+									retval = true;
+								} else {
+									retval = false;
+								}
+								break;
+							} else {
+								retval = false;
+								break;
+							}
+						} else {
+							retval = false;
+							break;
+						}
 					} else if (signatureForMethodSelector.hasConstModifier() == false) {
 						final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
 								" does not match the contract at line " +
@@ -708,6 +778,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
+
 			boolean retval = true;
 			if (t instanceof StagePropType && t.name().equals(name())) {
 				// it's just one of us...
@@ -722,8 +793,28 @@ public abstract class Type implements ExpressionStackAPI
 					final MethodSignature signatureForMethodSelector =
 							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
-						retval = false;
-						break;
+						// See if RHS is itself a Role / StageProp, and compare
+						if (t instanceof RoleType || t instanceof StagePropType) {
+							final RoleType otherAsRole = (RoleType)t;
+							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
+							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
+									retval = true;
+								} else {
+									retval = false;
+								}
+								break;
+							} else {
+								retval = false;
+								break;
+							}
+						} else {
+							retval = false;
+							break;
+						}
 					} else if (signatureForMethodSelector.hasConstModifier() == false) {
 						// Now handled by error-reporting version above...
 						// final String roleSignatureLineNumber = Integer.toString(rolesSignature.lineNumber());
@@ -867,7 +958,8 @@ public abstract class Type implements ExpressionStackAPI
 		if (null == enclosedScope_) {
 			assert null != enclosedScope_;
 		}
-		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector, methodSignatureFormalParameterList, paramToIgnore);
+		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector, methodSignatureFormalParameterList, paramToIgnore,
+				/* conversionAllowed = */ false);
 		
 		// mDecl can be null under error conditions
 		MethodSignature retval = null == mDecl? null: mDecl.signature();

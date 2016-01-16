@@ -92,7 +92,7 @@ public class Pass2Listener extends Pass1Listener {
 		currentScope_ = parsingData_.globalScope();
 		currentContext_ = null;
 	}
-	
+
 	@Override protected ClassDeclaration lookupOrCreateNewClassDeclaration(String name, StaticScope newScope, ClassDeclaration rawBaseClass, int lineNumber) {
 		return currentScope_.lookupClassDeclarationRecursive(name);
 	}
@@ -250,7 +250,8 @@ public class Pass2Listener extends Pass1Listener {
 			while (null != baseClass) {
 				final StaticScope baseClassScope = baseClass.enclosedScope();
 				final MethodDeclaration baseClassVersionOfMethod =
-						baseClassScope.lookupMethodDeclarationIgnoringParameter(currentMethod.name(), currentMethod.formalParameterList(), "this");
+						baseClassScope.lookupMethodDeclarationIgnoringParameter(currentMethod.name(), currentMethod.formalParameterList(), "this",
+								/* conversionAllowed = */ false);
 				if (null != baseClassVersionOfMethod) {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
@@ -589,7 +590,7 @@ public class Pass2Listener extends Pass1Listener {
 		object.setResultIsConsumed(true);
 									
 		Message message = parsingData_.popMessage();
-		
+				
 		if (null == message) {
 			return new NullExpression();		// yuk. refactor.
 		}
@@ -638,13 +639,22 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
 			Type wannabeContextType = nearestEnclosingMegaType;
 			if (wannabeContextType instanceof RoleType) {
-				final RoleType nearestEnclosingRole = (RoleType) nearestEnclosingMegaType;
-				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRole.enclosingScope());
+				final RoleType nearestEnclosingRoleOrStageProp = (RoleType) nearestEnclosingMegaType;
+				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRoleOrStageProp.enclosingScope());
 				assert wannabeContextType instanceof ContextType;
 			}
 			
+			/*
+			 else {
+				final RoleDeclaration roledecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(objectType.name());
+				methodDeclaration = roledecl != null?
+						roledecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
+								null;
+			}
+			*/
+			
 			// Look this thing up in the "required" interface to see
-			// if it's really a role method or just a latently bound
+			// if it's really a Role method or just a latently bound
 			// instance method in an object bound to this role
 			assert objectType instanceof RoleType;
 			final RoleType roleType = (RoleType)objectType;
@@ -828,7 +838,8 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		final StaticScope classScope = classDecl.enclosedScope();
-		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+				/* conversionAllowed = */ false);
 	}
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
@@ -838,14 +849,15 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		StaticScope classScope = classDecl.enclosedScope();
-		MethodDeclaration retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+		MethodDeclaration retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this", true);
 		if (null == retval) {
 			if (classDecl instanceof ClassDeclaration || classDecl instanceof ContextDeclaration) {	// should be
 				final ObjectSubclassDeclaration classDeclAsClassOrContextDecl = (ObjectSubclassDeclaration) classDecl;
 				final ClassDeclaration baseClassDeclaration = classDeclAsClassOrContextDecl.baseClassDeclaration();
 				if (null != baseClassDeclaration) {
 					classScope = baseClassDeclaration.enclosedScope();
-					retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+					retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+							/* conversionAllowed = */ false);
 				} else {
 					retval = null;
 				}
