@@ -1,3 +1,5 @@
+// List type bug in role-object contract #44
+
 context C {
     public C(A a) {
         R = a;

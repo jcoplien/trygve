@@ -513,9 +513,7 @@ public abstract class Declaration implements BodyPart {
 						}
 					}
 				} else {
-					if (returnType == null) {
-						assert returnType != null;
-					}
+					assert returnType != null;
 				}
 				ctorCheck(myEnclosedScope, parentScope, lineNumber);
 			} else {
