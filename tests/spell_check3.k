@@ -15,19 +15,30 @@ Based on the following use case:
 */
 
 ///////////////////////////////////////
-class TextBuffer {
+interface Buffer {
+    public void add(String text);
+    public void clear();
+    public void insert(String text, int position);
+    public void splice(int startIndex, int endIndex, String text);
+
+    public int length() const;
+    public String getText() const;
+}
+
+///////////////////////////////////////
+class TextBuffer implements Buffer {
     public TextBuffer() {
-        buffer_ = "";
+        text_ = "";
     }
 
     public TextBuffer(String text) {
         assert(text != null, "text was null");
-        buffer_ = text.clone;
+        text_ = text.clone;
     }
 
     public void add(String text) {
         assert(text != null, "text was null");
-        buffer_ = buffer_ + text;
+        text_ = text_ + text;
     }
 
     public void insert(String text, int position) {
@@ -42,24 +53,24 @@ class TextBuffer {
         assert(endIndex >= startIndex, "endIndex was less than startIndex");
         assert(text != null, "text was null");
 
-        buffer_ = buffer_.substring(0, startIndex) + 
-                  text + 
-                  buffer_.substring(endIndex, buffer_.length());
+        text_ = text_.substring(0, startIndex) + 
+                text + 
+                text_.substring(endIndex, text_.length());
     }
 
     public void clear() {
-        buffer_ = "";
+        text_ = "";
     }
 
-    public String getText() const { return buffer_; }
-    public int length() const { return buffer_.length(); }
+    public String getText() const { return text_; }
+    public int length() const { return text_.length(); }
 
-    private String buffer_;
+    private String text_;
 }
 
 ///////////////////////////////////////
 class TextSelection {
-    public TextSelection(TextBuffer buffer, int start, int end) {
+    public TextSelection(Buffer buffer, int start, int end) {
         assert(start >= 0, "Invalid start select position: " + start.toString());
         assert(start <= end, "End selection position less than start position.");
 
@@ -69,7 +80,7 @@ class TextSelection {
     }
 
     public String getText() const { 
-        return buffer_.getText().substring(start_, end_); 
+        return buffer_.getText().substring(start_, end_);
     }
 
     public void splice(int startIndex, int endIndex, String text) {
@@ -85,7 +96,7 @@ class TextSelection {
 
     private int start_;
     private int end_;
-    private TextBuffer buffer_;
+    private Buffer buffer_;
 }
 
 ///////////////////////////////////////
@@ -109,9 +120,8 @@ class TextFile {
         }
     }
 
-    public TextBuffer getBuffer() const { return buffer_; }
-
     public String getText() const { return buffer_.getText(); }
+    public Buffer getBuffer() const { return buffer_; }
 
     public void splice(int startIndex, int endIndex, String text) { 
         assert(startIndex >= 0, "startIndex was less than 0");
@@ -121,7 +131,7 @@ class TextFile {
         buffer_.splice(startIndex, endIndex, text); 
     }
 
-    private TextBuffer buffer_;
+    private Buffer buffer_;
 }
 
 ///////////////////////////////////////
@@ -202,7 +212,6 @@ context SpellCheck {
             return currentPosition() >= Text.length();
         }
 
-        // Sorry, English only...
         private boolean isAlphabetic(String character) {
             assert(character.length() == 1, "character string length not equal to one.");
             return character == "-" || 
