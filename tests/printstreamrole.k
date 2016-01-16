@@ -18,8 +18,13 @@ context C1 {
     new C1();
 }
 
-/* GOLD:
+/* In the old days this wouldn't parse. Now it works.
 line 7: Script `println(String)' not declared in Role `log'.
 line 7: 	Try moving the declaration of `log' before the definition of method `C1()'.
 ___________________________________________________________
+*/
+
+/* GOLD:
+___________________________________________________________
+test
 */

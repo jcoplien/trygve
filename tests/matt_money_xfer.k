@@ -82,8 +82,8 @@ class Currency {
 }
 
 /* GOLD:
-line 30: Script `decreaseBalance(Amount)' not declared in Role `SourceAccount'.
-line 39: Script `increaseBalance(Amount)' not declared in Role `DestinationAccount'.
+line 30: Type of actual parameter `current$context.Amount' (Amount) in call of `decreaseBalance' does not match type of formal parameter `amt' (Currency amt)
+line 39: Type of actual parameter `current$context.Amount' (Amount) in call of `increaseBalance' does not match type of formal parameter `amt' (Currency amt)
 line 69: WARNING: Assignment / initialization does not create a new instance. Both `value_' and `val' will refer to the same object. Use `val.clone' to create a separate instance.
 ___________________________________________________________
 */

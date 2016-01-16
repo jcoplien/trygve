@@ -637,7 +637,8 @@ public abstract class RTExpression extends RTCode {
 					// the base class of all Role-players -- Object -- and look there.
 					final ClassDeclaration classObject = StaticScope.globalScope().lookupClassDeclaration("Object");
 					final StaticScope classObjectScope = classObject.enclosedScope();
-					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this");
+					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+							/* conversionAllowed = */ false);
 				}
 			}
 			return retval;
@@ -923,7 +924,11 @@ public abstract class RTExpression extends RTCode {
 				final String ithParameterName = ithParameter.name();
 				final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
 				activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
-				final RTObject anArgument = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if (rawArgument instanceof RTObject == false) {
+					assert rawArgument instanceof RTObject;
+				}
+				final RTObject anArgument = (RTObject)rawArgument;
 				assert null != anArgument;
 				activationRecord.setObject(ithParameterName, anArgument);
 				anArgument.decrementReferenceCount();	// not on the stack any more

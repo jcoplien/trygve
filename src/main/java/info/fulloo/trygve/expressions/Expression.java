@@ -34,6 +34,7 @@ import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -58,7 +59,6 @@ import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RTExpression.*;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
-import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public abstract class Expression implements BodyPart, ExpressionStackAPI {
@@ -1289,13 +1289,27 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 						argumentList.addFirstActualParameter(self);
 						
 						final MethodDeclaration methodDecl =
-								typesScope.lookupMethodDeclarationIgnoringParameter(operator_, argumentList, "this");
+								typesScope.lookupMethodDeclarationIgnoringParameter(operator_, argumentList, "this",
+										/* conversionAllowed = */ false);
 						
 						if (null != methodDecl) {	// stumbling check
 							// Found it. Return type is type of this method.
 							retval = methodDecl.returnType();
 						} else {
-							retval = StaticScope.globalScope().lookupTypeDeclaration("void");
+							// Try looking in the requires section
+							final Declaration associatedDeclaration =
+									(type instanceof StagePropType)? ((StagePropType)type).associatedDeclaration():
+																	 ((RoleType)type).associatedDeclaration();
+							final Map<String, MethodSignature> requiresSection =
+									(associatedDeclaration instanceof StagePropDeclaration)?
+											((StagePropDeclaration)associatedDeclaration).requiredSelfSignatures():
+											((RoleDeclaration)associatedDeclaration).requiredSelfSignatures();
+							final MethodSignature newMethodSignature = requiresSection.get(operator_);
+							if (null != newMethodSignature) {
+								retval = newMethodSignature.returnType();
+							} else {
+								retval = StaticScope.globalScope().lookupTypeDeclaration("void");
+							}
 						}
 					}
 				}

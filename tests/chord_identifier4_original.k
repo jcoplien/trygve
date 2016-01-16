@@ -232,7 +232,7 @@ context Chord {
 }
 
 /* GOLD:
-line 65: WARNING: Script declaration for `name' may hide method declared at line 189
+line 65: WARNING: Script declaration for `name' may hide script declared at line 189
 ___________________________________________________________
 Cm11
 Dsus

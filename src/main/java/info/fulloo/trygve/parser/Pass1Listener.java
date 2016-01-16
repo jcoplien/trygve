@@ -1034,7 +1034,9 @@ public class Pass1Listener extends Pass0Listener {
 		// : access_qualifier return_type method_name '(' param_list ')' CONST*
 		// | access_qualifier return_type method_name CONST*
 		// | access_qualifier method_name '(' param_list ')' CONST*
+		
 		final String name = ctx.method_name().getText();
+		String returnTypeName = "";
 		final String accessQualifierString = null != ctx.access_qualifier()? ctx.access_qualifier().getText(): "";
 		final AccessQualifier accessQualifier = AccessQualifier.accessQualifierFromString(accessQualifierString);
 		
@@ -1042,7 +1044,7 @@ public class Pass1Listener extends Pass0Listener {
 		// There may not be any return type at all - as for a constructor
 		final KantParser.Return_typeContext returnTypeContext = ctx.return_type();
 		if (null != returnTypeContext) {
-			final String returnTypeName = returnTypeContext.getText();
+			returnTypeName = returnTypeContext.getText();
 			returnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
 		
 			// null is O.K. as a return type!
@@ -1063,6 +1065,19 @@ public class Pass1Listener extends Pass0Listener {
 		// : access_qualifier return_type method_name '(' param_list ')' CONST*
 		// | access_qualifier return_type method_name CONST*
 		// | access_qualifier method_name '(' param_list ')' CONST*
+		
+		// Update return type (e.g., if it is a template, we will now
+		// have more information)
+		final KantParser.Return_typeContext returnTypeContext = ctx.return_type();
+		if (null != returnTypeContext) {
+			final String returnTypeName = returnTypeContext.getText();
+			
+			final Type updatedReturnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
+			final MethodSignature currentMethodSignature = parsingData_.currentMethodSignature();
+			assert null != currentMethodSignature;
+			currentMethodSignature.setReturnType(updatedReturnType);
+			// null is NOT O.K. here as a return type, I think... Or can it be a ctor?
+		}
 		
 		if (printProductionsDebug) {
 			if ((null != ctx.CONST()) && (ctx.CONST().size() > 0)) {
@@ -1597,7 +1612,11 @@ public class Pass1Listener extends Pass0Listener {
 			expression = parsingData_.popExpression();
 			if (printProductionsDebug) { System.err.println("expr : do_while_expr"); }
 		} else if (null != ctx.switch_expr()) {
-			expression = parsingData_.popExpression();
+			if (parsingData_.currentExpressionExists()) {
+				expression = parsingData_.popExpression();
+			} else {
+				expression = new NullExpression();
+			}
 			if (printProductionsDebug) { System.err.println("expr : switch_expr"); }
 		} else if (null != ctx.BREAK()) {
 			final long nestingLevelInsideBreakable = nestingLevelInsideBreakable(ctx.BREAK());
@@ -1652,14 +1671,17 @@ public class Pass1Listener extends Pass0Listener {
 			// may not be at the end. If it is, then there may just be extra
 			// redundant return code. But watch for scope management stuff.
 			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-			assert null != nearestEnclosingMegaType;
-			if (expression instanceof ReturnExpression) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"You may not return another `return' expression.", "", "", "");
+			if (null != nearestEnclosingMegaType) {		// error stumbling
+				if (expression instanceof ReturnExpression) {
+					errorHook5p2(ErrorType.Fatal, lineNumber,
+							"You may not return another `return' expression.", "", "", "");
+					expression = new NullExpression();
+				}
+				expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+						nearestEnclosingMegaType, currentScope_);
+			} else {
 				expression = new NullExpression();
 			}
-			expression = new ReturnExpression(expression, ctx.getStart().getLine(),
-					nearestEnclosingMegaType, currentScope_);
 			
 			if (printProductionsDebug) {
 				if (null == ctx.expr()) {
@@ -1793,7 +1815,8 @@ public class Pass1Listener extends Pass0Listener {
 		argumentList.addFirstActualParameter(self);
 
 		final MethodDeclaration methodDecl = rhs.type().enclosedScope().
-				lookupMethodDeclarationIgnoringParameter(operationAsString, argumentList, "this");
+				lookupMethodDeclarationIgnoringParameter(operationAsString, argumentList, "this",
+						/* conversionAllowed = */ false);
 		if (null == methodDecl) {
 			// There is an invocation of a boolean operator on a Role
 			// or Stage Prop. Since Roles are inherently untyped,
@@ -1920,7 +1943,7 @@ public class Pass1Listener extends Pass0Listener {
 				// give her some advice.
 				errorHook6p2(ErrorType.Fatal, lineNumber,
 						"To use `", operationAsString + "' on Role `",
-						lhs.name(), "' you must declare a comapreTo(",
+						lhs.name(), "' you must declare a comapareTo(",
 						rhs.type().name() + " argument",
 						") operation in the `requires' section of " +  lhs.name());
 				expression = new NullExpression();
@@ -2648,7 +2671,11 @@ public class Pass1Listener extends Pass0Listener {
 		} else if ((null == ctx.abelian_atom()) && (null == ctx.abelian_expr()) && null != ctx.message()) {
 			//	| /* this. */ message
 			// This routine actually does pop the expressions stack (and the Message stack)
+
 			expression = this.messageSend(ctx.getStart(), null);
+			if (expression instanceof NullExpression) {
+				System.err.println("this.messageSend returns NullExpression");
+			}
 									
 			if (printProductionsDebug) { System.err.println("abelian_atom : /* this. */ message");}
 		} else if (null != ctx.abelian_atom() && null != ctx.CLONE()) {
@@ -3242,56 +3269,58 @@ public class Pass1Listener extends Pass0Listener {
 		final SwitchExpression switchExpression = parsingData_.popSwitchExpr();
 		
 		// Set all the goodies. The body is already taken care of.
-		final Expression expr = parsingData_.popExpression();
-		expr.setResultIsConsumed(true);
-		switchExpression.addExpression(expr);
-		parsingData_.pushExpression(switchExpression);
-	
-		final Expression expressionToSwitchOn = switchExpression.switchExpression();
-		if (null != expressionToSwitchOn) {
-			Type potentialSwitchExpressionType = null;
-			final Type switchExpressionType = expressionToSwitchOn.type();
-			boolean stillEvaluating = true;
-			for (final SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
-				// See if all case body expressions are of the same type
-				if (null == potentialSwitchExpressionType && stillEvaluating) {
-					if (aCase.hasNoBody() == false) {
-						potentialSwitchExpressionType = aCase.type();
-					}
-				}
-				
-				if (null != potentialSwitchExpressionType) {
-					if (stillEvaluating) {
-						final String caseTypePathName = aCase.type().pathName();
-						if (caseTypePathName.equals("void")) {
-							// it could be because there is no
-							// expression to go with the case statement.
-							// If so, don't let it upset things.
-							if (aCase.hasNoBody()) {
-								stillEvaluating = true;
-							} else {
-								stillEvaluating = caseTypePathName.equals("void");
-							}
-						} else {
-							stillEvaluating = caseTypePathName.equals(potentialSwitchExpressionType.pathName());
+		if(parsingData_.currentExpressionExists()) {	// error stumbling check
+			final Expression expr = parsingData_.popExpression();
+			expr.setResultIsConsumed(true);
+			switchExpression.addExpression(expr);
+			parsingData_.pushExpression(switchExpression);
+		
+			final Expression expressionToSwitchOn = switchExpression.switchExpression();
+			if (null != expressionToSwitchOn) {
+				Type potentialSwitchExpressionType = null;
+				final Type switchExpressionType = expressionToSwitchOn.type();
+				boolean stillEvaluating = true;
+				for (final SwitchBodyElement aCase : switchExpression.orderedSwitchBodyElements()) {
+					// See if all case body expressions are of the same type
+					if (null == potentialSwitchExpressionType && stillEvaluating) {
+						if (aCase.hasNoBody() == false) {
+							potentialSwitchExpressionType = aCase.type();
 						}
 					}
 					
-					// Make sure that all case test expressions are of type of switch expression
-					if (aCase.isDefault()) continue;
-					if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
-						errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
-								aCase.type().name(), "' is incompatible with switch expression of type `",
-								switchExpressionType.name(), "'.", "");
+					if (null != potentialSwitchExpressionType) {
+						if (stillEvaluating) {
+							final String caseTypePathName = aCase.type().pathName();
+							if (caseTypePathName.equals("void")) {
+								// it could be because there is no
+								// expression to go with the case statement.
+								// If so, don't let it upset things.
+								if (aCase.hasNoBody()) {
+									stillEvaluating = true;
+								} else {
+									stillEvaluating = caseTypePathName.equals("void");
+								}
+							} else {
+								stillEvaluating = caseTypePathName.equals(potentialSwitchExpressionType.pathName());
+							}
+						}
+						
+						// Make sure that all case test expressions are of type of switch expression
+						if (aCase.isDefault()) continue;
+						if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
+							errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
+									aCase.type().name(), "' is incompatible with switch expression of type `",
+									switchExpressionType.name(), "'.", "");
+						}
 					}
+				}	/* for */
+				
+				if (stillEvaluating) {		// then we made it through all the cases!
+					// We have a consistent expression type since all case
+					// statements yield the same type
+					switchExpression.setExpressionType(potentialSwitchExpressionType);
 				}
-			}	/* for */
-			
-			if (stillEvaluating) {		// then we made it through all the cases!
-				// We have a consistent expression type since all case
-				// statements yield the same type
-				switchExpression.setExpressionType(potentialSwitchExpressionType);
-			}
+			} /* if */
 		} /* if */
 		
 		currentScope_ = currentScope_.parentScope();
@@ -4033,7 +4062,7 @@ public class Pass1Listener extends Pass0Listener {
 							"Attempt to call instance method `" + mdecl.signature().getText(),
 							"' as though it were a static method of class `", objectType.name(), "'.");
 				}
-			}				
+			}
 											
 			if (null == mdecl) {
 				// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
@@ -4192,16 +4221,23 @@ public class Pass1Listener extends Pass0Listener {
 			mdecl = processReturnTypeLookupMethodDeclarationIn(roleDecl, methodSelectorName, actualArgumentList);
 			
 			if (null == mdecl) {
-				// If this is a Role variable, it's fair game to look for
-				// methods in what will be a base class for every Role-player:
-				// class object
-				final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
-				assert null != objectDecl;
-				
-				mdecl = processReturnTypeLookupMethodDeclarationIn(objectDecl, methodSelectorName, actualArgumentList);
-				if (null == mdecl) {
-					mdecl = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, methodSelectorName, actualArgumentList);
-					roleHint = true;
+				// First, check in requires list
+				final Map<String, MethodSignature> requiresSection = roleDecl.requiredSelfSignatures();
+				final MethodSignature aRequiredFunction = requiresSection.get(methodSelectorName);
+				if (null != aRequiredFunction) {
+					mdecl = new MethodDeclaration(aRequiredFunction, roleDecl.enclosedScope(), aRequiredFunction.lineNumber());
+				} else {
+					// If this is a Role variable, it's fair game to look for
+					// methods in what will be a base class for every Role-player:
+					// class object
+					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
+					assert null != objectDecl;
+					
+					mdecl = processReturnTypeLookupMethodDeclarationIn(objectDecl, methodSelectorName, actualArgumentList);
+					if (null == mdecl) {
+						mdecl = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, methodSelectorName, actualArgumentList);
+						roleHint = true;
+					}
 				}
 			}
 			if (null == mdecl) {

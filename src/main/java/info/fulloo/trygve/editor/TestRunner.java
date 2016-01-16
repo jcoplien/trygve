@@ -133,7 +133,9 @@ public class TestRunner {
 		"hanoi2.5.k",
 		"hanoi3.k",
 		"context_role_bug1.k",
-		"natt_20160112.k",
+		"matt_20160112.k",
+		"matt3.k",
+		"matt4.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
@@ -255,17 +257,17 @@ public class TestRunner {
 		if (s1.equals(s2)) {
 			return;
 		} else {
-			int s1Length = s1.length(), s2Length = s2.length();
-			int shortest = Integer.min(s1Length, s2Length);
+			final int s1Length = s1.length(), s2Length = s2.length();
+			final int shortest = Math.min(s1Length, s2Length);
 			for (int i = 0; i < shortest; i++) {
 				if (s1.charAt(i) == s2.charAt(i)) {
 					continue;
 				} else {
 					int j = i, counter = 0;
 					while (j < shortest && counter < 10) {
-						char c1 = s1.charAt(j), c2 = s2.charAt(j);
-						String sc1 = canonize(c1);
-						String sc2 = canonize(c2);
+						final char c1 = s1.charAt(j), c2 = s2.charAt(j);
+						final String sc1 = canonize(c1);
+						final String sc2 = canonize(c2);
 						System.err.format("%d: '%s' '%s'\n", j, sc1, sc2);
 						counter++;
 						j++;

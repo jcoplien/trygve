@@ -162,12 +162,13 @@ context SpellCheck {
 }
 
 /* GOLD:
-line 42: WARNING: Script declaration for `getText' may hide method declared at line 55
+line 42: WARNING: Script declaration for `getText' may hide script declared at line 55
 line 51: WARNING: Assignment / initialization does not create a new instance. Both `start_' and `start' will refer to the same object. Use `start.clone' to create a separate instance.
 line 52: WARNING: Assignment / initialization does not create a new instance. Both `end_' and `end' will refer to the same object. Use `end.clone' to create a separate instance.
-line 69: WARNING: Script declaration for `getText' may hide method declared at line 95
+line 69: WARNING: Script declaration for `getText' may hide script declared at line 95
 line 103: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.isFinished'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
 line 116: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.nextCharacter'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
 line 116: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.nextCharacter'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
 ___________________________________________________________
+Line 108: Assertion failed.
 */

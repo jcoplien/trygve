@@ -271,7 +271,8 @@ public abstract class Declaration implements BodyPart {
 						final List<MethodSignature> signatures = iter.getValue();
 						for (final MethodSignature anInterfaceSignature: signatures) {
 							final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
-							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this");
+							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this",
+									/* conversionAllowed = */ false);
 							if (null == methodDecl) {
 								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
 										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
@@ -416,7 +417,8 @@ public abstract class Declaration implements BodyPart {
 			
 			for (final Map.Entry<String, MethodSignature> signature : requiredSelfSignatures_.entrySet()) {
 				final MethodSignature methodSignature = signature.getValue();
-				final MethodDeclaration methodDecl = new MethodDeclaration(methodSignature, myEnclosedScope, lineno);
+				final StaticScope pseudoScope = new StaticScope(myEnclosedScope);
+				final MethodDeclaration methodDecl = new MethodDeclaration(methodSignature, pseudoScope, lineno);
 				myEnclosedScope.declareRequiredMethod(methodDecl);
 			}
 		}
@@ -490,7 +492,7 @@ public abstract class Declaration implements BodyPart {
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			
-			bodyPrefix_ = new ExprAndDeclList(lineNumber);	// for implicit construcotr
+			bodyPrefix_ = new ExprAndDeclList(lineNumber);	// for implicit constructor
 			
 			if (associatedDeclaration instanceof ContextDeclaration ||
 					associatedDeclaration instanceof ClassDeclaration) {
@@ -502,7 +504,7 @@ public abstract class Declaration implements BodyPart {
 						null != ((ClassDeclaration)associatedDeclaration).generatingTemplate()) {
 					final boolean methodNameEqualsTemplateName = name().equals(((ClassDeclaration)associatedDeclaration).generatingTemplate().name());
 					if (methodNameEqualsTemplateName) {
-						if (returnType != null) {
+						if (null != returnType) {
 							assert returnType == null;
 						}
 					} else {
@@ -511,7 +513,9 @@ public abstract class Declaration implements BodyPart {
 						}
 					}
 				} else {
-					assert returnType != null;
+					if (returnType == null) {
+						assert returnType != null;
+					}
 				}
 				ctorCheck(myEnclosedScope, parentScope, lineNumber);
 			} else {
@@ -678,6 +682,7 @@ public abstract class Declaration implements BodyPart {
 				final AccessQualifier accessQualifier, final int lineNumber,
 				final boolean isStatic) {
 			super(name);
+			
 			returnType_ = returnType;
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;

@@ -678,8 +678,7 @@ public class StaticScope {
 			// and pick up a role. Also stop at Class boundaries - it
 			// doesn't make sense to refer to a role inside of a class
 			final Declaration associatedDeclaration = this.associatedDeclaration();
-			final Type myType = null != associatedDeclaration? associatedDeclaration.type(): null;
-			if (myType instanceof ClassType || myType instanceof ContextType) {
+			if (associatedDeclaration instanceof ClassDeclaration || associatedDeclaration instanceof ContextDeclaration) {
 				retval = null;	// redundant, but clear
 			} else if (null != parentScope_) {
 				retval = parentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
@@ -845,7 +844,7 @@ public class StaticScope {
 									decl.lineNumber(),
 									"WARNING: Script declaration for `",
 									decl.name(),
-									"' may hide method declared at line ",
+									"' may hide script declared at line ",
 									String.valueOf(aDecl.lineNumber()));
 						}
 					}
@@ -1084,7 +1083,7 @@ public class StaticScope {
 		return retval;
 	}
 	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
-			final String paramToIgnore) {
+			final String paramToIgnore, final boolean conversionAllowed) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
@@ -1096,7 +1095,7 @@ public class StaticScope {
 					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
 				if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedLoggedSignature, mappedParameterList, paramToIgnore, false)) {
+				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedLoggedSignature, mappedParameterList, paramToIgnore, conversionAllowed)) {
 					retval = aDecl; break;
 				}
 			}
@@ -1326,7 +1325,7 @@ public class StaticScope {
 		public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
 				final String paramToIgnore) {
 			MethodDeclaration retval = super.lookupMethodDeclarationIgnoringParameter(methodSelector, parameterList,
-					 paramToIgnore);
+					 paramToIgnore, /* conversionAllowed = */ false);
 			if (null == retval) {
 				if (requiredMethodDeclarationDictionary_.containsKey(methodSelector)) {
 					final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodSelector);
