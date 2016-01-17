@@ -42,6 +42,16 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	}
 	public void addActualArgument(final Expression argument) {
 		addArgument(argument);
+		
+		// We don't want this popped prematurely. I don't know
+		// how often this is a problem, but it's at least a
+		// problem for NULL literals. The reason is that NullExpression
+		// serves both as a No-Op and as the Null Object. Most of
+		// the time it doesn't have a stack appearance. But if we
+		// say the result is consumed, then at run time the
+		// RTNullExpression will push an RTNullObject when its
+		// run() method is invoked.
+		argument.setResultIsConsumed(true);
 	}
 	public Expression parameterAtPosition(final int i) {
 		return (Expression)this.parameterAtIndex(i);

@@ -47,7 +47,11 @@ class Mandelbrot {
 }
 
 context Fractal {
-    stageprop TheSet {} requires {
+    stageprop TheSet {
+        public ComplexNumber recompute(ComplexNumber Z, ComplexNumber pos) const {
+           return compute(Z, pos)
+        }
+    } requires {
         ComplexNumber compute(ComplexNumber Z, ComplexNumber pos) const;
     }
 
@@ -73,7 +77,7 @@ context Fractal {
                 int iterations = 0;
 
                 while(Z.abs() < 2.0) {
-                    Z = TheSet.compute(Z, pos);
+                    Z = TheSet.recompute(Z, pos);
                     iterations = iterations + 1;
                     if(iterations == maxIterations) break;
                 }

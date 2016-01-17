@@ -40,11 +40,15 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
@@ -54,8 +58,8 @@ context Interval {
     }
 
     public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double lowPos = LowNote.notePosition();
+        double highPos = HighNote.notePosition();
         double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
 
         return highPos - lowPos + octaveOffset;
@@ -65,7 +69,9 @@ context Interval {
 // -------------------------------------------------
 
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String chordName() const { return name() }
+    } requires {
         double position() const;
         String name() const;
     }
@@ -158,8 +164,8 @@ context Chord {
     }
 
     // NOTE: How to handle the "may hide method" warning?
-    public String name() {
-        return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+    public String fullChordName() {
+        return Root.chordName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
@@ -215,13 +221,13 @@ context Chord {
     notes7.add(new Note("Ab"));
     Chord chord7 = new Chord(notes7);
 
-    System.out.println(chord.name());
-    System.out.println(chord2.name());
-    System.out.println(chord3.name());
-    System.out.println(chord4.name());
-    System.out.println(chord5.name());
-    System.out.println(chord6.name());
-    System.out.println(chord7.name());
+    System.out.println(chord .fullChordName());
+    System.out.println(chord2.fullChordName());
+    System.out.println(chord3.fullChordName());
+    System.out.println(chord4.fullChordName());
+    System.out.println(chord5.fullChordName());
+    System.out.println(chord6.fullChordName());
+    System.out.println(chord7.fullChordName());
 }
 
 /* GOLD:

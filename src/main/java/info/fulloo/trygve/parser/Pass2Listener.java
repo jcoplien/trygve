@@ -23,6 +23,8 @@ package info.fulloo.trygve.parser;
  * 
  */
 
+import java.util.Map;
+
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -39,6 +41,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
+import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -52,7 +55,6 @@ import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
-import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
@@ -555,6 +557,26 @@ public class Pass2Listener extends Pass1Listener {
 		message.addActualThisParameter(self);
 	}
 	
+	private MethodSignature declarationForMessageFromRequiresSectionOfRole(final Message message,
+			final RoleDeclaration roleDecl) {
+		MethodSignature retval = null;
+		final Map<String, MethodSignature> requiresDecls = roleDecl.requiredSelfSignatures();
+		for (Map.Entry<String, MethodSignature> entry : requiresDecls.entrySet()) {
+			if (entry.getKey().equals(message.selectorName())) {
+				final MethodSignature potentialRequiresMethod = entry.getValue();
+				if (null != potentialRequiresMethod) {
+					final FormalParameterList requiresSignature = potentialRequiresMethod.formalParameterList();
+					final ActualArgumentList callingSignature = message.argumentList();
+					if (requiresSignature.alignsWithUsingConversion(callingSignature)) {
+						retval = potentialRequiresMethod;
+						break;
+					}
+				}
+			}
+		}
+		return retval;
+	}
+	
 	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
 		// | expr '.' message
 		// | message
@@ -642,16 +664,52 @@ public class Pass2Listener extends Pass1Listener {
 				final RoleType nearestEnclosingRoleOrStageProp = (RoleType) nearestEnclosingMegaType;
 				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRoleOrStageProp.enclosingScope());
 				assert wannabeContextType instanceof ContextType;
+				
+				if (nearestEnclosingMegaType instanceof RoleType) {
+					// Don't allow Role methods directly to invoke
+					// Context methods. Look up the method in the enclosing
+					// context and make sure it's not there. But first we
+					// can say it's O.K. if it's either another method
+					// in the Role.
+					MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+							message.argumentList(), "this", true);
+					if (null == testDecl) {
+						// Check in the Requires list
+						final RoleType objectTypeAsRoleType = (RoleType)objectType;
+						final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
+						final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
+								message, roleDecl);
+						if (null == signatureInRequiresSection) {
+							testDecl = wannabeContextType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+									message.argumentList(), "this", true);
+							if (null != testDecl) {
+								final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+								errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+										"NONCOMPLIANT: Enacting enclosed Context script `", message.selectorName() + message.argumentList().selflessGetText(),
+										"' from within `" + nearestEnclosingMegaType.name() + "." + currentMethodScope.associatedDeclaration().name(),
+										"'.");
+							}
+						}
+					}
+				}
+			} else if (wannabeContextType instanceof ContextType) {
+				// We don't want Context methods to be able directly
+				// to call requires methods of Roles
+				final RoleType objectTypeAsRoleType = (RoleType)objectType;
+				final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
+				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
+						message, roleDecl);
+				if (null != signatureInRequiresSection) {
+					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Context script `", currentMethodScope.associatedDeclaration().name(),
+							"' may enact only Role scripts. Script `",
+							message.selectorName() + message.argumentList().selflessGetText(),
+							"' is an instance script from a class and is inaccessible to Context `",
+							wannabeContextType.name() + "'.");
+				}
 			}
-			
-			/*
-			 else {
-				final RoleDeclaration roledecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(objectType.name());
-				methodDeclaration = roledecl != null?
-						roledecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
-								null;
-			}
-			*/
+
 			
 			// Look this thing up in the "required" interface to see
 			// if it's really a Role method or just a latently bound
@@ -675,7 +733,7 @@ public class Pass2Listener extends Pass1Listener {
 					// Null check is related to error stumbling
 					methodSignature = methodDeclaration.signature();
 				} else {
-					// It's a role. Could be a call to assert or something like that
+					// It's a Role. Could be a call to assert or something like that
 					// in the base class
 					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
 					assert null != objectDecl;
@@ -1023,7 +1081,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// roleHint is set if the method was successfully found by turning off
 		// any consideration of Role parameters, like current$context. This
-		// typically applies in the ancilliary lookup of the assert API in
+		// typically applies in the ancillary lookup of the assert API in
 		// class Object when invoked through a Role pointer.
 		if (roleHint) {
 			typeCheckHelperForRoleMismatches(formals, actuals, mdecl, classdecl, parameterToIgnore, ctxGetStart);
@@ -1031,29 +1089,6 @@ public class Pass2Listener extends Pass1Listener {
 			typeCheckIgnoringParameterNormal(formals, actuals, mdecl, classdecl, parameterToIgnore, ctxGetStart);
 		}
 	}
-	
-	/*private static StaticScope nearestEnclosingProcedureScope(final StaticScope scope) {
-		// See if we are inside a method. If so, return the method scope.
-		StaticScope retval = null;
-		for(StaticScope current = scope; null != current; current = scope.parentScope()) {
-			final Declaration associatedDeclaration = scope.associatedDeclaration();
-			if (associatedDeclaration instanceof MethodDeclaration) {
-				retval = scope; break;
-				
-			// For these, we don't look any further. End of the line...
-			} else if (associatedDeclaration instanceof ClassDeclaration) {
-				break;
-			} else if (associatedDeclaration instanceof RoleDeclaration) {
-				break;
-			} else if (associatedDeclaration instanceof ContextDeclaration) {
-				break;
-			}
-			
-			// For the rest (blocks, loop "blocks", etc.) we just keep going
-		}
-		return retval;
-	}
-	*/
 
 	@Override public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// | JAVA_ID

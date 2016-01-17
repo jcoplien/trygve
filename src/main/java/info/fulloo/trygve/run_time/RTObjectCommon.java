@@ -277,7 +277,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				
 			if (null != oldValue) {
 				oldValue.decrementReferenceCount();
-				contextInfo.removeRolePlayer(name, oldValue);
+				contextInfo.removeStagePropPlayer(name, oldValue);
 			}
 				
 			contextInfo.addStagePropPlayer(name, value);
@@ -428,6 +428,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
 			}
+		}
+		@Override public String getText() {
+			return rTType().name();
+		}
+		@Override public int hashCode() {
+			// This is necessary for the way that objects keep track
+			// of their Role-playing registration. We need the canonical
+			// hashCode() and equals(Object) methods.
+			return getText().hashCode();
+		}
+		@Override public boolean equals(final Object other) {
+			return this == other;
 		}
 		
 		// Debugging only
@@ -873,6 +885,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public boolean equals(final Object other) {
 			return other instanceof RTNullObject;
+		}
+		@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+			// Not sure if no-op is the right thing to do, but
+			// it avoids silly work.
 		}
 	}
 	

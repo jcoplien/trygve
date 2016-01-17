@@ -5,6 +5,7 @@ context C1 {
    role R1 {
       public void r1Method() {
       }
+      public int compare(double amount) { return compareTo(amount) }
    } requires {
       int compareTo(double amount) const;
    }
@@ -13,7 +14,7 @@ context C1 {
       boolean fiftyLessThan10a = R1 > d2;
       System.out.print("fiftyLessThan10=")
                 .println(fiftyLessThan10a)
-      int fiftyLessThan10b = R1.compareTo(d2);
+      int fiftyLessThan10b = R1.compare(d2);
       System.out.print("fiftyLessThan10=")
                 .println(fiftyLessThan10b)
    }
