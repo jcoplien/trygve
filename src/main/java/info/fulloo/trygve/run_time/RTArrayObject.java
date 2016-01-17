@@ -234,6 +234,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		}
 	}
 	@Override public void unenlistAsStagePropPlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);

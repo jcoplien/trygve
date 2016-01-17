@@ -103,6 +103,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -138,6 +139,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		List<String> stagePropsIAmPlayingHere = null;
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
 			stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
@@ -150,6 +152,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
 			rolesIAmPlayingHere.remove(roleName);
@@ -162,6 +165,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
 			stagePropsIAmPlayingHere.remove(stagePropName);

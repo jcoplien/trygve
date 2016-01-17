@@ -138,6 +138,7 @@ public class TestRunner {
 		"matt4.k",
 		"requires_method1.k",
 		"illegal_context_access.k",
+		"interface_problem_48_simple.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

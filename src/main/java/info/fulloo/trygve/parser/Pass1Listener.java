@@ -4287,6 +4287,8 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == methodSignature) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in interface ", interfaceDecl.name());
+			} else {
+				returnType = methodSignature.returnType();
 			}
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
