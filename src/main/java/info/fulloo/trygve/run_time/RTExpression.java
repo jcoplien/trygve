@@ -809,10 +809,6 @@ public abstract class RTExpression extends RTCode {
 				if (null == methodDecl) {
 					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
 					if (null == methodDecl) {
-						if (self instanceof RTIntegerObject && methodSelectorName.equals("-")) {
-							int k = 0;
-							k++;
-						}
 						if (typeOfThisParameterToMethod instanceof RoleType) {
 							methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
 							if (null == methodDecl) {
