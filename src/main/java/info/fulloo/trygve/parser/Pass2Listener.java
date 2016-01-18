@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -581,6 +581,7 @@ public class Pass2Listener extends Pass1Listener {
 		// | expr '.' message
 		// | message
 		// Certified Pass 2 version. Can maybe be folded with pass 1....
+		// REFACTOR! TODO
 		
 		MethodDeclaration methodDeclaration = null;
 		Expression object = null, retval = null;
@@ -784,7 +785,7 @@ public class Pass2Listener extends Pass1Listener {
 								null;
 					if (null == methodDeclaration) {
 						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
 								message.getText(),
 								"' not declared in class ", classObjectType.name());
 						return null;		// punt
@@ -815,7 +816,7 @@ public class Pass2Listener extends Pass1Listener {
 							null;
 				if (null == methodDeclaration) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "' not declared in class ", classObjectType.name());
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", message.getText(), "' not declared in class ", classObjectType.name());
 					return null;		// punt
 				} else {
 					methodSignature = methodDeclaration.signature();

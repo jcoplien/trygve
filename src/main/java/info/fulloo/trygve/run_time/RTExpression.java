@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -809,6 +809,10 @@ public abstract class RTExpression extends RTCode {
 				if (null == methodDecl) {
 					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
 					if (null == methodDecl) {
+						if (self instanceof RTIntegerObject && methodSelectorName.equals("-")) {
+							int k = 0;
+							k++;
+						}
 						if (typeOfThisParameterToMethod instanceof RoleType) {
 							methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
 							if (null == methodDecl) {

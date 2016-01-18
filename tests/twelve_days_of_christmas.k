@@ -49,11 +49,15 @@ class Ordinal {
 // https://groups.google.com/d/msg/object-composition/LKlJEHzFJSg/MYcjYMtFBQAJ
 // with some assertion help from http://lingojam.com/EnglishtoShakespearean
 context TwelveDaysOfChristmas {
-    stageprop Giver {} requires {
+    stageprop Giver {
+        public String giftGiverName() const { return name() }
+    } requires {
         String name() const;
     }
 
-    stageprop Receiver {} requires {
+    stageprop Receiver {
+        public String giftGetterName() const { return name() }
+    } requires {
         String name() const;
     }
 
@@ -99,7 +103,9 @@ context TwelveDaysOfChristmas {
         void println(String text) const;
     }
 
-    role Gifts {} requires {
+    role Gifts {
+        public String descriptionForGiftNumber(int i) { return get(i) }
+    } requires {
         String get(int pos);
         int size();
     }
@@ -155,12 +161,12 @@ context TwelveDaysOfChristmas {
 
             Singers.sing(
                 "On the " + ordinal + " day of Christmas " +
-                Giver.name() + " gave to " + Receiver.name()
+                Giver.giftGiverName() + " gave to " + Receiver.giftGetterName()
             );
             Singers.pause();
 
             for(int i = day; i > 0; i = i - 1) {
-                Singers.singAboutGift(Gifts.get(i-1));
+                Singers.singAboutGift(Gifts.descriptionForGiftNumber(i-1));
             }
             Singers.pause();
         }
@@ -177,7 +183,7 @@ context TwelveDaysOfChristmas {
 /* GOLD:
 line 7: WARNING: Assignment / initialization does not create a new instance. Both `name_' and `name' will refer to the same object. Use `name.clone' to create a separate instance.
 line 22: WARNING: Assignment / initialization does not create a new instance. Both `order_' and `order' will refer to the same object. Use `order.clone' to create a separate instance.
-line 162: WARNING: Assignment / initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
+line 168: WARNING: Assignment / initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
 ___________________________________________________________
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.

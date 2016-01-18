@@ -1,7 +1,7 @@
 package info.fulloo.trygve.add_ons;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -376,13 +376,17 @@ public final class SystemClass {
 			super("PrintStream", "print", "toprint", "double", enclosingMethodScope);
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final PrintStream finalStream) {
-			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
+			RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 
 			if (rawToPrint instanceof RTNullExpression) {
 				finalStream.print("<null>");
 			} else if (rawToPrint instanceof RTNullObject) {
 				finalStream.print("<null>");
 			} else {
+				if (rawToPrint instanceof RTIntegerObject) {
+					// Yeah, it can happen. chord_identifier3.k
+					rawToPrint = new RTDoubleObject(((RTIntegerObject)rawToPrint).intValue());
+				}
 				assert rawToPrint instanceof RTDoubleObject;
 				final RTDoubleObject toPrint = (RTDoubleObject) rawToPrint;
 				final double foobar = toPrint.doubleValue();

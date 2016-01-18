@@ -36,11 +36,15 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { return position() }
+    } requires {
         int position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         int position() const;
     }
 
@@ -50,8 +54,8 @@ context Interval {
     }
 
     public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double lowPos = LowNote.notePosition();
+        double highPos = HighNote.notePosition();
         System.out.print("lowPos=")
                    .print(lowPos)
                    .print(", highPos=")
@@ -67,7 +71,9 @@ context Interval {
 
 // The first note in the list will be the root.
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String chordName() const { return name() }
+    } requires {
         int position() const;
         String name() const;
     }
@@ -102,7 +108,7 @@ context Chord {
         Notes = notes;
     }
 
-    public String name() {
+    public String fullChordName() {
         System.out.println(Notes.hasInterval(1.5));
         return "Chord::name";
     }
@@ -119,14 +125,13 @@ context Chord {
     notes.add(new Note("G"));
 
     Chord chord = new Chord(notes);
-    System.out.println(chord.name());
+    System.out.println(chord.fullChordName());
 }
 
 /* GOLD:
-line 53: WARNING: Substituting double object for `LowNote.position()' in assignment to `lowPos'.
-line 54: WARNING: Substituting double object for `HighNote.position()' in assignment to `highPos'.
-line 70: WARNING: Script declaration for `name' may hide script declared at line 105
-line 62: WARNING: Substituting double object for `octaveOffset' for call to method `+' at line 62
+line 40: WARNING: substituting object of type `double' for `this.position()'.
+line 46: WARNING: substituting object of type `double' for `this.position()'.
+line 66: WARNING: Substituting double object for `octaveOffset' for call to method `+' at line 66
 ___________________________________________________________
 lowPos=6.0, highPos=11.0
 2.5

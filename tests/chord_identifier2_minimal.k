@@ -38,11 +38,15 @@ class Note {
 }
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
@@ -56,8 +60,8 @@ context Interval {
         //double octaveOffset = if(LowNote.position() > HighNote.position()) 12.0 else 0.0;
 
         // Temp vars working
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double lowPos = LowNote.notePosition();
+        double highPos = HighNote.notePosition();
         double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
 
         return (highPos - lowPos + octaveOffset) / 2;
