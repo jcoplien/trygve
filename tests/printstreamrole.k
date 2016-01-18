@@ -4,10 +4,11 @@ context C1 {
     // better diagnostic
     public C1() {
         log = System.out;
-        log.println("test");
+        log.pl("test");
     }
 
     role log {
+        public void pl(String message) { println(message) }
     }
     requires {
         void println(String msg);

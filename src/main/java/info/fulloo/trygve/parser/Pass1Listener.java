@@ -1722,6 +1722,7 @@ public class Pass1Listener extends Pass0Listener {
 			
 			if (parsingData_.currentExpressionExists()) {
 				expression = parsingData_.popExpression();
+
 				for (int i = 0; i < abelianSumopSize; i++) {
 					final Expression expr2 = exprStack.pop();
 					final String operatorAsString = ctx.ABELIAN_SUMOP(i).getText();
@@ -1737,10 +1738,31 @@ public class Pass1Listener extends Pass0Listener {
 						// This dude or dudette has defined their own
 						// operator. Arrange a full-blown method call
 						// to handle it
-						final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+						final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+						
 						expression.setResultIsConsumed(true);
 						expr2.setResultIsConsumed(true);
 						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false);
+					} else if (expression.type() instanceof RoleType){
+						// Check if it is in the requires section for a Role
+						
+						final Type type = expression.type();
+						final Declaration associatedDeclaration =
+								(type instanceof StagePropType)? ((StagePropType)type).associatedDeclaration():
+																 ((RoleType)type).associatedDeclaration();
+						final Map<String, MethodSignature> requiresSection =
+								(associatedDeclaration instanceof StagePropDeclaration)?
+										((StagePropDeclaration)associatedDeclaration).requiredSelfSignatures():
+										((RoleDeclaration)associatedDeclaration).requiredSelfSignatures();
+						final MethodSignature newMethodSignature = requiresSection.get(operatorAsString);
+						if (null != newMethodSignature) {
+							final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+							final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false);
+						} else {
+							expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
+						}
 					} else {
 						// No need to set x.setResultIsConsumed for the two operands,
 						// because the SumExpression constructor does it.
@@ -4265,6 +4287,8 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == methodSignature) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in interface ", interfaceDecl.name());
+			} else {
+				returnType = methodSignature.returnType();
 			}
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());

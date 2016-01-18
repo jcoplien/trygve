@@ -39,7 +39,11 @@ class TextBuffer {
 ///////////////////////////////////////
 
 context TextSelection {
-    stageprop Text {} requires {
+    stageprop Text {
+        public String selection() const {
+           return this.getText()
+        }
+    } requires {
         String getText() const;
     }
 
@@ -47,14 +51,14 @@ context TextSelection {
         assert(start >= 0, "Invalid start select position: " + start.toString());
         assert(start <= end, "End selection position less than start position.");
 
-        Text = text;
-        start_ = start;
-        end_ = end;
+        Text = text.clone;
+        start_ = start.clone;
+        end_ = end.clone;
     }
 
-    public String getText() const { 
-        return Text.getText().substring(start_, end_); 
-    }
+    // public String contents() const { 
+    //     return Text.selection().substring(start_, end_); 
+    // }
 
     public int start() const { return start_; }
     public int end() const { return end_; }
@@ -66,7 +70,17 @@ context TextSelection {
 ///////////////////////////////////////
 
 context TextFile {
-    role Buffer {} requires {
+    role Buffer {
+        public void put(String text) {
+            add(text);
+        }
+        public String contents() {
+           return getText()
+        }
+        public void reset() {
+           clear()
+        }
+    } requires {
         String getText() const;
         void add(String text);
         void clear();
@@ -78,13 +92,13 @@ context TextFile {
 
     public void load(String filename) {
         if(filename == "twelve_days_of_christmas.txt") {            
-            Buffer.clear();
-            Buffer.add("On the twelveth day of Christmas my true love gave to me ");
-            Buffer.add("twelve drummers drumming, eleven pipers piping, ten lords a-leaping, ");
-            Buffer.add("nine ladies dancing, eight maids a-milking, seven swans a-swimming, ");
-            Buffer.add("six geese a-laying, five gold rings; ");
-            Buffer.add("four calling birds, three french hens, two turtle doves ");
-            Buffer.add("and a partridge in a pear tree.");
+            Buffer.reset();
+            Buffer.put("On the twelveth day of Christmas my true love gave to me ");
+            Buffer.put("twelve drummers drumming, eleven pipers piping, ten lords a-leaping, ");
+            Buffer.put("nine ladies dancing, eight maids a-milking, seven swans a-swimming, ");
+            Buffer.put("six geese a-laying, five gold rings; ");
+            Buffer.put("four calling birds, three french hens, two turtle doves ");
+            Buffer.put("and a partridge in a pear tree.");
         } else {
             assert(false, 
                 "File '" + filename + "' not found (try 'twelve_days_of_christmas.txt')");
@@ -92,15 +106,23 @@ context TextFile {
 //        return this;
     }
 
-    public String getText() { return Buffer.getText(); }
+    // public String getText() { return Buffer.contents(); }
 }
 
 ///////////////////////////////////////
 
 context SpellCheck {
+    role SpellChecker {
+       public int position() const {
+          return currentPos()
+       }
+    } requires {
+       int currentPos() const;
+       void setPosition(int pos);
+    }
     role Text {
         public boolean isFinished() const {
-            return currentPos_ >= getText().length();
+            return SpellChecker.position() >= getText().length();
         }
 
         // Sorry, English only...
@@ -113,7 +135,9 @@ context SpellCheck {
 
         private String nextCharacter() {
             // NOTE: Will this postfix "trick" work? Untested...
-            return getText().substring(currentPos_, ++currentPos_);
+            String retval = getText().substring(SpellChecker.position(), SpellChecker.position());
+            SpellChecker.setPosition(SpellChecker.position() + 1);
+            return retval;
         }
 
         public String nextWord() {
@@ -142,8 +166,17 @@ context SpellCheck {
     }
 
     public SpellCheck(Text text) {
-        Text = text;
+        Text = text.clone;
+        SpellChecker = this;
         currentPos_ = 0;
+    }
+
+    public int currentPos() const {
+       return currentPos_.clone
+    }
+
+    public void setPosition(int pos) {
+       currentPos_ = pos.clone
     }
 
     public void test() {
@@ -162,13 +195,8 @@ context SpellCheck {
 }
 
 /* GOLD:
-line 42: WARNING: Script declaration for `getText' may hide script declared at line 55
-line 51: WARNING: Assignment / initialization does not create a new instance. Both `start_' and `start' will refer to the same object. Use `start.clone' to create a separate instance.
-line 52: WARNING: Assignment / initialization does not create a new instance. Both `end_' and `end' will refer to the same object. Use `end.clone' to create a separate instance.
-line 69: WARNING: Script declaration for `getText' may hide script declared at line 95
-line 103: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.isFinished'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
-line 116: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.nextCharacter'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
-line 116: NONCOMPLIANT: Attempt to access Context member `currentPos_' from within scope of Role script `Text.nextCharacter'. Roles may not directly access Context data.  Consider binding the Context to one of its own Roles instead.
+line 115: WARNING: Script declaration for `setPosition' may hide script declared at line 178
+line 115: WARNING: Script declaration for `currentPos' may hide script declared at line 174
+line 194: No matching constructor on class `SpellCheck' for `new' invocation
 ___________________________________________________________
-Line 108: Assertion failed.
 */

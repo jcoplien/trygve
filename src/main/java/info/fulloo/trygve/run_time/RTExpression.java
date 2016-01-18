@@ -840,6 +840,12 @@ public abstract class RTExpression extends RTCode {
 				// This evaluation leaves a result on the stack -
 				// a result which will be a parameter to the method
 				
+				// Make sure it doesn't get popped. Setting things in ActualParameters
+				// doesn't seem to be enough (setResultIsConsumed(true))
+				if (pc instanceof RTExpression) {
+					((RTExpression)pc).setResultIsConsumed(true);
+				}
+				
 				// Woops - this gets short-circuited if it's a method invocation?
 				// It goes off to evaluate the method (as a "this" argument) and
 				// then, just below, expects to pull "this" (e.g. PrintStream)

@@ -38,8 +38,6 @@ context Activity {
 }
 
 /* GOLD:
-line 20: No such operation `+' on type `EarlyStart' for argument `Duration'.
-line 20: Operation `+' cannot be applied to type `EarlyStart' for argument `Duration'.
 line 38: Missing main expression.
 ___________________________________________________________
 */
