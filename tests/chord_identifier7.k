@@ -1,6 +1,6 @@
 class Note {
     public Note(String name) {
-        name_ = name;
+        name_ = name.clone;
         assert(position() > 0.0, "Invalid note: " + name);
     }
 
@@ -44,28 +44,36 @@ context Interval {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double distanceFromLowNote() const {
+            // NOTE: Internal expression evaluated to a NULL Java object
+            double pos = position() - LowNote.position();
+            if(pos < 0.0) pos = pos + 12.0;
+            return pos;
+        }
+    } requires {
         double position() const;
     }
 
     public Interval(LowNote lowNote, HighNote highNote) {
+        assert(lowNote != null, "lowNote was null");
+        assert(highNote != null, "highNote was null");
+
         LowNote = lowNote;
         HighNote = highNote;
     }
 
-    public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
-        double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
-
-        return highPos - lowPos + octaveOffset;
+    public double semitones() const {
+        return HighNote.distanceFromLowNote();
     }
 }
 
 // -------------------------------------------------
 
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String noteName() { return name() }
+    } requires {
         double position() const;
         String name() const;
     }
@@ -97,8 +105,7 @@ context Chord {
         }
 
         private boolean isMinor() {
-            // NOTE: This expression doesn't work
-            return hasInterval(3.0) && !hasInterval(4.0);
+            return (hasInterval(3.0) && !hasInterval(4.0))
         }
 
         public String dominant() {
@@ -124,7 +131,6 @@ context Chord {
         
         // TODO: Calculate #11 (Lydian chord)
         public String augmentations() {
-            // NOTE: In the future, List::remove could be useful in this method.
             List<String> augs = new List<String>();
 
             if (hasInterval(6.0)) augs.add("b5");
@@ -134,7 +140,7 @@ context Chord {
             if (hasInterval(4.0) && !isMajor()) augs.add("b11");
             if (hasInterval(8.0)) augs.add("b13");
 
-            // NOTE: List/Array::join would be nice here.
+            // NOTE: String::join would be nice here.
             String output = "";
             for(String aug : augs) output = output + aug;
             return output;
@@ -158,9 +164,8 @@ context Chord {
         Notes = notes;
     }
 
-    // NOTE: How to handle the "may hide method" warning?
     public String name() {
-        return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+        return Root.noteName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
