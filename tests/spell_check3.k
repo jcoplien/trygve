@@ -264,7 +264,7 @@ context SpellCheck {
     }
 
     public void start() {
-        SpellChecker.setPosition(0);
+        setPosition(0);
         Dictionary.checkCurrentWord();
     }
 
