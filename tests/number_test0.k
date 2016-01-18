@@ -1,5 +1,9 @@
 context NumberTest {
-    role Number {} requires {
+    role Number {
+        public void Add(int i) { add(i) }
+        public int  Get(int i) { return get(i) }
+        public int  Size()     { return size() }
+    } requires {
         void add(int i);
         int get(int i);
         int size();
@@ -7,17 +11,17 @@ context NumberTest {
 
     public NumberTest(int [] intArray) {
         Number = new List<int>();
-        for(int i : intArray) Number.add(i);
+        for(int i : intArray) Number.Add(i);
 
-        System.out.println(Number.size());
+        System.out.println(Number.Size());
     }
 
     public int sum() {
-        System.out.println(Number.size());
+        System.out.println(Number.Size());
 
         int s = 0;
-        for(int i = 0; i < Number.size(); i++) {
-            s = s + Number.get(i);
+        for(int i = 0; i < Number.Size(); i++) {
+            s = s + Number.Get(i);
         }
         return s;
     }

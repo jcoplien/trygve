@@ -103,6 +103,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		List<String> rolesIAmPlayingHere = null;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
@@ -138,6 +139,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		List<String> stagePropsIAmPlayingHere = null;
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
 			stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
@@ -150,6 +152,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		if (rolesIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> rolesIAmPlayingHere = rolesIAmPlayingInContext_.get(contextInstance);
 			rolesIAmPlayingHere.remove(roleName);
@@ -162,6 +165,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	
 	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {
+		assert null != contextInstance;
 		if (stagePropsIAmPlayingInContext_.containsKey(contextInstance)) {
 			final List<String> stagePropsIAmPlayingHere = stagePropsIAmPlayingInContext_.get(contextInstance);
 			stagePropsIAmPlayingHere.remove(stagePropName);
@@ -277,7 +281,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				
 			if (null != oldValue) {
 				oldValue.decrementReferenceCount();
-				contextInfo.removeRolePlayer(name, oldValue);
+				contextInfo.removeStagePropPlayer(name, oldValue);
 			}
 				
 			contextInfo.addStagePropPlayer(name, value);
@@ -428,6 +432,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
 			}
+		}
+		@Override public String getText() {
+			return rTType().name();
+		}
+		@Override public int hashCode() {
+			// This is necessary for the way that objects keep track
+			// of their Role-playing registration. We need the canonical
+			// hashCode() and equals(Object) methods.
+			return getText().hashCode();
+		}
+		@Override public boolean equals(final Object other) {
+			return this == other;
 		}
 		
 		// Debugging only
@@ -873,6 +889,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		@Override public boolean equals(final Object other) {
 			return other instanceof RTNullObject;
+		}
+		@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
+			// Not sure if no-op is the right thing to do, but
+			// it avoids silly work.
 		}
 	}
 	

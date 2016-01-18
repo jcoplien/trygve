@@ -39,11 +39,15 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
@@ -53,8 +57,8 @@ context Interval {
     }
 
     public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double lowPos = LowNote.notePosition();
+        double highPos = HighNote.notePosition();
         double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
 
         return highPos - lowPos + octaveOffset;
@@ -64,7 +68,9 @@ context Interval {
 // -------------------------------------------------
 
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String chordName() { return name() }
+    } requires {
         double position() const;
         String name() const;
     }
@@ -158,7 +164,7 @@ context Chord {
 
     // NOTE: How to handle the "may hide method" warning?
     public String name() {
-        return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+        return Root.chordName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
@@ -215,7 +221,7 @@ context Chord {
 }
 
 /* GOLD:
-line 67: WARNING: Script declaration for `name' may hide script declared at line 160
+line 71: WARNING: Script declaration for `name' may hide script declared at line 166
 ___________________________________________________________
 Cm11
 Dsus
