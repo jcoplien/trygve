@@ -131,6 +131,7 @@ context Chord {
 /* GOLD:
 line 40: WARNING: substituting object of type `double' for `this.position()'.
 line 46: WARNING: substituting object of type `double' for `this.position()'.
+line 88: NONCOMPLIANT: Trying to enact object script `position()' without using the interface of the Role it is playing: `Root'.
 line 66: WARNING: Substituting double object for `octaveOffset' for call to method `+' at line 66
 ___________________________________________________________
 lowPos=6.0, highPos=11.0

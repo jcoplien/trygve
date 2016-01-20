@@ -1,6 +1,6 @@
 class Note {
     public Note(String name) {
-        name_ = name;
+        name_ = name.clone;
         assert(position() > 0.0, "Invalid note: " + name);
     }
 
@@ -31,7 +31,8 @@ class Note {
         if(name_ == "Bb") pos = 11.0;
         if(name_ == "B")  pos = 12.0;
         if(name_ == "Cb") pos = 12.0;
-        return pos;
+        assert(pos > 0.0);
+        return pos
     }
 
     private String name_;
@@ -40,32 +41,47 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { double d = position();
+System.out.print("d=").println(d);
+          return d }
+    } requires {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double distanceFromLowNote() const {
+System.out.println("Entered distanceFromLowNote()");
+            // NOTE: Internal expression evaluated to a NULL Java object
+            double lowNotePosition = LowNote.notePosition();
+System.out.print("LowNote.notePosition=").println(lowNotePosition);
+            double pos = position() - LowNote.notePosition();
+            if (pos < 0.0) pos = pos + 12.0;
+            return pos;
+        }
+    } requires {
         double position() const;
     }
 
     public Interval(LowNote lowNote, HighNote highNote) {
+        assert(lowNote != null, "lowNote was null");
+        assert(highNote != null, "highNote was null");
+
         LowNote = lowNote;
         HighNote = highNote;
     }
 
-    public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
-        double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
-
-        return highPos - lowPos + octaveOffset;
+    public double semitones() const {
+        return HighNote.distanceFromLowNote();
     }
 }
 
 // -------------------------------------------------
 
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String noteName() { return name() }
+    } requires {
         double position() const;
         String name() const;
     }
@@ -97,8 +113,7 @@ context Chord {
         }
 
         private boolean isMinor() {
-            // NOTE: This expression doesn't work
-            return hasInterval(3.0) && !hasInterval(4.0);
+            return (hasInterval(3.0) && !hasInterval(4.0))
         }
 
         public String dominant() {
@@ -124,7 +139,6 @@ context Chord {
         
         // TODO: Calculate #11 (Lydian chord)
         public String augmentations() {
-            // NOTE: In the future, List::remove could be useful in this method.
             List<String> augs = new List<String>();
 
             if (hasInterval(6.0)) augs.add("b5");
@@ -134,7 +148,7 @@ context Chord {
             if (hasInterval(4.0) && !isMajor()) augs.add("b11");
             if (hasInterval(8.0)) augs.add("b13");
 
-            // NOTE: List/Array::join would be nice here.
+            // NOTE: String::join would be nice here.
             String output = "";
             for(String aug : augs) output = output + aug;
             return output;
@@ -158,9 +172,8 @@ context Chord {
         Notes = notes;
     }
 
-    // NOTE: How to handle the "may hide method" warning?
-    public String name() {
-        return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+    public String fullChordName() {
+        return Root.noteName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
@@ -216,13 +229,13 @@ context Chord {
     notes7.add(new Note("Ab"));
     Chord chord7 = new Chord(notes7);
 
-    System.out.println(chord.name());
-    System.out.println(chord2.name());
-    System.out.println(chord3.name());
-    System.out.println(chord4.name());
-    System.out.println(chord5.name());
-    System.out.println(chord6.name());
-    System.out.println(chord7.name());
+    System.out.println(chord.fullChordName());
+    System.out.println(chord2.fullChordName());
+    System.out.println(chord3.fullChordName());
+    System.out.println(chord4.fullChordName());
+    System.out.println(chord5.fullChordName());
+    System.out.println(chord6.fullChordName());
+    System.out.println(chord7.fullChordName());
 }
 
 /* GOLD:

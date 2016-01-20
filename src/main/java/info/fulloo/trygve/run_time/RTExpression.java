@@ -323,6 +323,7 @@ public abstract class RTExpression extends RTCode {
 					return new RTHalt();
 				} else {
 					// What's this dynamicScope_ crap? Does anybody use it?
+					
 					dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor -- increments ref count, don't worry
 					RTObject value = qualifier.getObject(idName_);
 					
@@ -651,6 +652,91 @@ public abstract class RTExpression extends RTCode {
 			return retval;
 		}
 		
+		private RTMethod contextMethodDeclLookup(final RTObject contextOfRoleOfInvokingMethod,
+				final Type typeOfThisParameterToMethod) {
+			RTMethod methodDecl = null;
+			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			
+			if (contextOfRoleOfInvokingMethod instanceof RTContextObject) {
+				// Then the invoker is inside of a Context, or perhaps the Role
+				// of a Context.
+				final RTContextObject invokingContext = (RTContextObject)contextOfRoleOfInvokingMethod;
+				final RTType rawContextType = invokingContext.rTType();
+				assert rawContextType instanceof RTContext;
+				final RTContext typeOfInvokingContext = (RTContext)rawContextType;
+				
+				// See if it is another Role in this context.
+				// (But, hey, we *have* the Context of the target — why
+				// go skurking for it here?!)
+				RTRole theRole = typeOfInvokingContext.getRole(typeOfThisParameterToMethod.name());
+				if (null == theRole) {
+					final RTStageProp theStageProp = typeOfInvokingContext.getStageProp(typeOfThisParameterToMethod.name());
+					if (null == theStageProp) {
+						// Example: contextType here is TextFile
+						// typeOfThisParameterToMethod is for Role SpellCheck.Text
+						// it's an argument of an assert, called from within
+						//	SpellCheck.Text.nextWord, called by println, right after SpellCheck
+						// 	is instantiated (around line 155). Trying to call
+						// 	SpellCheck.Text.isFinished.
+						//
+						// See cotnext_role_bug1.k
+						//
+						// Role Text is of type TextFile, which is also a Context
+						assert null != theStageProp;
+					}
+					methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
+				} else {
+					assert null != theRole;
+					methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
+				}
+				assert null != methodDecl;
+			} else if (contextOfRoleOfInvokingMethod instanceof RTObjectCommon) {
+				// The "this" parameter is a pointer to the Role Player, typed
+				// in terms of the Role Player's type.
+
+				// That implies *for now* that the call is invoking an instance method
+				// and not a role method. So:
+				
+				final RTObject rolePlayer = (RTObject)contextOfRoleOfInvokingMethod;
+				final RTType rolePlayerType = rolePlayer.rTType();
+				assert null != rolePlayerType;
+				methodDecl = rolePlayerType.lookupMethod(methodSelectorName_, actualParameters_);
+				if (null == methodDecl) {
+					// ... then it is another Role method invocation on the
+					// RolePlayer.  First, get the RTRole:
+					final RTObject objectContextPointer = getObjectUpToMethodScopeFrom("current$context", currentScope);
+					if (objectContextPointer instanceof RTContextObject == false) {
+						assert objectContextPointer instanceof RTContextObject;
+					}
+					final RTContextObject contextPointer = (RTContextObject)objectContextPointer;
+					
+					final RTType rawContextType = contextPointer.rTType();
+					assert rawContextType instanceof RTContext;
+					final RTContext contextType = (RTContext)rawContextType;
+					RTRole theRole = contextType.getRole(typeOfThisParameterToMethod.name());
+					if (null != theRole) {
+						// Look up the method in the Role scope.
+						methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
+					} else {
+						// Look up the method in the StageProp scope.
+						final RTStageProp theStageProp = contextType.getStageProp(typeOfThisParameterToMethod.name());
+						assert null != theStageProp;
+						methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
+					}
+					assert null != methodDecl;
+				}
+			} else {
+				// It could be that we are calling from a Role method to
+				// another Role method. Then could indicate a Role
+				// object in this (though it is more likely to point to
+				// a RTCommonObject, which it probably does — so we should
+				// never get here).
+				assert false;
+			}
+			
+			return methodDecl;
+		}
+		
 		private RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			// Should look up method in the receiver's scope. Get the
 			// current scope so we can get all the magic identifiers
@@ -686,83 +772,8 @@ public abstract class RTExpression extends RTCode {
 				}
 				
 				if (null == methodDecl) {
-					// Major refactoring in order. TODO.
-				if (contextOfRoleOfInvokingMethod instanceof RTContextObject) {
-					// Then the invoker is inside of a Context, or perhaps the Role
-					// of a Context.
-					final RTContextObject invokingContext = (RTContextObject)contextOfRoleOfInvokingMethod;
-					final RTType rawContextType = invokingContext.rTType();
-					assert rawContextType instanceof RTContext;
-					final RTContext typeOfInvokingContext = (RTContext)rawContextType;
-					
-					// See if it is another Role in this context.
-					// (But, hey, we *have* the Context of the target — why
-					// go skurking for it here?!)
-					theRole = typeOfInvokingContext.getRole(typeOfThisParameterToMethod.name());
-					if (null == theRole) {
-						final RTStageProp theStageProp = typeOfInvokingContext.getStageProp(typeOfThisParameterToMethod.name());
-						if (null == theStageProp) {
-							// Example: contextType here is TextFile
-							// typeOfThisParameterToMethod is for Role SpellCheck.Text
-							// it's an argument of an assert, called from within
-							//	SpellCheck.Text.nextWord, called by println, right after SpellCheck
-							// 	is instantiated (around line 155). Trying to call
-							// 	SpellCheck.Text.isFinished.
-							//
-							// See cotnext_role_bug1.k
-							//
-							// Role Text is of type TextFile, which is also a Context
-							assert null != theStageProp;
-						}
-						methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
-					} else {
-						assert null != theRole;
-						methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
-					}
-					assert null != methodDecl;
-				} else if (contextOfRoleOfInvokingMethod instanceof RTObjectCommon) {
-					// The "this" parameter is a pointer to the Role Player, typed
-					// in terms of the Role Player's type.
-
-					// That implies *for now* that the call is invoking an instance method
-					// and not a role method. So:
-					
-					final RTObject rolePlayer = (RTObject)contextOfRoleOfInvokingMethod;
-					final RTType rolePlayerType = rolePlayer.rTType();
-					assert null != rolePlayerType;
-					methodDecl = rolePlayerType.lookupMethod(methodSelectorName_, actualParameters_);
-					if (null == methodDecl) {
-						// ... then it is another Role method invocation on the
-						// RolePlayer.  First, get the RTRole:
-						final RTObject objectContextPointer = getObjectUpToMethodScopeFrom("current$context", currentScope);
-						if (objectContextPointer instanceof RTContextObject == false) {
-							assert objectContextPointer instanceof RTContextObject;
-						}
-						final RTContextObject contextPointer = (RTContextObject)objectContextPointer;
-						
-						final RTType rawContextType = contextPointer.rTType();
-						assert rawContextType instanceof RTContext;
-						final RTContext contextType = (RTContext)rawContextType;
-						theRole = contextType.getRole(typeOfThisParameterToMethod.name());
-						if (null != theRole) {
-							// Look up the method in the Role scope.
-							methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
-						} else {
-							// Look up the method in the StageProp scope.
-							final RTStageProp theStageProp = contextType.getStageProp(typeOfThisParameterToMethod.name());
-							assert null != theStageProp;
-							methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
-						}
-						assert null != methodDecl;
-					}
-				} else {
-					// It could be that we are calling from a Role method to
-					// another Role method. Then could indicate a Role
-					// object in this (though it is more likely to point to
-					// a RTCommonObject, which it probably does — so we should
-					// never get here).
-					assert false;
-				}
+					methodDecl = contextMethodDeclLookup(contextOfRoleOfInvokingMethod,
+							typeOfThisParameterToMethod);
 				}
 			} else {
 				// Calculate the address of the method. Generalize for classes and Contexts.
@@ -954,10 +965,28 @@ public abstract class RTExpression extends RTCode {
 			}
 		}
 
-		@Override public RTCode run() {
+		public RTCode newRun() {
+            RTMessageDispatcher dispatcher =
+            	RTMessageDispatcher.makeDispatcher(
+            		messageExpr_,
+    				methodSelectorName_,
+    				argPush_,
+    				postReturnProcessing_,
+    				expressionsCountInArguments_,
+    				actualParameters_,
+    				isStatic(),
+    				nearestEnclosingType_);
+            RTCode retval = dispatcher.hasError();
+            if (null == retval) {
+            	retval = dispatcher.methodDecl();
+            }
+            return retval;
+        }
+        
+        @Override public RTCode run() {
 			RTCode start = argPush_;
 			RTObject self = null;
-
+			
 			// Push the return address onto the stack
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(postReturnProcessing_);
 			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
@@ -1012,7 +1041,7 @@ public abstract class RTExpression extends RTCode {
 
 			
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTContextObject contextObjectToGoWithThis = null;
+			RTContextObject contextObjectEnclosingCalledScript = null;
 			if (typeOfThisParameterToCalledMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				// If we're a non-Role method *and* we're calling a Role method
 				// (we got to this line in this code), we need
@@ -1021,24 +1050,42 @@ public abstract class RTExpression extends RTCode {
 				
 				// NOTE: Check if this is necessary. It may already be
 				// in the parameter list and pushParameterLoop may already
-				// take care of itl
-				contextObjectToGoWithThis = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
+				// take care of it.
+
+				// We used to get the current$context by calling
+				// RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope)
+				// That would go up the dynamic chain looking for a current$context. However,
+				// if we are in a Context method not called from another Context method,
+				// then I guess it was going up the dynamic scope and finding the current$context
+				// of the caller.
+				//
+				// If we're in a Context method and are calling a Role method, we can
+				// get the current$context as just "this"
+				contextObjectEnclosingCalledScript = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
+				if (thisDeclaration.type() instanceof RoleType) {
+					if (null == contextObjectEnclosingCalledScript) {
+						// Assertion fired in call of noteName in StageProp Root of
+						// context Chord (chord_identifier7.k). self was null. Being
+						// called from Context method of Chord
+						// assert null != contextObjectEnclosingCalledScript;
+					}
+				}
 			} else if (typeOfThisParameterToCalledMethod instanceof RoleType && 0 == indexForThisExtraction) {
 				// Probably a "requires" method being called through the
 				// Role identifier, though it's actually in the Role-player
-				contextObjectToGoWithThis = null;
+				contextObjectEnclosingCalledScript = null;
 			} else if (typeOfThisParameterToCalledMethod instanceof ContextType) {
 				// Shouldn't matter, as calling a Context method (not a Role method)
-				// doesn't require current$context
-				contextObjectToGoWithThis = null;
+				// doesn't require current$context.
+				contextObjectEnclosingCalledScript = null;
 			} else if (typeOfThisParameterToCalledMethod instanceof ClassType ||
 						typeOfThisParameterToCalledMethod instanceof BuiltInType) {
 				// Just an old-fashioned method call
-				contextObjectToGoWithThis = null;
+				contextObjectEnclosingCalledScript = null;
 			} else if (typeOfThisParameterToCalledMethod instanceof InterfaceType) {
-				contextObjectToGoWithThis = null;
+				contextObjectEnclosingCalledScript = null;
 			} else if (typeOfThisParameterToCalledMethod instanceof ArrayType) {
-				contextObjectToGoWithThis = null;
+				contextObjectEnclosingCalledScript = null;
 			} else {
 				// what's a mother to do?
 				// E.g., 
@@ -1051,7 +1098,7 @@ public abstract class RTExpression extends RTCode {
 			// to do that, because methods dispatched through it could just
 			// be ordinary methods in the Role-player.
 			this.pushContextPointerIfNecessary(typeOfThisParameterToCalledMethod, 
-					contextObjectToGoWithThis,
+					contextObjectEnclosingCalledScript,
 					indexForThisExtraction);
 
 			

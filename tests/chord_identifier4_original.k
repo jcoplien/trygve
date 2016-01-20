@@ -238,6 +238,7 @@ context Chord {
 }
 
 /* GOLD:
+line 160: NONCOMPLIANT: Trying to enact object script `position()' without using the interface of the Role it is playing: `Root'.
 ___________________________________________________________
 Cm11
 Dsus

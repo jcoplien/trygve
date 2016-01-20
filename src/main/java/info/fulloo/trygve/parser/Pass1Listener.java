@@ -1695,23 +1695,25 @@ public class Pass1Listener extends Pass0Listener {
 				final MethodSignature currentMethod = parsingData_.currentMethodSignature();
 				final Type methodReturnType = currentMethod.returnType();
 				final Type expressionType = expression.type();
-				if (methodReturnType.pathName().equals(expressionType.pathName())) {
-					;  // we're cool
-				} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
-					// We're almost cool...
-					errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
-							"WARNING: substituting object of type `",
-							methodReturnType.name(),
-							"' for `",
-							expression.getText() + "'.");
-					expression = expression.promoteTo(methodReturnType);
-					expression.setResultIsConsumed(true);
-				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-							"Type mismatch in return statement. Expected `",
-							methodReturnType.name(),
-							"' and found `",
-							expression.getText() + "'.");
+				if (null != methodReturnType && null != expressionType) {
+					if (methodReturnType.pathName().equals(expressionType.pathName())) {
+						;  // we're cool
+					} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
+						// We're almost cool...
+						errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
+								"WARNING: substituting object of type `",
+								methodReturnType.name(),
+								"' for `",
+								expression.getText() + "'.");
+						expression = expression.promoteTo(methodReturnType);
+						expression.setResultIsConsumed(true);
+					} else {
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+								"Type mismatch in return statement. Expected `",
+								methodReturnType.name(),
+								"' and found `",
+								expression.getText() + "'.");
+					}
 				}
 			}
 			expression = new ReturnExpression(expression, ctx.getStart().getLine(),

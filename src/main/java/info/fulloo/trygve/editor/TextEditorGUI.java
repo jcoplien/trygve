@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/chord_identifier3.k";
+	private final static String defaultFile = "tests/chord_identifier7.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.2.2";
+    final String TrygveVersion = "1.2.3";
     
     
     /** Creates new form TextEditorGUI */
@@ -467,8 +467,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	Arrays.sort(allURLs);
     	
     	
-    	char [] menuBreaks = { 'g', 'n', 's', 'z' }; int j = 0;
-		JMenu submenu = new JMenu("a-f");
+    	final char [] menuBreaks = { 'f', 'n', 's', 'z' }; int j = 0;
+		JMenu submenu = new JMenu("a-" + (char)(menuBreaks[0] - 1));
     	for (int i = 0; i < numberOfTestCases; i++) {
     		assert 'a' > 'A';
     		final String fileName = allFileNames[i];

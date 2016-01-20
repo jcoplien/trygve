@@ -216,3 +216,10 @@ context Project {
 
     new FrontloadActivities(proj).frontload();
 }
+
+/* GOLD:
+line 89: NONCOMPLIANT: Trying to enact object script `size()' without using the interface of the Role it is playing: `Predecessors'.
+line 90: NONCOMPLIANT: Trying to enact object script `get(int)' without using the interface of the Role it is playing: `Predecessors'.
+___________________________________________________________
+line 148: FATAL: TERMINATED: Attempting to invoke method + on a null object
+*/

@@ -197,6 +197,7 @@ context SpellCheck {
 /* GOLD:
 line 115: WARNING: Script declaration for `setPosition' may hide script declared at line 178
 line 115: WARNING: Script declaration for `currentPos' may hide script declared at line 174
+line 139: NONCOMPLIANT: Trying to enact object script `setPosition(int)' without using the interface of the Role it is playing: `SpellChecker'.
 line 194: No matching constructor on class `SpellCheck' for `new' invocation
 ___________________________________________________________
 */
