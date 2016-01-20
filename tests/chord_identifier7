@@ -31,8 +31,7 @@ class Note {
         if(name_ == "Bb") pos = 11.0;
         if(name_ == "B")  pos = 12.0;
         if(name_ == "Cb") pos = 12.0;
-        assert(pos > 0.0);
-        return pos
+        return pos;
     }
 
     private String name_;
@@ -41,22 +40,15 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {
-        public double notePosition() const { double d = position();
-System.out.print("d=").println(d);
-          return d }
-    } requires {
+    stageprop LowNote {} requires {
         double position() const;
     }
 
     stageprop HighNote {
         public double distanceFromLowNote() const {
-System.out.println("Entered distanceFromLowNote()");
             // NOTE: Internal expression evaluated to a NULL Java object
-            double lowNotePosition = LowNote.notePosition();
-System.out.print("LowNote.notePosition=").println(lowNotePosition);
-            double pos = position() - LowNote.notePosition();
-            if (pos < 0.0) pos = pos + 12.0;
+            double pos = position() - LowNote.position();
+            if(pos < 0.0) pos = pos + 12.0;
             return pos;
         }
     } requires {
@@ -172,7 +164,7 @@ context Chord {
         Notes = notes;
     }
 
-    public String fullChordName() {
+    public String name() {
         return Root.noteName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
@@ -229,13 +221,13 @@ context Chord {
     notes7.add(new Note("Ab"));
     Chord chord7 = new Chord(notes7);
 
-    System.out.println(chord.fullChordName());
-    System.out.println(chord2.fullChordName());
-    System.out.println(chord3.fullChordName());
-    System.out.println(chord4.fullChordName());
-    System.out.println(chord5.fullChordName());
-    System.out.println(chord6.fullChordName());
-    System.out.println(chord7.fullChordName());
+    System.out.println(chord.name());
+    System.out.println(chord2.name());
+    System.out.println(chord3.name());
+    System.out.println(chord4.name());
+    System.out.println(chord5.name());
+    System.out.println(chord6.name());
+    System.out.println(chord7.name());
 }
 
 /* GOLD:
