@@ -229,8 +229,8 @@ class TextFile {
 
 ///////////////////////////////////////
 // An inverted dictionary. Anything not in it is considered correctly spelled.
-class SimpleDictionary {
-    public SimpleDictionary() {}
+class InvertedDictionary {
+    public InvertedDictionary() {}
 
     public List<String> suggestSpelling(String word) const {
         assert(word != null, "word was null.");
@@ -266,7 +266,7 @@ context SpellCheck {
     role SpellChecker {
         public void advanceToNextWord() {
             if(!hasNext()) return;
-            Dictionary.checkCurrentWord(next());
+            Dictionary.checkSpelling(next());
         }
     } requires {
         boolean hasNext() const;
@@ -275,7 +275,7 @@ context SpellCheck {
     }
 
     stageprop Dictionary {
-        public void checkCurrentWord(String word) {
+        public void checkSpelling(String word) {
             List<String> suggestions = suggestSpelling(word);
 
             if(suggestions.size() > 0) {
@@ -296,13 +296,13 @@ context SpellCheck {
     // if uncommenting this constructor.
     public SpellCheck(SpellChecker spellChecker) {
         SpellChecker = spellChecker;
-        Dictionary = new SimpleDictionary();
+        Dictionary = new InvertedDictionary();
     }
     */
 
     public SpellCheck(Buffer buffer) {
         SpellChecker = new WordIterator(buffer);
-        Dictionary = new SimpleDictionary();
+        Dictionary = new InvertedDictionary();
     }
 
     public void start() {
