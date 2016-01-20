@@ -16,13 +16,13 @@ Based on the following use case:
 
 ///////////////////////////////////////
 interface Buffer {
-    public void add(String text);
-    public void clear();
-    public void insert(String text, int position);
-    public void splice(int startIndex, int endIndex, String text);
+    public void append(String text);
+    public void delete(int start, int end);
+    public void insert(int offset, String text);
+    public void replace(int start, int end, String text);
 
     public int length() const;
-    public String getText() const;
+    public String toString() const;
 }
 
 ///////////////////////////////////////
@@ -36,34 +36,36 @@ class TextBuffer implements Buffer {
         text_ = text.clone;
     }
 
-    public void add(String text) {
+    public void append(String text) {
         assert(text != null, "text was null");
         text_ = text_ + text;
     }
 
-    public void insert(String text, int position) {
-        assert(text != null, "text was null");
+    public void delete(int start, int end) {
+        assert(start >= 0, "start was less than 0");
+        assert(end >= start, "end was less than start");
+        replace(start, end, "");
+    }
+
+    public void insert(int position, String text) {
         assert(position >= 0, "position was less than 0");
-
-        splice(position, position, text);
-    }
-
-    public void splice(int startIndex, int endIndex, String text) {
-        assert(startIndex >= 0, "startIndex was less than 0");
-        assert(endIndex >= startIndex, "endIndex was less than startIndex");
         assert(text != null, "text was null");
 
-        text_ = text_.substring(0, startIndex) + 
+        replace(position, position, text);
+    }
+
+    public void replace(int start, int end, String text) {
+        assert(start >= 0, "start was less than 0");
+        assert(end >= start, "end was less than start");
+        assert(text != null, "text was null");
+
+        text_ = text_.substring(0, start) + 
                 text + 
-                text_.substring(endIndex, text_.length());
+                text_.substring(end, text_.length());
     }
 
-    public void clear() {
-        text_ = "";
-    }
-
-    public String getText() const { return text_; }
     public int length() const { return text_.length(); }
+    public String toString() const { return text_; }
 
     private String text_;
 }
@@ -75,13 +77,13 @@ class WordIterator {
         i_ = -1;
     }
 
-    public void add(String word) { assert(false, "WordIterator::add not implemented.") }
-    public void remove() { assert(false, "WordIterator::remove not implemented.") }
+    public void add(String word) { assert(false, "WordIterator::add not supported.") }
+    public void remove() { assert(false, "WordIterator::remove not supported.") }
 
     public boolean hasNext() const {
         int j = i_.clone;
         while(++j < buffer_.length()) {
-            String currentChar = buffer_.getText().substring(j, j+1);
+            String currentChar = buffer_.toString().substring(j, j+1);
             if(isAlphabetic(currentChar)) return true;
         }
         return false;
@@ -92,13 +94,13 @@ class WordIterator {
 
         // Advance past non-alphabetic characters
         while(++i_ < buffer_.length()) {
-            word = buffer_.getText().substring(i_, i_+1);
+            word = buffer_.toString().substring(i_, i_+1);
             if(isAlphabetic(word)) break;
         }
 
-        // Advance past current word
+        // Create and advance past current word
         while(++i_ < buffer_.length()) {
-            String currentChar = buffer_.getText().substring(i_, i_+1);
+            String currentChar = buffer_.toString().substring(i_, i_+1);
             if(!isAlphabetic(currentChar)) break;
             word = word + currentChar;
         }
@@ -108,11 +110,14 @@ class WordIterator {
     }
 
     public void set(String word) {
+        assert(word != null, "word was null");
+
         i_ = i_ - last_.length();
-        buffer_.splice(i_, i_ + last_.length(), word);
+        buffer_.replace(i_, i_ + last_.length(), word);
         i_ = i_ + word.length();
     }
 
+    // TODO: Multi-language support?
     private boolean isAlphabetic(String character) {
         assert(character.length() == 1, "character string length not equal to one.");
         return character == "-" || 
@@ -126,7 +131,7 @@ class WordIterator {
 }
 
 ///////////////////////////////////////
-class TextSelection {
+class TextSelection implements Buffer {
     public TextSelection(Buffer buffer, int start, int end) {
         assert(start >= 0, "Invalid start select position: " + start.toString());
         assert(start <= end, "End selection position less than start position.");
@@ -136,16 +141,47 @@ class TextSelection {
         end_ = end.clone;
     }
 
-    public String getText() const { 
-        return buffer_.getText().substring(start_, end_);
+    public void append(String text) {
+        assert(text != null, "text was null");
+        buffer_.append(text);
+        end_ = end_ + text.length();
     }
 
-    public void splice(int startIndex, int endIndex, String text) {
-        assert(startIndex >= 0, "startIndex was less than 0");
-        assert(endIndex >= startIndex, "endIndex was less than startIndex");
+    public void delete(int start, int end) {
+        assert(start >= 0, "start was less than 0");
+        assert(end >= start, "end was less than start");
+        replace(start, end, "");
+    }
+
+    public void insert(int position, String text) {
+        assert(position >= 0, "position was less than 0");
         assert(text != null, "text was null");
 
-        buffer_.splice(start_ + startIndex, start_ + endIndex, text);
+        buffer_.replace(start_ + position, start_ + position, text);
+        end_ = end_ + text.length();
+    }
+
+    /*
+    public Buffer getBuffer() const {
+        return buffer_;
+    }
+    */
+
+    public void replace(int start, int end, String text) {
+        assert(start >= 0, "start was less than 0");
+        assert(end >= start, "end was less than start");
+        assert(text != null, "text was null");
+
+        buffer_.replace(start_ + start, start_ + end, text);
+        end_ = end_ + text.length() + start - end;
+    }
+
+    public String toString() const { 
+        return buffer_.toString().substring(start_, end_);
+    }
+
+    public int length() const {
+        return end() - start();
     }
 
     public int start() const { return start_; }
@@ -163,29 +199,29 @@ class TextFile {
     }
 
     public void load(String filename) {
-        if(filename == "twelve_days_of_christmas.txt") {            
-            buffer_.clear();
-            buffer_.add("On the twelveth day of Christmas my true love gave to me\n");
-            buffer_.add("twelve drummers drumming, eleven pipers piping, ten lords a-leaping,\n");
-            buffer_.add("nine ladies dancing, eight maids a-milking, seven swans a-swimming,\n");
-            buffer_.add("six geese a-laying, five gold rings;\n");
-            buffer_.add("four calling birds, three french hens, two turtle doves\n");
-            buffer_.add("and a partridge in a pear tree.\n");
+        if(filename == "twelve_days_of_christmas.txt") {
+            buffer_.delete(0, buffer_.length());
+            buffer_.append("On the twelveth day of Christmas my true love gave to me\n");
+            buffer_.append("twelve drummers drumming, eleven pipers piping, ten lords a-leaping,\n");
+            buffer_.append("nine ladies dancing, eight maids a-milking, seven swans a-swimming,\n");
+            buffer_.append("six geese a-laying, five gold rings;\n");
+            buffer_.append("four calling birds, three french hens, two turtle doves\n");
+            buffer_.append("and a partridge in a pear tree.\n");
         } else {
             assert(false, 
                 "File '" + filename + "' not found (try 'twelve_days_of_christmas.txt')");
         }
     }
 
-    public String getText() const { return buffer_.getText(); }
+    public String toString() const { return buffer_.toString(); }
     public Buffer getBuffer() const { return buffer_; }
 
-    public void splice(int startIndex, int endIndex, String text) { 
-        assert(startIndex >= 0, "startIndex was less than 0");
-        assert(endIndex >= startIndex, "endIndex was less than startIndex");
+    public void replace(int start, int end, String text) { 
+        assert(start >= 0, "start was less than 0");
+        assert(end >= start, "end was less than start");
         assert(text != null, "text was null");
 
-        buffer_.splice(startIndex, endIndex, text); 
+        buffer_.replace(start, end, text); 
     }
 
     private Buffer buffer_;
@@ -224,57 +260,13 @@ class SimpleDictionary {
     }
 }
 
-/*
 ///////////////////////////////////////
 context SpellCheck {
-    /////////////////////////////////////////
+
     role SpellChecker {
         public void advanceToNextWord() {
-            if(isFinished()) return;
-
-            // Advance past current word
-            while(isAlphabetic(currentCharacter())) {
-                setPosition(currentPosition() + 1);
-                if(isFinished()) return;
-            }
-
-            // Advance past non-alphabetic characters
-            while(!isAlphabetic(currentCharacter())) {
-                setPosition(currentPosition() + 1);
-                if(isFinished()) return;
-            }
-
-            Dictionary.checkCurrentWord();
-        }
-
-        public String currentWord() {
-            if(isFinished()) return "";
-
-            String output = "";
-            int pos = currentPosition().clone;
-
-            while(isAlphabetic(Text.characterAt(pos))) {
-                output = output + Text.characterAt(pos++);
-                // NOTE: Cannot call Text.getText().length() here.
-                if(pos >= Text.length()) return output;
-            }
-
-            return output;
-        }
-
-        private String currentCharacter() {
-            return Text.characterAt(currentPosition());
-        }
-
-        private boolean isFinished() {
-            return currentPosition() >= Text.length();
-        }
-
-        private boolean isAlphabetic(String character) {
-            assert(character.length() == 1, "character string length not equal to one.");
-            return character == "-" || 
-                   (character >= "a" && character <= "z") ||
-                   (character >= "A" && character <= "Z");
+            if(!hasNext()) return;
+            Dictionary.checkCurrentWord(next());
         }
     } requires {
         boolean hasNext() const;
@@ -282,17 +274,13 @@ context SpellCheck {
         void set(String word);
     }
 
-    /////////////////////////////////////////
     stageprop Dictionary {
-        public void checkCurrentWord() {
-            String word = SpellChecker.currentWord();
+        public void checkCurrentWord(String word) {
             List<String> suggestions = suggestSpelling(word);
 
             if(suggestions.size() > 0) {
-                int pos = SpellChecker.currentPosition();
-
                 // TODO: User input and selection
-                Text.splice(pos, pos + word.length(), "[" + suggestions.get(0) + "]");
+                SpellChecker.set("[" + suggestions.get(0) + "]");
             }
 
             SpellChecker.advanceToNextWord();
@@ -303,21 +291,23 @@ context SpellCheck {
 
     /////////////////////////////////////////
 
-    public SpellCheck(Text text) {
-        Text = text;
-        SpellChecker = this;
+    /*
+    // NOTE: Exception in thread "AWT-EventQueue-0" java.lang.AssertionError
+    // if uncommenting this constructor.
+    public SpellCheck(SpellChecker spellChecker) {
+        SpellChecker = spellChecker;
+        Dictionary = new SimpleDictionary();
+    }
+    */
+
+    public SpellCheck(Buffer buffer) {
+        SpellChecker = new WordIterator(buffer);
         Dictionary = new SimpleDictionary();
     }
 
     public void start() {
-        setPosition(0);
-        Dictionary.checkCurrentWord();
+        SpellChecker.advanceToNextWord();
     }
-
-    private int currentPosition() const { return currentPos_; }
-    private void setPosition(int pos) { currentPos_ = pos.clone; }
-
-    private int currentPos_;
 }
 
 ///// Entrypoint //////////////////////////////////////////////////
@@ -326,31 +316,16 @@ context SpellCheck {
     // Load and print the original file
     TextFile file = new TextFile();
     file.load("twelve_days_of_christmas.txt");
-    System.out.println(file.getText());
+    System.out.println(file.toString());
 
     // Spell check a selection and print it
     TextSelection selection = new TextSelection(file.getBuffer(), 105, 181);
     new SpellCheck(selection).start();
-    System.out.println(file.getText());
+    System.out.println(file.toString());
 
     // Spell check the whole file and print it
-    new SpellCheck(file).start();
-    System.out.println(file.getText());
-}
-*/
-
-{
-    TextFile file = new TextFile();
-    file.load("twelve_days_of_christmas.txt");
-    WordIterator w = new WordIterator(file.getBuffer());
-
-    int i = 0;
-    while(w.hasNext()) {
-        System.out.println(w.next());
-        if(i++ % 5 == 0) w.set("PARTRIDGE");
-    }
-    
-    System.out.println(file.getText());
+    new SpellCheck(file.getBuffer()).start();
+    System.out.println(file.toString());
 }
 
 /* GOLD:
