@@ -69,6 +69,63 @@ class TextBuffer implements Buffer {
 }
 
 ///////////////////////////////////////
+class WordIterator {
+    public WordIterator(Buffer buffer) {
+        buffer_ = buffer;
+        i_ = -1;
+    }
+
+    public void add(String word) { assert(false, "WordIterator::add not implemented.") }
+    public void remove() { assert(false, "WordIterator::remove not implemented.") }
+
+    public boolean hasNext() const {
+        int j = i_.clone;
+        while(++j < buffer_.length()) {
+            String currentChar = buffer_.getText().substring(j, j+1);
+            if(isAlphabetic(currentChar)) return true;
+        }
+        return false;
+    }
+
+    public String next() {
+        String word = "";
+
+        // Advance past non-alphabetic characters
+        while(++i_ < buffer_.length()) {
+            word = buffer_.getText().substring(i_, i_+1);
+            if(isAlphabetic(word)) break;
+        }
+
+        // Advance past current word
+        while(++i_ < buffer_.length()) {
+            String currentChar = buffer_.getText().substring(i_, i_+1);
+            if(!isAlphabetic(currentChar)) break;
+            word = word + currentChar;
+        }
+
+        last_ = word.clone;
+        return word;
+    }
+
+    public void set(String word) {
+        i_ = i_ - last_.length();
+        buffer_.splice(i_, i_ + last_.length(), word);
+        i_ = i_ + word.length();
+    }
+
+    private boolean isAlphabetic(String character) {
+        assert(character.length() == 1, "character string length not equal to one.");
+        return character == "-" || 
+               (character >= "a" && character <= "z") ||
+               (character >= "A" && character <= "Z");
+    }
+
+    private Buffer buffer_;
+    private int i_;
+    private String last_;
+}
+
+///////////////////////////////////////
 class TextSelection {
     public TextSelection(Buffer buffer, int start, int end) {
         assert(start >= 0, "Invalid start select position: " + start.toString());
@@ -167,6 +224,7 @@ class SimpleDictionary {
     }
 }
 
+/*
 ///////////////////////////////////////
 context SpellCheck {
     /////////////////////////////////////////
@@ -219,21 +277,9 @@ context SpellCheck {
                    (character >= "A" && character <= "Z");
         }
     } requires {
-        int currentPosition() const;
-        void setPosition(int pos);
-    }
-
-    /////////////////////////////////////////
-    role Text {
-        public String characterAt(int pos) {
-            return getText().substring(pos, pos+1);
-        }
-        public int length() {
-            return getText().length();
-        }
-    } requires {
-        String getText() const;
-        void splice(int startIndex, int endIndex, String text);
+        boolean hasNext() const;
+        String next();
+        void set(String word);
     }
 
     /////////////////////////////////////////
@@ -289,6 +335,21 @@ context SpellCheck {
 
     // Spell check the whole file and print it
     new SpellCheck(file).start();
+    System.out.println(file.getText());
+}
+*/
+
+{
+    TextFile file = new TextFile();
+    file.load("twelve_days_of_christmas.txt");
+    WordIterator w = new WordIterator(file.getBuffer());
+
+    int i = 0;
+    while(w.hasNext()) {
+        System.out.println(w.next());
+        if(i++ % 5 == 0) w.set("PARTRIDGE");
+    }
+    
     System.out.println(file.getText());
 }
 
