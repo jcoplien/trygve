@@ -42,7 +42,9 @@ context Interval {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
@@ -57,7 +59,7 @@ context Interval {
 
         // Temp vars working
         double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double highPos = HighNote.notePosition();
         double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
 
         return (highPos - lowPos + octaveOffset) / 2;
@@ -152,11 +154,6 @@ Object of type Note playing too many roles, including HighNote
  */
 
 /* GOLD:
+line 61: Context script `semitones' may enact only Role scripts. Script `position()' is an instance script from a class and is inaccessible to Context `Interval'.
 ___________________________________________________________
-C
-Chord::notes
-3
-C
-Chord::notes
-3
 */

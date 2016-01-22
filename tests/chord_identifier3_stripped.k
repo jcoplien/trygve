@@ -4,11 +4,13 @@ class Note {
     private String name_;
 }
 context Interval {
-    stageprop LowNote {} requires { int position() const; }
+    stageprop LowNote {
+       public double notePosition() const { return position() }
+    } requires { int position() const; }
     stageprop HighNote {} requires { int position() const; }
     public Interval(LowNote lowNote) {
         System.out.print("Interval.Interval(")
-                  .print(lowNote.position())
+                  .print(lowNote.notePosition())
                   .println(")");
         LowNote = lowNote;
         HighNote = lowNote
@@ -45,9 +47,10 @@ context Chord {
 }
 
 /* GOLD:
+line 8: WARNING: substituting object of type `double' for `this.position()'.
 ___________________________________________________________
-Interval.Interval(10)
+Interval.Interval(10.0)
 0
 Chord.Root.hasInterval(1.5)
-Interval.Interval(10)
+Interval.Interval(10.0)
 */

@@ -1,6 +1,6 @@
 class Note {
     public Note(String name) {
-        name_ = name.clone();
+        name_ = name.clone;
         assert(position() > 0.0, "Invalid note: " + name);
     }
 
@@ -11,12 +11,15 @@ class Note {
     public double position() const {
         double pos = 0.0;
         if(name_ == "C")  pos = 1.0;
+        if(name_ == "B#") pos = 1.0;
         if(name_ == "C#") pos = 2.0;
         if(name_ == "Db") pos = 2.0;
         if(name_ == "D")  pos = 3.0;
         if(name_ == "D#") pos = 4.0;
         if(name_ == "Eb") pos = 4.0;
         if(name_ == "E")  pos = 5.0;
+        if(name_ == "Fb") pos = 5.0;
+        if(name_ == "E#") pos = 6.0;
         if(name_ == "F")  pos = 6.0;
         if(name_ == "F#") pos = 7.0;
         if(name_ == "Gb") pos = 7.0;
@@ -27,7 +30,9 @@ class Note {
         if(name_ == "A#") pos = 11.0;
         if(name_ == "Bb") pos = 11.0;
         if(name_ == "B")  pos = 12.0;
-        return pos;
+        if(name_ == "Cb") pos = 12.0;
+        assert(pos > 0.0);
+        return pos
     }
 
     private String name_;
@@ -37,75 +42,76 @@ class Note {
 
 context Interval {
     stageprop LowNote {
-        public double notePosition() const { return position() }
+        public double notePosition() const { double d = position();
+System.out.print("d=").println(d);
+          return d }
     } requires {
         double position() const;
     }
 
     stageprop HighNote {
-        public double notePosition() const { return position() }
+        public double distanceFromLowNote() const {
+<<<<<<< HEAD
+System.out.println("Entered distanceFromLowNote()");
+            // NOTE: Internal expression evaluated to a NULL Java object
+            double lowNotePosition = LowNote.notePosition();
+System.out.print("LowNote.notePosition=").println(lowNotePosition);
+            double pos = position() - LowNote.notePosition();
+            if (pos < 0.0) pos = pos + 12.0;
+=======
+            // NOTE: Internal expression evaluated to a NULL Java object
+            double pos = position() - LowNote.position();
+            if(pos < 0.0) pos = pos + 12.0;
+>>>>>>> origin/master
+            return pos;
+        }
     } requires {
         double position() const;
     }
 
     public Interval(LowNote lowNote, HighNote highNote) {
+        assert(lowNote != null, "lowNote was null");
+        assert(highNote != null, "highNote was null");
+
         LowNote = lowNote;
         HighNote = highNote;
     }
 
-    public double semitones() {
-        double lowPos = LowNote.notePosition();
-        double highPos = HighNote.notePosition();
-        double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
-
-        return highPos - lowPos + octaveOffset;
+    public double semitones() const {
+        return HighNote.distanceFromLowNote();
     }
 }
 
 // -------------------------------------------------
 
-// The first note in the list will be the root.
 context Chord {
     stageprop Root {
-        public String chordName() const { return name() }
+        public String noteName() { return name() }
     } requires {
         double position() const;
-        // NOTE: Compilation error with the "name" method included:
         String name() const;
     }
 
     role Notes {
         public String quality() {
-            // NOTE: cannot use bool expression directly, must use if statement.
-            boolean hasDominant = if (dominant().length() > 0) true else false;
-
-            boolean minor = isMinor();
-            boolean major = isMajor();
-
-            // NOTE: Any call to isMinor() or isMajor() below
-            // creates a runtime crash. Temp vars is the workaround.
+            boolean hasDominant = dominant().length() > 0;
 
             String sus2 = "";
-            if(hasInterval(2.0)) {
-                if(hasDominant == false) { 
-                    sus2 = "sus2";
-                    if(isMinor()) sus2 = "add9";
-                    if(isMajor()) sus2 = "add9";
-                }
+            if(hasInterval(2.0) && hasDominant == false) { 
+                sus2 = "sus2";
+
+                if(isMinor()) sus2 = "add9";
+                if(isMajor()) sus2 = "add9";
             }
 
             String sus4 = "";
-            if(hasInterval(5.0)) {
-                if(hasDominant == false) { 
-                    sus4 = "sus";
-                    if(isMinor()) sus4 = "add11";
-                    if(isMajor()) sus4 = "add11";
-                }
+            if(hasInterval(5.0) && !hasDominant) {
+                sus4 = "sus";
+                if(isMinor()) sus4 = "add11";
+                if(isMajor()) sus4 = "add11";
             }
 
-            // NOTE: Parenthesis around expression doesn't work, need temp var.
-            String majorOrMinor = if(isMinor()) "m" else "";
-            return majorOrMinor + sus2 + sus4;
+            return (if(isMinor()) "m" else "") + sus2 + sus4;
         }
 
         private boolean isMajor() {
@@ -113,14 +119,14 @@ context Chord {
         }
 
         private boolean isMinor() {
-            return hasInterval(3.0)
+            return (hasInterval(3.0) && !hasInterval(4.0))
         }
 
         public String dominant() {
             String highest = "";
             String maj7 = if(hasInterval(11.0)) "maj" else "";
 
-            // NOTE: Crashes here for every hasInterval call
+            if(hasInterval(7.0) && size() == 2) highest = "5";
             if(hasInterval(9.0)) highest = "6";
             if(hasInterval(10.0)) highest = "7";
             if(hasInterval(11.0)) highest = "7";
@@ -137,17 +143,18 @@ context Chord {
             return maj7 + highest;
         }
         
+        // TODO: Calculate #11 (Lydian chord)
         public String augmentations() {
             List<String> augs = new List<String>();
 
             if (hasInterval(6.0)) augs.add("b5");
             if (hasInterval(8.0)) augs.add("#5");
             if (hasInterval(1.0)) augs.add("b9");
-            if (hasInterval(3.0)) if(isMinor() == false) augs.add("#9");
-            if (hasInterval(4.0)) if(isMajor() == false) augs.add("b11");
-            if (hasInterval(6.0)) augs.add("#11");
-            if(hasInterval(8.0)) augs.add("b13");
+            if (hasInterval(3.0) && isMinor() == false) augs.add("#9");
+            if (hasInterval(4.0) && !isMajor()) augs.add("b11");
+            if (hasInterval(8.0)) augs.add("b13");
 
+            // NOTE: String::join would be nice here.
             String output = "";
             for(String aug : augs) output = output + aug;
             return output;
@@ -155,32 +162,11 @@ context Chord {
 
         public boolean hasInterval(double semitones) {
             for (int i = 1; i < this.size(); i++) {
-                // NOTE: Cannot access Root.position here, compilation error:
-                // Exception in thread "AWT-EventQueue-0" java.lang.AssertionError
-                double pos = Root.position();
-                
-                // NOTE: Cannot use Root directly for duck typing, need a temp var.
                 Interval interval = new Interval(Root, this.get(i));
-                
-                // NOTE: Cannot return, the loop keeps going.
-                // This is true in general, only one return statement seems 
-                // allowed in methods.
                 if(interval.semitones() == semitones) return true;
             }
             return false;
         } 
-/*
-        // Workaround for the broken method
-        private boolean hasInterval(double semitones) {
-            boolean has = false;
-            Root root = Root;
-            for(int i = 1; i < this.size(); i++) {
-                Interval interval = new Interval(root, this.get(i));                
-                if(interval.semitones() == semitones) has = true;
-            }
-            return has;
-        } 
-*/
     } requires {
         Note get(int pos);
         int size();
@@ -192,13 +178,16 @@ context Chord {
         Notes = notes;
     }
 
+<<<<<<< HEAD
     public String fullChordName() {
-        // NOTE: Cannot use Root.chordName() directly, need temp var.
-        return Root.chordName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+=======
+    public String name() {
+>>>>>>> origin/master
+        return Root.noteName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
-// ----- Start -------------------------------
+// ----- Entrypoint -------------------------------
 
 {
     List<Note> notes = new List<Note>();
@@ -220,7 +209,7 @@ context Chord {
     notes3.add(new Note("G"));
     notes3.add(new Note("Bb"));
     notes3.add(new Note("D"));
-    notes3.add(new Note("Eb"));
+    notes3.add(new Note("F"));
     Chord chord3 = new Chord(notes3);
 
     List<Note> notes4 = new List<Note>();
@@ -231,17 +220,42 @@ context Chord {
     notes4.add(new Note("G"));
     Chord chord4 = new Chord(notes4);
 
+    List<Note> notes5 = new List<Note>();
+    notes5.add(new Note("F#"));
+    notes5.add(new Note("C#"));
+    Chord chord5 = new Chord(notes5);
+
+    List<Note> notes6 = new List<Note>();
+    notes6.add(new Note("G"));
+    notes6.add(new Note("A"));
+    notes6.add(new Note("D"));
+    Chord chord6 = new Chord(notes6);
+
+    List<Note> notes7 = new List<Note>();
+    notes7.add(new Note("Cb"));
+    notes7.add(new Note("D"));
+    notes7.add(new Note("Eb"));
+    notes7.add(new Note("A"));
+    notes7.add(new Note("Ab"));
+    Chord chord7 = new Chord(notes7);
+
     System.out.println(chord.fullChordName());
     System.out.println(chord2.fullChordName());
     System.out.println(chord3.fullChordName());
     System.out.println(chord4.fullChordName());
+    System.out.println(chord5.fullChordName());
+    System.out.println(chord6.fullChordName());
+    System.out.println(chord7.fullChordName());
 }
 
 /* GOLD:
-line 160: NONCOMPLIANT: Trying to enact object script `position()' without using the interface of the Role it is playing: `Root'.
+line 68: WARNING: Method declaration for `name' may hide method declared at line 162
 ___________________________________________________________
 Cm11
 Dsus
-Emmaj7b5#11
+Em7b5b9
 Fmaj9
+F#5
+Gsus2
+Cb13#9
 */

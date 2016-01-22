@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -577,10 +577,68 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
 	}
 	
+	private void contextInvocationCheck(final Type nearestEnclosingMegaType, final Message message,
+			final Type objectType, final Type wannabeContextType, final Token ctxGetStart) {
+		// Don't allow Role methods directly to invoke
+		// Context methods. Look up the method in the enclosing
+		// context and make sure it's not there. But first we
+		// can say it's O.K. if it's either another method
+		// in the Role.
+		MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+				message.argumentList(), "this", true);
+		if (null == testDecl) {
+			// Check in the Requires list
+			final RoleType objectTypeAsRoleType = (RoleType)objectType;
+			final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
+			final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
+					message, roleDecl);
+			if (null == signatureInRequiresSection) {
+				testDecl = wannabeContextType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+						message.argumentList(), "this", true);
+				if (null != testDecl) {
+					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+					errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+							"NONCOMPLIANT: Enacting enclosed Context script `", message.selectorName() + message.argumentList().selflessGetText(),
+							"' from within `" + nearestEnclosingMegaType.name() + "." + currentMethodScope.associatedDeclaration().name(),
+							"'.");
+				}
+			}
+		}
+	}
+
+	private void otherRolesRequiresInvocationCheck(final Type nearestEnclosingMegaType, final Message message,
+			final Type objectType, final Type wannabeContextType, final Token ctxGetStart) {
+		// Don't allow Role methods directly to invoke
+		// the "requires" methods of other Roles in the same Context.
+		// But first we can say it's O.K. if it's within the same Role.
+		if (currentRole_.type().pathName().equals(objectType.pathName())) {
+			;	// is within the same Role; it's cool
+		} else {
+			MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+					message.argumentList(), "this", true);
+			if (null != testDecl) {
+				;	// is a regular Role method — is O.K.
+			} else {
+				// Check in the Requires list
+				final RoleType objectTypeAsRoleType = (RoleType)objectType;
+				final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
+				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
+						message, roleDecl);
+				if (null != signatureInRequiresSection) {
+					errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+							"NONCOMPLIANT: Trying to enact object script `", message.selectorName() + message.argumentList().selflessGetText(),
+							"' without using the interface of the Role it is playing: `" + roleDecl.name(),
+							"'.");
+				}
+			}
+		}
+	}
+	
 	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
 		// | expr '.' message
 		// | message
 		// Certified Pass 2 version. Can maybe be folded with pass 1....
+		// REFACTOR! TODO
 		
 		MethodDeclaration methodDeclaration = null;
 		Expression object = null, retval = null;
@@ -665,32 +723,12 @@ public class Pass2Listener extends Pass1Listener {
 				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRoleOrStageProp.enclosingScope());
 				assert wannabeContextType instanceof ContextType;
 				
-				if (nearestEnclosingMegaType instanceof RoleType) {
-					// Don't allow Role methods directly to invoke
-					// Context methods. Look up the method in the enclosing
-					// context and make sure it's not there. But first we
-					// can say it's O.K. if it's either another method
-					// in the Role.
-					MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
-							message.argumentList(), "this", true);
-					if (null == testDecl) {
-						// Check in the Requires list
-						final RoleType objectTypeAsRoleType = (RoleType)objectType;
-						final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
-						final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
-								message, roleDecl);
-						if (null == signatureInRequiresSection) {
-							testDecl = wannabeContextType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
-									message.argumentList(), "this", true);
-							if (null != testDecl) {
-								final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-								errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
-										"NONCOMPLIANT: Enacting enclosed Context script `", message.selectorName() + message.argumentList().selflessGetText(),
-										"' from within `" + nearestEnclosingMegaType.name() + "." + currentMethodScope.associatedDeclaration().name(),
-										"'.");
-							}
-						}
-					}
+				if (nearestEnclosingMegaType instanceof RoleType || nearestEnclosingMegaType instanceof StagePropType) {
+					// Don't allow Role methods directly to invoke Context methods.
+					contextInvocationCheck(nearestEnclosingMegaType, message, objectType, wannabeContextType, ctxGetStart);
+					
+					// Don't allow Role methods directly to invoke other Roles' "requires" methods.
+					otherRolesRequiresInvocationCheck(nearestEnclosingMegaType, message, objectType, wannabeContextType, ctxGetStart);
 				}
 			} else if (wannabeContextType instanceof ContextType) {
 				// We don't want Context methods to be able directly
@@ -784,7 +822,7 @@ public class Pass2Listener extends Pass1Listener {
 								null;
 					if (null == methodDeclaration) {
 						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `",
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
 								message.getText(),
 								"' not declared in class ", classObjectType.name());
 						return null;		// punt
@@ -815,7 +853,7 @@ public class Pass2Listener extends Pass1Listener {
 							null;
 				if (null == methodDeclaration) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", message.getText(), "' not declared in class ", classObjectType.name());
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", message.getText(), "' not declared in class ", classObjectType.name());
 					return null;		// punt
 				} else {
 					methodSignature = methodDeclaration.signature();

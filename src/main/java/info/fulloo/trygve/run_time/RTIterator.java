@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,15 +23,10 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.Map;
-
-import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
-import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
-import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
+import java.util.Iterator;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 
-public abstract class RTIterator implements RTObject {
+public abstract class RTIterator extends RTCommonRunTimeCrap {
 	public RTIterator() {
 		super();
 		referenceCount_ = 1;
@@ -124,39 +119,31 @@ public abstract class RTIterator implements RTObject {
 			super();
 			assert whatIAmIteratingOver instanceof RTSetObject;
 			whatIAmIteratingOver_ = (RTSetObject)whatIAmIteratingOver;
-			setSize_ = whatIAmIteratingOver_.size();
-			currentIndex_ = 0;
+			theIterator_ = whatIAmIteratingOver_.RTIterator();
 		}
 		@Override public boolean isThereANext() {
-			return currentIndex_ < setSize_;
+			return theIterator_.hasNext();
 		}
 		@Override public int compareTo(final Object rawOther) {
-			int retval = 0;
-			final RTArrayIterator other = ((RTArrayIterator)rawOther);
-			if (currentIndex_ < other.currentIndex_) retval = -1;
-			else if (currentIndex_ > other.currentIndex_) retval = 1;
-			return retval;
-		}
-		@Override public RTObject next() {
-			ErrorLogger.error(ErrorType.Unimplemented, "Unimplemented: Set iterators",
-					"", "", "");
-			// assert currentIndex_ < listSize_;
-			// return whatIAmIteratingOver_.get(currentIndex_);
-			return null;
-		}
-		@Override public void advance() {
-			currentIndex_++;
+			assert false;
+			return 0;
 		}
 		@Override public boolean equals(final RTObject other) {
 			assert false;
 			return false;
 		}
-		
+		@Override public RTObject next() {
+			return theIterator_.next();
+		}
+		@Override public void advance() {
+			theIterator_.next();
+		}
+
 		private final RTSetObject whatIAmIteratingOver_;
-		private int currentIndex_;
-		private final int setSize_;
+		private final Iterator<RTObject> theIterator_;
 	}
 
+	/*
 	@Override public RTObject getObject(String name) { assert false; return null; }
 	@Override public void addObjectDeclaration(String objectName, RTType type) { assert false; }
 	@Override public Map<String, RTType> objectDeclarations() { assert false; return null; }
@@ -194,6 +181,7 @@ public abstract class RTIterator implements RTObject {
 			final RTContextObject contextInstance) { assert false; }
 	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName,
 			final RTContextObject contextInstance) { assert false; }
-	
+
 	private int referenceCount_;
+	*/
 }

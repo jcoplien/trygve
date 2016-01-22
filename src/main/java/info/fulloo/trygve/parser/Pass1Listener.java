@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1647,49 +1647,7 @@ public class Pass1Listener extends Pass0Listener {
 			expression = new ContinueExpression(lineNumber, currentContinuableExpression, nestingLevelInsideBreakable);
 			if (printProductionsDebug) { System.err.println("expr : CONTINUE"); }
 		} else if (null != ctx.RETURN()) {
-			// The expression being returned is popped from
-			// parsingData_.popExpression() in this.expressionFromReturnStatement
-			// It may be null.
-			expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
-			if (null != ctx.expr()) {
-				expression.setResultIsConsumed(true);	// consumed by the return statement
-			}
-			
-			if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
-				if (null == expression.type()) {
-					assert null != expression.type();
-				}
-				assert null != expression.type().pathName();
-				if (expression.type().pathName().equals("void")) {
-					assert true;	// tests/chord_identifier7.k
-					expression = new TopOfStackExpression();
-				}
-			}
-			
-			// Now, speaking of the return statement... Methods stick one in at
-			// the end for free. But we have an explicit return here and it
-			// may not be at the end. If it is, then there may just be extra
-			// redundant return code. But watch for scope management stuff.
-			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-			if (null != nearestEnclosingMegaType) {		// error stumbling
-				if (expression instanceof ReturnExpression) {
-					errorHook5p2(ErrorType.Fatal, lineNumber,
-							"You may not return another `return' expression.", "", "", "");
-					expression = new NullExpression();
-				}
-				expression = new ReturnExpression(expression, ctx.getStart().getLine(),
-						nearestEnclosingMegaType, currentScope_);
-			} else {
-				expression = new NullExpression();
-			}
-			
-			if (printProductionsDebug) {
-				if (null == ctx.expr()) {
-					System.err.println("expr : RETURN");
-				} else {
-					System.err.println("expr : RETURN expr");
-				}
-			}
+			expression = processReturnExpression(ctx);
 		} else {
 			// Could be a parsing error
 			expression = new NullExpression();
@@ -1699,6 +1657,80 @@ public class Pass1Listener extends Pass0Listener {
 		parsingData_.pushExpression(expression);
 		
 		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	private Expression processReturnExpression(KantParser.ExprContext ctx) {
+		// The expression being returned is popped from
+		// parsingData_.popExpression() in this.expressionFromReturnStatement
+		// It may be null.
+		Expression expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
+		if (null != ctx.expr()) {
+			expression.setResultIsConsumed(true);	// consumed by the return statement
+		}
+		
+		if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
+			if (null == expression.type()) {
+				assert null != expression.type();
+			}
+			assert null != expression.type().pathName();
+			if (expression.type().pathName().equals("void")) {
+				assert true;	// tests/chord_identifier7.k
+				expression = new TopOfStackExpression();
+			}
+		}
+		
+		// Now, speaking of the return statement... Methods stick one in at
+		// the end for free. But we have an explicit return here and it
+		// may not be at the end. If it is, then there may just be extra
+		// redundant return code. But watch for scope management stuff.
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		if (null != nearestEnclosingMegaType) {		// error stumbling
+			if (expression instanceof ReturnExpression) {
+				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+						"You may not return another `return' expression.", "", "", "");
+				expression = new NullExpression();
+			} else {
+				// Check to make sure it is of the right type
+					
+				final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+				final Type methodReturnType = currentMethod.returnType();
+				final Type expressionType = expression.type();
+				if (null != methodReturnType && null != expressionType) {
+					if (methodReturnType.pathName().equals(expressionType.pathName())) {
+						;  // we're cool
+					} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
+						// We're almost cool...
+						errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
+								"WARNING: substituting object of type `",
+								methodReturnType.name(),
+								"' for `",
+								expression.getText() + "'.");
+						expression = expression.promoteTo(methodReturnType);
+						expression.setResultIsConsumed(true);
+					} else {
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+								"Type mismatch in return statement. Expected `",
+								methodReturnType.name(),
+								"' and found `",
+								expression.getText() + "'.");
+					}
+				}
+			}
+			expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+					nearestEnclosingMegaType, currentScope_);
+		} else {
+			expression = new NullExpression();
+		}
+		
+		if (printProductionsDebug) {
+			if (null == ctx.expr()) {
+				System.err.println("expr : RETURN");
+			} else {
+				System.err.println("expr : RETURN expr");
+			}
+		}
+		
+		return expression;
 	}
 	
 	@Override public void exitAbelian_expr(KantParser.Abelian_exprContext ctx) {	
@@ -2695,9 +2727,6 @@ public class Pass1Listener extends Pass0Listener {
 			// This routine actually does pop the expressions stack (and the Message stack)
 
 			expression = this.messageSend(ctx.getStart(), null);
-			if (expression instanceof NullExpression) {
-				System.err.println("this.messageSend returns NullExpression");
-			}
 									
 			if (printProductionsDebug) { System.err.println("abelian_atom : /* this. */ message");}
 		} else if (null != ctx.abelian_atom() && null != ctx.CLONE()) {

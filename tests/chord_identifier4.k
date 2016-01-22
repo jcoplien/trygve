@@ -36,11 +36,15 @@ class Note {
 // -------------------------------------------------
 
 context Interval {
-    stageprop LowNote {} requires {
+    stageprop LowNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
-    stageprop HighNote {} requires {
+    stageprop HighNote {
+        public double notePosition() const { return position() }
+    } requires {
         double position() const;
     }
 
@@ -50,8 +54,8 @@ context Interval {
     }
 
     public double semitones() {
-        double lowPos = LowNote.position();
-        double highPos = HighNote.position();
+        double lowPos = LowNote.notePosition();
+        double highPos = HighNote.notePosition();
         double octaveOffset = if(lowPos > highPos) 12.0 else 0.0;
 
         return highPos - lowPos + octaveOffset;
@@ -61,7 +65,9 @@ context Interval {
 // -------------------------------------------------
 
 context Chord {
-    stageprop Root {} requires {
+    stageprop Root {
+        public String chordName() const { return name() }
+    } requires {
         double position() const;
         String name() const;
     }
@@ -157,8 +163,8 @@ context Chord {
         Notes = notes;
     }
 
-    public String name() {
-        return Root.name() + Notes.quality() + Notes.dominant() + Notes.augmentations();
+    public String fullChordName() {
+        return Root.chordName() + Notes.quality() + Notes.dominant() + Notes.augmentations();
     }
 }
 
@@ -200,15 +206,14 @@ context Chord {
     notes5.add(new Note("C#"));
     Chord chord5 = new Chord(notes5);
 
-    System.out.println(chord.name());
-    System.out.println(chord2.name());
-    System.out.println(chord3.name());
-    System.out.println(chord4.name());
-    System.out.println(chord5.name());
+    System.out.println(chord.fullChordName());
+    System.out.println(chord2.fullChordName());
+    System.out.println(chord3.fullChordName());
+    System.out.println(chord4.fullChordName());
+    System.out.println(chord5.fullChordName());
 }
 
 /* GOLD:
-line 64: WARNING: Script declaration for `name' may hide script declared at line 160
 ___________________________________________________________
 Cm11
 Dsus

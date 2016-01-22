@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.1
+ * Trygve IDE 1.2
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,6 +25,7 @@ package info.fulloo.trygve.run_time;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -146,6 +147,9 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 	public int compareTo(final RTObject other) {
 		assert false;
 		return 0;
+	}
+	public Iterator<RTObject> RTIterator() {
+		return theSet_.iterator();
 	}
 	
 	private final Set<RTObject> theSet_;
