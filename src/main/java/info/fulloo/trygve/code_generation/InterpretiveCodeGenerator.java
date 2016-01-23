@@ -31,6 +31,7 @@ import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
@@ -153,6 +154,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		typeDeclarationList = DateClass.typeDeclarationList();	// "Date"
 		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = ScannerClass.typeDeclarationList();	// "Scanner"
+		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
 		typeDeclarationList = typeDeclarationListWrapper.declarations();
@@ -225,7 +229,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (classDeclaration.type().pathName().equals("System.")) {
 					rTClassDeclaration = new RTSystemClass(classDeclaration);
 				} else {
-				// Kludge. But it's direct, and effective.
+					// Kludge. But it's direct, and effective.
 					rTClassDeclaration = new RTClass(classDeclaration);
 				}
 				RunTimeEnvironment.runTimeEnvironment_.addTopLevelClass(classDeclaration.name(), rTClassDeclaration);
@@ -275,7 +279,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingInt:
 		case usingTemplate:
 		case usingString:
-			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
+			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
 					retval.type(), StaticScope.globalScope());
@@ -658,6 +662,43 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtMethod.addCode(getSomethingInDateCode);
 	}
+	private void processScannerMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> code = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.undefined;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 1) {
+			if (methodDeclaration.name().equals("nextLine")) {
+				code.add(new ScannerClass.RTNextLineCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
+			} else {
+				retvalType = RetvalTypes.undefined;
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			if (methodDeclaration.name().equals("Scanner")) {
+				code.add(new ScannerClass.RTScannerCtorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else {
+				retvalType = RetvalTypes.undefined;
+				assert false;
+			}
+		} else {
+			retvalType = RetvalTypes.undefined;
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, code);
+		
+		assert code.size() > 0;
+		
+		rtMethod.addCode(code);
+	}
 	private void processStringMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		final List<RTCode> code = new ArrayList<RTCode>();
@@ -942,6 +983,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("InputStream")) {
 				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Scanner")) {
+				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);

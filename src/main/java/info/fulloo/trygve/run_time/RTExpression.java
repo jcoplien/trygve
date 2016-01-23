@@ -2054,6 +2054,8 @@ public abstract class RTExpression extends RTCode {
 				for (final String iter : ((RTContext)rTType_).isStagePropArrayMapEntries()) {
 					((RTContextObject)newlyCreatedObject).designateStagePropAsArray(iter);
 				}
+				
+			// These should all be pathnames. Easy fix. FIXME.
 			} else if (classType_.name().startsWith("List<")) {
 				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().startsWith("Set<")) {
@@ -2062,6 +2064,8 @@ public abstract class RTExpression extends RTCode {
 				newlyCreatedObject = new RTMapObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().equals("Date")) {
 				newlyCreatedObject = new RTDateObject(rTType_);
+			} else if (classType_.name().equals("Scanner")) {
+				newlyCreatedObject = new RTScannerObject(rTType_);
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}

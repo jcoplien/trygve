@@ -33,6 +33,7 @@ import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.declarations.AccessQualifier;
@@ -179,6 +180,7 @@ public class StaticScope {
 			SetClass.setup();
 			MathClass.setup();
 			DateClass.setup();
+			ScannerClass.setup();
 		}
 	}
 	
