@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1075,6 +1076,17 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			
 			private final PrintStream printStream_;
 		}
+		public static class RTInputStreamInfo extends RTObjectCommon {
+			public RTInputStreamInfo(final InputStream inputStream) {
+				super((RTType)null);
+				inputStream_ = inputStream;
+			}
+			public InputStream inputStream() {
+				return inputStream_;
+			}
+			
+			private final InputStream inputStream_;
+		}
 		@Override public void postSetupInitializtion() {
 			// Lookup "out" and "err" and set them up
 			final RTObject out = nameToStaticObjectMap_.get("out");
@@ -1086,6 +1098,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			printStreamInfo = new RTPrintStreamInfo(System.err);
 			err.addObjectDeclaration("printStreamInfo", null);
 			err.setObject("printStreamInfo", printStreamInfo);
+			
+			final RTObject in = nameToStaticObjectMap_.get("in");
+			RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			in.addObjectDeclaration("inputStreamInfo", null);
+			in.setObject("inputStreamInfo", inputStreamInfo);
 		}
 	}
 	

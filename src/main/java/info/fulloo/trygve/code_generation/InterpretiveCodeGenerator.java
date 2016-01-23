@@ -526,6 +526,49 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtMethod.addCode(printlnCode);
 	}
+	
+	private void processInputStreamMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
+		if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+			if (methodDeclaration.name().equals("read")) {
+				readCode.add(new SystemClass.RTReadCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, RetvalTypes.usingInt, readCode);
+		
+		/*
+		final int sizeOfCodeArray = readCode.size();
+		assert (sizeOfCodeArray > 0);
+		RTCode last = readCode.get(sizeOfCodeArray - 1);
+		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
+				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
+		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
+				self.type(), StaticScope.globalScope());xxx
+		final StaticScope myScope = methodDeclaration.enclosedScope();
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
+		final RTCode returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+		returnStatement.setNextCode(last.nextCode());
+		last.setNextCode(returnStatement);
+		readCode.add(returnStatement);
+		
+		assert readCode.size() > 0;
+		*/
+		
+		rtMethod.addCode(readCode);
+	}
 	private void processDateMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		RetvalTypes retvalType;
@@ -896,6 +939,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("InputStream")) {
+				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);

@@ -746,7 +746,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		private double foobar_;
 	}
 	public static class RTStringObject extends RTObjectCommon implements RTObject {
-		RTStringObject(final String foobar) {
+		public RTStringObject(final String foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelClassNamed("String"));
 			foobar_ = foobar;
 		}

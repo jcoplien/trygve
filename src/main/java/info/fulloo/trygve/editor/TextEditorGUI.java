@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/frontloading1.k";
+	private final static String defaultFile = "tests/input_test1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.3.3";
+    final String TrygveVersion = "1.3.4";
     
     
     /** Creates new form TextEditorGUI */
