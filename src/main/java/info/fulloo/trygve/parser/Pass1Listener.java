@@ -1664,61 +1664,70 @@ public class Pass1Listener extends Pass0Listener {
 		// The expression being returned is popped from
 		// parsingData_.popExpression() in this.expressionFromReturnStatement
 		// It may be null.
+		
+		final ExprContext exprContext = ctx.expr();
 		Expression expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
-		if (null != ctx.expr()) {
+		
+		if (null != exprContext && null != expression) {
 			expression.setResultIsConsumed(true);	// consumed by the return statement
-		}
 		
-		if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
-			if (null == expression.type()) {
-				assert null != expression.type();
-			}
-			assert null != expression.type().pathName();
-			if (expression.type().pathName().equals("void")) {
-				assert true;	// tests/chord_identifier7.k
-				expression = new TopOfStackExpression();
-			}
-		}
-		
-		// Now, speaking of the return statement... Methods stick one in at
-		// the end for free. But we have an explicit return here and it
-		// may not be at the end. If it is, then there may just be extra
-		// redundant return code. But watch for scope management stuff.
-		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		if (null != nearestEnclosingMegaType) {		// error stumbling
-			if (expression instanceof ReturnExpression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"You may not return another `return' expression.", "", "", "");
-				expression = new NullExpression();
-			} else {
-				// Check to make sure it is of the right type
-					
-				final MethodSignature currentMethod = parsingData_.currentMethodSignature();
-				final Type methodReturnType = currentMethod.returnType();
-				final Type expressionType = expression.type();
-				if (null != methodReturnType && null != expressionType) {
-					if (methodReturnType.pathName().equals(expressionType.pathName())) {
-						;  // we're cool
-					} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
-						// We're almost cool...
-						errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
-								"WARNING: substituting object of type `",
-								methodReturnType.name(),
-								"' for `",
-								expression.getText() + "'.");
-						expression = expression.promoteTo(methodReturnType);
-						expression.setResultIsConsumed(true);
-					} else {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-								"Type mismatch in return statement. Expected `",
-								methodReturnType.name(),
-								"' and found `",
-								expression.getText() + "'.");
-					}
+			if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
+				if (null == expression.type()) {
+					assert null != expression.type();
+				}
+				assert null != expression.type().pathName();
+				if (expression.type().pathName().equals("void")) {
+					assert true;	// tests/chord_identifier7.k
+					expression = new TopOfStackExpression();
 				}
 			}
-			expression = new ReturnExpression(expression, ctx.getStart().getLine(),
-					nearestEnclosingMegaType, currentScope_);
+			
+			// Now, speaking of the return statement... Methods stick one in at
+			// the end for free. But we have an explicit return here and it
+			// may not be at the end. If it is, then there may just be extra
+			// redundant return code. But watch for scope management stuff.
+			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			if (null != nearestEnclosingMegaType) {		// error stumbling
+				if (expression instanceof ReturnExpression) {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+							"You may not return another `return' expression.", "", "", "");
+					expression = new NullExpression();
+				} else {
+					// Check to make sure it is of the right type
+						
+					final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+					final Type methodReturnType = currentMethod.returnType();
+					
+					assert null != expression;
+					final Type expressionType = expression.type();
+					if (null != methodReturnType && null != expressionType) {
+						if (methodReturnType.pathName().equals(expressionType.pathName())) {
+							;  // we're cool
+						} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
+							// We're almost cool...
+							errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
+									"WARNING: substituting object of type `",
+									methodReturnType.name(),
+									"' for `",
+									expression.getText() + "'.");
+							expression = expression.promoteTo(methodReturnType);
+							expression.setResultIsConsumed(true);
+						} else {
+							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+									"Type mismatch in return statement. Expected `",
+									methodReturnType.name(),
+									"' and found `",
+									expression.getText() + "'.");
+						}
+					}
+				}
+				expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+						nearestEnclosingMegaType, currentScope_);
+			} else {
+				// expression = new NullExpression();
+				expression = new ReturnExpression(null, ctx.getStart().getLine(),
+						nearestEnclosingMegaType, currentScope_);
+			}
 		} else {
 			expression = new NullExpression();
 		}
