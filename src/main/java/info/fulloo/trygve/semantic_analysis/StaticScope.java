@@ -845,7 +845,7 @@ public class StaticScope {
 									decl.lineNumber(),
 									"WARNING: Script declaration for `",
 									decl.name(),
-									"' may hide script declared at line ",
+									"' has the same name as the Context script declared at line ",
 									String.valueOf(aDecl.lineNumber()));
 						}
 					}

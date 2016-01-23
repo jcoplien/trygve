@@ -66,7 +66,7 @@ class LedgerEntry
 }
 
 /* GOLD:
-line 27: WARNING: Script declaration for `getBalance' may hide script declared at line 18
+line 27: WARNING: Script declaration for `getBalance' has the same name as the Context script declared at line 18
 ___________________________________________________________
 30.0
 */
