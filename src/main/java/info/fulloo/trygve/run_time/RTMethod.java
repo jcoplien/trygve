@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RTMethod extends RTCode {
-	public RTMethod(final String name, final MethodDeclaration methodDeclaration) {
+	public RTMethod(final String name, final MethodDeclaration methodDeclaration, final Expression returnExpression) {
 		super();
 		
 		// Get ClassType as a handle to template information
@@ -52,7 +52,6 @@ public class RTMethod extends RTCode {
 			rawClassType = null;
 		}
 		
-		Expression returnExpression = null;
 		name_ = name;
 		codeSize_ = 10;
 		nextCodeIndex_ = 0; 
@@ -74,15 +73,12 @@ public class RTMethod extends RTCode {
 			final TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.enclosedScope().templateInstantiationInfo();
 			assert null != templateInstantiationInfo;
 			returnType_ = templateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType_.name());
-
-			// Put one in anyhow, even though there is no return value for this one...
-			returnExpression = null;
 		} else if (null != returnType_
 				&& returnType_ != StaticScope.globalScope().lookupTypeDeclaration("void")) {
-			returnExpression = null;
+			;
 		} else {
 			// Put one in anyhow, even though there is no return value...
-			returnExpression = null;
+			;
 		}
 
 		methodDeclaration_ = methodDeclaration;
@@ -112,6 +108,10 @@ public class RTMethod extends RTCode {
 		nextCodeIndex_ = 0;
 
 		initializationList_ = new LinkedHashMap<String, RTExpression>();
+	}
+	
+	public RTMethod(final String name, final MethodDeclaration methodDeclaration) {
+		this(name, methodDeclaration, null);
 	}
 
 	public void addCode(final List<RTCode> code) {

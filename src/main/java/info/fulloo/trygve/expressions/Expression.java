@@ -1,7 +1,7 @@
 package info.fulloo.trygve.expressions;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -196,18 +196,22 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class MessageExpression extends Expression
 	{
 		public MessageExpression(final Expression object, final Message message,
-				final Type type, final int lineNumber, final boolean isStatic) {
+				final Type type, final int lineNumber, final boolean isStatic,
+				final MethodInvocationEnvironmentClass originMethodClass,
+				final MethodInvocationEnvironmentClass targetMethodClass) {
 			super(message.selectorName(), type, message.enclosingMegaType());
-			
+
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
 			isStatic_ = isStatic;
+			originMessageClass_ = originMethodClass;
+			targetMessageClass_ = targetMethodClass;
 		}
 		@Override public String getText() {
 			return object_.getText() + "." + message_.getText();
 		}
-		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileMessageExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		public Message message() {
@@ -225,7 +229,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public boolean isStatic() {
 			return isStatic_;
 		}
+		public MethodInvocationEnvironmentClass originMessageClass() {
+			return originMessageClass_;
+		}
+		public MethodInvocationEnvironmentClass targetMessageClass() {
+			return targetMessageClass_;
+		}
 		
+		private final MethodInvocationEnvironmentClass originMessageClass_, targetMessageClass_;
 		private final Expression object_;
 		private final Message message_;
 		private final int lineNumber_;
@@ -1480,6 +1491,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				while (myScope.associatedDeclaration() instanceof MethodDeclaration == false) {
 					nestingLevelInsideMethod++;
 					myScope = myScope.parentScope();
+					if (null == myScope) {
+						break;	// ?? FIXME
+					}
 				}
 			}
 			nestingLevelInsideMethod_ = nestingLevelInsideMethod;
@@ -1510,6 +1524,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final Expression returnExpression_;	// may be null
 		private final int lineNumber_;
 		private final int nestingLevelInsideMethod_;
+	}
+	
+	public static class DummyReturnExpression extends ReturnExpression
+	{
+		public DummyReturnExpression(final Expression returnExpression, final int lineNumber,
+				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
+			super(returnExpression, lineNumber, nearestEnclosingMegaType, enclosingScope);
+		}
 	}
 	
 	public static class BlockExpression extends Expression
@@ -1767,6 +1789,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		return retval;
 	}
+
 	protected void setType(final Type t) {
 		type_ = t;
 	}	
@@ -1777,4 +1800,5 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	private static long labelCounter_ = 0;
 	private boolean resultIsConsumed_;
 	final Type enclosingMegaType_;
+	
 }

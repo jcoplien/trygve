@@ -1,7 +1,7 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
@@ -568,8 +569,15 @@ public abstract class Declaration implements BodyPart {
 							// If there's a constructor, set up to call it from the beginning
 							// of this constructor. Very first thing.
 							if (null != constructor) {
+								MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
+								
+								originMessageClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+								targetMessageClass = methodScope.methodInvocationEnvironmentClass();
+								assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
+								
 								final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
-								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false);
+								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
+										originMessageClass, targetMessageClass);
 								bodyPrefix_.addBodyPart(messageExpr);
 							}
 						}

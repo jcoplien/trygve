@@ -1,7 +1,7 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
+import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -89,6 +90,7 @@ import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.SumExpression;
 import info.fulloo.trygve.expressions.Expression.SwitchExpression;
+import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
@@ -721,7 +723,21 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			
+			// Odd that these built-ins have survived this long without designating a
+			// return expression... The primitives just put it on top the stack.
+			// Just recognize that they do that
+			Expression returnExpr = null;
+			if (methodDeclaration.name().equals("toString")) {
+				final Expression expressionToReturn = new TopOfStackExpression();
+				returnExpr = new ReturnExpression(expressionToReturn, 0,
+						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						methodDeclaration.enclosedScope());
+			} else {
+				assert false;
+			}
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpr);
+			
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("toString")) {
@@ -868,7 +884,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		TypeDeclaration typeDeclaration = null;
 		final StaticScope myScope = scope; // methodDeclaration.enclosingScope();
-		final StaticScope rightEnclosingScope = Expression.nearestEnclosingMegaTypeOf(myScope).enclosedScope();
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final StaticScope rightEnclosingScope = nearestEnclosingMegaType.enclosedScope();
 		final Declaration roleOrContextOrClass = rightEnclosingScope.associatedDeclaration();
 		if (roleOrContextOrClass instanceof StagePropDeclaration) {
 			// FYI: StagePropDeclaration is a subclass of RoleDeclaration
@@ -923,7 +940,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// As a side-effect, convertTypeDeclarationToRTTypeDeclaration will add the
 		// necessary types to the run-time environment
 		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		// Give them all a return statement. This is never executed but
+		// is only consulted at run time to see if the method returns
+		// anything — hence the instantiation of a dummy.
+		RTMethod rtMethod = null;
+		final Type returnType = methodDeclaration.returnType();
+		if (null != returnType && false == returnType.name().equals("void")) {
+			final Expression expressionToReturn = new TopOfStackExpression();
+			final Expression returnExpression = new DummyReturnExpression(expressionToReturn,
+					methodDeclaration.lineNumber(),
+					nearestEnclosingMegaType, scope);
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpression);
+		} else {
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		}
+		
 		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
 	}

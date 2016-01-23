@@ -1,7 +1,7 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -155,9 +156,14 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof MessageExpression) {
 					final MessageExpression aParam = (MessageExpression)aParameter;
+					
+					MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
+					originMessageClass = aParam.originMessageClass();
+					targetMessageClass = aParam.targetMessageClass();
+					
 					final MessageExpression newParameter = new MessageExpression(
 							aParam.objectExpression(), aParam.message(), newType,
-							aParam.lineNumber(), false);
+							aParam.lineNumber(), false, originMessageClass, targetMessageClass);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof NullExpression) {
 					retval.addActualArgument(aParameter);

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -111,6 +111,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.parser.KantParser.Abelian_atomContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_exprContext;
@@ -1739,6 +1740,7 @@ public class Pass1Listener extends Pass0Listener {
 		// | if_expr
 		
 		Expression expression = null;
+		MethodInvocationEnvironmentClass originMethodClass, targetMethodClass;
 		final int lineNumber = ctx.getStart().getLine();
 		
 		if (null != ctx.abelian_product() && ctx.abelian_product().size() > 1 && null != ctx.ABELIAN_SUMOP()) {
@@ -1775,7 +1777,20 @@ public class Pass1Listener extends Pass0Listener {
 						
 						expression.setResultIsConsumed(true);
 						expr2.setResultIsConsumed(true);
-						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false);
+						originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+						if (expression.type() instanceof RoleType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+						} else if (expression.type() instanceof ClassType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						} else if (expression.type() instanceof BuiltInType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						} else if (expression.type() instanceof ContextType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+						} else {
+							targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
+						}
+						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
+								originMethodClass, targetMethodClass);
 					} else if (expression.type() instanceof RoleType){
 						// Check if it is in the requires section for a Role
 						
@@ -1790,8 +1805,11 @@ public class Pass1Listener extends Pass0Listener {
 						final MethodSignature newMethodSignature = requiresSection.get(operatorAsString);
 						if (null != newMethodSignature) {
 							final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-							final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
-							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false);
+							originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+							targetMethodClass = associatedDeclaration.type().enclosedScope().methodInvocationEnvironmentClass();
+						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false,
+									originMethodClass, targetMethodClass);
 						} else {
 							expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 						}
@@ -1951,7 +1969,13 @@ public class Pass1Listener extends Pass0Listener {
 				
 				// The compareTo message is applied to its first own
 				// argument - in this case, lhs
-				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false);
+				MethodInvocationEnvironmentClass originMethodClass, targetMethodClass;
+				
+				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+				targetMethodClass = lhs.type().enclosedScope().methodInvocationEnvironmentClass();
+			
+				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false,
+						originMethodClass, targetMethodClass);
 				expression.setResultIsConsumed(true);
 				
 				// Assign result of compareTo
@@ -1980,8 +2004,10 @@ public class Pass1Listener extends Pass0Listener {
 				final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
 				final Expression classObjectExpression = new IdentifierExpression("Object", objectType,
 						StaticScope.globalScope(), lineNumber);
+				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+				targetMethodClass = convertMessage.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
-						lineNumber, true);
+						lineNumber, true, originMethodClass, targetMethodClass);
 				expression.setResultIsConsumed(true);
 
 				// This sucks. Expression lists usually take the first seed
@@ -4144,8 +4170,25 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		object.setResultIsConsumed(true);
+		
+		MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
+		if (null != currentScope_.associatedDeclaration()) {
+			originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+		} else {
+			final Type anotherType = object.enclosingMegaType();
+			if (null != anotherType) {
+				final StaticScope anotherScope = anotherType.enclosedScope();
+				originMethodClass = anotherScope.methodInvocationEnvironmentClass();
+			} else {
+				originMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;	// outermost scope
+			}
+		}
+		final MethodInvocationEnvironmentClass targetMethodClass = null == message.enclosingMegaType()?
+				MethodInvocationEnvironmentClass.ClassEnvironment:
+				message.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
-		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic);
+		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
+				originMethodClass, targetMethodClass);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,

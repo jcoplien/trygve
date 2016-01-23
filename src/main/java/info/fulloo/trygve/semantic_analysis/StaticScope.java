@@ -1,7 +1,7 @@
 package info.fulloo.trygve.semantic_analysis;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,7 @@ import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 public class StaticScope {
@@ -1471,6 +1472,34 @@ public class StaticScope {
 			}
 			System.err.format("\n");
 		}
+	}
+	
+	public MethodInvocationEnvironmentClass methodInvocationEnvironmentClass() {
+		MethodInvocationEnvironmentClass retval;
+		if (associatedDeclaration_ instanceof MethodDeclaration) {
+			retval = parentScope_.methodInvocationEnvironmentClass();
+		} else if (associatedDeclaration_ instanceof ObjectDeclaration) {
+			if (((ObjectDeclaration)associatedDeclaration_).name().equals(" Object")) {
+				retval = MethodInvocationEnvironmentClass.ClassEnvironment;
+			} else {
+				retval = parentScope_.methodInvocationEnvironmentClass();
+			}
+		} else if (associatedDeclaration_ instanceof TemplateDeclaration) {
+			retval = parentScope_.methodInvocationEnvironmentClass();
+		} else if (null == associatedDeclaration_) {
+			// Main scope. Class rules apply
+			retval = MethodInvocationEnvironmentClass.ClassEnvironment;
+		} else if (associatedDeclaration_ instanceof RoleDeclaration) {
+			retval = MethodInvocationEnvironmentClass.RoleEnvironment;
+		} else if (associatedDeclaration_ instanceof ContextDeclaration) {
+			retval = MethodInvocationEnvironmentClass.ContextEnvironment;
+		} else if (associatedDeclaration_ instanceof ClassDeclaration) {
+			retval = MethodInvocationEnvironmentClass.ClassEnvironment;
+		} else {
+			retval = MethodInvocationEnvironmentClass.Unknown;
+			assert false;
+		}
+		return retval;
 	}
 	
 	private StaticScope parentScope_;
