@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBigIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -354,6 +356,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 						enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 						false);
 				parameterName_ = parameterName;
+				methodName_ = methodName;
 			}
 			public RTCode run() {
 				// Don't need to push or pop anything. The return code stays
@@ -381,7 +384,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return null;	// halt the machine
 			}
 			
-			protected final String parameterName_;
+			protected final String parameterName_, methodName_;
 		}
 		public static class RTToStringCode extends RTIntegerCommon {
 			public RTToStringCode(final StaticScope methodEnclosedScope) {
@@ -405,40 +408,60 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTBinaryOpCode extends RTIntegerCommon {
 			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
 				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+				lineNumber_ = 0;
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				RTCode nextPC = null;
 				assert myEnclosedScope instanceof RTDynamicScope;
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
 				final RTStackable self = dynamicScope.getObject("this");
-				assert self instanceof RTIntegerObject;
-				final RTStackable rhs = dynamicScope.getObject("rhs");
-				assert rhs instanceof RTIntegerObject;
-				final RTIntegerObject selfObject = (RTIntegerObject)self;
-				final long selfValue = selfObject.intValue();
-				final RTIntegerObject rhsObject = (RTIntegerObject)rhs;
-				final long rhsValue = rhsObject.intValue();
-				
-				final String operator = this.methodSelectorName();
-				long iRetval = 0;
-				
-				if (operator.equals("+")) {
-					iRetval = selfValue + rhsValue;
-				} else if (operator.equals("-")) {
-					iRetval = selfValue - rhsValue;
-				} else if (operator.equals("*")) {
-					iRetval = selfValue * rhsValue;
-				} else if (operator.equals("/")) {
-					iRetval = selfValue / rhsValue;
-				} else if (operator.equals("%")) {
-					iRetval = selfValue % rhsValue;
-				}
-				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+				if (self instanceof RTNullObject) {
+					ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+							"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on left-hand side of operation involving `",
+							parameterName_, "'.", "");
+					nextPC = new RTHalt();
+				} else {
+					final RTStackable rhs = dynamicScope.getObject("rhs");
+					if (rhs instanceof RTNullObject) {
+						ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+								"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on right-hand side, named `",
+								parameterName_, "'.", "");
+						nextPC = new RTHalt();
+					} else {
+						assert self instanceof RTIntegerObject;
+						assert rhs instanceof RTIntegerObject;
 
-				addRetvalTo(dynamicScope);
-				dynamicScope.setObject("ret$val", retval);
-				
-				return super.nextCode();
+						final RTIntegerObject selfObject = (RTIntegerObject)self;
+						final long selfValue = selfObject.intValue();
+						final RTIntegerObject rhsObject = (RTIntegerObject)rhs;
+						final long rhsValue = rhsObject.intValue();
+						
+						final String operator = this.methodSelectorName();
+						long iRetval = 0;
+						
+						if (operator.equals("+")) {
+							iRetval = selfValue + rhsValue;
+						} else if (operator.equals("-")) {
+							iRetval = selfValue - rhsValue;
+						} else if (operator.equals("*")) {
+							iRetval = selfValue * rhsValue;
+						} else if (operator.equals("/")) {
+							iRetval = selfValue / rhsValue;
+						} else if (operator.equals("%")) {
+							iRetval = selfValue % rhsValue;
+						}
+						final RTIntegerObject retval = new RTIntegerObject(iRetval);
+		
+						addRetvalTo(dynamicScope);
+						dynamicScope.setObject("ret$val", retval);
+						
+						nextPC = super.nextCode();
+					}
+				}
+				return nextPC;
 			}
+			
+			private final int lineNumber_;
 		}
 		public static class RTCompareToCode extends RTIntegerCommon {
 			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
@@ -1053,6 +1076,17 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			
 			private final PrintStream printStream_;
 		}
+		public static class RTInputStreamInfo extends RTObjectCommon {
+			public RTInputStreamInfo(final InputStream inputStream) {
+				super((RTType)null);
+				inputStream_ = inputStream;
+			}
+			public InputStream inputStream() {
+				return inputStream_;
+			}
+			
+			private final InputStream inputStream_;
+		}
 		@Override public void postSetupInitializtion() {
 			// Lookup "out" and "err" and set them up
 			final RTObject out = nameToStaticObjectMap_.get("out");
@@ -1064,6 +1098,11 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			printStreamInfo = new RTPrintStreamInfo(System.err);
 			err.addObjectDeclaration("printStreamInfo", null);
 			err.setObject("printStreamInfo", printStreamInfo);
+			
+			final RTObject in = nameToStaticObjectMap_.get("in");
+			RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			in.addObjectDeclaration("inputStreamInfo", null);
+			in.setObject("inputStreamInfo", inputStreamInfo);
 		}
 	}
 	

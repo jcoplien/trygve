@@ -221,7 +221,7 @@ context Chord {
 }
 
 /* GOLD:
-line 71: WARNING: Script declaration for `name' may hide script declared at line 166
+line 71: WARNING: Script declaration for `name' has the same name as the Context script declared at line 166
 ___________________________________________________________
 Cm11
 Dsus

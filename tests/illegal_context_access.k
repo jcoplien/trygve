@@ -34,8 +34,8 @@ context Ctx {
 }
 
 /* GOLD:
-line 3: WARNING: Script declaration for `ctxMethod2' may hide script declared at line 26
-line 3: WARNING: Script declaration for `ctxMethod1' may hide script declared at line 21
+line 3: WARNING: Script declaration for `ctxMethod2' has the same name as the Context script declared at line 26
+line 3: WARNING: Script declaration for `ctxMethod1' has the same name as the Context script declared at line 21
 ___________________________________________________________
 Ctx enter
 roleScript1 enter

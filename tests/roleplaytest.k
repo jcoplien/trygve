@@ -63,8 +63,10 @@ ___________________________________________________________
 Context1 ctor called:
 I am C1R1
 Object of type AnObject playing too many roles, including C2R1
-	In Context Context1: C1R1 C1R2.
-	In Context Context2: C2R1.
+	In Context `Context1':, C1R1, C1R2.
+	In Context `Context2':, C2R1.
+Objects may play Role(s) only in one Context at a time (note: this does not apply to Stage Props).
+Further execution may exhibit undefined behaviour.
 Context2 ctor called:
 I am AnObject(123)
 Done

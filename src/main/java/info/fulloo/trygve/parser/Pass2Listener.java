@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
@@ -759,7 +760,23 @@ public class Pass2Listener extends Pass1Listener {
 				// Then it may be in the "required" declarations and is NOT a role method per se
 				isOKMethodSignature = true;
 			} else {
-				final Expression currentContext = new IdentifierExpression("current$context", wannabeContextType, nearestMethodScope, ctxGetStart.getLine());
+				// If we're calling from a Context script to a script of one of its Roles,
+				// we want to pass "this" in the "current$context" slot. Otherwise, if it's
+				// from another Role, just use "current$context". There should be no other
+				// possibilities
+				final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				
+				String nameOfContextIdentifier;
+				if (enclosingType instanceof ContextType) {
+					nameOfContextIdentifier = "this";
+				} else if (enclosingType instanceof RoleType) {
+					nameOfContextIdentifier = "current$context";
+				} else {
+					nameOfContextIdentifier = "current$context";	// arbitrary.  Gnu!!
+					assert false;
+				}
+				
+				final Expression currentContext = new IdentifierExpression(nameOfContextIdentifier, wannabeContextType, nearestMethodScope, ctxGetStart.getLine());
 				final ActualArgumentList saveArgumentList = message.argumentList().copy();
 				message.argumentList().addFirstActualParameter(currentContext);
 				currentContext.setResultIsConsumed(true);
@@ -911,8 +928,48 @@ public class Pass2Listener extends Pass1Listener {
 		message.setReturnType(returnType);
 		
 		if (null != methodSignature) {
+			MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
+
+			if (null != currentScope_.associatedDeclaration()) {
+				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+			} else {
+				final Type anotherType = object.enclosingMegaType();
+				if (null != anotherType) {
+					final StaticScope anotherScope = anotherType.enclosedScope();
+					originMethodClass = anotherScope.methodInvocationEnvironmentClass();
+				} else {
+					originMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;	// outermost scope
+				}
+			}
+			
+			MethodInvocationEnvironmentClass targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
+			if (null != object && null != object.type()) {
+				if (object.type() instanceof StagePropType) {
+					targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+				} else if (object.type() instanceof RoleType) {
+					targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+				} else if (object.type() instanceof ContextType) {
+					targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+				} else if (object.type() instanceof InterfaceType) {
+					// Interfaces wrap classes
+					targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				} else if (object.type() instanceof ArrayType) {
+					// Arrays kind of behave like classes, certainly as regards dispatching
+					targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				} else if (null != methodDeclaration) {
+					targetMethodClass = methodDeclaration.enclosingScope().methodInvocationEnvironmentClass();
+				} else  {
+					targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
+				}
+			} else if (null != methodDeclaration) {
+				targetMethodClass = methodDeclaration.enclosingScope().methodInvocationEnvironmentClass();
+			} else  {
+				targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
+			}
+			
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
-			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic());
+			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic(),
+					originMethodClass, targetMethodClass);
 			if (null == methodDeclaration) {
 				// Could be a "required" method in a Role. It's O.K.
 				assert true;

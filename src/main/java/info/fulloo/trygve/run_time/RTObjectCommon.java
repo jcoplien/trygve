@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -125,16 +125,19 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				final StringBuffer stringBuffer = new StringBuffer();
 				final String contextName = iter.getKey().rTType().name();
 				final List<String> roleNames = iter.getValue();
-				stringBuffer.append("\tIn Context ");
+				stringBuffer.append("\tIn Context `");
 				stringBuffer.append(contextName);
-				stringBuffer.append(":");
+				stringBuffer.append("':");
 				for (final String aRoleName : roleNames) {
-					stringBuffer.append(" ");
+					stringBuffer.append(", ");
 					stringBuffer.append(aRoleName);
 				}
 				final String message = stringBuffer.toString();
 				ErrorLogger.error(ErrorType.Fatal, message, ".", "", "");
 			}
+			ErrorLogger.error(ErrorType.Fatal,
+					"Objects may play Role(s) only in one Context at a time (note: this does not apply to Stage Props).",
+					"\nFurther execution may exhibit undefined behaviour.", "", "");
 		}
 	}
 	
@@ -743,7 +746,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		private double foobar_;
 	}
 	public static class RTStringObject extends RTObjectCommon implements RTObject {
-		RTStringObject(final String foobar) {
+		public RTStringObject(final String foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelClassNamed("String"));
 			foobar_ = foobar;
 		}

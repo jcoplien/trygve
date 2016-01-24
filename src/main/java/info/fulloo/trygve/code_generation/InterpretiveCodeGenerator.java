@@ -1,7 +1,7 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
@@ -67,6 +68,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
+import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -89,6 +91,7 @@ import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.SumExpression;
 import info.fulloo.trygve.expressions.Expression.SwitchExpression;
+import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
@@ -150,6 +153,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = DateClass.typeDeclarationList();	// "Date"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = ScannerClass.typeDeclarationList();	// "Scanner"
 		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
@@ -223,7 +229,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (classDeclaration.type().pathName().equals("System.")) {
 					rTClassDeclaration = new RTSystemClass(classDeclaration);
 				} else {
-				// Kludge. But it's direct, and effective.
+					// Kludge. But it's direct, and effective.
 					rTClassDeclaration = new RTClass(classDeclaration);
 				}
 				RunTimeEnvironment.runTimeEnvironment_.addTopLevelClass(classDeclaration.name(), rTClassDeclaration);
@@ -273,7 +279,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingInt:
 		case usingTemplate:
 		case usingString:
-			IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
+			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
 					retval.type(), StaticScope.globalScope());
@@ -524,6 +530,49 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtMethod.addCode(printlnCode);
 	}
+	
+	private void processInputStreamMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
+		if (formalParameterList.count() == 1) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+			if (methodDeclaration.name().equals("read")) {
+				readCode.add(new SystemClass.RTReadCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, RetvalTypes.usingInt, readCode);
+		
+		/*
+		final int sizeOfCodeArray = readCode.size();
+		assert (sizeOfCodeArray > 0);
+		RTCode last = readCode.get(sizeOfCodeArray - 1);
+		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
+				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
+		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
+				self.type(), StaticScope.globalScope());xxx
+		final StaticScope myScope = methodDeclaration.enclosedScope();
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
+		final RTCode returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+		returnStatement.setNextCode(last.nextCode());
+		last.setNextCode(returnStatement);
+		readCode.add(returnStatement);
+		
+		assert readCode.size() > 0;
+		*/
+		
+		rtMethod.addCode(readCode);
+	}
 	private void processDateMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		RetvalTypes retvalType;
@@ -612,6 +661,43 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		addReturn(methodDeclaration, retvalType, getSomethingInDateCode);
 		
 		rtMethod.addCode(getSomethingInDateCode);
+	}
+	private void processScannerMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> code = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.undefined;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 1) {
+			if (methodDeclaration.name().equals("nextLine")) {
+				code.add(new ScannerClass.RTNextLineCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
+			} else {
+				retvalType = RetvalTypes.undefined;
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			if (methodDeclaration.name().equals("Scanner")) {
+				code.add(new ScannerClass.RTScannerCtorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else {
+				retvalType = RetvalTypes.undefined;
+				assert false;
+			}
+		} else {
+			retvalType = RetvalTypes.undefined;
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, code);
+		
+		assert code.size() > 0;
+		
+		rtMethod.addCode(code);
 	}
 	private void processStringMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
@@ -721,7 +807,21 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
-			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			
+			// Odd that these built-ins have survived this long without designating a
+			// return expression... The primitives just put it on top the stack.
+			// Just recognize that they do that
+			Expression returnExpr = null;
+			if (methodDeclaration.name().equals("toString")) {
+				final Expression expressionToReturn = new TopOfStackExpression();
+				returnExpr = new ReturnExpression(expressionToReturn, 0,
+						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						methodDeclaration.enclosedScope());
+			} else {
+				assert false;
+			}
+			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpr);
+			
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("toString")) {
@@ -868,7 +968,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		TypeDeclaration typeDeclaration = null;
 		final StaticScope myScope = scope; // methodDeclaration.enclosingScope();
-		final StaticScope rightEnclosingScope = Expression.nearestEnclosingMegaTypeOf(myScope).enclosedScope();
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
+		final StaticScope rightEnclosingScope = nearestEnclosingMegaType.enclosedScope();
 		final Declaration roleOrContextOrClass = rightEnclosingScope.associatedDeclaration();
 		if (roleOrContextOrClass instanceof StagePropDeclaration) {
 			// FYI: StagePropDeclaration is a subclass of RoleDeclaration
@@ -879,6 +980,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("InputStream")) {
+				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Scanner")) {
+				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);
@@ -923,7 +1030,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// As a side-effect, convertTypeDeclarationToRTTypeDeclaration will add the
 		// necessary types to the run-time environment
 		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		// Give them all a return statement. This is never executed but
+		// is only consulted at run time to see if the method returns
+		// anything — hence the instantiation of a dummy.
+		RTMethod rtMethod = null;
+		final Type returnType = methodDeclaration.returnType();
+		if (null != returnType && false == returnType.name().equals("void")) {
+			final Expression expressionToReturn = new TopOfStackExpression();
+			final Expression returnExpression = new DummyReturnExpression(expressionToReturn,
+					methodDeclaration.lineNumber(),
+					nearestEnclosingMegaType, scope);
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpression);
+		} else {
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		}
+		
 		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
 	}

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -111,6 +111,7 @@ public class TestRunner {
 		"chord_identifier4_original.k",
 		"chord_identifier5.k",
 		"chord_identifier6.k",
+		"chord_identifier7.k",
 		"assert_in_roletest.k",
 		"moneytransfer_original.k",
 		"bool_op1.k",
@@ -139,6 +140,7 @@ public class TestRunner {
 		"requires_method1.k",
 		"illegal_context_access.k",
 		"frontloading1.k",
+		"spell_check.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

@@ -1,4 +1,4 @@
-package info.fulloo.trygve.semantic_analysis;
+package info.fulloo.trygve.expressions;
 
 /*
  * Trygve IDE 1.3
@@ -23,32 +23,6 @@ package info.fulloo.trygve.semantic_analysis;
  *
  */
 
-import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
-import info.fulloo.trygve.expressions.Expression;
-
-public class Program {
-	public Program(final Expression main, final TypeDeclarationList theRest, final TypeDeclarationList templateInstantationList) {
-		main_ = main;
-		theRest_ = theRest;
-		templateInstantiations_ = templateInstantationList;
-		setProgram(this);
-	}
-	private static void setProgram(final Program theThis) {
-		program_ = theThis;
-	}
-	public static Program program() {
-		return program_;
-	}
-	public Expression main() {
-		return main_;
-	}
-	public TypeDeclarationList templateInstantiations() {
-		return templateInstantiations_;
-	}
-	public TypeDeclarationList theRest() {
-		return theRest_;
-	}
-	private final Expression main_;
-	private final TypeDeclarationList theRest_, templateInstantiations_;
-	private static Program program_ = null;
+public enum MethodInvocationEnvironmentClass {
+	RoleEnvironment, ContextEnvironment, ClassEnvironment, Unknown
 }

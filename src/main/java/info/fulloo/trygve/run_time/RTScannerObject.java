@@ -23,50 +23,36 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Scanner;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
-import info.fulloo.trygve.run_time.RTIterator.RTSetIterator;
+import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 
-public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable {
-	public RTSetObject(final RTType setType) {
-		super(setType);	// 
-		setType_ = setType;	// e.g. an instance of RTClass
+public class RTScannerObject extends RTObjectCommon implements RTObject {
+	public RTScannerObject(final RTType scannerType) {
+		super(scannerType);	// 
+		scannerType_ = scannerType;	// e.g. an instance of RTClass
 		baseType_ = null;
-		theSet_ = new HashSet<RTObject>();
+		theScanner_ = null;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
 	public Type baseType() {
 		return baseType_;
 	}
-	public RTObject getObject(final RTObject theIndexObject) {
-		assert false;
-		return null;
-	}
-	public int size() {
-		return theSet_.size();
-	}
 	@Override public int hashCode() {
-		return theSet_.hashCode();
+		return theScanner_.hashCode();
 	}
 	@Override public boolean equals(final Object other) {
-		boolean retval = true;
-		if (other instanceof RTSetObject) {
-			retval = theSet_.equals(((RTSetObject)other).theSet_);
-		} else {
-			retval = false;
-		}
-		return retval;
+		return this == other;
 	}
 	
 	// I'm more than a little unhappy that these are copy-pasted. FIXME.
@@ -105,55 +91,45 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 		assert false;
 		return null;
 	}
-	private RTSetObject(final Set<RTObject> theSet, final Type baseType, final RTType setType) {
-		super(setType);
-		theSet_ = new HashSet<RTObject>();
+	private RTScannerObject(final Scanner theScanner, final Type baseType, final RTType scannerType) {
+		super(scannerType);
+		theScanner_ = theScanner;
 		baseType_ = baseType;
-		setType_ = setType;
-		theSet_.addAll(theSet);
+		scannerType_ = scannerType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	public RTIterator makeIterator() {
-		final RTIterator retval = new RTSetIterator(this);
-		return retval;
+		// maybe some day
+		assert false;
+		return null;
 	}
 	@Override public RTObject dup() {
-		final RTSetObject retval = new RTSetObject(theSet_, baseType_, setType_);
+		final RTScannerObject retval = new RTScannerObject(theScanner_, baseType_, scannerType_);
 		return retval;
 	}
 	@Override public RTType rTType() {
-		return setType_;
+		return scannerType_;
 	}
-	
-	public boolean isEmpty() {
-		return theSet_.isEmpty();
+	public void ctor(final RTObject streamArg) {
+		final RTInputStreamInfo inputStreamInfo = (RTInputStreamInfo)streamArg.getObject("inputStreamInfo");
+		final InputStream inputStream = inputStreamInfo.inputStream();
+		theScanner_ = new Scanner(inputStream);
 	}
-	public boolean isValidIndex(final int i) {
-		return i < theSet_.size() && i >= 0;
-	}
-	public boolean remove(final RTObject o) {
-		return theSet_.remove(o);
-	}
-	public void add(final RTObject element) {
-		theSet_.add(element);
-	}
-	public void ctor() {
-	}
-	public RTObject contains(final RTObject element) {
-		final boolean rawRetval = theSet_.contains(element);
-		final RTObject retval = new RTBooleanObject(rawRetval);
+	public RTObject nextLine() {
+		final String nextLine = theScanner_.nextLine();
+		final RTStringObject retval = new RTStringObject(nextLine);
 		return retval;
 	}
 	public int compareTo(final RTObject other) {
 		assert false;
 		return 0;
 	}
-	public Iterator<RTObject> RTIterator() {
-		return theSet_.iterator();
+	public Scanner theScanner() {
+		return theScanner_;
 	}
 	
-	private final Set<RTObject> theSet_;
+	private       Scanner theScanner_;
 	private final Type baseType_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
-	private final RTType setType_;
+	private final RTType scannerType_;
 }

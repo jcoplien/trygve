@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,8 +45,6 @@ import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
-import info.fulloo.trygve.declarations.Type.BuiltInType;
-import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -63,6 +61,9 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.BreakableExpression;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
+import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.expressions.Constant.BooleanConstant;
 import info.fulloo.trygve.expressions.Constant.DoubleConstant;
 import info.fulloo.trygve.expressions.Constant.IntegerConstant;
@@ -216,6 +217,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTProduct((ProductExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof PowerExpression) {
 			retval = new RTPower((PowerExpression)expr, nearestEnclosingType);
+		} else if (expr instanceof DummyReturnExpression) {
+			retval = new RTDummyReturn("return", (DummyReturnExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof ReturnExpression) {
 			retval = new RTReturn("return", (ReturnExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof BlockExpression) {
@@ -243,6 +246,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTNullExpression();
 		} else if (expr instanceof IndexExpression) {
 			retval = new RTIndexExpression((IndexExpression)expr);
+		} else if (expr instanceof TopOfStackExpression) {
+			retval = new RTTopOfStackExpression((TopOfStackExpression)expr);
 		} else {
 			retval = new RTNullExpression();
 		}
@@ -273,6 +278,22 @@ public abstract class RTExpression extends RTCode {
 				final RTNullObject nullObject = new RTNullObject();
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(nullObject);
 				setLastExpressionResult(nullObject, 0);
+			}
+			return super.nextCode();
+		}
+	}
+	public static class RTTopOfStackExpression extends RTExpression {
+		public RTTopOfStackExpression(final TopOfStackExpression unused) {
+			super();
+		}
+		@Override public RTCode run() {
+			final RTStackable value = RunTimeEnvironment.runTimeEnvironment_.peekStack();
+			if (value instanceof RTObject == false) {
+				assert value instanceof RTObject;
+			}
+			if (resultIsConsumed()) {
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+				setLastExpressionResult((RTObject)value, 0);
 			}
 			return super.nextCode();
 		}
@@ -480,7 +501,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTMessage extends RTExpression {
 		public static RTMessage makeRTMessage(final String name, final MessageExpression messageExpr,
 				final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
-			final RTMessage retval = new RTMessage(name, messageExpr, nearestEnclosingType, scope,isStatic);
+			final RTMessage retval = new RTMessage(name, messageExpr, nearestEnclosingType, scope, isStatic);
 			return retval;
 		}
 		public String methodSelectorName() {		// for debugging only
@@ -488,8 +509,11 @@ public abstract class RTExpression extends RTCode {
 		}
 		public RTMessage(final String name, final MessageExpression messageExpr, final RTType nearestEnclosingType, final StaticScope scope, final boolean isStatic) {
 			super();
-			methodSelectorName_ = messageExpr.name();
 
+			methodSelectorName_ = messageExpr.name();
+			originMessageClass_ = messageExpr.originMessageClass();
+			targetMessageClass_ = messageExpr.targetMessageClass();
+			
 			templateInstantiationInfo_ = null == scope? null : scope.templateInstantiationInfo();
 			if (null != nearestEnclosingType && nearestEnclosingType instanceof RTClass) {
 				final RTClass enclosingClass = (RTClass)nearestEnclosingType;
@@ -546,14 +570,17 @@ public abstract class RTExpression extends RTCode {
 			fakeMessage.setReturnType(returnType);
 			MessageExpression fakeMessageExpression = null;
 			
+			originMessageClass_ = enclosingMegaType.enclosedScope().methodInvocationEnvironmentClass();
+			targetMessageClass_ = MethodInvocationEnvironmentClass.ClassEnvironment;
+			
 			if (false == isStatic) {
 				fakeSelfExpression = actualParameters.parameterAtPosition(0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-					returnType, lineNumber_, isStatic_);
+					returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_);
 			} else {
 				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope(), 0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-						returnType, lineNumber_, isStatic_);
+						returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_);
 			}
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
@@ -651,321 +678,8 @@ public abstract class RTExpression extends RTCode {
 			}
 			return retval;
 		}
-		
-		private RTMethod contextMethodDeclLookup(final RTObject contextOfRoleOfInvokingMethod,
-				final Type typeOfThisParameterToMethod) {
-			RTMethod methodDecl = null;
-			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			
-			if (contextOfRoleOfInvokingMethod instanceof RTContextObject) {
-				// Then the invoker is inside of a Context, or perhaps the Role
-				// of a Context.
-				final RTContextObject invokingContext = (RTContextObject)contextOfRoleOfInvokingMethod;
-				final RTType rawContextType = invokingContext.rTType();
-				assert rawContextType instanceof RTContext;
-				final RTContext typeOfInvokingContext = (RTContext)rawContextType;
-				
-				// See if it is another Role in this context.
-				// (But, hey, we *have* the Context of the target — why
-				// go skurking for it here?!)
-				RTRole theRole = typeOfInvokingContext.getRole(typeOfThisParameterToMethod.name());
-				if (null == theRole) {
-					final RTStageProp theStageProp = typeOfInvokingContext.getStageProp(typeOfThisParameterToMethod.name());
-					if (null == theStageProp) {
-						// Example: contextType here is TextFile
-						// typeOfThisParameterToMethod is for Role SpellCheck.Text
-						// it's an argument of an assert, called from within
-						//	SpellCheck.Text.nextWord, called by println, right after SpellCheck
-						// 	is instantiated (around line 155). Trying to call
-						// 	SpellCheck.Text.isFinished.
-						//
-						// See cotnext_role_bug1.k
-						//
-						// Role Text is of type TextFile, which is also a Context
-						assert null != theStageProp;
-					}
-					methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
-				} else {
-					assert null != theRole;
-					methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
-				}
-				assert null != methodDecl;
-			} else if (contextOfRoleOfInvokingMethod instanceof RTObjectCommon) {
-				// The "this" parameter is a pointer to the Role Player, typed
-				// in terms of the Role Player's type.
 
-				// That implies *for now* that the call is invoking an instance method
-				// and not a role method. So:
-				
-				final RTObject rolePlayer = (RTObject)contextOfRoleOfInvokingMethod;
-				final RTType rolePlayerType = rolePlayer.rTType();
-				assert null != rolePlayerType;
-				methodDecl = rolePlayerType.lookupMethod(methodSelectorName_, actualParameters_);
-				if (null == methodDecl) {
-					// ... then it is another Role method invocation on the
-					// RolePlayer.  First, get the RTRole:
-					final RTObject objectContextPointer = getObjectUpToMethodScopeFrom("current$context", currentScope);
-					if (objectContextPointer instanceof RTContextObject == false) {
-						assert objectContextPointer instanceof RTContextObject;
-					}
-					final RTContextObject contextPointer = (RTContextObject)objectContextPointer;
-					
-					final RTType rawContextType = contextPointer.rTType();
-					assert rawContextType instanceof RTContext;
-					final RTContext contextType = (RTContext)rawContextType;
-					RTRole theRole = contextType.getRole(typeOfThisParameterToMethod.name());
-					if (null != theRole) {
-						// Look up the method in the Role scope.
-						methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
-					} else {
-						// Look up the method in the StageProp scope.
-						final RTStageProp theStageProp = contextType.getStageProp(typeOfThisParameterToMethod.name());
-						assert null != theStageProp;
-						methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
-					}
-					assert null != methodDecl;
-				}
-			} else {
-				// It could be that we are calling from a Role method to
-				// another Role method. Then could indicate a Role
-				// object in this (though it is more likely to point to
-				// a RTCommonObject, which it probably does — so we should
-				// never get here).
-				assert false;
-			}
-			
-			return methodDecl;
-		}
-		
-		private RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
-			// Should look up method in the receiver's scope. Get the
-			// current scope so we can get all the magic identifiers
-			// (this, current$context, etc.)
-			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTMethod methodDecl = null;
-
-			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
-				// Then self is an object playing the Role (with rTType an instance of RTClass)
-				// Get the current RTContext (must be in self of current activation record)
-				final RTObject contextOfRoleOfInvokingMethod = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);;
-				assert null != contextOfRoleOfInvokingMethod;
-				
-				// Also get the Context of the Role of the invoked method. IT IS OK
-				// THAT IT NOT BE THE CURRENT CONTEXT, in the event that the
-				// Role-player is itself a Context instance!
-				assert typeOfThisParameterToMethod instanceof RoleType;
-				
-				final RoleType roleOfCallee = (RoleType)typeOfThisParameterToMethod;
-				final Declaration rawTargetContext = roleOfCallee.contextDeclaration();
-				assert rawTargetContext instanceof ContextDeclaration;
-				final ContextDeclaration targetContext = (ContextDeclaration) rawTargetContext;
-				final RTType rawrTTypeOfTargetContext = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(targetContext);
-				assert rawrTTypeOfTargetContext instanceof RTContext;
-				final RTContext rTTypeOfTargetContext = (RTContext)rawrTTypeOfTargetContext;
-				
-				RTRole theRole = rTTypeOfTargetContext.getRole(typeOfThisParameterToMethod.name());
-				if (null == theRole) {
-					final RTStageProp theStageProp = rTTypeOfTargetContext.getStageProp(typeOfThisParameterToMethod.name());
-					methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
-				} else {
-					methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
-				}
-				
-				if (null == methodDecl) {
-					methodDecl = contextMethodDeclLookup(contextOfRoleOfInvokingMethod,
-							typeOfThisParameterToMethod);
-				}
-			} else {
-				// Calculate the address of the method. Generalize for classes and Contexts.
-				final RTType rTTypeOfSelf = null != self? self.rTType():
-					InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
-				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
-							methodSelectorName_, " on a null object", "");
-
-					// Halt the machine
-					return null;
-				} else if (null == rTTypeOfSelf) {
-					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
-							methodSelectorName_, "' on a null Java object", "");
-					return null;
-					// assert null != rTTypeOfSelf;
-				}
-				
-				final ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
-				TemplateInstantiationInfo templateInstantiationInfo = null == classType? null: classType.templateInstantiationInfo();
-				
-				if (null == templateInstantiationInfo) {
-					final RTClass rTclassType = nearestEnclosingType_ instanceof RTClass? (RTClass)nearestEnclosingType_: null;
-					templateInstantiationInfo = null == rTclassType? null: rTclassType.templateInstantiationInfo();
-				}
-				
-				ActualOrFormalParameterList actualParameters = actualParameters_;
-				if (null != templateInstantiationInfo) {
-					actualParameters = actualParameters.mapTemplateParameters(templateInstantiationInfo);
-				}
-				
-				String methodSelectorName = methodSelectorName_;
-				if (null != classType && methodSelectorName.equals(classType.name())) {
-					// assert isaconstructor
-					if (methodSelectorName.matches("[a-zA-Z]<.*>") || methodSelectorName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
-						// Is a template constructor. Just get the base name
-						final int indexOfLessThan = methodSelectorName.indexOf('<');
-						methodSelectorName = methodSelectorName.substring(0, indexOfLessThan);
-					}
-				}
-				
-				// Give a direct match the first chance
-				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
-				if (null == methodDecl) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
-					if (null == methodDecl) {
-						if (typeOfThisParameterToMethod instanceof RoleType) {
-							methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
-							if (null == methodDecl) {
-								methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
-							}
-						}
-						if (null == methodDecl) {
-							// One last try - look it up in Object
-							methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
-							assert null != methodDecl;
-						}
-					}
-					assert null != methodDecl;
-				}
-			}
-			
-			if (null == methodDecl) {
-				assert null != methodDecl;
-			}
-			return methodDecl;
-		}
-		
-		private RTStackable pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
-				final int indexForThisExtraction) {
-			RTCode pc = start;
-			final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
-			RTObject self = null;
-			while (null != pc) {
-				// This evaluation leaves a result on the stack -
-				// a result which will be a parameter to the method
-				
-				// Make sure it doesn't get popped. Setting things in ActualParameters
-				// doesn't seem to be enough (setResultIsConsumed(true))
-				if (pc instanceof RTExpression) {
-					((RTExpression)pc).setResultIsConsumed(true);
-				}
-				
-				// Woops - this gets short-circuited if it's a method invocation?
-				// It goes off to evaluate the method (as a "this" argument) and
-				// then, just below, expects to pull "this" (e.g. PrintStream)
-				// off the stack - but what's sitting on the stack is the return
-				// address for the method (RTPostReturnProcessing) and "nextInstruction"
-				// points to a method
-				final RTCode nextInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-				
-				final RTCode oldPc = pc;
-				pc = nextInstruction;
-				if (pc instanceof RTHalt) {
-					return pc;
-				} else if (null != pc) {
-					pc.incrementReferenceCount();
-				}
-				oldPc.decrementReferenceCount();
-			}
-			
-			if (false == isStatic() && RunTimeEnvironment.runTimeEnvironment_.stackIndex() <= startingStackIndex + indexForThisExtraction) {
-				assert RunTimeEnvironment.runTimeEnvironment_.stackIndex() > startingStackIndex + indexForThisExtraction;
-			}
-			
-			self = isStatic()? null:
-				(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
-
-			assert null != self || isStatic();
-			return self;
-		}
-
-		private void pushContextPointerIfNecessary(final Type typeOfThisParameterToMethod,
-				final RTContextObject contextToGoWithThis, 
-				final int indexForThisExtraction) {
-			// We need to push a Context pointer if the method we are
-			// calling is a Role method. If it's a non-Role-method it must
-			// be a Context method and we can push this. If we're in a
-			// Role method we can push the Context pointer
-			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
-				// If we're a non-Role method *and* we're calling a Role method
-				// (we got to this line in this code), we need
-				// to push an extra argument - current$context. If we're calling
-				// a Role method it can be only from within a Context.
-				
-				if (null == RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope)) {
-					// No declaration of current$context in the current scope.
-					// We're not a Role method. We are just a Context method.
-
-					
-					/*
-					 * 
-					 * We don't need to do this push because it's already
-					 * pushed as part of the pushArgumentLoop.
-					 * 
-					 * 
-					
-					// If we're not a Role method the right value to pass for
-					// the current formal current$context parameter is
-					// the current value of "this" in the calling activation
-					// record. Set up for an extra push before everything else
-					// is pushed. It will be popped and added to the Role method's
-					// activation record.
-					
-					final RTObject tempContextPointer = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);
-					if (null == tempContextPointer) {
-						assert null != tempContextPointer;
-					}
-					if (false == tempContextPointer instanceof RTContextObject) {
-						assert tempContextPointer instanceof RTContextObject;
-					}
-					
-					final RTContextObject contextPointer = (RTContextObject)tempContextPointer;
-					RunTimeEnvironment.runTimeEnvironment_.pushStack(contextPointer);
-					*/
-				} else {
-					// We have a current$context declared so we must be within
-					// a Role method. And we're calling another Role method
-					// because typeOfThisParameterToMethod is of RTRole type.
-					// But it may not be the same Role or even the same Context.
-					
-					RunTimeEnvironment.runTimeEnvironment_.pushStack(contextToGoWithThis);
-				}
-			}
-		}
-		
-		private void populateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
-			final FormalParameterList formalParameters = methodDecl.formalParameters();
-			for (int i = formalParameters.count() - 1; 0 <= i; --i) {
-				final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
-				final String ithParameterName = ithParameter.name();
-				final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
-				activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
-				final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
-				if (rawArgument instanceof RTObject == false) {
-					assert rawArgument instanceof RTObject;
-				}
-				final RTObject anArgument = (RTObject)rawArgument;
-				assert null != anArgument;
-				activationRecord.setObject(ithParameterName, anArgument);
-				anArgument.decrementReferenceCount();	// not on the stack any more
-			}
-			if (this.isBuiltInAssert_) {
-				// Put the line number in the activation record
-				final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
-				activationRecord.addObjectDeclaration("lineNumber", null);
-				activationRecord.setObject("lineNumber", lineNumberToPush);
-			}
-		}
-
-		public RTCode newRun() {
+		@Override public RTCode run() {
             RTMessageDispatcher dispatcher =
             	RTMessageDispatcher.makeDispatcher(
             		messageExpr_,
@@ -975,184 +689,15 @@ public abstract class RTExpression extends RTCode {
     				expressionsCountInArguments_,
     				actualParameters_,
     				isStatic(),
-    				nearestEnclosingType_);
+    				nearestEnclosingType_,
+    				originMessageClass(),
+    				targetMessageClass());
             RTCode retval = dispatcher.hasError();
             if (null == retval) {
             	retval = dispatcher.methodDecl();
             }
             return retval;
         }
-        
-        @Override public RTCode run() {
-			RTCode start = argPush_;
-			RTObject self = null;
-			
-			// Push the return address onto the stack
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(postReturnProcessing_);
-			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
-			
-			// We're about to push the arguments onto the stack. If the
-			// target method is a Role method it will have current$context
-			// as one of its formal parameters.
-			
-			// The positional index of "this" should be 0 in ordinary case,
-			// 1 if there is current$context pushed on the stack
-			// (two stack protocols...). The indexForThisExtraction
-			// is a positional (slot) index; the expressionCounterForThisExtraction
-			// is how many expressions we need to wade through to get
-			// to the object pointer. See below.
-			int indexForThisExtraction = 0, expressionCounterForThisExtraction = 0;
-			if (null != start && start instanceof RTIdentifier) {
-				final RTIdentifier startAsRTIdent = (RTIdentifier) start;
-				if (startAsRTIdent.name().equals("current$context")) {
-					assert true;
-					
-					// If indexForThisExtraction is 1, it means that
-					// we're calling *from* a Role method
-					indexForThisExtraction = 1;  
-					expressionCounterForThisExtraction = expressionsCountInArguments_[indexForThisExtraction - 1];
-				}
-			}
-			assert indexForThisExtraction < actualParameters_.count() || 0 == actualParameters_.count();
-			
-			final ActualArgumentList argList = actualParameters_;
-			Expression thisDeclaration = null;
-			Type typeOfThisParameterToCalledMethod = null;
-			if (this.isStatic()) {
-				// There is no "this" on the stack for static method calls
-				if (null == this.messageExpr_) {
-					assert null != this.messageExpr_;
-				}
-				final Expression classNameExpression = this.messageExpr_.objectExpression();
-				assert classNameExpression instanceof IdentifierExpression;
-				final String className = classNameExpression.name();
-				// Works only for global scope types. FIXME.
-				typeOfThisParameterToCalledMethod = StaticScope.globalScope().lookupTypeDeclaration(className);
-				assert null != typeOfThisParameterToCalledMethod;
-			} else {
-				final Object rawThisDeclaration = argList.argumentAtPosition(indexForThisExtraction); // could be a Role identifier...
-				assert null != rawThisDeclaration && rawThisDeclaration instanceof Expression;
-				thisDeclaration = (Expression)rawThisDeclaration;
-				typeOfThisParameterToCalledMethod = thisDeclaration.type();	// tentative...
-			}
-			
-			
-			// final RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
-
-			
-			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTContextObject contextObjectEnclosingCalledScript = null;
-			if (typeOfThisParameterToCalledMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
-				// If we're a non-Role method *and* we're calling a Role method
-				// (we got to this line in this code), we need
-				// to push an extra argument - current$context. If we're calling
-				// a Role method it can be only from within a Context.
-				
-				// NOTE: Check if this is necessary. It may already be
-				// in the parameter list and pushParameterLoop may already
-				// take care of it.
-
-				// We used to get the current$context by calling
-				// RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope)
-				// That would go up the dynamic chain looking for a current$context. However,
-				// if we are in a Context method not called from another Context method,
-				// then I guess it was going up the dynamic scope and finding the current$context
-				// of the caller.
-				//
-				// If we're in a Context method and are calling a Role method, we can
-				// get the current$context as just "this"
-				contextObjectEnclosingCalledScript = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
-				if (thisDeclaration.type() instanceof RoleType) {
-					if (null == contextObjectEnclosingCalledScript) {
-						// Assertion fired in call of noteName in StageProp Root of
-						// context Chord (chord_identifier7.k). self was null. Being
-						// called from Context method of Chord
-						// assert null != contextObjectEnclosingCalledScript;
-					}
-				}
-			} else if (typeOfThisParameterToCalledMethod instanceof RoleType && 0 == indexForThisExtraction) {
-				// Probably a "requires" method being called through the
-				// Role identifier, though it's actually in the Role-player
-				contextObjectEnclosingCalledScript = null;
-			} else if (typeOfThisParameterToCalledMethod instanceof ContextType) {
-				// Shouldn't matter, as calling a Context method (not a Role method)
-				// doesn't require current$context.
-				contextObjectEnclosingCalledScript = null;
-			} else if (typeOfThisParameterToCalledMethod instanceof ClassType ||
-						typeOfThisParameterToCalledMethod instanceof BuiltInType) {
-				// Just an old-fashioned method call
-				contextObjectEnclosingCalledScript = null;
-			} else if (typeOfThisParameterToCalledMethod instanceof InterfaceType) {
-				contextObjectEnclosingCalledScript = null;
-			} else if (typeOfThisParameterToCalledMethod instanceof ArrayType) {
-				contextObjectEnclosingCalledScript = null;
-			} else {
-				// what's a mother to do?
-				// E.g., 
-				assert false;
-			}
-			
-			// Is this too early? We can't know whether to push current$context
-			// until we know whether the called method is a Role method or not.
-			// The typeOfThisParameterToMethod argument is insufficient alone
-			// to do that, because methods dispatched through it could just
-			// be ordinary methods in the Role-player.
-			this.pushContextPointerIfNecessary(typeOfThisParameterToCalledMethod, 
-					contextObjectEnclosingCalledScript,
-					indexForThisExtraction);
-
-			
-			// This loop just processes the pushing of the arguments
-			// The value of "pc" will eventually return null - there
-			// is no link to subsequent code
-			final RTStackable tempSelf = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
-			if (tempSelf instanceof RTObject) {
-				self = (RTObject)tempSelf;
-			} else if (tempSelf instanceof RTHalt) {
-				return (RTCode)tempSelf;
-			}
-			
-			// Get the method declaration by looking it up in the receiver's scope
-			// Null return on error (e.g., attempting to invoke a method on a null object)
-			RTMethod methodDecl = this.getMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
-			
-			// While we're at it, see if we're calling the real assert. It
-			// gets an extra argument pushed in the loop below.
-			isBuiltInAssert_ = false;
-			if (methodSelectorName_.equals("assert")) {
-				if (null != methodDecl) {
-					final MethodDeclaration originalMethodDeclaration = methodDecl.methodDeclaration();
-					if (null != originalMethodDeclaration) {
-						final StaticScope methodScope = originalMethodDeclaration.enclosedScope();
-						final StaticScope declaringScope = null == methodScope? null: methodScope.parentScope();
-						final Declaration associatedDeclaration = null == declaringScope? null:
-												declaringScope.associatedDeclaration();
-						final String typePathName = null == associatedDeclaration? " ":
-							associatedDeclaration.type().pathName();
-						if (typePathName.equals("Object.")) {
-							isBuiltInAssert_ = true;
-						}
-					}
-				}
-			}
-			
-			if (null != methodDecl) {
-				// Now that the actual parameters are on the stack, let's
-				// open up an activation record, pop off the arguments
-				// and move them into the activation record as formal
-				// parameters
-				
-				// Push the activation record onto the activation record stack
-				// (I think this is the only place in the code where activation
-				// records are pushed)
-				final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
-				RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
-				this.populateActivationRecord(methodDecl, activationRecord);
-			}
-		
-			// Turn it over to the executive to call the method.
-			return methodDecl;
-		}
 		
 		@Override public void setNextCode(final RTCode nextCode) {
 			// This becomes the public version of setNextCode. The value
@@ -1348,6 +893,14 @@ public abstract class RTExpression extends RTCode {
 			return argList;
 		}
 		
+		public MethodInvocationEnvironmentClass originMessageClass() {
+			return originMessageClass_;
+		}
+		
+		public MethodInvocationEnvironmentClass targetMessageClass() {
+			return targetMessageClass_;
+		}
+		
 		public boolean isStatic() {
 			return isStatic_;
 		}
@@ -1363,8 +916,8 @@ public abstract class RTExpression extends RTCode {
 		private final RTPostReturnProcessing postReturnProcessing_;
 		private RTType nearestEnclosingType_;
 		private final boolean isStatic_;
-		private boolean isBuiltInAssert_;
-	}
+		private final MethodInvocationEnvironmentClass originMessageClass_, targetMessageClass_;
+	}	// class RTMessage
 
 	public static class RTDupMessage extends RTExpression {
 		public RTDupMessage(final String name, final DupMessageExpression expr, final RTType enclosingMegaType) {
@@ -2448,9 +2001,13 @@ public abstract class RTExpression extends RTCode {
 				rTConstructor_ = null;
 			} else {
 				// compile it
+				final MethodInvocationEnvironmentClass originMessageClass = null == expr.enclosingMegaType()?
+						MethodInvocationEnvironmentClass.ClassEnvironment:
+						expr.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
+				final MethodInvocationEnvironmentClass targetMessageClass = constructor.enclosedScope().methodInvocationEnvironmentClass();
 				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope, expr.lineNumber());
 				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber(),
-						false);
+						false, originMessageClass, targetMessageClass);
 				
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
@@ -2497,6 +2054,8 @@ public abstract class RTExpression extends RTCode {
 				for (final String iter : ((RTContext)rTType_).isStagePropArrayMapEntries()) {
 					((RTContextObject)newlyCreatedObject).designateStagePropAsArray(iter);
 				}
+				
+			// These should all be pathnames. Easy fix. FIXME.
 			} else if (classType_.name().startsWith("List<")) {
 				newlyCreatedObject = new RTListObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().startsWith("Set<")) {
@@ -2505,6 +2064,8 @@ public abstract class RTExpression extends RTCode {
 				newlyCreatedObject = new RTMapObject(rTType_);	// rTType_ is, e.g. an instance of RTClass
 			} else if (classType_.name().equals("Date")) {
 				newlyCreatedObject = new RTDateObject(rTType_);
+			} else if (classType_.name().equals("Scanner")) {
+				newlyCreatedObject = new RTScannerObject(rTType_);
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}
@@ -4095,10 +3656,10 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTReturn extends RTExpression {
-		public RTReturn(final String methodName, final List<RTCode> re, final RTType nearestEnclosingType) {
+		public RTReturn(final String methodName, final List<RTCode> returnExpression, final RTType nearestEnclosingType) {
 			super();
-			rTRe_ = re;
-			
+			rTRe_ = returnExpression;
+
 			// So far this is used only for debugging
 			methodName_ = methodName;
 			lineNumber_ = 0;
@@ -4106,7 +3667,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		public RTReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
 			super();
-
+			
 			// If returnExpr isn't null, then there's a return value. It's the
 			// responsibility of the return statement to evaluate it and put
 			// it on the stack, and to get it back to the caller
@@ -4225,6 +3786,12 @@ public abstract class RTExpression extends RTCode {
 		private final String methodName_;
 		private final int lineNumber_;
 		private final int nestingLevelInsideMethod_;
+	}
+	
+	public static class RTDummyReturn extends RTReturn {
+		public RTDummyReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
+			super (methodName, returnExpression, nearestEnclosingType);
+		}
 	}
 	
 	public static class RTBlock extends RTExpression {

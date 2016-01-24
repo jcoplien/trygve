@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -111,6 +111,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.parser.KantParser.Abelian_atomContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_exprContext;
@@ -1663,61 +1664,70 @@ public class Pass1Listener extends Pass0Listener {
 		// The expression being returned is popped from
 		// parsingData_.popExpression() in this.expressionFromReturnStatement
 		// It may be null.
+		
+		final ExprContext exprContext = ctx.expr();
 		Expression expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
-		if (null != ctx.expr()) {
+		
+		if (null != exprContext && null != expression) {
 			expression.setResultIsConsumed(true);	// consumed by the return statement
-		}
 		
-		if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
-			if (null == expression.type()) {
-				assert null != expression.type();
-			}
-			assert null != expression.type().pathName();
-			if (expression.type().pathName().equals("void")) {
-				assert true;	// tests/chord_identifier7.k
-				expression = new TopOfStackExpression();
-			}
-		}
-		
-		// Now, speaking of the return statement... Methods stick one in at
-		// the end for free. But we have an explicit return here and it
-		// may not be at the end. If it is, then there may just be extra
-		// redundant return code. But watch for scope management stuff.
-		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		if (null != nearestEnclosingMegaType) {		// error stumbling
-			if (expression instanceof ReturnExpression) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"You may not return another `return' expression.", "", "", "");
-				expression = new NullExpression();
-			} else {
-				// Check to make sure it is of the right type
-					
-				final MethodSignature currentMethod = parsingData_.currentMethodSignature();
-				final Type methodReturnType = currentMethod.returnType();
-				final Type expressionType = expression.type();
-				if (null != methodReturnType && null != expressionType) {
-					if (methodReturnType.pathName().equals(expressionType.pathName())) {
-						;  // we're cool
-					} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
-						// We're almost cool...
-						errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
-								"WARNING: substituting object of type `",
-								methodReturnType.name(),
-								"' for `",
-								expression.getText() + "'.");
-						expression = expression.promoteTo(methodReturnType);
-						expression.setResultIsConsumed(true);
-					} else {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-								"Type mismatch in return statement. Expected `",
-								methodReturnType.name(),
-								"' and found `",
-								expression.getText() + "'.");
-					}
+			if (null != expression && this.getClass().getSimpleName().equals("Pass1Listener") == false) {
+				if (null == expression.type()) {
+					assert null != expression.type();
+				}
+				assert null != expression.type().pathName();
+				if (expression.type().pathName().equals("void")) {
+					assert true;	// tests/chord_identifier7.k
+					expression = new TopOfStackExpression();
 				}
 			}
-			expression = new ReturnExpression(expression, ctx.getStart().getLine(),
-					nearestEnclosingMegaType, currentScope_);
+			
+			// Now, speaking of the return statement... Methods stick one in at
+			// the end for free. But we have an explicit return here and it
+			// may not be at the end. If it is, then there may just be extra
+			// redundant return code. But watch for scope management stuff.
+			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			if (null != nearestEnclosingMegaType) {		// error stumbling
+				if (expression instanceof ReturnExpression) {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+							"You may not return another `return' expression.", "", "", "");
+					expression = new NullExpression();
+				} else {
+					// Check to make sure it is of the right type
+						
+					final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+					final Type methodReturnType = currentMethod.returnType();
+					
+					assert null != expression;
+					final Type expressionType = expression.type();
+					if (null != methodReturnType && null != expressionType) {
+						if (methodReturnType.pathName().equals(expressionType.pathName())) {
+							;  // we're cool
+						} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
+							// We're almost cool...
+							errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
+									"WARNING: substituting object of type `",
+									methodReturnType.name(),
+									"' for `",
+									expression.getText() + "'.");
+							expression = expression.promoteTo(methodReturnType);
+							expression.setResultIsConsumed(true);
+						} else {
+							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+									"Type mismatch in return statement. Expected `",
+									methodReturnType.name(),
+									"' and found `",
+									expression.getText() + "'.");
+						}
+					}
+				}
+				expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+						nearestEnclosingMegaType, currentScope_);
+			} else {
+				// expression = new NullExpression();
+				expression = new ReturnExpression(null, ctx.getStart().getLine(),
+						nearestEnclosingMegaType, currentScope_);
+			}
 		} else {
 			expression = new NullExpression();
 		}
@@ -1739,6 +1749,7 @@ public class Pass1Listener extends Pass0Listener {
 		// | if_expr
 		
 		Expression expression = null;
+		MethodInvocationEnvironmentClass originMethodClass, targetMethodClass;
 		final int lineNumber = ctx.getStart().getLine();
 		
 		if (null != ctx.abelian_product() && ctx.abelian_product().size() > 1 && null != ctx.ABELIAN_SUMOP()) {
@@ -1775,7 +1786,20 @@ public class Pass1Listener extends Pass0Listener {
 						
 						expression.setResultIsConsumed(true);
 						expr2.setResultIsConsumed(true);
-						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false);
+						originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+						if (expression.type() instanceof RoleType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+						} else if (expression.type() instanceof ClassType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						} else if (expression.type() instanceof BuiltInType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						} else if (expression.type() instanceof ContextType) {
+							targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+						} else {
+							targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
+						}
+						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
+								originMethodClass, targetMethodClass);
 					} else if (expression.type() instanceof RoleType){
 						// Check if it is in the requires section for a Role
 						
@@ -1790,8 +1814,11 @@ public class Pass1Listener extends Pass0Listener {
 						final MethodSignature newMethodSignature = requiresSection.get(operatorAsString);
 						if (null != newMethodSignature) {
 							final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-							final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
-							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false);
+							originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+							targetMethodClass = associatedDeclaration.type().enclosedScope().methodInvocationEnvironmentClass();
+						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
+							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false,
+									originMethodClass, targetMethodClass);
 						} else {
 							expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 						}
@@ -1951,7 +1978,13 @@ public class Pass1Listener extends Pass0Listener {
 				
 				// The compareTo message is applied to its first own
 				// argument - in this case, lhs
-				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false);
+				MethodInvocationEnvironmentClass originMethodClass, targetMethodClass;
+				
+				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+				targetMethodClass = lhs.type().enclosedScope().methodInvocationEnvironmentClass();
+			
+				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false,
+						originMethodClass, targetMethodClass);
 				expression.setResultIsConsumed(true);
 				
 				// Assign result of compareTo
@@ -1980,8 +2013,10 @@ public class Pass1Listener extends Pass0Listener {
 				final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
 				final Expression classObjectExpression = new IdentifierExpression("Object", objectType,
 						StaticScope.globalScope(), lineNumber);
+				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+				targetMethodClass = convertMessage.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
-						lineNumber, true);
+						lineNumber, true, originMethodClass, targetMethodClass);
 				expression.setResultIsConsumed(true);
 
 				// This sucks. Expression lists usually take the first seed
@@ -4144,8 +4179,25 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		object.setResultIsConsumed(true);
+		
+		MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
+		if (null != currentScope_.associatedDeclaration()) {
+			originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+		} else {
+			final Type anotherType = object.enclosingMegaType();
+			if (null != anotherType) {
+				final StaticScope anotherScope = anotherType.enclosedScope();
+				originMethodClass = anotherScope.methodInvocationEnvironmentClass();
+			} else {
+				originMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;	// outermost scope
+			}
+		}
+		final MethodInvocationEnvironmentClass targetMethodClass = null == message.enclosingMegaType()?
+				MethodInvocationEnvironmentClass.ClassEnvironment:
+				message.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
-		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic);
+		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
+				originMethodClass, targetMethodClass);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.2
+ * Trygve IDE 1.3
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -156,6 +156,9 @@ public abstract class RTClassAndContextCommon implements RTType {
 			possibilities.put(methodDecl.formalParameters(), methodDecl);
 		} else {
 			final Map<FormalParameterList, RTMethod> newVector = new LinkedHashMap<FormalParameterList, RTMethod>();
+			if (null == methodDecl) {
+				assert null != methodDecl;
+			}
 			newVector.put(methodDecl.formalParameters(), methodDecl);
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}
