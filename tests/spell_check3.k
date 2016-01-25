@@ -268,6 +268,9 @@ context SpellCheck {
             if(!hasNext()) return;
             Dictionary.checkSpelling(next());
         }
+        public void replaceCurrentSpellingWith(String word) {
+            set(word);
+        }
     } requires {
         boolean hasNext() const;
         String next();
@@ -280,7 +283,7 @@ context SpellCheck {
 
             if(suggestions.size() > 0) {
                 // TODO: User input and selection
-                SpellChecker.set("[" + suggestions.get(0) + "]");
+                SpellChecker.replaceCurrentSpellingWith("[" + suggestions.get(0) + "]");
             }
 
             SpellChecker.advanceToNextWord();
