@@ -326,9 +326,8 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
 				final String paramToIgnore, final HierarchySelector baseClassSearch) {
 			MethodSignature retval = null;
-			assert null == paramToIgnore;
 			
-			assert false;		// ever called?
+			assert true;		// ever called? Yup. spell=check2.k
 			
 			final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 			
@@ -336,7 +335,7 @@ public abstract class Type implements ExpressionStackAPI
 			if (selectorSignatureMap_.containsKey(methodSelector)) {
 				signatures = selectorSignatureMap_.get(methodSelector);
 				for (final MethodSignature signature : signatures) {
-					if (signature.formalParameterList().alignsWith(methodSignatureFormalParameterList)) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(signature.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true)) {
 						retval = signature;
 						break;
 					}

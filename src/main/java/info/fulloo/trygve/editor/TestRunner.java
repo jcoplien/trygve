@@ -141,6 +141,7 @@ public class TestRunner {
 		"illegal_context_access.k",
 		"frontloading1.k",
 		"spell_check.k",
+		"spell_check2.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {
