@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/spell_check.k";
+	private final static String defaultFile = "tests/chainable1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.3.6";
+    final String TrygveVersion = "1.3.7";
     
     public InputStream getIn() {
     	return console_.getIn();

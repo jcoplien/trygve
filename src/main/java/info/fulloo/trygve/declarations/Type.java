@@ -577,7 +577,7 @@ public abstract class Type implements ExpressionStackAPI
 			if (t instanceof RoleType && t.name().equals(name())) {
 				// it's just one of us...
 				retval = true;
-			} else {
+			} else if (null != associatedDeclaration_){
 				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 				retval = true;
 				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
@@ -609,6 +609,10 @@ public abstract class Type implements ExpressionStackAPI
 						break;
 					}
 				}
+			} else {
+				// associatedDeclaration_ is null?
+				// assert false;
+				retval = false;	// probably just a Pass1 stumble. chainable1.k
 			}
 			return retval;
 		}
