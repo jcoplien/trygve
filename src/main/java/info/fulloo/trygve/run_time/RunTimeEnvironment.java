@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -57,7 +58,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RunTimeEnvironment {
 	public static RunTimeEnvironment runTimeEnvironment_;
-	public RunTimeEnvironment() {
+	public RunTimeEnvironment(final InputStream redirectedInputStream) {
 		super();
 		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
 		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
@@ -67,6 +68,7 @@ public class RunTimeEnvironment {
 		setRunTimeEnvironment(this);
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
+		redirectedInputStream_ = redirectedInputStream;
 	}
 	private static void setRunTimeEnvironment(final RunTimeEnvironment theThis) {
 		runTimeEnvironment_ = theThis;
@@ -363,7 +365,11 @@ public class RunTimeEnvironment {
 		return retval;
 	}
 	
-	private void printStack() {
+	public InputStream redirectedInputStream() {
+		return redirectedInputStream_;
+	}
+	
+	public void printStack() {
 		final int stackSize = stack.size();
 		System.err.format("________________________________________________________ (%d)\n", stackSize);
 		final int endIndex = stackSize > 5? stackSize - 5: 0;
@@ -405,5 +411,6 @@ public class RunTimeEnvironment {
 	private       Stack<IntWrapper> framePointers_;
 	private       Stack<RTDynamicScope> dynamicScopes;
 	private final List<RTClass> allClassList_;
-	public  RTDynamicScope globalDynamicScope;
+	public        RTDynamicScope globalDynamicScope;
+	private final InputStream redirectedInputStream_;
 }

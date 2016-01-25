@@ -137,7 +137,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			ErrorLogger.error(ErrorType.Fatal,
 					"Objects may play Role(s) only in one Context at a time (note: this does not apply to Stage Props).",
-					"\nFurther execution may exhibit undefined behaviour.", "", "");
+					System.getProperty("line.separator") ,
+					"Further execution may exhibit undefined behaviour.", "");
 		}
 	}
 	

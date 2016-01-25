@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.tree.*;
 
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -71,7 +72,7 @@ public class ParseRun {
         		// Pass 4 mainly does template instantiations
         		this.pass4(parsingData, tree);
         		
-        		this.generateCode(parsingData);
+        		this.generateCode(parsingData, gui.getIn());
         	}
         	catch (final NoSuchMethodException nsme) {
         		System.err.println("No method for rule "+startRuleName+" or it has arguments");
@@ -110,9 +111,9 @@ public class ParseRun {
         ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
-	private void generateCode(final ParsingData parsingData) {
+	private void generateCode(final ParsingData parsingData, final InputStream redirectedInputStream) {
 		final Program program = Program.program();
-		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData);
+		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, redirectedInputStream);
 		codeGenerator.compile();
 		virtualMachine_ = codeGenerator.virtualMachine();
 		mainExpr_ = codeGenerator.mainExpr();

@@ -1473,12 +1473,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ReturnExpression extends Expression
 	{
-		public ReturnExpression(final Expression returnExpression, final int lineNumber,
+		public ReturnExpression(final String methodName, final Expression returnExpression,
+				final int lineNumber,
 				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
-			super("return" + (null !=  returnExpression? " " + returnExpression.getText(): ""),
+			super("return from " + methodName + ": returning " + (null !=  returnExpression? " " + returnExpression.getText(): "nothing"),
 				  null != returnExpression? returnExpression.type():
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
 						nearestEnclosingMegaType);
+			
 			returnExpression_ = returnExpression;
 			lineNumber_ = lineNumber;
 			
@@ -1530,7 +1532,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	{
 		public DummyReturnExpression(final Expression returnExpression, final int lineNumber,
 				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
-			super(returnExpression, lineNumber, nearestEnclosingMegaType, enclosingScope);
+			super("dummmy", returnExpression, lineNumber, nearestEnclosingMegaType, enclosingScope);
 		}
 	}
 	

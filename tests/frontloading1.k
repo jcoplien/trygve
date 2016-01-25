@@ -221,5 +221,9 @@ context Project {
 line 89: NONCOMPLIANT: Trying to enact object script `size()' without using the interface of the Role it is playing: `Predecessors'.
 line 90: NONCOMPLIANT: Trying to enact object script `get(int)' without using the interface of the Role it is playing: `Predecessors'.
 ___________________________________________________________
-line 148: FATAL: TERMINATED: Attempting to invoke method + on a null object
+FATAL: TERMINATED: Attempt to invoke script `+' on null object on left-hand side of operation involving `rhs'.
+	In script `+'
+	Called from script `earlyStartTime'
+	Called from script `findUnplanned'
+	Called from script `frontload'
 */
