@@ -218,9 +218,12 @@ public abstract class RTExpression extends RTCode {
 		} else if (expr instanceof PowerExpression) {
 			retval = new RTPower((PowerExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof DummyReturnExpression) {
-			retval = new RTDummyReturn("return", (DummyReturnExpression)expr, nearestEnclosingType);
+			retval = new RTDummyReturn(((ReturnExpression)expr).name(), (DummyReturnExpression)expr, nearestEnclosingType,
+					((DummyReturnExpression) expr).nestingLevelInsideMethod());
 		} else if (expr instanceof ReturnExpression) {
-			retval = new RTReturn("return", (ReturnExpression)expr, nearestEnclosingType);
+			retval = new RTReturn(((ReturnExpression)expr).name(), ((ReturnExpression)expr).returnExpression(),
+					nearestEnclosingType,
+					((ReturnExpression) expr).nestingLevelInsideMethod());
 		} else if (expr instanceof BlockExpression) {
 			retval = new RTBlock((BlockExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof NewExpression) {
@@ -1135,6 +1138,7 @@ public abstract class RTExpression extends RTCode {
 					assert false;
 				}
 			}
+
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
 			setLastExpressionResult(value, lineNumber_);
 			return nextCode_;
@@ -3656,16 +3660,20 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTReturn extends RTExpression {
-		public RTReturn(final String methodName, final List<RTCode> returnExpression, final RTType nearestEnclosingType) {
+		public RTReturn(final String methodName, final List<RTCode> returnExpression,
+				final RTType nearestEnclosingType, final int nestingLevelInsideMethod) {
 			super();
+			
 			rTRe_ = returnExpression;
 
+			lineNumber_ = 0;
+			nestingLevelInsideMethod_ = nestingLevelInsideMethod;
+			
 			// So far this is used only for debugging
 			methodName_ = methodName;
-			lineNumber_ = 0;
-			nestingLevelInsideMethod_ = 0;
 		}
-		public RTReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
+		public RTReturn(final String methodName, final Expression returnExpression,
+				final RTType nearestEnclosingType, final int nestingLevelInsideMethod) {
 			super();
 			
 			// If returnExpr isn't null, then there's a return value. It's the
@@ -3674,11 +3682,14 @@ public abstract class RTExpression extends RTCode {
 			if (null != returnExpression) {
 				rTRe_ = new ArrayList<RTCode>();
 				assert returnExpression instanceof NullExpression == false;
-				if (returnExpression instanceof ReturnExpression == false) {
-					assert returnExpression instanceof ReturnExpression;
+				// if (returnExpression instanceof ReturnExpression == false) {
+				// 	assert returnExpression instanceof ReturnExpression;
+				// }
+				if (returnExpression instanceof ReturnExpression) {
+					assert returnExpression instanceof ReturnExpression == false;
 				}
 				final RTExpression expressionToCreateReturnValue =
-						RTExpression.makeExpressionFrom(((ReturnExpression)returnExpression).returnExpression(), nearestEnclosingType);
+						RTExpression.makeExpressionFrom(returnExpression, nearestEnclosingType);
 				rTRe_.add(expressionToCreateReturnValue);
 			} else {
 				rTRe_ = null;
@@ -3687,14 +3698,14 @@ public abstract class RTExpression extends RTCode {
 			// So far this is used only for debugging
 			methodName_ = methodName;
 			lineNumber_ = null == returnExpression? 0: returnExpression.lineNumber();
-			nestingLevelInsideMethod_ = (null == returnExpression)?
-					0:
-					((ReturnExpression)returnExpression).nestingLevelInsideMethod();
+
+			nestingLevelInsideMethod_ = nestingLevelInsideMethod;
 		}
 		@Override public RTCode run() {
 			RTCode returnAddress = null;
 			boolean thereIsAReturnExpression = false;		// hasAReturnExpression
 			List<RTCode> returnExpressionList = null;
+		
 			if (null != rTRe_) {
 				returnExpressionList = rTRe_;
 				if (returnExpressionList.size() == 1) {
@@ -3716,7 +3727,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			if (thereIsAReturnExpression) {
 				// It's already evaluated and on top of the stack? No. Gotta do it now.
-				// Step one: Get it - if it's used
+				// Step 1: Get it - if it's used
 				RTStackable returnValue = null;
 				if (resultIsConsumed()) {	// maybe is always true?
 					RTCode pc = returnExpressionList.get(0);
@@ -3748,6 +3759,12 @@ public abstract class RTExpression extends RTCode {
 				}
 			} else {
 				// There is no R-value on the stack: just get the return address
+				
+				// Step 2, as above Clean up the stack. Get out to method scope
+				// Pop as many dynamic scopes as we must
+				RunTimeEnvironment.runTimeEnvironment_.popDynamicScopeInstances(nestingLevelInsideMethod_);
+				
+				// Do the corresponding pops of scope from the run-time stack
 				RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
 				returnAddress = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			}
@@ -3789,8 +3806,9 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	public static class RTDummyReturn extends RTReturn {
-		public RTDummyReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType) {
-			super (methodName, returnExpression, nearestEnclosingType);
+		public RTDummyReturn(final String methodName, final Expression returnExpression, final RTType nearestEnclosingType,
+				final int nestingLevelInsideMethod) {
+			super (methodName, returnExpression, nearestEnclosingType, nestingLevelInsideMethod);
 		}
 	}
 	

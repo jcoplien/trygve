@@ -23,6 +23,7 @@ package info.fulloo.trygve.code_generation;
  *  
  */
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -68,7 +69,6 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
-import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -121,11 +121,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
 		interpretiveCodeGenerator = justThis;
 	}
-	public InterpretiveCodeGenerator(final Program program, final ParsingData parsingData) {
+	public InterpretiveCodeGenerator(final Program program, final ParsingData parsingData, final InputStream redirectedInputStream) {
 		super();
 		program_ = program;
 		parsingData_ = parsingData;
-		virtualMachine_ = new RunTimeEnvironment();
+		virtualMachine_ = new RunTimeEnvironment(redirectedInputStream);
 		setStaticHandle(this);
 	}
 	@Override public RunTimeEnvironment virtualMachine() {
@@ -272,7 +272,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
 		
 		ReturnExpression returnExpression = null;
-		RTCode returnStatement = new RTReturn("error", (Expression)null, null);
+		RTCode returnStatement = new RTReturn("error", (Expression)null, null, 0);
 		switch (retvalType) {
 		case usingDouble:
 		case usingBool:
@@ -281,12 +281,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingString:
 			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-			returnExpression = new ReturnExpression(retval, methodDeclaration.lineNumber(),
+			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.lineNumber(),
 					retval.type(), StaticScope.globalScope());
-			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression.returnExpression(),
+					rTEnclosingMegaType,
+					returnExpression.nestingLevelInsideMethod());
 			break;
 		case none:
-			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+			returnStatement = new RTReturn(methodDeclaration.name(), (Expression)null,
+					rTEnclosingMegaType,
+					(int)0);
 			break;
 		case undefined:
 		default:
@@ -516,12 +520,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
 		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
 				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
+		final ReturnExpression returnExpression = new ReturnExpression(
+				methodDeclaration.name(),
+				self, methodDeclaration.lineNumber(),
 				self.type(), StaticScope.globalScope());
 		final StaticScope myScope = methodDeclaration.enclosedScope();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
 		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
-		final RTCode returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
+		final RTCode returnStatement = new RTReturn(methodDeclaration.name(),
+				returnExpression.returnExpression(), rTEnclosingMegaType,
+				returnExpression.nestingLevelInsideMethod());
 		returnStatement.setNextCode(last.nextCode());
 		last.setNextCode(returnStatement);
 		printlnCode.add(returnStatement);
@@ -558,7 +566,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		RTCode last = readCode.get(sizeOfCodeArray - 1);
 		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
 				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-		final ReturnExpression returnExpression = new ReturnExpression(self, methodDeclaration.lineNumber(),
+		final ReturnExpression returnExpression = new ReturnExpression(methodDeclaration.name(), self, methodDeclaration.lineNumber(),
 				self.type(), StaticScope.globalScope());xxx
 		final StaticScope myScope = methodDeclaration.enclosedScope();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
@@ -814,7 +822,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			Expression returnExpr = null;
 			if (methodDeclaration.name().equals("toString")) {
 				final Expression expressionToReturn = new TopOfStackExpression();
-				returnExpr = new ReturnExpression(expressionToReturn, 0,
+				returnExpr = new ReturnExpression(
+						methodDeclaration.name(),
+						expressionToReturn, 0,
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
 						methodDeclaration.enclosedScope());
 			} else {
@@ -1034,13 +1044,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// Give them all a return statement. This is never executed but
 		// is only consulted at run time to see if the method returns
 		// anything — hence the instantiation of a dummy.
+		//
+		// Wait a minute... some of these go live...
 		RTMethod rtMethod = null;
 		final Type returnType = methodDeclaration.returnType();
 		if (null != returnType && false == returnType.name().equals("void")) {
 			final Expression expressionToReturn = new TopOfStackExpression();
-			final Expression returnExpression = new DummyReturnExpression(expressionToReturn,
+			final Expression returnExpression = new ReturnExpression(
+					methodDeclaration.name(),
+					expressionToReturn,	/* Dummy? */
 					methodDeclaration.lineNumber(),
-					nearestEnclosingMegaType, scope);
+					nearestEnclosingMegaType, methodDeclaration.enclosedScope());
 			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpression);
 		} else {
 			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
@@ -1315,7 +1329,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				}
 			}
 		}
-		retval.add(new RTReturn(methodDeclaration.name(), rTExpr, rtTypeDeclaration));
+		retval.add(new RTReturn(methodDeclaration.name(), rTExpr, rtTypeDeclaration,
+				null == expr? 0: expr.nestingLevelInsideMethod()));
 		return retval;
 	}
 	public List<RTCode> compileBlockExpression(final BlockExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {

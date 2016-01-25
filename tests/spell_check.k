@@ -227,7 +227,7 @@ context SpellCheck {
                 System.out.println(word + " spelled OK");
                 return;
             }
-
+if(suggestions.size() == 0) assert(false, "theoretically unreachable")
             int pos = SpellChecker.currentPosition();
             int oldWordPos = pos - word.length() - 1;
             int newPos = oldWordPos + suggestions.get(0).length() + 1;
@@ -320,5 +320,139 @@ and a partridge in a pear tree.
 
 Moving to next word. Current position: 0
 ten spelled OK
-line 0: List.get(): List index out-of-range: 0 on list of size 0
+Moving to next word. Current position: 4
+lords spelled OK
+Moving to next word. Current position: 10
+Moving to next word. Current position: 18
+nine spelled OK
+Moving to next word. Current position: 26
+ladies spelled OK
+Moving to next word. Current position: 33
+dancing spelled OK
+Moving to next word. Current position: 41
+eight spelled OK
+Moving to next word. Current position: 48
+maids spelled OK
+Moving to next word. Current position: 54
+Moving to next word. Current position: 62
+seven spelled OK
+Moving to next word. Current position: 71
+swans spelled OK
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords [leaping],
+nine ladies dancing, eight maids [milking], seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+Moving to next word. Current position: 0
+On spelled OK
+Moving to next word. Current position: 3
+the spelled OK
+Moving to next word. Current position: 7
+twelveth spelled OK
+Moving to next word. Current position: 16
+day spelled OK
+Moving to next word. Current position: 20
+of spelled OK
+Moving to next word. Current position: 23
+Christmas spelled OK
+Moving to next word. Current position: 33
+my spelled OK
+Moving to next word. Current position: 36
+true spelled OK
+Moving to next word. Current position: 41
+love spelled OK
+Moving to next word. Current position: 46
+gave spelled OK
+Moving to next word. Current position: 51
+to spelled OK
+Moving to next word. Current position: 54
+me spelled OK
+Moving to next word. Current position: 57
+twelve spelled OK
+Moving to next word. Current position: 64
+drummers spelled OK
+Moving to next word. Current position: 73
+drumming spelled OK
+Moving to next word. Current position: 82
+eleven spelled OK
+Moving to next word. Current position: 90
+pipers spelled OK
+Moving to next word. Current position: 97
+piping spelled OK
+Moving to next word. Current position: 104
+ten spelled OK
+Moving to next word. Current position: 109
+lords spelled OK
+Moving to next word. Current position: 115
+leaping spelled OK
+Moving to next word. Current position: 124
+nine spelled OK
+Moving to next word. Current position: 131
+ladies spelled OK
+Moving to next word. Current position: 138
+dancing spelled OK
+Moving to next word. Current position: 146
+eight spelled OK
+Moving to next word. Current position: 153
+maids spelled OK
+Moving to next word. Current position: 159
+milking spelled OK
+Moving to next word. Current position: 168
+seven spelled OK
+Moving to next word. Current position: 176
+swans spelled OK
+Moving to next word. Current position: 182
+Moving to next word. Current position: 191
+six spelled OK
+Moving to next word. Current position: 198
+geese spelled OK
+Moving to next word. Current position: 204
+Moving to next word. Current position: 211
+five spelled OK
+Moving to next word. Current position: 219
+gold spelled OK
+Moving to next word. Current position: 224
+rings spelled OK
+Moving to next word. Current position: 230
+four spelled OK
+Moving to next word. Current position: 236
+calling spelled OK
+Moving to next word. Current position: 244
+birds spelled OK
+Moving to next word. Current position: 250
+three spelled OK
+Moving to next word. Current position: 257
+french spelled OK
+Moving to next word. Current position: 264
+hens spelled OK
+Moving to next word. Current position: 269
+two spelled OK
+Moving to next word. Current position: 274
+turtle spelled OK
+Moving to next word. Current position: 281
+doves spelled OK
+Moving to next word. Current position: 287
+and spelled OK
+Moving to next word. Current position: 291
+a spelled OK
+Moving to next word. Current position: 293
+partridge spelled OK
+Moving to next word. Current position: 303
+in spelled OK
+Moving to next word. Current position: 306
+a spelled OK
+Moving to next word. Current position: 308
+pear spelled OK
+Moving to next word. Current position: 313
+tree spelled OK
+Moving to next word. Current position: 318
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords [leaping],
+nine ladies dancing, eight maids [milking], seven swans [swimming],
+six geese [laying], five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
 */

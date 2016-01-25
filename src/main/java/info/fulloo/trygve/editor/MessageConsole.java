@@ -24,7 +24,12 @@ package info.fulloo.trygve.editor;
  */
 
 import java.io.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.event.*;
 import javax.swing.text.*;
@@ -49,6 +54,14 @@ public class MessageConsole
 	private Document document;
 	private boolean isAppend;
 	private DocumentListener limitLinesListener;
+	private DocInputStream in_;
+	
+    public DocInputStream getIn(){
+        return in_;
+    }
+    public void keyListenerSetup() {
+       this.textComponent.addKeyListener(this.getIn());
+    }
 
 	public MessageConsole(JTextComponent textComponent)
 	{
@@ -67,7 +80,9 @@ public class MessageConsole
 		this.textComponent = textComponent;
 		this.document = textComponent.getDocument();
 		this.isAppend = isAppend;
-		textComponent.setEditable( false );
+		textComponent.setEditable( true );
+		in_ = new DocInputStream(textComponent);
+        // textComponent.addKeyListener(in_);
 	}
 
 	/*
@@ -90,7 +105,8 @@ public class MessageConsole
 		ConsoleOutputStream cos = new ConsoleOutputStream(textColor, printStream);
 		System.setOut( new PrintStream(cos, true) );
 	}
-
+	
+	
 	/*
 	 *  Redirect the output from the standard error to the console
 	 *  using the default text color and null PrintStream
@@ -267,4 +283,93 @@ public class MessageConsole
 			buffer.setLength(0);
 		}
 	}
+	private static class DocInputStream extends InputStream implements KeyListener {
+
+        ArrayBlockingQueue<Integer> queue;
+        final JTextComponent myComponent_;
+
+        public DocInputStream(final JTextComponent associatedTextComponent){
+            queue = new ArrayBlockingQueue<Integer>(1024);
+            myComponent_ = associatedTextComponent;
+        }
+        
+        void requestFocus() {
+        	 myComponent_.grabFocus();
+             myComponent_.requestFocus();//or inWindow
+        }
+
+        @Override
+        public int read() throws IOException {
+        	requestFocus();
+            Integer i=null;
+            try {
+                i = queue.take();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Console.class.getName()).
+                        log(Level.SEVERE, null, ex);
+            }
+            if(i!=null)
+                return i;
+            return -1;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+        	requestFocus();
+            if (b == null) {
+                throw new NullPointerException();
+            } else if (off < 0 || len < 0 || len > b.length - off) {
+                throw new IndexOutOfBoundsException();
+            } else if (len == 0) {
+                return 0;
+            }
+                    int c = read();
+            if (c == -1) {
+                return -1;
+            }
+            b[off] = (byte)c;
+
+            int i = 1;
+            try {
+                for (; i < len && available() > 0 ; i++) {
+                    c = read();
+                    if (c == -1) {
+                        break;
+                    }
+                    b[off + i] = (byte)c;
+                }
+            } catch (IOException ee) {
+            }   
+            return i;
+
+        }
+
+
+
+        @Override
+        public int available(){
+            return queue.size();
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+            int c = e.getKeyChar();
+            try {
+                queue.put(c);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(Console.class.getName()).
+                        log(Level.SEVERE, null, ex);
+            }
+        }
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+        }
+
+    }
 }

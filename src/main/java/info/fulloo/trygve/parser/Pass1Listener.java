@@ -1133,7 +1133,7 @@ public class Pass1Listener extends Pass0Listener {
 		DeclarationList object_decl = null;
 		BodyPart expr = null;
 		final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
-		if (null != ctx.expr()) {
+		if (null != ctx.expr() && parsingData_.currentExpressionExists()) {
 			expr = parsingData_.popExpression();
 		}
 		if (null != ctx.object_decl()) {
@@ -1666,7 +1666,11 @@ public class Pass1Listener extends Pass0Listener {
 		// It may be null.
 		
 		final ExprContext exprContext = ctx.expr();
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		Expression expression = this.expressionFromReturnStatement(ctx.expr(), ctx.getParent(), ctx.getStart());
+		
+		final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+		final String methodName = null == currentMethod? "<null>": currentMethod.name();
 		
 		if (null != exprContext && null != expression) {
 			expression.setResultIsConsumed(true);	// consumed by the return statement
@@ -1686,7 +1690,7 @@ public class Pass1Listener extends Pass0Listener {
 			// the end for free. But we have an explicit return here and it
 			// may not be at the end. If it is, then there may just be extra
 			// redundant return code. But watch for scope management stuff.
-			final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			
 			if (null != nearestEnclosingMegaType) {		// error stumbling
 				if (expression instanceof ReturnExpression) {
 					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
@@ -1694,8 +1698,6 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new NullExpression();
 				} else {
 					// Check to make sure it is of the right type
-						
-					final MethodSignature currentMethod = parsingData_.currentMethodSignature();
 					final Type methodReturnType = currentMethod.returnType();
 					
 					assert null != expression;
@@ -1721,15 +1723,16 @@ public class Pass1Listener extends Pass0Listener {
 						}
 					}
 				}
-				expression = new ReturnExpression(expression, ctx.getStart().getLine(),
+				expression = new ReturnExpression(methodName, expression, ctx.getStart().getLine(),
 						nearestEnclosingMegaType, currentScope_);
 			} else {
 				// expression = new NullExpression();
-				expression = new ReturnExpression(null, ctx.getStart().getLine(),
+				expression = new ReturnExpression(methodName, null, ctx.getStart().getLine(),
 						nearestEnclosingMegaType, currentScope_);
 			}
 		} else {
-			expression = new NullExpression();
+			expression = new ReturnExpression(methodName, null, ctx.getStart().getLine(),
+					nearestEnclosingMegaType, currentScope_);
 		}
 		
 		if (printProductionsDebug) {

@@ -43,6 +43,7 @@ import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBigIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
@@ -244,6 +245,27 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					activationRecord.addObjectDeclaration("ret$val", null);
 				}
 			}
+			
+			protected void printMiniStackStatus() {
+				// Experiment: Pop down stack looking for information about the method
+				RTStackable topOfStack;
+				while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
+					topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
+					if (topOfStack instanceof RTPostReturnProcessing) {
+						RTPostReturnProcessing currentMethodReturn = (RTPostReturnProcessing)topOfStack;
+						ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.name(), "'", "");
+						while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
+							topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
+							if (topOfStack instanceof RTPostReturnProcessing) {
+								currentMethodReturn = (RTPostReturnProcessing)topOfStack;
+								ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.name(), "'", "");
+							}
+						}
+						break;
+					}
+					System.err.format("popping stack: type is %s\n", topOfStack.getClass().getSimpleName());
+				}
+			}
 		}
 		public static class RTAssertCode extends RTObjectCommon {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
@@ -416,16 +438,18 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
 				final RTStackable self = dynamicScope.getObject("this");
 				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+					ErrorLogger.error(ErrorType.Runtime,
 							"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on left-hand side of operation involving `",
-							parameterName_, "'.", "");
+							parameterName_ + "'.");
+					this.printMiniStackStatus();
 					nextPC = new RTHalt();
 				} else {
 					final RTStackable rhs = dynamicScope.getObject("rhs");
 					if (rhs instanceof RTNullObject) {
-						ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+						ErrorLogger.error(ErrorType.Runtime,
 								"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on right-hand side, named `",
-								parameterName_, "'.", "");
+								parameterName_ + "'.");
+						this.printMiniStackStatus();
 						nextPC = new RTHalt();
 					} else {
 						assert self instanceof RTIntegerObject;
@@ -1100,7 +1124,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			err.setObject("printStreamInfo", printStreamInfo);
 			
 			final RTObject in = nameToStaticObjectMap_.get("in");
-			RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			// final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(RunTimeEnvironment.runTimeEnvironment_.redirectedInputStream());
 			in.addObjectDeclaration("inputStreamInfo", null);
 			in.setObject("inputStreamInfo", inputStreamInfo);
 		}

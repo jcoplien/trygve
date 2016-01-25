@@ -36,6 +36,7 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
@@ -44,6 +45,9 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 public class RTMethod extends RTCode {
 	public RTMethod(final String name, final MethodDeclaration methodDeclaration, final Expression returnExpression) {
 		super();
+		
+		// Sometimes returnExpression is a ReturnExpression and sometimes just an Expression.
+		// FIXME.
 		
 		// Get ClassType as a handle to template information
 		final StaticScope methodScope = methodDeclaration.enclosedScope();
@@ -86,7 +90,14 @@ public class RTMethod extends RTCode {
 		// Again, this is really used only for void functions,
 		// where a return statement is optional: this is the
 		// one we provide for them.
-		returnInstruction_ = new RTReturn(methodDeclaration_.name(), returnExpression, null);
+		Expression expressionToBeReturned = returnExpression;
+		if (returnExpression instanceof ReturnExpression) {
+			expressionToBeReturned = ((ReturnExpression)expressionToBeReturned).returnExpression();
+		} else {
+			expressionToBeReturned = returnExpression;
+		}
+		returnInstruction_ = new RTReturn(methodDeclaration_.name(),
+				expressionToBeReturned, null, 0);
 		this.addCode(returnInstruction_);
 		
 		// All dogs go to heaven and all procedures that have something to return

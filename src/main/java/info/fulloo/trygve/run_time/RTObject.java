@@ -28,6 +28,9 @@ import java.util.Map;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 
+// INFO: To get a hex shorthand for an object, use:
+// Integer.toHexString(System.identityHashCode(object))
+
 public interface RTObject extends RTStackable {
 	public RTObject getObject(final String name);
 	public void addObjectDeclaration(final String objectName, final RTType type);

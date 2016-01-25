@@ -252,7 +252,6 @@ public abstract class RTMessageDispatcher {
 			// address for the method (RTPostReturnProcessing) and "nextInstruction"
 			// points to a method
 			final RTCode nextInstruction = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-			
 			final RTCode oldPc = pc;
 			pc = nextInstruction;
 			if (pc instanceof RTHalt) {
@@ -269,7 +268,6 @@ public abstract class RTMessageDispatcher {
 		
 		self = isStatic_? null:
 			(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
-
 		assert null != self || isStatic_;
 		return self;
 	}
@@ -284,6 +282,10 @@ public abstract class RTMessageDispatcher {
 			final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (rawArgument instanceof RTObject == false) {
 				assert rawArgument instanceof RTObject;
+			}
+			if (ithParameterName.equals("current$context") && rawArgument instanceof RTContextObject == false) {
+				assert rawArgument instanceof RTContextObject;
+				// probably didn't push it when we should have
 			}
 			final RTObject anArgument = (RTObject)rawArgument;
 			assert null != anArgument;
@@ -304,6 +306,8 @@ public abstract class RTMessageDispatcher {
 		// Get the method declaration by looking it up in the receiver's scope
 		// Null return on error (e.g., attempting to invoke a method on a null object)
 		methodDecl_ = this.getMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
+		// may be null if, for example, invoking a method on a null object
+		// (test case tests/inheritance.k)
 		
 		// While we're at it, see if we're calling the real assert. It
 		// gets an extra argument pushed in the loop below.
@@ -947,20 +951,21 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-
+			
 			final int indexForThisExtraction = 1;	// seems very temperamental about being generalised...
 			// final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 			
 			RTObject self = null;
 			RTCode start = argPush_;
-
+			
 			// Now push the arguments onto the stack
 			final Type typeOfThisParameterToCalledMethod = super.commonProlog(indexForThisExtraction, expressionCounterForThisExtraction);
 			
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null - there
 			// is no link to subsequent code
+			
 			final RTStackable tempSelf = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
 			
 			if (tempSelf instanceof RTHalt) {
@@ -1053,7 +1058,7 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
+
 			RTObject self = null;
 			RTCode start = argPush_;
 

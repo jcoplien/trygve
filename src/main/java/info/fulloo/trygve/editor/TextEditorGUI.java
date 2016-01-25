@@ -44,12 +44,15 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/input_test1.k";
+	private final static String defaultFile = "tests/spell_check.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.3.5";
+    final String TrygveVersion = "1.3.6";
     
+    public InputStream getIn() {
+    	return console_.getIn();
+    }
     
     /** Creates new form TextEditorGUI */
     public TextEditorGUI() {
@@ -111,6 +114,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             console_ = new MessageConsole(errorPanel);
             console_.redirectOut();
             console_.redirectErr(java.awt.Color.RED, null);
+            console_.keyListenerSetup();
         }
         editPane = super.editPane(); // new javax.swing.JEditorPane();
         if (OLD) {
@@ -735,7 +739,7 @@ private void loadFile(final String pathName) {
     try {
         final BufferedReader reader = new BufferedReader(new FileReader(pathName));
         while (reader.ready()) {
-            stringBuilder.append(reader.readLine() + "\n");
+            stringBuilder.append(reader.readLine() + System.getProperty("line.separator"));
         }
         reader.close();
         this.editPane.setText(stringBuilder.toString());
