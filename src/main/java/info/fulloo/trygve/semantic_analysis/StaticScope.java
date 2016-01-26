@@ -535,6 +535,11 @@ public class StaticScope {
 		final Type doubleType = StaticScope.globalScope().lookupTypeDeclaration("double");
 		assert null != doubleType;
 		
+		final Type listType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert null != listType;
+		addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType));
+		
+		
 		StaticScope newScope = new StaticScope(doubleType.enclosedScope());
 		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
 		methodDecl.setHasConstModifier(true);

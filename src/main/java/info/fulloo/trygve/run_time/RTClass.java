@@ -25,6 +25,7 @@ package info.fulloo.trygve.run_time;
 
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -969,9 +970,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					listCopy.add(aString.stringValue());
 				}
 				
-				final String sResult = String.join(delimeter, listCopy);
+				final String sResult = String.join(delimeter.stringValue(), listCopy);
 
-	
 				final RTStringObject result = new RTStringObject(sResult);
 
 				addRetvalTo(dynamicScope);

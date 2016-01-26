@@ -707,7 +707,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtMethod.addCode(code);
 	}
-	private void processStringMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+	private void processStringMethodDefinition(final MethodDeclaration methodDeclaration,
+			final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		final List<RTCode> code = new ArrayList<RTCode>();
 		RetvalTypes retvalType = RetvalTypes.undefined;
@@ -728,7 +729,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-		} else if (formalParameterList.count() == 2) {
+		} else if (2 == formalParameterList.count()) {
 			if (methodDeclaration.name().equals("+")) {
 				code.add(new RTStringClass.RTPlusCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingString;
@@ -745,9 +746,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				retvalType = RetvalTypes.undefined;
 				assert false;
 			}
-		} else if (formalParameterList.count() == 3) {
+		} else if (3 == formalParameterList.count()) {
 			if (methodDeclaration.name().equals("substring")) {
 				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
+			} else if (methodDeclaration.name().equals("join")) {
+				code.add(new RTStringClass.RTJoinCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.undefined;

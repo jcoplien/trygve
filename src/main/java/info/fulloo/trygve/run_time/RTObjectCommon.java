@@ -802,6 +802,20 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTIntegerObject retval = new RTIntegerObject(lRetval);
 			return retval;
 		}
+		RTStringObject join(final RTObject string, final RTListObject listOfStrings) {
+			// NOTE: Pseudo-static method; "this" is unused
+			final RTStringObject rTInsertingString = (RTStringObject)string;
+			final String insertingString = rTInsertingString.stringValue();
+			final List<String> listCopy = new ArrayList<String>();
+			final int listSize = listOfStrings.size();
+			for (int i = 0; i < listSize; i++) {
+				final RTStringObject aString = (RTStringObject)listOfStrings.get(i);
+				listCopy.add(aString.stringValue());
+			}
+			final String sRetval = String.join(insertingString, listCopy);
+			final RTStringObject retval = new RTStringObject(sRetval);
+			return retval;
+		}
 		public int hashCode() {
 			return foobar_.hashCode();
 		}
