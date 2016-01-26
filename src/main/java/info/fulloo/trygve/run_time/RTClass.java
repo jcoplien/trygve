@@ -950,6 +950,36 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTJoinCode extends RTStringCommon {
+			public RTJoinCode(final StaticScope methodEnclosedScope) {
+				super("String", "join", asList("delimiter", "elements"), asList("String", "List<String>"),
+						methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable delimeterObject = dynamicScope.getObject("delimiter");
+				final RTStringObject delimeter = (RTStringObject)delimeterObject;
+				final RTStackable elementsObjects = dynamicScope.getObject("elements");
+				final RTListObject elements = (RTListObject)elementsObjects;
+				final List<String> listCopy = new ArrayList<String>();
+				final int listSize = elements.size();
+				for (int i = 0; i < listSize; i++) {
+					final RTStringObject aString = (RTStringObject)elements.get(i);
+					listCopy.add(aString.stringValue());
+				}
+				
+				final String sResult = String.join(delimeter, listCopy);
+
+	
+				final RTStringObject result = new RTStringObject(sResult);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", result);
+				
+				return super.nextCode();
+			}
+		}
 		
 		@Override public RTType typeNamed(final String typeName) { return null; }
 		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }

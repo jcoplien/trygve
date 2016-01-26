@@ -802,17 +802,22 @@ public abstract class Type implements ExpressionStackAPI
 							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
 							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
 							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
-							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
-								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
-									retval = true;
+							if (null != appearanceOfThisSignatureInOther) {
+								final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+								if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+									if (appearanceOfThisSignatureInOther.hasConstModifier()) {
+										retval = true;
+									} else {
+										retval = false;
+									}
+									break;
 								} else {
 									retval = false;
+									break;
 								}
-								break;
 							} else {
+								// punt. dunno.
 								retval = false;
-								break;
 							}
 						} else {
 							retval = false;

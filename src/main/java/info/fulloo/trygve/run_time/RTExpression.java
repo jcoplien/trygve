@@ -1093,10 +1093,15 @@ public abstract class RTExpression extends RTCode {
 					// that from the dynamic scope. Just go looking for a declaration of "this"
 					// and we'll have the scope; then see if it has a current$context
 					final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+					
+					// This is just a hope...
 					final RTDynamicScope scopeOfCurrentActiveRoleMethod = currentScope.nearestEnclosingScopeDeclaring("this");
+					
+					// This may be null if we are in a Context method, and not in a Role method!
 					final RTObject rawContextContainingRoleWhoseMethodWeAreExecuting = scopeOfCurrentActiveRoleMethod.getObject("current$context");
-					assert rawContextContainingRoleWhoseMethodWeAreExecuting instanceof RTContextObject;
-					if (rawContextContainingRoleWhoseMethodWeAreExecuting instanceof RTContextObject) {
+					
+					if (null != rawContextContainingRoleWhoseMethodWeAreExecuting &&
+							rawContextContainingRoleWhoseMethodWeAreExecuting instanceof RTContextObject) {
 						final RTContextObject contextContainingRoleWhoseMethodWeAreExecuting = (RTContextObject)rawContextContainingRoleWhoseMethodWeAreExecuting;
 						// Then we are executing within a Role method!
 						// Now: self points to the Context object that is *playing* the
