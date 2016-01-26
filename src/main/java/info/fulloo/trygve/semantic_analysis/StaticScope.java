@@ -389,7 +389,7 @@ public class StaticScope {
 		typeDeclarationList_.add(doubleDeclaration);
 	}
 	
-	private static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
+	public static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
 			final List<String> paramNames, final List<Type> paramTypes) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
@@ -534,11 +534,6 @@ public class StaticScope {
 		assert null != stringType;
 		final Type doubleType = StaticScope.globalScope().lookupTypeDeclaration("double");
 		assert null != doubleType;
-		
-		final Type listType = StaticScope.globalScope().lookupTypeDeclaration("Object");
-		assert null != listType;
-		addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType));
-		
 		
 		StaticScope newScope = new StaticScope(doubleType.enclosedScope());
 		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);

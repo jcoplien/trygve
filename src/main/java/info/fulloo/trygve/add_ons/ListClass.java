@@ -80,6 +80,8 @@ public final class ListClass {
 		assert null != voidType;
 		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
 		assert null != booleanType;
+		final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+		assert null != stringType;
 		
 		if (null == globalScope.lookupTypeDeclaration("List")) {
 			final StaticScope newScope = new StaticScope(globalScope);
@@ -111,6 +113,9 @@ public final class ListClass {
 			declareListMethod("size", intType, null, null, true);
 			
 			declareListMethod("isEmpty", booleanType, null, null, true);
+			
+			// kludge.
+			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType_));
 			
 			// Declare the type
 			globalScope.declareType(listType_);
