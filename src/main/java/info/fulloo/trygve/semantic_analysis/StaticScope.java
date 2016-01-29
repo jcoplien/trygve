@@ -390,7 +390,7 @@ public class StaticScope {
 	}
 	
 	public static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
-			final List<String> paramNames, final List<Type> paramTypes) {
+			final List<String> paramNames, final List<Type> paramTypes, final boolean isStatic) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
 		FormalParameterList formals = new FormalParameterList();
@@ -404,7 +404,7 @@ public class StaticScope {
 		}
 		formals.addFormalParameter(self);
 		final StaticScope myScope = new StaticScope(stringType.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, 0, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		myScope.setDeclaration(methodDecl);
@@ -418,19 +418,19 @@ public class StaticScope {
 		
 		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), objectBaseClass, 0);
 		
-		addStringMethod(stringType, "+", stringType, asList("rhs"), asList(stringType));
+		addStringMethod(stringType, "+", stringType, asList("rhs"), asList(stringType), false);
 		
-		addStringMethod(stringType, "length", intType, null, null);
+		addStringMethod(stringType, "length", intType, null, null, false);
 		
-		addStringMethod(stringType, "substring", stringType, asList("end", "start"), asList(intType, intType));
+		addStringMethod(stringType, "substring", stringType, asList("end", "start"), asList(intType, intType), false);
 		
-		addStringMethod(stringType, "indexOf", intType, asList("searchString"), asList(stringType));
+		addStringMethod(stringType, "indexOf", intType, asList("searchString"), asList(stringType), false);
 		
-		addStringMethod(stringType, "contains", booleanType, asList("searchString"), asList(stringType));
+		addStringMethod(stringType, "contains", booleanType, asList("searchString"), asList(stringType), false);
 		
-		addStringMethod(stringType, "toString", stringType, null, null);
+		addStringMethod(stringType, "toString", stringType, null, null, false);
 		
-		addStringMethod(stringType, "compareTo", intType, asList("other"), asList(stringType));
+		addStringMethod(stringType, "compareTo", intType, asList("other"), asList(stringType), false);
 		
 		globalScope_.declareType(stringType);
 		stringDeclaration.setType(stringType);

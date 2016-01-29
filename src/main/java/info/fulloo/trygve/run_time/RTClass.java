@@ -26,6 +26,7 @@ package info.fulloo.trygve.run_time;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -431,7 +432,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public static class RTBinaryOpCode extends RTIntegerCommon {
 			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
 				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
-				lineNumber_ = 0;
 			}
 			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 				RTCode nextPC = null;
@@ -485,8 +485,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				}
 				return nextPC;
 			}
-			
-			private final int lineNumber_;
 		}
 		public static class RTCompareToCode extends RTIntegerCommon {
 			public RTCompareToCode(final StaticScope methodEnclosedScope, final String operation) {
@@ -951,8 +949,20 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
-		public static class RTJoinCode extends RTStringCommon {
-			public RTJoinCode(final StaticScope methodEnclosedScope) {
+		private static String stringJoin(final CharSequence delimiter, final Iterable<? extends CharSequence> elements) {
+			final StringBuffer retvalBuffer = new StringBuffer();
+			for (Iterator<? extends CharSequence> anIterator = elements.iterator(); anIterator.hasNext(); ) {
+				final CharSequence aSlice = anIterator.next();
+				retvalBuffer.append(aSlice);
+				if (anIterator.hasNext()) {
+					retvalBuffer.append(delimiter);
+				}
+			}
+			final String retval = retvalBuffer.toString();
+			return retval;
+		}
+		public static class RTJoinListCode extends RTStringCommon {
+			public RTJoinListCode(final StaticScope methodEnclosedScope) {
 				super("String", "join", asList("delimiter", "elements"), asList("String", "List<String>"),
 						methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
 			}
@@ -970,7 +980,36 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					listCopy.add(aString.stringValue());
 				}
 				
-				final String sResult = String.join(delimeter.stringValue(), listCopy);
+				final String sResult = stringJoin(delimeter.stringValue(), listCopy);
+
+				final RTStringObject result = new RTStringObject(sResult);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", result);
+				
+				return super.nextCode();
+			}
+		}
+		public static class RTJoinArrayCode extends RTStringCommon {
+			public RTJoinArrayCode(final StaticScope methodEnclosedScope) {
+				super("String", "join", asList("delimiter", "elements"), asList("String", "String_$array"),
+						methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable delimeterObject = dynamicScope.getObject("delimiter");
+				final RTStringObject delimeter = (RTStringObject)delimeterObject;
+				final RTStackable elementsObjects = dynamicScope.getObject("elements");
+				final RTArrayObject elements = (RTArrayObject)elementsObjects;
+				final int arraySize = elements.size();
+				final List<String> arrayCopy = new ArrayList<String>();
+				for (int i = 0; i < arraySize; i++) {
+					final RTStringObject aString = (RTStringObject)elements.get(i);
+					arrayCopy.add(aString.stringValue());
+				}
+				
+				final String sResult = stringJoin(delimeter.stringValue(), arrayCopy);
 
 				final RTStringObject result = new RTStringObject(sResult);
 

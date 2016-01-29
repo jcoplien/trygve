@@ -43,6 +43,7 @@ import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -751,7 +752,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingString;
 			} else if (methodDeclaration.name().equals("join")) {
-				code.add(new RTStringClass.RTJoinCode(methodDeclaration.enclosedScope()));
+				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
+				if (elementsParamType.name().equals("List<String>") || elementsParamType.name().equals("List")) {
+					code.add(new RTStringClass.RTJoinListCode(methodDeclaration.enclosedScope()));
+				} else if (elementsParamType instanceof ArrayType) {
+					code.add(new RTStringClass.RTJoinArrayCode(methodDeclaration.enclosedScope()));
+				} else {
+					ErrorLogger.error(ErrorType.Fatal, methodDeclaration.lineNumber(),
+							"Invalid parameter type `",
+							elementsParamType.name(),
+							"' to String.join.", "", "", "");
+				}
 				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.undefined;

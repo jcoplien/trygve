@@ -27,6 +27,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.declarations.Type.ArrayType;
 import static java.util.Arrays.asList;
 
 /*
@@ -115,7 +116,10 @@ public final class ListClass {
 			declareListMethod("isEmpty", booleanType, null, null, true);
 			
 			// kludge.
-			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType_));
+			assert null != stringType;
+			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType_), true);
+			final Type arrayOfStringType = new ArrayType("String_$array", stringType);
+			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, arrayOfStringType), true);
 			
 			// Declare the type
 			globalScope.declareType(listType_);
