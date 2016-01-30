@@ -120,6 +120,7 @@ import info.fulloo.trygve.parser.KantParser.Abelian_unary_opContext;
 import info.fulloo.trygve.parser.KantParser.Argument_listContext;
 import info.fulloo.trygve.parser.KantParser.BlockContext;
 import info.fulloo.trygve.parser.KantParser.Boolean_exprContext;
+import info.fulloo.trygve.parser.KantParser.Builtin_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Compound_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Do_while_exprContext;
 import info.fulloo.trygve.parser.KantParser.ExprContext;
@@ -1428,22 +1429,29 @@ public class Pass1Listener extends Pass0Listener {
 		return type;
 	}
 	
+	@Override public void exitBuiltin_type_name(KantParser.Builtin_type_nameContext ctx)
+	{
+		if (printProductionsDebug) {
+			System.err.print("builtin_type_name : '");
+			System.err.print(ctx.getText());
+			System.err.println("')");
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
 	@Override public void exitType_name(KantParser.Type_nameContext ctx)
 	{
 		// type_name
 	    //	: JAVA_ID
 		//  | JAVA_ID type_list
-	    //	| 'int'
-		//  | 'Integer'
-	    //	| 'double'
-	    //	| 'char'
-	    //	| 'String'
+	    //	| builtin_type_name
 		
-		// All three passes
+		// All four passes
 	
 		Type type = null;
 		String typeName = null;
 		if (null != ctx.JAVA_ID() && null == ctx.type_list()) {
+			//  | type_name : JAVA_ID
 			typeName = ctx.JAVA_ID().getText();
 	
 			type = currentScope_.lookupTypeDeclarationRecursive(typeName);
@@ -1451,6 +1459,7 @@ public class Pass1Listener extends Pass0Listener {
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 		} else if (null == ctx.JAVA_ID() && null == ctx.type_list()) {
+			//  | type_name : builtin_type_name
 			typeName = ctx.getText();
 			
 			type = currentScope_.lookupTypeDeclarationRecursive(typeName);
@@ -2517,6 +2526,7 @@ public class Pass1Listener extends Pass0Listener {
 		//  | NEW JAVA_ID type_list '(' argument_list ')'
 		//  | abelian_atom '.' JAVA_ID
 		//  | abelian_atom '.' message
+		//  | builtin_type_name '.' message
 		//	| null_expr
 		//	| JAVA_ID
 		//	| abelian_atom ABELIAN_INCREMENT_OP
@@ -2600,10 +2610,10 @@ public class Pass1Listener extends Pass0Listener {
 			assert rawExpression instanceof Expression;
 			expression = (Expression)rawExpression;
 			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
-		} else if (null != ctx.abelian_atom() && null != ctx.message()) {
+		} else if (null == ctx.builtin_type_name() && null != ctx.abelian_atom() && null != ctx.message()) {
 			//	| abelian_atom '.' message
 			// This routine actually does pop the expressions stack (and the Message stack)
-			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom());
+			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom(), null);
 			
 			if (null == expression) {
 				errorHook5p2(ErrorType.Fatal, lineNumber,
@@ -2613,6 +2623,22 @@ public class Pass1Listener extends Pass0Listener {
 												
 			if (printProductionsDebug) {
 				System.err.println("abelian_product : abelian_atom '.' message");
+			}
+		} else if (null == ctx.NEW() && null != ctx.builtin_type_name() && null != ctx.message()) {
+			//	| builtin_type_name '.' message
+			//    (e.g., String.join)
+			
+			// This routine actually does pop the expressions stack (and the Message stack)
+			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom(), ctx.builtin_type_name());
+			
+			if (null == expression) {
+				errorHook5p2(ErrorType.Fatal, lineNumber,
+						"No match for call: ", ctx.type_name().getText(), ".", ctx.message().getText());
+				expression = new NullExpression();
+			}
+												
+			if (printProductionsDebug) {
+				System.err.println("type_name : abelian_atom '.' message");
 			}
 		} else if (null != ctx.NEW()) {
 			// NEW message
@@ -2764,7 +2790,7 @@ public class Pass1Listener extends Pass0Listener {
 			//	| /* this. */ message
 			// This routine actually does pop the expressions stack (and the Message stack)
 
-			expression = this.messageSend(ctx.getStart(), null);
+			expression = this.messageSend(ctx.getStart(), null, null);
 									
 			if (printProductionsDebug) { System.err.println("abelian_atom : /* this. */ message");}
 		} else if (null != ctx.abelian_atom() && null != ctx.CLONE()) {
@@ -4100,7 +4126,8 @@ public class Pass1Listener extends Pass0Listener {
 	
 	// You find something analogous with exitExpr here in pass 1.
 	
-	public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
+	public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctx_abelianAtom,
+			final Builtin_type_nameContext ctx_typeName) {
 		// | expr '.' message
 		// | message
 		// Pass 1 version
@@ -4109,12 +4136,19 @@ public class Pass1Listener extends Pass0Listener {
 		Type type = null, enclosingMegaType = null;
 		MethodDeclaration mdecl = null;
 		
-		if (ctxExpr != null) {
+		if (null != ctx_abelianAtom) {
 			if (parsingData_.currentExpressionExists()) {
 				object = parsingData_.popExpression();
 			} else {
 				object = new NullExpression();
 			}
+		} else if (null != ctx_typeName) {
+			// e.g. String.join
+			final String typeName = ctx_typeName.getText();
+			final Type theType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			final Type classType = StaticScope.globalScope().lookupTypeDeclaration("Class");
+			object = new IdentifierExpression(theType.name(), classType, classType.enclosedScope().parentScope(),
+						ctxGetStart.getLine());
 		} else {
 			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);

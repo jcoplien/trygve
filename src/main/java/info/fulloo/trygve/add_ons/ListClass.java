@@ -5,11 +5,14 @@ import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
+import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
+import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -72,6 +75,48 @@ public final class ListClass {
 		methodDecl.setHasConstModifier(isConst);
 		listType_.enclosedScope().declareMethod(methodDecl);
 	}
+	
+	private static Type addListOfStringType(final Type stringType) {
+		Type retval = null;
+		final TemplateDeclaration listDecl = (TemplateDeclaration)listType_.enclosedScope().associatedDeclaration();
+			
+		final StaticScope templateScope = listDecl.enclosingScope();
+		final StaticScope templateEnclosedScope = listDecl.enclosedScope();
+		final TypeDeclaration baseClass = listDecl.baseClass();
+		final String baseClassName = null == baseClass? "void": baseClass.name();
+		final ClassDeclaration baseClassDecl = null == baseClass? null:
+							templateScope.lookupClassDeclarationRecursive(baseClassName);
+		
+		ClassDeclaration classDeclaration = StaticScope.globalScope().lookupClassDeclarationRecursive("List<String>");
+		if (null == classDeclaration) {
+			// Create a new type vector from the type parameters
+			final TemplateInstantiationInfo templateInstantiationInfo = new TemplateInstantiationInfo(listDecl, "List<String>");
+			templateInstantiationInfo.add(stringType);
+			
+			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
+			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
+			classDeclaration = new ClassDeclaration("List<String>", templateEnclosedScope,
+					baseClassDecl, 0);
+			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo);
+			final Type rawNewType = classDeclaration.type();
+			assert rawNewType instanceof ClassType;
+			final ClassType newType = (ClassType)rawNewType;
+			templateInstantiationInfo.setClassType(newType);
+
+			templateScope.declareType(newType);
+			templateScope.declareClass(classDeclaration);
+
+			// Here's where we queue template instantiations for code generation
+			// Dangerous to leave it out, but I think we can get by for now, because
+			// it will be covered by some other use within the user program
+			// parsingData_.currentTemplateInstantiationList().addDeclaration(classDeclaration);
+			retval = newType;
+		} else {
+			retval = classDeclaration.type();
+		}
+		return retval;
+	}
+	
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -117,9 +162,13 @@ public final class ListClass {
 			
 			// kludge.
 			assert null != stringType;
-			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, listType_), true);
+			
+			final Type listOfStringType = addListOfStringType(stringType);
+			
+			// Yeah, parameters are backwards in order for addStringMethod.
+			StaticScope.addStringMethod(stringType, "join", stringType, asList("elements", "delimiter"), asList(listOfStringType, stringType), true);
 			final Type arrayOfStringType = new ArrayType("String_$array", stringType);
-			StaticScope.addStringMethod(stringType, "join", stringType, asList("delimeter", "elements"), asList(stringType, arrayOfStringType), true);
+			StaticScope.addStringMethod(stringType, "join", stringType, asList("elements", "delimiter"), asList(arrayOfStringType, stringType), true);
 			
 			// Declare the type
 			globalScope.declareType(listType_);

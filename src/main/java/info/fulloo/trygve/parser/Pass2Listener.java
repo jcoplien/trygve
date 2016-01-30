@@ -75,6 +75,7 @@ import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedClassMemberExpression;
 import info.fulloo.trygve.expressions.Expression.RoleArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
+import info.fulloo.trygve.parser.KantParser.Builtin_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Class_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
@@ -635,7 +636,8 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctxExpr) {
+	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctx_abelianAtom,
+			final Builtin_type_nameContext ctx_builtin_typeName) {
 		// | expr '.' message
 		// | message
 		// Certified Pass 2 version. Can maybe be folded with pass 1....
@@ -647,7 +649,7 @@ public class Pass2Listener extends Pass1Listener {
 		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 		
 		// Pop the expression for the indicated object and message
-		if (ctxExpr != null) {
+		if (ctx_abelianAtom != null) {
 			// Error stumbling check
 			if (parsingData_.currentExpressionExists()) {
 				if (null == parsingData_.peekExpression()) {
@@ -663,6 +665,13 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				return null;	// get out
 			}
+		} else if (ctx_builtin_typeName != null) {
+			// e.g. String.join
+			final String typeName = ctx_builtin_typeName.getText();
+			final Type theType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			final Type classType = StaticScope.globalScope().lookupTypeDeclaration("Class");
+			object = new IdentifierExpression(theType.name(), classType, classType.enclosedScope().parentScope(),
+						ctxGetStart.getLine());
 		} else if (null != nearestEnclosingMegaType) {
 			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
 		} else {

@@ -743,14 +743,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (methodDeclaration.name().equals("compareTo")) {
 				code.add(new RTStringClass.RTCompareToCode(methodDeclaration.enclosedScope(), methodDeclaration.name()));
 				retvalType = RetvalTypes.usingInt;
-			} else {
-				retvalType = RetvalTypes.undefined;
-				assert false;
-			}
-		} else if (3 == formalParameterList.count()) {
-			if (methodDeclaration.name().equals("substring")) {
-				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingString;
 			} else if (methodDeclaration.name().equals("join")) {
 				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
 				if (elementsParamType.name().equals("List<String>") || elementsParamType.name().equals("List")) {
@@ -763,6 +755,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 							elementsParamType.name(),
 							"' to String.join.", "", "", "");
 				}
+				retvalType = RetvalTypes.usingString;
+			} else {
+				retvalType = RetvalTypes.undefined;
+				assert false;
+			}
+		} else if (3 == formalParameterList.count()) {
+			if (methodDeclaration.name().equals("substring")) {
+				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.undefined;

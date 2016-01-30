@@ -140,9 +140,10 @@ public class TestRunner {
 		"requires_method1.k",
 		"illegal_context_access.k",
 		"frontloading1.k",
-		// "spell_check.k",
+		"spell_check.k",
 		"spell_check2.k",
 		"chainable1.k",
+		"join1.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

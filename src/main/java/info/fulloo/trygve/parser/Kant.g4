@@ -204,7 +204,11 @@ compound_type_name
 type_name
         : JAVA_ID
         | JAVA_ID type_list
-        | 'int'
+        | builtin_type_name
+        ;
+        
+builtin_type_name
+		: 'int'
         | 'double'
         | 'char'
         | 'String'
@@ -265,6 +269,7 @@ abelian_atom
         | NEW type_name '[' expr ']'
         | NEW JAVA_ID type_list '(' argument_list ')'
         | <assoc=left> abelian_atom '.' message
+        | <assoc=left> builtin_type_name '.' message
 		| abelian_atom '.' JAVA_ID
 		| null_expr
 		| /* this. */ message

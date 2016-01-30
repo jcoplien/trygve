@@ -392,7 +392,7 @@ public class StaticScope {
 	public static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
 			final List<String> paramNames, final List<Type> paramTypes, final boolean isStatic) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
 		FormalParameterList formals = new FormalParameterList();
 		if (null != paramNames) {
 			final Iterator<Type> typeIter = paramTypes.iterator();
@@ -402,7 +402,9 @@ public class StaticScope {
 			    formals.addFormalParameter(formalParameter);
 			}
 		}
-		formals.addFormalParameter(self);
+		if (isStatic == false) {
+			formals.addFormalParameter(self);
+		}
 		final StaticScope myScope = new StaticScope(stringType.enclosedScope());
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, 0, isStatic);
 		methodDecl.addParameterList(formals);
