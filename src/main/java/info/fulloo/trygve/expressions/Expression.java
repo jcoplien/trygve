@@ -514,7 +514,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class AssignmentExpression extends Expression
 	{
-		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass1Listener parser) {
+		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass0Listener parser) {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			
@@ -526,7 +526,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			
 			identifierBindingCheck(lhs, rhs, parser);
 		}
-		private void doTrivialConversions(final Pass1Listener parser) {
+		private void doTrivialConversions(final Pass0Listener parser) {
 			// Should be pathnames. FIXME (easy fix).
 			if (null != lhs_ && null != rhs_ && null != lhs_.type() && null != rhs_.type()) {		// error stumbling check
 				if (lhs_.type().name().equals("double")) {
@@ -550,7 +550,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			}
 			return retval;
 		}
-		private void identifierBindingCheck(final Expression lhs, final Expression rhs, final Pass1Listener parser) {
+		private void identifierBindingCheck(final Expression lhs, final Expression rhs, final Pass0Listener parser) {
 			if (isIdentifierExpression(lhs) && isIdentifierExpression(rhs)) {
 				final Type lhsType = lhs.type(), rhsType = rhs.type();
 				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {

@@ -98,6 +98,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
+import info.fulloo.trygve.parser.Pass0Listener;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass;
 import info.fulloo.trygve.run_time.RTClass.*;
@@ -1007,8 +1008,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (rhs instanceof Constant) {
 					;	// O.K.
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, rhs.lineNumber(), "Improperly formed initialization of ",
-							lhs.name() + ": non-constant right-hand side `", rhs.getText(), "'.");
+					ErrorLogger.error(ErrorType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
+							lhs.name() + "': non-constant right-hand side `", rhs.getText(), "'.");
 					rhs = new NullExpression();
 				}
 				final AssignmentExpression newAssignmentExpression =
