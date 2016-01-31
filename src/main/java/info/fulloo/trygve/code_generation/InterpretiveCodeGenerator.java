@@ -98,7 +98,6 @@ import info.fulloo.trygve.expressions.Expression.UnaryAbelianopExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect;
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
-import info.fulloo.trygve.parser.Pass0Listener;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass;
 import info.fulloo.trygve.run_time.RTClass.*;
