@@ -40,6 +40,7 @@ import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
@@ -985,8 +986,75 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		}
 	}
 	
+	private List<BodyPart> rescopeInitializations(final List<BodyPart> initializations, final Type classType,
+			final StaticScope methodScope) {
+		final List<BodyPart> retval = new ArrayList<BodyPart>();
+		for (final BodyPart initializer : initializations) {
+			if (initializer instanceof AssignmentExpression) {
+				final AssignmentExpression assignmentExpr = (AssignmentExpression)initializer;
+				final Expression lhs = assignmentExpr.lhs();
+				Expression rhs = assignmentExpr.rhs();
+				Expression newLhs;
+				if (lhs instanceof IdentifierExpression) {
+					final IdentifierExpression self = new IdentifierExpression("this", classType,
+							methodScope, lhs.lineNumber());
+					newLhs = new QualifiedIdentifierExpression(self, lhs.name(), lhs.type());
+				} else {
+					ErrorLogger.error(ErrorType.Fatal, lhs.lineNumber(), "Improperly formed initialization of `",
+							lhs.name(), "'.", "");
+					newLhs = new NullExpression();
+				}
+				if (rhs instanceof Constant) {
+					;	// O.K.
+				} else {
+					ErrorLogger.error(ErrorType.Fatal, rhs.lineNumber(), "Improperly formed initialization of ",
+							lhs.name() + ": non-constant right-hand side `", rhs.getText(), "'.");
+					rhs = new NullExpression();
+				}
+				final AssignmentExpression newAssignmentExpression =
+						new AssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
+				retval.add(newAssignmentExpression);
+			} else {
+				retval.add(initializer);
+			}
+		}
+		return retval;
+	}
+	
 	private void compileMethodInScope(final MethodDeclaration methodDeclaration, final StaticScope scope) {
-		final List<BodyPart> bodyParts = methodDeclaration.bodyParts();
+		// BodyParts start with the prefixBodyParts, which mainly entail
+		// the protocol used in constructors to call the base class constructor.
+		// After that, constructors also have initializationBodyParts, where
+		// we find the code for in-situ initializations of instance objects
+		// which were syntactically placed with the object declarations. Last
+		// are the regularBodyParts which is just the ordinary method body.
+		// They come together in odd orders during parsing; here, during code
+		// generation, we just pick all of them off and put them back together.
+		final Declaration associatedMegaTypeDeclaration = scope.associatedDeclaration();
+		List<BodyPart> initializationBodyParts = null;
+		final boolean isCtor = methodDeclaration.name().equals(associatedMegaTypeDeclaration.name());
+		if (associatedMegaTypeDeclaration instanceof ObjectSubclassDeclaration) {
+			if (isCtor) {
+				// Process these initializations only in constructor bodies
+				initializationBodyParts = ((ObjectSubclassDeclaration)associatedMegaTypeDeclaration).inSituInitializations();
+				initializationBodyParts = rescopeInitializations(initializationBodyParts, 
+						associatedMegaTypeDeclaration.type(),
+						methodDeclaration.enclosedScope());
+			} else {
+				initializationBodyParts = new ArrayList<BodyPart>();
+			}
+		} else {
+			initializationBodyParts = new ArrayList<BodyPart>();
+		}
+		assert null != initializationBodyParts;
+		
+		final List<BodyPart> prefixBodyParts = methodDeclaration.prefixBodyParts();
+		final List<BodyPart> regularBodyParts = methodDeclaration.bodyParts();
+		
+		final List<BodyPart> bodyParts = prefixBodyParts;
+		bodyParts.addAll(initializationBodyParts);
+		bodyParts.addAll(regularBodyParts);
+		
 		// Null body parts here for "add" declaration in simpletemplate.k
 		// Called by compileScope for List<int,String> scope, from compileClass,
 		// from compileDeclarations, from original compile

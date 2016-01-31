@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -328,6 +329,36 @@ public class Pass1Listener extends Pass0Listener {
 		return newClass;
 	}
 	
+	private void checkNeedsCtor(final TypeDeclaration decl) {
+		// All classes and Context should have a default constructor.
+		// If someone invokes "new Foo()" we want to enact a constructor,
+		// if for no other reason than to execute the in-situ initializations.
+		
+		assert decl instanceof ClassDeclaration || decl instanceof ContextDeclaration;
+		final StaticScope scope = decl.enclosedScope();
+		final ActualArgumentList argumentList = new ActualArgumentList();
+		final Expression self = new IdentifierExpression("this", decl.type(), decl.enclosedScope(), decl.lineNumber());
+		argumentList.addFirstActualParameter(self);
+		final MethodDeclaration theConstructor = scope.lookupMethodDeclaration(decl.name(), argumentList, false);
+		if (null == theConstructor) {
+			// Let's make one
+			final FormalParameterList parameterList = new FormalParameterList();
+			final ObjectDeclaration selfDecl = new ObjectDeclaration("this", decl.type(), decl.lineNumber());
+			parameterList.addFormalParameter(selfDecl);
+			final StaticScope constructorScope = new StaticScope(scope);
+			final MethodDeclaration newCtor = new MethodDeclaration(decl.name(),
+					constructorScope, null, AccessQualifier.PublicAccess, decl.lineNumber(), false);
+			constructorScope.setDeclaration(newCtor);
+			newCtor.addParameterList(parameterList);
+			scope.declareMethod(newCtor);
+			final Expression returnStatement = new ReturnExpression(decl.name(),
+					null, decl.lineNumber(), decl.type(), constructorScope);
+			final ExprAndDeclList ctorBody = new ExprAndDeclList(decl.lineNumber());
+			ctorBody.addBodyPart(returnStatement);
+			newCtor.setBody(ctorBody);
+		}
+	}
+	
 	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
 	{
 		// : 'context' JAVA_ID '{' context_body '}'
@@ -344,6 +375,10 @@ public class Pass1Listener extends Pass0Listener {
 		assert rawNewDeclaration instanceof TypeDeclaration;	
 		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
 		parsingData_.currentTypeDeclarationList().addDeclaration(newDeclaration);
+		
+		if (newDeclaration instanceof ClassDeclaration || newDeclaration instanceof ContextDeclaration) {
+			checkNeedsCtor(newDeclaration);
+		}
 		
 		final StaticScope parentScope = currentScope_.parentScope();
 		currentScope_ = parentScope;
@@ -1320,17 +1355,15 @@ public class Pass1Listener extends Pass0Listener {
 			// Maybe here...  Add the initializations to the expression in progress
 			final List<BodyPart> intializationExprs = idInfo.initializations();
 			if (0 < intializationExprs.size()) {
-				// There may not even be a currentExprAndDecl... We presume that initializations
-				// occur where there are ExprAndDecl blocks in play. We'll have to change this
-				// if we come to allow inline initialization of object members in the class
-				// syntax, and handle the intialisations in some other way (e.g., letting
-				// the constructor handle them.
+				// There may not even be a currentExprAndDecl... We used to presume that initializations
+				// occurred where there were ExprAndDecl blocks in play. We changed this because we now
+				// allow inline initialization of object members in the class syntax. Now we must handle
+				// the intialisations in the constructor. Queue them up to the declaration if so.
 				
 				// In any case, errors can cause currentExprAndDecl() to be empty, so we
 				// need to bail out accordingly
 				
 				if (parsingData_.currentExprAndDeclExists()) {
-					// final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
 					for (int z = 0; z < intializationExprs.size(); z++) {
 						if (null != currentForExpression) {
 							// For loops are special
@@ -1352,6 +1385,14 @@ public class Pass1Listener extends Pass0Listener {
 							// No: currentExprAndDecl.addBodyPart(intializationExprs.get(z));
 						}
 					}
+				} else if (currentScope_.associatedDeclaration() instanceof ClassDeclaration ||
+						currentScope_.associatedDeclaration() instanceof ContextDeclaration) {
+					// Then this is an in situ initialization - i.e., someone is putting the
+					// initialization with the declaration of an instance object instead of
+					// initializing it in the constructor
+
+					final ObjectSubclassDeclaration declaration = (ObjectSubclassDeclaration)currentScope_.associatedDeclaration();
+					declaration.addInSituInitializers(intializationExprs);
 				} else {
 					return;	// punt - error return
 				}

@@ -62,6 +62,10 @@ public abstract class Declaration implements BodyPart {
 		return new ArrayList<BodyPart>();
 	}
 	
+	public void addInSituInitializers(List<BodyPart> initializerList) {
+		assert false;	// pure virtual, kind of
+	}
+	
 	public static class ObjectDeclaration extends Declaration
 	{
 		public ObjectDeclaration(final String name, final Type type, final int lineNumber) {
@@ -187,12 +191,20 @@ public abstract class Declaration implements BodyPart {
 		public ObjectSubclassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, int lineNumber) {
 			super(name, lineNumber, myEnclosedScope);
 			baseClass_ = baseClass;
+			inSituInitializations_ = new ArrayList<BodyPart>();
 		}
 		public ClassDeclaration baseClassDeclaration() {
 			return baseClass_;
 		}
+		public void addInSituInitializers(final List<BodyPart> initializerList) {
+			inSituInitializations_.addAll(initializerList);
+		}
+		public List<BodyPart> inSituInitializations() {
+			return inSituInitializations_;
+		}
 		
 		protected final ClassDeclaration baseClass_;
+		protected final List<BodyPart> inSituInitializations_;
 	}
 	
 	public static class ContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration
@@ -526,6 +538,34 @@ public abstract class Declaration implements BodyPart {
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;
 		}
+		
+		private void callBaseCtor(final StaticScope methodScope, final ClassType baseClass, final int lineNumber) {
+			// Look up constructor in that base class
+			final String baseClassName = baseClass.name();
+			final ActualArgumentList actualArgumentList = new ActualArgumentList();
+			final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope, lineNumber);
+			actualArgumentList.addActualArgument(self);
+			final StaticScope baseClassScope = baseClass.enclosedScope();
+			if (null != baseClassScope) {
+				final MethodDeclaration constructor = baseClassScope.lookupMethodDeclaration(baseClassName, actualArgumentList, false);
+			
+				// If there's a constructor, set up to call it from the beginning
+				// of this constructor. Very first thing.
+				if (null != constructor) {
+					MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
+					
+					originMessageClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+					targetMessageClass = methodScope.methodInvocationEnvironmentClass();
+					assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
+					
+					final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
+					final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
+							originMessageClass, targetMessageClass);
+					bodyPrefix_.addBodyPart(messageExpr);
+				}
+			}
+		}
+	
 		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final int lineNumber) {
 			// Am I a constructor?
 			boolean isCtor = false;
@@ -547,7 +587,8 @@ public abstract class Declaration implements BodyPart {
 			}
 			
 			if (isCtor) {
-				// Do we have a base class?
+				// Special things constructors need to do:
+				// base class processing and initializations
 				final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 				final Type megaType = null == associatedDeclaration? null: associatedDeclaration.type();
 				if (null != megaType && megaType instanceof ClassType) {
@@ -555,36 +596,13 @@ public abstract class Declaration implements BodyPart {
 					
 					// It's a class. Does the class have a base class?
 					final ClassType baseClass = theClass.baseClass();
-					
 					if (null != baseClass) {
-						// Look up constructor in that base class
-						final String baseClassName = baseClass.name();
-						final ActualArgumentList actualArgumentList = new ActualArgumentList();
-						final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope, lineNumber);
-						actualArgumentList.addActualArgument(self);
-						final StaticScope baseClassScope = baseClass.enclosedScope();
-						if (null != baseClassScope) {
-							final MethodDeclaration constructor = baseClassScope.lookupMethodDeclaration(baseClassName, actualArgumentList, false);
-						
-							// If there's a constructor, set up to call it from the beginning
-							// of this constructor. Very first thing.
-							if (null != constructor) {
-								MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
-								
-								originMessageClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-								targetMessageClass = methodScope.methodInvocationEnvironmentClass();
-								assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
-								
-								final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
-								final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
-										originMessageClass, targetMessageClass);
-								bodyPrefix_.addBodyPart(messageExpr);
-							}
-						}
+						callBaseCtor(methodScope, baseClass, lineNumber);
 					}
 				}
 			}
 		}
+		
 		public void setMyEnclosingScope(final StaticScope scope) {
 			myEnclosedScope_.setParentScope(scope);
 		}
@@ -633,12 +651,14 @@ public abstract class Declaration implements BodyPart {
 		@Override public List<BodyPart> bodyParts() {
 			List<BodyPart> retval = null;
 			if (null != body_) {
-				retval = bodyPrefix_.bodyParts();
-				retval.addAll(body_.bodyParts());
+				retval = body_.bodyParts();
 			} else {
-				retval = bodyPrefix_.bodyParts();
+				retval = new ArrayList<BodyPart>();
 			}
 			return retval;
+		}
+		public List<BodyPart> prefixBodyParts() {
+			return bodyPrefix_.bodyParts();
 		}
 		public void hasManualBaseClassConstructorInvocations(final boolean tf) {
 			if (tf) {
@@ -768,6 +788,11 @@ public abstract class Declaration implements BodyPart {
 		}
 		public void addBodyPart(final BodyPart bp) {
 			bodyParts_.add(bp);
+		}
+		public void addBodyParts(final List<BodyPart> bps) {
+			for (final BodyPart bodyPart : bps) {
+				addBodyPart(bodyPart);
+			}
 		}
 		@Override public List<BodyPart> bodyParts() {
 			return bodyParts_;
