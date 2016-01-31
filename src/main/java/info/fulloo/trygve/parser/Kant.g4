@@ -43,13 +43,25 @@ type_declaration_list
         ;
 
 type_declaration
+		: context_declaration
+		| class_declaration
+		| interface_declaration
+		;
+		
+context_declaration
         : 'context' JAVA_ID '{' context_body '}'
-        | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+        ;
+        
+class_declaration
+        : 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
         | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
         | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
         | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
         | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
-        | 'interface' JAVA_ID '{' interface_body '}'
+        ;
+        
+interface_declaration
+        : 'interface' JAVA_ID '{' interface_body '}'
         ;
         
 implements_list

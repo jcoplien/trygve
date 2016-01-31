@@ -50,6 +50,36 @@ public interface KantListener extends ParseTreeListener {
 	 */
 	void exitType_declaration(KantParser.Type_declarationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link KantParser#context_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterContext_declaration(KantParser.Context_declarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#context_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitContext_declaration(KantParser.Context_declarationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#class_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterClass_declaration(KantParser.Class_declarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#class_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitClass_declaration(KantParser.Class_declarationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#interface_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void enterInterface_declaration(KantParser.Interface_declarationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#interface_declaration}.
+	 * @param ctx the parse tree
+	 */
+	void exitInterface_declaration(KantParser.Interface_declarationContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link KantParser#implements_list}.
 	 * @param ctx the parse tree
 	 */

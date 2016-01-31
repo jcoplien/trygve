@@ -230,14 +230,24 @@ public class Pass1Listener extends Pass0Listener {
 		/* nothing */
 	}
 
-	@Override public void enterType_declaration(KantParser.Type_declarationContext ctx)
+	@Override public void enterContext_declaration(KantParser.Context_declarationContext ctx)
 	{
-		// : 'context' JAVA_ID '{' context_body '}'
-		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'interface' JAVA_ID '{' interface_body '}'
+		// context_declaration : 'context' JAVA_ID '{' context_body '}'
+		final String name = ctx.JAVA_ID().getText();
+		
+		if (null != ctx.context_body()) {
+			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
+		} else {
+			assert false;
+		}
+	}
+	
+	@Override public void enterClass_declaration(KantParser.Class_declarationContext ctx)
+	{
+		// class_declaration : 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
 		
 		final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
 		assert null != objectBaseClass;
@@ -246,9 +256,8 @@ public class Pass1Listener extends Pass0Listener {
 		
 		final String name = ctx.JAVA_ID(0).getText();
 		ClassDeclaration rawBaseClass = null;
-		if (null != ctx.context_body()) {
-			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
-		} else if (null != ctx.class_body()) {
+		
+		 if (null != ctx.class_body()) {
 			final TerminalNode baseClassNode = ctx.JAVA_ID(1);
 			
 			if (null != baseClassNode) {
@@ -279,7 +288,17 @@ public class Pass1Listener extends Pass0Listener {
 				currentScope_ = newClass.enclosedScope();
 				parsingData_.pushClassDeclaration(newClass);
 			}
-		} else if (null != ctx.interface_body()) {
+		} else {
+			assert false;
+		}
+	}
+	
+	@Override public void enterInterface_declaration(KantParser.Interface_declarationContext ctx)
+	{
+		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
+		final String name = ctx.JAVA_ID().getText();
+
+		if (null != ctx.interface_body()) {
 			currentInterface_ = this.lookupOrCreateInterfaceDeclaration(name, ctx.getStart().getLine());
 			currentScope_ = currentInterface_.enclosedScope();
 		} else {
@@ -361,13 +380,11 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
 	{
-		// : 'context' JAVA_ID '{' context_body '}'
-		// | 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		// | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
-		// | 'interface' JAVA_ID '{' interface_body '}'
+		// This is the Pass 1-4 version
+		// type_declaration : context_declaration
+		//                  | class_declaration
+		//                  | interface_declaration
+		//
 		
 		// One version serves passes 1 - 4
 		assert null != currentScope_;
@@ -402,15 +419,58 @@ public class Pass1Listener extends Pass0Listener {
 		currentRole_ = null;
 		
 		if (printProductionsDebug) {
-			if (ctx.context_body() != null) {
-				System.err.println("type_declaration : 'context' JAVA_ID '{' context_body '}'");
-			} else if (ctx.class_body() != null && ctx.JAVA_ID(1) == null) {
-				System.err.println("type_declaration : 'class' JAVA_ID '{' class_body   '}'");
-			} else if (ctx.interface_body() != null && ctx.JAVA_ID(1) == null) {
-				System.err.println("type_declaration : 'interface' JAVA_ID '{' interface_body   '}'");
+			if (null != ctx.context_declaration()) {
+				System.err.println("type_declaration : context_declaration");
+			} else if (null != ctx.class_declaration()) {
+				System.err.println("type_declaration : class_declaration");
+			} else if (null != ctx.interface_declaration()) {
+				System.err.println("type_declaration : interface_declaration");
 			} else {
-				System.err.println("type_declaration : 'class' JAVA_ID 'extends' JAVA_ID '{' class_body  '}'");
+				assert false;
 			}
+		}
+	}
+	
+	@Override public void exitContext_declaration(KantParser.Context_declarationContext ctx)
+	{
+		// : 'context' JAVA_ID '{' context_body '}'
+				
+		if (printProductionsDebug) {
+			System.err.println("context_declaration : 'context' JAVA_ID '{' context_body '}'");
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void exitClass_declaration(KantParser.Class_declarationContext ctx)
+	{
+		// class_declaration : 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
+				
+		if (printProductionsDebug) {
+			if (null != ctx.type_parameters() && null != ctx.class_body() && null == ctx.JAVA_ID(1)) {
+				System.err.println("class_declaration : 'class' JAVA_ID type_parameters (implements_list)* '{' class_body '}'");
+			} else if (null != ctx.type_parameters() && null != ctx.class_body() && null != ctx.JAVA_ID(1)) {
+				System.err.println("class_declaration : JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'");
+			} else if (null == ctx.type_parameters() && null != ctx.class_body() && null == ctx.JAVA_ID(1)) {
+				System.err.println("class_declaration : JAVA_ID (implements_list)* '{' class_body '}'");
+			} else if (null == ctx.type_parameters() && null != ctx.class_body() && null != ctx.JAVA_ID(1)) {
+				System.err.println("class_declaration : JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'");
+			} else {
+				assert false;
+			}
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void exitInterface_declaration(KantParser.Interface_declarationContext ctx)
+	{
+		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
+		
+		if (printProductionsDebug) {
+			System.err.println("interface_declaration : 'interface' JAVA_ID '{' interface_body   '}'");
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
