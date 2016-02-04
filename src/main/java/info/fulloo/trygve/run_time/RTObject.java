@@ -29,7 +29,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 
 // INFO: To get a hex shorthand for an object, use:
-// Integer.toHexString(System.identityHashCode(object))
+// Integer.toHexString(System.identityHashCode(object)) hex unique object identifier
 
 public interface RTObject extends RTStackable {
 	public RTObject getObject(final String name);

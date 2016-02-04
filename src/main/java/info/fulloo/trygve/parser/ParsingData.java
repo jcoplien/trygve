@@ -104,7 +104,7 @@ public class ParsingData {
 	
 
 	public ActualArgumentList    currentArgumentList() { return argumentLists_.peek(); }
-	public void                     pushArgumentList(ActualArgumentList al) { argumentLists_.push(al); }
+	public void                     pushArgumentList(final ActualArgumentList al) { argumentLists_.push(al); }
 	public ActualArgumentList        popArgumentList() { assert argumentLists_.size() > 0; return argumentLists_.pop(); }
 	public void                     pushDeclarationList(final DeclarationList l) { declarationList_.push(l); }
 	public boolean               currentDeclarationListExists() { return declarationList_.size() > 0; }
@@ -172,10 +172,10 @@ public class ParsingData {
 	public TemplateDeclaration 	     popTemplateDeclaration() { return templateDeclarations_.pop(); }	
 	public TemplateDeclaration 	 currentTemplateDeclaration() { return templateDeclarations_.peek(); }
 	public void 					pushTemplateDeclaration(final TemplateDeclaration td) { templateDeclarations_.push(td); };
+	public TypeDeclarationList   currentTemplateInstantiationList() { return templateInstantationList_; }
 	public void					    pushTypeDeclarationList(final TypeDeclarationList decl) { typeDeclarationListStack_.push(decl); }
 	public TypeDeclarationList		 popTypeDeclarationList() { return typeDeclarationListStack_.pop(); }
 	public TypeDeclarationList   currentTypeDeclarationList() { return typeDeclarationListStack_.peek(); }
-	public TypeDeclarationList   currentTemplateInstantiationList() { return templateInstantationList_; }
 	public void                     pushTypeNameList(final ArrayList<String> los) { typeNameListStack_.push(los); }
     public ArrayList<String>         popTypeNameList() { return typeNameListStack_.pop(); }
     public ArrayList<String>     currentTypeNameList() { return typeNameListStack_.peek(); }

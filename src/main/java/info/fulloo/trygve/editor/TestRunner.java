@@ -144,6 +144,8 @@ public class TestRunner {
 		"spell_check2.k",
 		"chainable1.k",
 		"join1.k",
+		"InSituInit1.k",
+		"nestedContext1.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

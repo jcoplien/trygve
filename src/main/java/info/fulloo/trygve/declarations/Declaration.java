@@ -219,8 +219,11 @@ public abstract class Declaration implements BodyPart {
 		public ContextDeclaration parentContext() {
 			return parentContext_;
 		}
+		public void setParentContext(ContextDeclaration parentContext) {
+			parentContext_ = parentContext;
+		}
 		
-		private final ContextDeclaration parentContext_;
+		private ContextDeclaration parentContext_;
 	}
 	
 	public static class ClassDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration

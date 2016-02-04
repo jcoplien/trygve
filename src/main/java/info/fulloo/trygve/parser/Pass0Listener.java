@@ -42,6 +42,7 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
@@ -76,7 +77,9 @@ public class Pass0Listener extends KantBaseListener {
 		final String name = ctx.JAVA_ID().getText();
 		
 		if (null != ctx.context_body()) {
+			final ContextDeclaration oldContext = currentContext_;
 			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
+			currentContext_.setParentContext(oldContext);
 		} else {
 			assert false;
 		}
@@ -149,6 +152,13 @@ public class Pass0Listener extends KantBaseListener {
 	@Override public void exitContext_declaration(KantParser.Context_declarationContext ctx)
 	{
 		// : 'context' JAVA_ID '{' context_body '}'
+
+		exitType_declarationCommon();
+		
+		if (null != currentContext_) {
+			currentContext_ = currentContext_.parentContext();
+		}
+
 		if (printProductionsDebug) {
 			System.err.println("context_declaration : 'context' JAVA_ID '{' context_body '}'");
 		}
@@ -161,6 +171,16 @@ public class Pass0Listener extends KantBaseListener {
 		// | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
 		// | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
 		// | 'class'   JAVA_ID (implements_list)* 'extends' JAVA_ID '{' class_body '}'
+		
+		final Declaration rawNewDeclaration = currentScope_.associatedDeclaration();
+		assert rawNewDeclaration instanceof TypeDeclaration;	
+		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
+		if (newDeclaration instanceof ClassDeclaration) {
+			// (Could be a template, in which case we skip it)
+			this.implementsCheck((ClassDeclaration)newDeclaration, ctx.getStart().getLine());
+		}
+		
+		exitType_declarationCommon();
 		
 		if (printProductionsDebug) {
 			if (null != ctx.type_parameters() && null != ctx.class_body() && null == ctx.JAVA_ID(1)) {
@@ -181,13 +201,14 @@ public class Pass0Listener extends KantBaseListener {
 	{
 		// | 'interface' JAVA_ID '{' interface_body '}'
 		
+		exitType_declarationCommon();
+		
 		if (printProductionsDebug) {
 			System.err.println("interface_declaration : 'interface' JAVA_ID '{' interface_body   '}'");
 		}
 	}
 		
-	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
-	{
+	private void exitType_declarationCommon() {
 		// This is the Pass 0 version
 		// type_declaration : context_declaration
 		//                  | class_declaration
@@ -196,36 +217,46 @@ public class Pass0Listener extends KantBaseListener {
 		final Declaration rawNewDeclaration = currentScope_.associatedDeclaration();
 		assert rawNewDeclaration instanceof TypeDeclaration;	
 		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
-		parsingData_.currentTypeDeclarationList().addDeclaration(newDeclaration);
+			
+		final StaticScope newDeclarationParentScope = newDeclaration.enclosingScope();
+		final Type environment = Expression.nearestEnclosingMegaTypeOf(newDeclarationParentScope);
+		if (null == environment) {
+			// Only declare it if it's at most global scope
+			parsingData_.currentTypeDeclarationList().addDeclaration(newDeclaration);
+		}
 		
 		final StaticScope parentScope = currentScope_.parentScope();
 		currentScope_ = parentScope;
-		if (null != currentContext_) {
-			currentContext_ = currentContext_.parentContext();
-		}
 		
 		if (newDeclaration instanceof ClassDeclaration) {
 			if (null != ((ClassDeclaration)newDeclaration).generatingTemplate()) {
 				parsingData_.popTemplateDeclaration();
 			}
-			
-			this.implementsCheck((ClassDeclaration)newDeclaration, ctx.getStart().getLine());
 		} else if (newDeclaration instanceof ClassDeclaration) {
 			parsingData_.popClassDeclaration();
 			// implements_list is taken care of along the way
 		} else if (newDeclaration instanceof TemplateDeclaration) {
+			// Something wrong here...  FIXME.
 			parsingData_.popTemplateDeclaration();
 		}
 		
 		currentInterface_ = null;
 		currentRole_ = null;
-		
+	}
+	
+	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
+	{
+		// This is the Pass 0 version
+		// type_declaration : context_declaration
+		//                  | class_declaration
+		//                  | interface_declaration
+
 		if (printProductionsDebug) {
-			if (newDeclaration instanceof ContextDeclaration) {
+			if (null != ctx.context_declaration()) {
 				System.err.println("type_declaration : context_declaration");
-			} else if (newDeclaration instanceof ClassDeclaration) {
+			} else if (null != ctx.class_declaration()) {
 				System.err.println("type_declaration : class_declaration");
-			} else if (newDeclaration instanceof InterfaceDeclaration) {
+			} else if (null != ctx.interface_declaration()) {
 				System.err.println("type_declaration : interface_declaration");
 			} else {
 				assert false;

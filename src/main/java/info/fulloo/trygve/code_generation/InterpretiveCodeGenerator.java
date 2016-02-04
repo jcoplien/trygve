@@ -99,7 +99,6 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.run_time.RTClass;
-import info.fulloo.trygve.run_time.RTClass.RTSystemClass;
 import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
@@ -1540,6 +1539,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				}
 				assert null != tempRetval;
 				retval = tempRetval;
+			} else {
+				retval = tempRetval;
 			}
 			
 			assert null != retval;
@@ -1547,6 +1548,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		return retval;
 	}
+	
 	private static RTType lookInTopLevelTypeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 
@@ -1579,21 +1581,25 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();
-		final RTType aType = RunTimeEnvironment.runTimeEnvironment_.typeFromPath(scopePathName);
-		if (null != aType) {
-			retval = aType;
-		} else if (enclosingScope != StaticScope.globalScope()) {
-			retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
-			RunTimeEnvironment.runTimeEnvironment_.registerTypeByPath(scopePathName, retval);
-			assert null != retval;
-		} else {
-			// Top-level
-			assert enclosingScope == StaticScope.globalScope();
-			retval = InterpretiveCodeGenerator.lookInTopLevelTypeForRTTypeDeclaration(enclosedScope);
-			assert null != retval;
+		
+		if (null == retval) {
+			final RTType aType = RunTimeEnvironment.runTimeEnvironment_.typeFromPath(scopePathName);
+			if (null != aType) {
+				retval = aType;
+			} else if (enclosingScope != StaticScope.globalScope()) {
+				// retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
+				retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
+				RunTimeEnvironment.runTimeEnvironment_.registerTypeByPath(scopePathName, retval);
+				assert null != retval;
+			} else {
+				// Top-level
+				assert enclosingScope == StaticScope.globalScope();
+				retval = InterpretiveCodeGenerator.lookInTopLevelTypeForRTTypeDeclaration(enclosedScope);
+				assert null != retval;
+			}
 		}
 		
-		assert retval != null;
+		assert null != retval;
 		return retval;
 	}
 	public ParsingData parsingData() {

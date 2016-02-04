@@ -50,9 +50,6 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		// initially for tracking its Role-players
 		this.addObjectDeclaration("context$info", null);
 		
-		// if (null != typeDeclaration_) {
-		// 	rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(decl.type().enclosedScope());
-		// }
 		populateNameToTypeObjectMap();
 		populateNameToStaticObjectMap();
 		populateNameToRoleAndStagePropMaps();
@@ -127,8 +124,14 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 	@Override public RTRole getRole(final String name) {
 		return nameToRoleObjectMap_.get(name);
 	}
+	public RTRole getRoleDecl(final String name) {
+		return nameToRoleDeclMap_.get(name);
+	}
 	public RTStageProp getStageProp(final String name) {
 		return nameToStagePropObjectMap_.get(name);
+	}
+	public RTStageProp getStagePropDecl(final String name) {
+		return nameToStagePropDeclMap_.get(name);
 	}
 	@Override public RTType typeNamed(String typeName) {
 		RTType retval = this.stringToClassDeclMap_.get(typeName);

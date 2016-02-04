@@ -63,8 +63,8 @@ public abstract class RTMessageDispatcher {
 			) {
 		RTMessageDispatcher retval = null;
 // System.out.format("from %s to %s; message \"%s\"\n", originMessageClass.toString(), targetMessageClass.toString(), methodSelectorName);
-		
-		switch(originMessageClass) {
+
+		switch (originMessageClass) {
 		case ClassEnvironment:
 			switch(targetMessageClass) {
 			case ClassEnvironment:
@@ -101,7 +101,7 @@ public abstract class RTMessageDispatcher {
 			}
 			break;
 		case RoleEnvironment:
-			switch(targetMessageClass) {
+			switch (targetMessageClass) {
 			case ClassEnvironment:
 				retval = new RTRoleToClass(
 						messageExpr,
@@ -477,9 +477,11 @@ public abstract class RTMessageDispatcher {
 					// note that we want the type of the
 					// declaration and NOT of the object
 					// (so we should get the Role type)
-					final RTRole theRole = context.getRole(roleName);
+					final RTRole theRole = context.getRoleDecl(roleName);
+					// final RTRole theRole = context.getRole(roleName);
 					if (null == theRole) {
-						final RTStageProp theStageProp = context.getStageProp(roleName);
+						final RTStageProp theStageProp = context.getStagePropDecl(roleName);
+						// final RTStageProp theStageProp = context.getStageProp(roleName);
 						if (null != theStageProp) {
 							methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
 						}
@@ -799,7 +801,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-			
+
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 			
@@ -981,9 +983,12 @@ public abstract class RTMessageDispatcher {
 					// the type of self will be the type of a RolePlayer.
 					// At this point we know it's a Role method (do we?)
 					// so we have used the right stack protocol
-					//assert self instanceof RTRole == true;
+					// assert self instanceof RTRole == true;
+					
+					commonWrapup(typeOfThisParameterToCalledMethod, 1, self);
+				} else {
+					assert false;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 1, self);
 			}
 		}
 		
@@ -1015,10 +1020,14 @@ public abstract class RTMessageDispatcher {
 					assert rawrTTypeOfTargetContext instanceof RTContext;
 					final RTContext rTTypeOfTargetContext = (RTContext)rawrTTypeOfTargetContext;
 					
-					RTRole theRole = rTTypeOfTargetContext.getRole(typeOfThisParameterToMethod.name());
+					final RTRole theRole = rTTypeOfTargetContext.getRole(typeOfThisParameterToMethod.name());
 					if (null == theRole) {
 						final RTStageProp theStageProp = rTTypeOfTargetContext.getStageProp(typeOfThisParameterToMethod.name());
-						methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
+						if (null == theStageProp) {
+							assert false;
+						} else {
+							methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
+						}
 					} else {
 						methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
 					}

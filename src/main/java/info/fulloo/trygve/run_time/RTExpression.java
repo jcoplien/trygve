@@ -1133,7 +1133,7 @@ public abstract class RTExpression extends RTCode {
 							// to enforce policy. Make sure the semantic routines check
 							// on this and at least offer a warning...
 							//
-							// Example: accessing currentPos_. self is an RTContextObject for "TextFile"  k = 0
+							// Example: accessing currentPos_. self is an RTContextObject for "TextFile"
 							assert null != value;
 						}
 					}
@@ -1625,12 +1625,14 @@ public abstract class RTExpression extends RTCode {
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 			lineNumber_ = expr.lineNumber();
 		}
+		
 		@Override public RTCode run() {
 			// I found I needed to add this loop to a new ArrayType [expr]
 			// expression. Invoking rhs_.run() alone just sets up the object
 			// and does null initialization - it does not call the constructor.
 			//
 			// So I broke out the real assignment processing into RTAssignmentPart2.
+			
 			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 		}
 		public void setNextCode(final RTCode pc) {
@@ -1786,7 +1788,6 @@ public abstract class RTExpression extends RTCode {
 				final RTRoleIdentifier lhs = (RTRoleIdentifier)lhs_;
 				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
-				
 				assert contextScope.rTType() instanceof RTContext;
 				if (lhs instanceof RTStagePropIdentifier) {
 					contextScope.setStagePropBinding(lhs.name(), rhs);

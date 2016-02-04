@@ -361,7 +361,7 @@ public class RunTimeEnvironment {
 	}
 	public RTCode runner(final RTCode code) {
 		runnerPrefix(code);
-		RTCode retval = code.run();
+		final RTCode retval = code.run();
 		return retval;
 	}
 	

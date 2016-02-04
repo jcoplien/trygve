@@ -1,7 +1,15 @@
 class InSituInitTest {
     public InSituInitTest() {}
 
-    private String string = "Hello world!";
+    private String string = "Hello ";
+
+    public void test() {
+        System.out.print(string);
+    }
+}
+
+class InSituInitTest2 {
+    private String string = "world!";
 
     public void test() {
         System.out.println(string);
@@ -9,9 +17,12 @@ class InSituInitTest {
 }
 
 
+{
 (new InSituInitTest()).test()
+(new InSituInitTest2()).test()
+}
 
 /* GOLD:
 ___________________________________________________________
-1+2+3+4
+Hello world!
 */

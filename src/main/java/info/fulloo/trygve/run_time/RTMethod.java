@@ -227,7 +227,7 @@ public class RTMethod extends RTCode {
 		populateActivationRecord();
 		
 		// NOTE: initializationList_ is not linked in with code_
-		final RTCode pc = initializeLocals();	// deprecated?
+		final RTCode pc = initializeLocals();	// deprecated? doesn't seem ever to do anything.
 		if (pc instanceof RTHalt) {
 			retval = pc;
 		} else {

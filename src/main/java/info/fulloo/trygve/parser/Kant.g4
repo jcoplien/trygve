@@ -92,6 +92,7 @@ context_body_element
         | object_decl
         | role_decl
         | stageprop_decl
+        | context_declaration
         ;
 
 role_decl
