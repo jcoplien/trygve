@@ -148,6 +148,7 @@ public class TestRunner {
 		"nestedContext1.k",
 		"nestedContext2.k",
 		"nestedContext3.k",
+		"runeInitialization1.k",
 		"twelve_days_of_christmas.k",
 	};
 	public static int numberOfTestCases() {

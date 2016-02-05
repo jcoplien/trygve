@@ -1985,8 +1985,16 @@ public class Pass1Listener extends Pass0Listener {
 						} else {
 							targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 						}
+						boolean isPolymorphic = true;
+						if (amInConstructor()) {
+							if (expression instanceof IdentifierExpression) {
+								if (((IdentifierExpression)expression).name().equals("this")) {
+									isPolymorphic = false;
+								}
+							}
+						}
 						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
-								originMethodClass, targetMethodClass);
+								originMethodClass, targetMethodClass, isPolymorphic);
 					} else if (expression.type() instanceof RoleType){
 						// Check if it is in the requires section for a Role
 						
@@ -2005,7 +2013,7 @@ public class Pass1Listener extends Pass0Listener {
 							targetMethodClass = associatedDeclaration.type().enclosedScope().methodInvocationEnvironmentClass();
 						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
 							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false,
-									originMethodClass, targetMethodClass);
+									originMethodClass, targetMethodClass, !amInConstructor());
 						} else {
 							expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 						}
@@ -2171,7 +2179,7 @@ public class Pass1Listener extends Pass0Listener {
 				targetMethodClass = lhs.type().enclosedScope().methodInvocationEnvironmentClass();
 			
 				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false,
-						originMethodClass, targetMethodClass);
+						originMethodClass, targetMethodClass, !amInConstructor());
 				expression.setResultIsConsumed(true);
 				
 				// Assign result of compareTo
@@ -2203,7 +2211,7 @@ public class Pass1Listener extends Pass0Listener {
 				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 				targetMethodClass = convertMessage.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
-						lineNumber, true, originMethodClass, targetMethodClass);
+						lineNumber, true, originMethodClass, targetMethodClass, !amInConstructor());
 				expression.setResultIsConsumed(true);
 
 				// This sucks. Expression lists usually take the first seed
@@ -4292,6 +4300,19 @@ public class Pass1Listener extends Pass0Listener {
 	public void ctorCheck(final Type type, final Message message, final int lineNumber) {
 		/* Nothing */
 	}
+	
+	protected boolean amInConstructor() {
+		boolean retval = false;
+		final Declaration declaration = currentScope_.associatedDeclaration();
+		if (declaration instanceof MethodDeclaration) {
+			final MethodDeclaration currentMethodDeclaration = (MethodDeclaration)declaration;
+			final Type methodsMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			final String methodName = currentMethodDeclaration.name();
+			final String megaTypeName = methodsMegaType.name();
+			retval = methodName.equals(megaTypeName);
+		}
+		return retval;
+	}
 
 	// This is a template function mainly for historial reasons data back to
 	// expr and sexpr, and should be updated. We separated those non-terminals
@@ -4408,8 +4429,9 @@ public class Pass1Listener extends Pass0Listener {
 				MethodInvocationEnvironmentClass.ClassEnvironment:
 				message.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
+		final boolean polymorphic = !amInConstructor();
 		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
-				originMethodClass, targetMethodClass);
+				originMethodClass, targetMethodClass, polymorphic);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
@@ -4499,6 +4521,14 @@ public class Pass1Listener extends Pass0Listener {
 									baseClassName,
 									"' must be the first statement in the derived class constructor.",
 									"");
+							noerrors = false;
+						}
+						if (mdecl.accessQualifier() != AccessQualifier.PublicAccess) {
+							errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+									"Call of base class constructor for class `",
+									baseClassName,
+									"', which is not accessible to class `",
+									classDecl.name() + "'.");
 							noerrors = false;
 						}
 					}

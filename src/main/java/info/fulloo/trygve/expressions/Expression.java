@@ -198,7 +198,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public MessageExpression(final Expression object, final Message message,
 				final Type type, final int lineNumber, final boolean isStatic,
 				final MethodInvocationEnvironmentClass originMethodClass,
-				final MethodInvocationEnvironmentClass targetMethodClass) {
+				final MethodInvocationEnvironmentClass targetMethodClass,
+				final boolean isPolymorphic) {
 			super(message.selectorName(), type, message.enclosingMegaType());
 
 			object_ = object;
@@ -207,6 +208,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			isStatic_ = isStatic;
 			originMessageClass_ = originMethodClass;
 			targetMessageClass_ = targetMethodClass;
+			isPolymorphic_ = isPolymorphic;
 		}
 		@Override public String getText() {
 			return object_.getText() + "." + message_.getText();
@@ -235,12 +237,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public MethodInvocationEnvironmentClass targetMessageClass() {
 			return targetMessageClass_;
 		}
+		public boolean isPolymorphic() {
+			return isPolymorphic_;
+		}
 		
 		private final MethodInvocationEnvironmentClass originMessageClass_, targetMessageClass_;
 		private final Expression object_;
 		private final Message message_;
 		private final int lineNumber_;
 		private final boolean isStatic_;
+		private final boolean isPolymorphic_;
 	}
 	
 	public static class DupMessageExpression extends Expression

@@ -163,7 +163,8 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					
 					final MessageExpression newParameter = new MessageExpression(
 							aParam.objectExpression(), aParam.message(), newType,
-							aParam.lineNumber(), false, originMessageClass, targetMessageClass);
+							aParam.lineNumber(), false, originMessageClass, targetMessageClass,
+							true);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof NullExpression) {
 					retval.addActualArgument(aParameter);
