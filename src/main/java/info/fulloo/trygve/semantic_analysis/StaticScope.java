@@ -1,7 +1,7 @@
 package info.fulloo.trygve.semantic_analysis;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,8 @@ import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
+import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -845,17 +847,40 @@ public class StaticScope {
 							collision = true;
 							break;
 						} else {
-							ErrorLogger.error(ErrorType.Warning,
-									decl.lineNumber(),
-									"WARNING: Script declaration for `",
-									decl.name(),
-									"' has the same name as the Context script declared at line ",
-									String.valueOf(aDecl.lineNumber()));
+							// Skip the error if the hiding declaration is in a "requires" section
+							boolean isARequiresMethod = false;
+							if (decl.enclosingScope() instanceof StaticRoleScope) {
+								final StaticRoleScope roleScope = (StaticRoleScope)decl.enclosingScope();
+								final MethodDeclaration roleMethodDeclaration = roleScope.lookupRequiredMethod(decl);
+								if (null != roleMethodDeclaration) {
+									isARequiresMethod = true;
+								}
+							}
+							
+							// Don't flag "requires" methods. It kind of misses the whole point.
+							if (false == isARequiresMethod) {
+								final Type typeOfWhichDeclIsAMember = Expression.nearestEnclosingMegaTypeOf(aDecl.enclosedScope());
+								String rightName = "declaration";
+								if (typeOfWhichDeclIsAMember instanceof ContextType) rightName = "Context";
+								else if (typeOfWhichDeclIsAMember instanceof InterfaceType) rightName = "Interface";
+								else if (typeOfWhichDeclIsAMember instanceof RoleType) rightName = "Role";
+								else if (typeOfWhichDeclIsAMember instanceof ClassType) rightName = "Class";
+								else rightName = "declaration";
+								ErrorLogger.error(ErrorType.Warning,
+										decl.lineNumber(),
+										"WARNING: Script declaration for `",
+										decl.name(),
+										"' has the same name as the ",
+										rightName,
+										" script declared at line ",
+										String.valueOf(aDecl.lineNumber()));
+							}
 						}
 					}
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Method ", name, " hides method of same name at line ",
+					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Method ", name,
+							" hides method of same name at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
 			}
@@ -1346,6 +1371,25 @@ public class StaticScope {
 						} else if (null != loggedSignature && FormalParameterList.alignsWithParameterListIgnoringParamNamed(loggedSignature, parameterList, paramToIgnore, false)) {
 							retval = aDecl; break;
 						}
+					}
+				}
+			}
+			return retval;
+		}
+		public MethodDeclaration lookupRequiredMethod(final MethodDeclaration decl) {
+			MethodDeclaration retval = null;
+			final String methodName = decl.name();
+			
+			if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
+				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
+				for (final MethodDeclaration aDecl : oldEntry) {
+					final FormalParameterList loggedSignature = aDecl.formalParameterList();
+					if (null == loggedSignature && null == decl.formalParameterList()) {
+						retval = aDecl;
+						break;
+					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
+						retval = aDecl;
+						break;
 					}
 				}
 			}

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -977,8 +977,21 @@ public class Pass1Listener extends Pass0Listener {
 		// class_body_element
 	    //	: method_decl
 	    //	| object_decl
+		//  | type_declaration
 	    
 		/* nothing */
+		
+		if (printProductionsDebug) {
+			if (null != ctx.method_decl()) {
+				System.err.println("class_body_element : method_decl");
+			} else if (null != ctx.object_decl()) {
+				System.err.println("class_body_element : object_decl");
+			} else if (null != ctx.type_declaration()) {
+				System.err.println("class_body_element : type_declaration");
+			} else {
+				assert false;
+			}
+		}
 	}
 	
 	@Override public void enterInterface_body(KantParser.Interface_bodyContext ctx) {

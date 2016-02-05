@@ -300,8 +300,6 @@ if(suggestions.size() == 0) assert(false, "theoretically unreachable")
 }
 
 /* GOLD:
-line 163: WARNING: Script declaration for `setPosition' has the same name as the Context script declared at line 279
-line 163: WARNING: Script declaration for `currentPosition' has the same name as the Context script declared at line 278
 line 208: NONCOMPLIANT: Trying to enact object script `currentPosition()' without using the interface of the Role it is playing: `SpellChecker'.
 line 212: NONCOMPLIANT: Trying to enact object script `currentPosition()' without using the interface of the Role it is playing: `SpellChecker'.
 line 231: NONCOMPLIANT: Trying to enact object script `currentPosition()' without using the interface of the Role it is playing: `SpellChecker'.

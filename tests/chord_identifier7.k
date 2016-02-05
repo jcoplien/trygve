@@ -232,7 +232,6 @@ context Chord {
 
 /* GOLD:
 line 50: NONCOMPLIANT: Trying to enact object script `position()' without using the interface of the Role it is playing: `LowNote'.
-line 74: WARNING: Script declaration for `name' has the same name as the Context script declared at line 167
 ___________________________________________________________
 Cm11
 Dsus

@@ -6,7 +6,7 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -44,11 +44,11 @@ import javax.swing.JMenu;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/nestedContext2.k";
+	private final static String defaultFile = "tests/nestedContext3.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.3.15";
+    final String TrygveVersion = "1.4";
     
     public InputStream getIn() {
     	return console_.getIn();

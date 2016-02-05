@@ -152,6 +152,7 @@ class_body
 class_body_element
         : method_decl
         | object_decl
+        | type_declaration
         ;
         
 interface_body
