@@ -947,6 +947,10 @@ public class StaticScope {
 	}
 	
 	private void checkObjectDeclarationShadowing(final ObjectDeclaration decl) {
+		// With the introduction of nested types, this really gets annoying
+		if (decl.name().equals("this")) return;
+		
+		// See if this hides a declaration in another scope.
 		final StaticScope parent = this.parentScope();
 		if (null != parent) {
 			final String name = decl.name();
@@ -958,7 +962,8 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of ", name, " may hide declaration at line ",
+					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of ", name,
+							" may hide declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
 			}

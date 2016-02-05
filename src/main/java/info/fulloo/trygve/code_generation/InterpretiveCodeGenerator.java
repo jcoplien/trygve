@@ -1534,6 +1534,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else if (associatedDeclaration instanceof RoleDeclaration) {
 					tempRetval = new RTRole((RoleDeclaration)associatedDeclaration);
 					retval.addRole(associatedDeclaration.name(), (RTRole)tempRetval);
+				} else if (associatedDeclaration instanceof MethodDeclaration) {
+					// It's in the scope hierarchy but not the type hierarchy.  TRIAL -- seems to work
+					tempRetval = retval;
+					;
 				} else {
 					assert false;
 				}

@@ -161,7 +161,7 @@ interface_body
 		;
 
 method_decl
-        : method_decl_hook '{' expr_and_decl_list '}'
+        : method_decl_hook '{' type_and_expr_and_decl_list '}'
         ;
 
 method_decl_hook
@@ -182,6 +182,12 @@ expr_and_decl_list
         | expr_and_decl_list /* null-expr */ ';'
         | /* null */
         ;
+ 
+type_and_expr_and_decl_list
+ 		: expr_and_decl_list
+ 		| expr_and_decl_list type_declaration
+ 		| type_declaration expr_and_decl_list
+ 		;
 
 return_type
         : type_name
