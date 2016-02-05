@@ -51,10 +51,11 @@ class Ordinal {
 context TwelveDaysOfChristmas {
     stageprop Giver {
         public String giftGiverName() const { return name() }
-        public void giveGift() {
+        public void giveAGift() {
             String gift = gifts().remove(0);
-            Receiver.gifts().add(gift);
+            Receiver.receiveGift(gift);
         }
+        public boolean hasGiftsLeft() { return gifts().size() > 0 }
     } requires {
         String name() const;
         List<String> gifts() const;
@@ -62,6 +63,15 @@ context TwelveDaysOfChristmas {
 
     stageprop Receiver {
         public String giftGetterName() const { return name() }
+        public void receiveGift(String gift) {
+            gifts().add(gift);
+        }
+        public String giftNumber(int number) {
+            return gifts().get(number-1);
+        }
+        public int numberOfGifts() {
+            return gifts().size();
+        }
     } requires {
         String name() const;
         List<String> gifts() const;
@@ -69,7 +79,7 @@ context TwelveDaysOfChristmas {
 
     stageprop Singers {
         public void singAboutGivingAGift() {
-            int currentDay = 25 + Receiver.gifts().size();
+            int currentDay = 25 + Receiver.numberOfGifts();
             Date currentDate = new Date(2015, 12, currentDay);
             String ordinal = Christmas.dayOfTheSeason(currentDate);
 
@@ -79,14 +89,14 @@ context TwelveDaysOfChristmas {
             );
             Singers.pause();
 
-            Giver.giveGift();
+            Giver.giveAGift();
 
-            for(int i = Receiver.gifts().size() - 1; i >= 0; i--) {
-                Singers.singAboutGift(Receiver.gifts().get(i));
+            for(int i = Receiver.numberOfGifts(); i > 0; i--) {
+                Singers.singAboutGift(Receiver.giftNumber(i));
             }
             Singers.pause();
 
-            if(Giver.gifts().size() > 0)
+            if(Giver.hasGiftsLeft())
                 Singers.singAboutGivingAGift();
         }
 
