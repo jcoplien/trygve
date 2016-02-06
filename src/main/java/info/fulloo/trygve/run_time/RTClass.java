@@ -81,16 +81,22 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		super.populateNameToStaticObjectMap();
 	}
 	private void doBaseClassProcessing(final ClassType classType) {
+		this.doBaseClassProcessingHelper(classType, new ArrayList<RTClass>());
+	}
+	private void doBaseClassProcessingHelper(final ClassType classType, List<RTClass> derivedClasses) {
 		final ClassType baseClassType = classType.baseClass();
 		if (null != baseClassType) {
 			// Add base class stuff, too.
+			derivedClasses.add(this);
 			final StaticScope baseClassEnclosedScope = baseClassType.enclosedScope();
 			final RTType rawBaseClass = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(baseClassEnclosedScope);
 			assert rawBaseClass instanceof RTClass;
 			final RTClass baseClass = (RTClass)rawBaseClass;
-			baseClass.doBaseClassProcessing(baseClassType);	// recur up the inheritance hierarchy
-			baseClass.populateNameToTypeObjectMap(nameToTypeObjectMap_);
-			baseClass.populateNameToStaticObjectMap(nameToStaticObjectMap_, nameToStaticObjectTypeMap_);
+			baseClass.doBaseClassProcessingHelper(baseClassType, derivedClasses);	// recur up the inheritance hierarchy
+			for (final RTClass aDerivedClass : derivedClasses) {
+				baseClass.populateNameToTypeObjectMap(aDerivedClass);
+				baseClass.populateNameToStaticObjectMap(aDerivedClass);
+			}
 		}
 	}
 	@Override public void addClass(final String typeName, final RTClass classDecl) {

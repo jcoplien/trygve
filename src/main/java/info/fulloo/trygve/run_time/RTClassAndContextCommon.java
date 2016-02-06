@@ -71,8 +71,9 @@ public abstract class RTClassAndContextCommon implements RTType {
 		final RTObject retval = new RTObjectCommon(this);
 		return retval;
 	}
-	protected void populateNameToTypeObjectMap(Map<String, RTType> nameToTypeObjectMap) {
+	protected void populateNameToTypeObjectMap(final RTClassAndContextCommon object) {
 		assert null != typeDeclaration_;
+		final Map<String, RTType> nameToTypeObjectMap = object.nameToTypeObjectMap_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
 		List<ObjectDeclaration> objectDeclarations = enclosedScope.objectDeclarations();
 		for (final ObjectDeclaration objectDecl : objectDeclarations) {
@@ -82,11 +83,12 @@ public abstract class RTClassAndContextCommon implements RTType {
 		}
 	}
 	protected void populateNameToTypeObjectMap() {
-		this.populateNameToTypeObjectMap(nameToTypeObjectMap_);
+		this.populateNameToTypeObjectMap(this);
 	}
-	protected void populateNameToStaticObjectMap(Map<String, RTObject> nameToStaticObjectMap,
-												 Map<String, Type> nameToStaticObjectTypeMap) {
+	protected void populateNameToStaticObjectMap(final RTClassAndContextCommon object) {
 		assert null != typeDeclaration_;
+		final Map<String, RTObject> nameToStaticObjectMap = object.nameToStaticObjectMap_;
+		final Map<String, Type> nameToStaticObjectTypeMap = object.nameToStaticObjectTypeMap_;
 		final StaticScope enclosedScope = typeDeclaration_.enclosedScope();
 		final Map<String, ObjectDeclaration> staticDeclarations = enclosedScope.staticObjectDeclarations();
 		
@@ -100,7 +102,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		}
 	}
 	protected void populateNameToStaticObjectMap() {
-		this.populateNameToStaticObjectMap(nameToStaticObjectMap_, nameToStaticObjectTypeMap_);
+		this.populateNameToStaticObjectMap(this);
 	}
 	public void metaInit() {
 		// This method sets up static members
@@ -251,14 +253,13 @@ public abstract class RTClassAndContextCommon implements RTType {
 	private long referenceCount_;
 	
 	// Not final; modified in derived classes
-	protected Map<String, RTType> nameToTypeObjectMap_;
-	
+	protected       Map<String, RTType> nameToTypeObjectMap_;
 	protected final Map<String, RTRole> nameToRoleDeclMap_;
 	protected final Map<String, RTStageProp> nameToStagePropDeclMap_;
 	protected final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
-	protected TypeDeclaration typeDeclaration_;
-	private final Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
+	protected       TypeDeclaration typeDeclaration_;
+	private   final Map<String, Map<FormalParameterList, RTMethod>> stringToMethodDeclMap_;
 	protected final Map<String, RTObject> nameToStaticObjectMap_;
 	protected final Map<String, Type> nameToStaticObjectTypeMap_;
-	private final TemplateInstantiationInfo templateInstantiationInfo_;
+	private   final TemplateInstantiationInfo templateInstantiationInfo_;
 }

@@ -556,6 +556,8 @@ public abstract class Declaration implements BodyPart {
 				// If there's a constructor, set up to call it from the beginning
 				// of this constructor. Very first thing.
 				if (null != constructor) {
+					// If it's private, the programmer is telling us that it
+					// shouldn't be called. Don't insert it.
 					if (constructor.accessQualifier() == AccessQualifier.PublicAccess) {
 						MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
 						
@@ -670,11 +672,24 @@ public abstract class Declaration implements BodyPart {
 			return bodyPrefix_.bodyParts();
 		}
 		public void hasManualBaseClassConstructorInvocations(final boolean tf) {
+			// hasManualBaseClassConstructorInvocations is called at the point
+			// that we discover an explicit constructor. But the code has already
+			// pumped in a default construct for all classes (see
+			// MethodDeclaration.callBaseCtor). We call it via code
+			// that's been inserted in bodyPrefix_. Here, we need to remove it
+			//
+			// However, it can also be the case that the base class already
+			// has a private default constructor, in which case the code in
+			// MethodDeclaration.callBaseCtor does NOT add a constructor
+			// call to bodyPrefix_. We keep the tag
+			// hasManualBaseClassConstructorInvocations_ so that other code
+			// can distinguish between those two situations.
 			if (tf) {
 				// Don¨t use the implicit base class ctor call
 				// if the programmer is doing his or her own
 				bodyPrefix_ = new ExprAndDeclList(lineNumber_);
 			}
+
 			hasManualBaseClassConstructorInvocations_ = tf;
 		}
 		

@@ -1844,7 +1844,8 @@ public abstract class RTExpression extends RTCode {
 				super.setNextCode(code);
 			}
 			
-			private static class RTAssignmentPart2B extends RTExpression {
+			// Public for run-time trace stuff
+			public static class RTAssignmentPart2B extends RTExpression {
 				public RTAssignmentPart2B(final RTExpression lhs, final int lineNumber) {
 					super();
 					lineNumber_ = lineNumber;
@@ -1880,6 +1881,10 @@ public abstract class RTExpression extends RTCode {
 				}
 				public void setRhs(final RTObject rhs) {
 					rhs_ = rhs;
+				}
+				
+				public int lineNumber() {
+					return lineNumber_;
 				}
 				
 				private final RTExpression lhs_;
@@ -3394,6 +3399,10 @@ public abstract class RTExpression extends RTCode {
 		public String getText() {
 			return rTExpr_.getText();
 		}
+		public int lineNumber() {
+			return lineNumber_;
+		}
+		
 		protected RTObject rTExpr_;
 		private final int lineNumber_;
 	}

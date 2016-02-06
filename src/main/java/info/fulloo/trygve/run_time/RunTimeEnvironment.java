@@ -40,6 +40,7 @@ import info.fulloo.trygve.run_time.RTClass.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTAssignment;
 import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTAssignmentPart2;
+import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTAssignmentPart2.RTAssignmentPart2B;
 import info.fulloo.trygve.run_time.RTExpression.RTConstant;
 import info.fulloo.trygve.run_time.RTExpression.RTIdentifier;
 import info.fulloo.trygve.run_time.RTExpression.RTIf;
@@ -47,6 +48,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.run_time.RTExpression.RTNew;
 import info.fulloo.trygve.run_time.RTExpression.RTQualifiedIdentifier;
+import info.fulloo.trygve.run_time.RTExpression.RTQualifiedIdentifier.RTQualifiedIdentifierPart2;
 import info.fulloo.trygve.run_time.RTExpression.RTReturn;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
@@ -321,12 +323,18 @@ public class RunTimeEnvironment {
 					lineNumber = Integer.toString(((RTAssignment)code).lineNumber()) + ".";
 				} else if (code instanceof RTAssignmentPart2) {
 					lineNumber = Integer.toString(((RTAssignmentPart2)code).lineNumber()) + ".";
+				} else if (code instanceof RTAssignmentPart2B) {
+					lineNumber = Integer.toString(((RTAssignmentPart2B)code).lineNumber()) + ".";
 				} else if (code instanceof RTNew) {
 					lineNumber = Integer.toString(((RTNew)code).lineNumber()) + ".";
 				} else if (code instanceof RTIf) {
 					lineNumber = Integer.toString(((RTIf)code).lineNumber()) + ".";
+				} else if (code instanceof RTConstant) {
+					lineNumber = Integer.toString(((RTConstant)code).lineNumber()) + ".";
 				} else if (code instanceof RTQualifiedIdentifier) {
 					lineNumber = Integer.toString(((RTQualifiedIdentifier)code).lineNumber()) + ".";
+				} else if (code instanceof RTQualifiedIdentifierPart2) {
+					lineNumber = Integer.toString(((RTQualifiedIdentifierPart2)code).lineNumber()) + ".";
 				} else if (code instanceof RTReturn) {
 					final int iLineNumber = ((RTReturn)code).lineNumber();
 					if (0 > iLineNumber) {
