@@ -1,7 +1,7 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1049,6 +1049,28 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		final List<BodyPart> prefixBodyParts = methodDeclaration.prefixBodyParts();
 		final List<BodyPart> regularBodyParts = methodDeclaration.bodyParts();
+		if (prefixBodyParts.isEmpty()) {
+			// It could be either because there was no suitable default
+			// constructor or because a manual construct canceled out the
+			// automatically provided call
+			
+			final Type megaTypeOfPotentialCtor = Expression.nearestEnclosingMegaTypeOf(methodDeclaration.enclosedScope());
+			Declaration baseClassDeclaration = null;
+			if (megaTypeOfPotentialCtor.enclosedScope().associatedDeclaration() instanceof ClassDeclaration) {
+				final ClassDeclaration classDeclaration = (ClassDeclaration)megaTypeOfPotentialCtor.enclosedScope().associatedDeclaration();
+				baseClassDeclaration = classDeclaration.baseClassDeclaration();
+			}
+			if (null != baseClassDeclaration) {
+				if (megaTypeOfPotentialCtor.name().equals(methodDeclaration.name()) &&
+						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
+					if (methodDeclaration.hasManualBaseClassConstructorInvocations() == false) {
+						ErrorLogger.error(ErrorType.Fatal, methodDeclaration.lineNumber(),
+							"Constructor `", methodDeclaration.name(),
+							"' has no valid means to ensure that the base class part of the object is initialized.", "");
+					}
+				}
+			}
+		}
 		
 		final List<BodyPart> bodyParts = prefixBodyParts;
 		bodyParts.addAll(initializationBodyParts);
@@ -1534,6 +1556,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else if (associatedDeclaration instanceof RoleDeclaration) {
 					tempRetval = new RTRole((RoleDeclaration)associatedDeclaration);
 					retval.addRole(associatedDeclaration.name(), (RTRole)tempRetval);
+				} else if (associatedDeclaration instanceof MethodDeclaration) {
+					// It's in the scope hierarchy but not the type hierarchy.  TRIAL -- seems to work
+					tempRetval = retval;
+					;
 				} else {
 					assert false;
 				}
@@ -1578,6 +1604,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	public static RTType scopeToRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
+		if (null == enclosedScope) {
+			assert null != enclosedScope;
+		}
 		final StaticScope enclosingScope = enclosedScope.parentScope();
 		
 		final String scopePathName = enclosedScope.pathName();

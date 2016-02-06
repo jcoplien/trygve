@@ -1,7 +1,7 @@
 package info.fulloo.trygve.semantic_analysis;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -165,7 +165,7 @@ public class Pass2Listener extends Pass1Listener {
 
 	@Override public void exitMethod_decl(KantParser.Method_declContext ctx)
 	{
-		//  : method_decl_hook '{' expr_and_decl_list '}'
+		//  : method_decl_hook '{' type_and_expr_and_decl_list '}'
 		// Declare parameters in the new scope
 		// This is definitely a Pass2 thing
 		final MethodSignature signature = parsingData_.popMethodSignature();
@@ -978,7 +978,7 @@ public class Pass2Listener extends Pass1Listener {
 			
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
 			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic(),
-					originMethodClass, targetMethodClass);
+					originMethodClass, targetMethodClass, !amInConstructor());
 			if (null == methodDeclaration) {
 				// Could be a "required" method in a Role. It's O.K.
 				assert true;

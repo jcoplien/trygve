@@ -3,7 +3,7 @@
     package info.fulloo.trygve.parser;
 
 
-import org.antlr.v4.runtime.ParserRuleContext; 
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -325,6 +325,18 @@ public class KantBaseListener implements KantListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitExpr_and_decl_list(KantParser.Expr_and_decl_listContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterType_and_expr_and_decl_list(KantParser.Type_and_expr_and_decl_listContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitType_and_expr_and_decl_list(KantParser.Type_and_expr_and_decl_listContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

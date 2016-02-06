@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -300,12 +301,34 @@ public abstract class RTMessageDispatcher {
 		}
 	}
 	
+	protected RTMethod getNonPolymorphicMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
+		// Should look up method in the receiver's STATIC scope. Get the
+		// current scope so we can get all the magic identifiers
+		// (this, current$context, etc.)
+		final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+		RTMethod methodDecl = null;
+		assert currentScope.rTType() instanceof RTContextObject == false;
+		assert currentScope.rTType() instanceof RTRole == false;
+
+		methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, false);
+		
+		if (null == methodDecl) {
+			assert null != methodDecl;
+		}
+		return methodDecl;
+	}
+	
 	protected void commonWrapup(final Type typeOfThisParameterToCalledMethod,
 			final int indexForThisExtraction,
-			final RTObject self) {
+			final RTObject self, final boolean isPolymorphic) {
 		// Get the method declaration by looking it up in the receiver's scope
 		// Null return on error (e.g., attempting to invoke a method on a null object)
-		methodDecl_ = this.getMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
+		if (isPolymorphic) {
+			methodDecl_ = this.getMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
+		} else {
+			methodDecl_ = this.getNonPolymorphicMethodDecl(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
+		}
+		
 		// may be null if, for example, invoking a method on a null object
 		// (test case tests/inheritance.k)
 		
@@ -500,11 +523,61 @@ public abstract class RTMessageDispatcher {
 		return methodDecl;
 	}
 	
-	protected RTMethod genericMethodDeclLookup(final Type typeOfThisParameterToMethod, final RTObject self) {
+	private RTMethod genericPolymorphicMethodLookup(final RTType rTTypeOfSelf, final Type typeOfThisParameterToMethod,
+			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
+		// Give a direct match the first chance
+		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		if (null == methodDecl) {
+			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			if (null == methodDecl) {
+				if (typeOfThisParameterToMethod instanceof RoleType) {
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					if (null == methodDecl) {
+						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+					}
+				}
+				if (null == methodDecl) {
+					// One last try - look it up in Object
+					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
+					assert null != methodDecl;
+				}
+			}
+			assert null != methodDecl;
+		}
+		return methodDecl;
+	}
+	
+	private RTMethod nonPolymorphicMethodLookup(final Type typeOfThisParameterToMethod,
+			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
+		// Give a direct match the only chance
+		final RTType rTTypeOfLocalSelf = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
+;		RTMethod methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		if (null == methodDecl) {
+			methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			if (null == methodDecl) {
+				if (typeOfThisParameterToMethod instanceof RoleType) {
+					methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					if (null == methodDecl) {
+						methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+					}
+				}
+				if (null == methodDecl) {
+					// One last try - look it up in Object
+					methodDecl = rTTypeOfLocalSelf.lookupMethod(methodSelectorName, actualParameters);
+					assert null != methodDecl;
+				}
+			}
+			assert null != methodDecl;
+		}
+		return methodDecl;
+	}
+	
+	protected RTMethod genericMethodDeclLookup(final Type typeOfThisParameterToMethod, final RTObject self, boolean isPolymorphic) {
 		RTMethod methodDecl = null;	
 		// Calculate the address of the method. Generalize for classes and Contexts.
 		final RTType rTTypeOfSelf = null != self? self.rTType():
-		InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
+				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
+
 		if (self instanceof RTNullObject) {
 			ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 					methodSelectorName_, " on a null object", "");
@@ -541,25 +614,19 @@ public abstract class RTMessageDispatcher {
 			}
 		}
 		
-		// Give a direct match the first chance
-		methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
-		if (null == methodDecl) {
-			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
-			if (null == methodDecl) {
-				if (typeOfThisParameterToMethod instanceof RoleType) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
-					if (null == methodDecl) {
-						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
-					}
-				}
-				if (null == methodDecl) {
-					// One last try - look it up in Object
-					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
-					assert null != methodDecl;
-				}
+		if (isPolymorphic) {
+			methodDecl = genericPolymorphicMethodLookup(rTTypeOfSelf,
+					typeOfThisParameterToMethod, methodSelectorName, actualParameters);
+		} else {
+			if (typeOfThisParameterToMethod	instanceof ArrayType) {
+				// As usual
+				methodDecl = genericPolymorphicMethodLookup(rTTypeOfSelf,
+						typeOfThisParameterToMethod, methodSelectorName, actualParameters);
+			} else {
+				methodDecl = nonPolymorphicMethodLookup(typeOfThisParameterToMethod, methodSelectorName, actualParameters);
 			}
-			assert null != methodDecl;
 		}
+
 		return methodDecl;
 	}
 		
@@ -645,7 +712,7 @@ public abstract class RTMessageDispatcher {
 					assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 0, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
 		
@@ -658,7 +725,7 @@ public abstract class RTMessageDispatcher {
 			assert currentScope.rTType() instanceof RTContextObject == false;
 			assert currentScope.rTType() instanceof RTRole == false;
 
-			methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+			methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			
 			if (null == methodDecl) {
 				assert null != methodDecl;
@@ -705,7 +772,7 @@ public abstract class RTMessageDispatcher {
 					self = (RTObject)tempSelf;
 					assert self instanceof RTContextObject /* && self instanceof RTRole == false */;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 0, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -823,7 +890,7 @@ public abstract class RTMessageDispatcher {
 					self = (RTObject)tempSelf;
 					assert self instanceof RTContextObject /* && self instanceof RTRole == false */;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 0, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -835,7 +902,7 @@ public abstract class RTMessageDispatcher {
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				assert false;	// we shouldn't be in a Role
 			} else {
-				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			}
 
 			if (null == methodDecl) {
@@ -885,7 +952,7 @@ public abstract class RTMessageDispatcher {
 					assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 0, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -927,7 +994,7 @@ public abstract class RTMessageDispatcher {
 							typeOfThisParameterToMethod);
 				}
 			} else {
-				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			}
 			
 			if (null == methodDecl) {
@@ -985,7 +1052,7 @@ public abstract class RTMessageDispatcher {
 					// so we have used the right stack protocol
 					// assert self instanceof RTRole == true;
 					
-					commonWrapup(typeOfThisParameterToCalledMethod, 1, self);
+					commonWrapup(typeOfThisParameterToCalledMethod, 1, self, messageExpr.isPolymorphic());
 				} else {
 					assert false;
 				}
@@ -1037,7 +1104,7 @@ public abstract class RTMessageDispatcher {
 								typeOfThisParameterToMethod);
 					}
 				} else {
-					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 				}
 				
 				if (null == methodDecl) {
@@ -1091,7 +1158,7 @@ public abstract class RTMessageDispatcher {
 					// This need not be true — could be the RolePlayer type
 					// assert self instanceof RTRole == true;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, indexForThisExtraction, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, indexForThisExtraction, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -1109,7 +1176,7 @@ public abstract class RTMessageDispatcher {
 					methodDecl = noncompliantRoleMethodDeclLookup(typeOfThisParameterToMethod, indexForThisExtraction, self);
 				} else {
 					assert true;	// should be able to get rid of this code?  nope.
-					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 				}
 			}
 			
@@ -1157,7 +1224,7 @@ public abstract class RTMessageDispatcher {
 					assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
-				commonWrapup(typeOfThisParameterToCalledMethod, 0, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -1169,7 +1236,7 @@ public abstract class RTMessageDispatcher {
 			if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 				assert false;	// can't be (empirical)
 			} else {
-				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			}
 			
 			if (null == methodDecl) {
@@ -1221,7 +1288,7 @@ public abstract class RTMessageDispatcher {
 					// or RTContextObject. But it's an RTObject...
 				}
 				final int newIndexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
-				commonWrapup(typeOfThisParameterToCalledMethod, newIndexForThisExtraction, self);
+				commonWrapup(typeOfThisParameterToCalledMethod, newIndexForThisExtraction, self, messageExpr.isPolymorphic());
 			}
 		}
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
@@ -1235,7 +1302,7 @@ public abstract class RTMessageDispatcher {
 				if (typeOfThisParameterToMethod instanceof RoleType && 1 == indexForThisExtraction) {	// a guess...
 					assert false;	// is a Context; can't be a Role
 				} else {
-					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self);
+					methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 				}
 			}
 			

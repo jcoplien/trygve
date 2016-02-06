@@ -8,7 +8,7 @@ import org.antlr.v4.runtime.tree.ParseTreeListener;
  * This interface defines a complete listener for a parse tree produced by
  * {@link KantParser}.
  */
-public interface KantListener extends ParseTreeListener { 
+public interface KantListener extends ParseTreeListener {
 	/**
 	 * Enter a parse tree produced by {@link KantParser#program}.
 	 * @param ctx the parse tree
@@ -269,6 +269,16 @@ public interface KantListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpr_and_decl_list(KantParser.Expr_and_decl_listContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link KantParser#type_and_expr_and_decl_list}.
+	 * @param ctx the parse tree
+	 */
+	void enterType_and_expr_and_decl_list(KantParser.Type_and_expr_and_decl_listContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link KantParser#type_and_expr_and_decl_list}.
+	 * @param ctx the parse tree
+	 */
+	void exitType_and_expr_and_decl_list(KantParser.Type_and_expr_and_decl_listContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link KantParser#return_type}.
 	 * @param ctx the parse tree

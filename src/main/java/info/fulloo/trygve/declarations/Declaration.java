@@ -1,7 +1,7 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -509,6 +509,7 @@ public abstract class Declaration implements BodyPart {
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			
 			bodyPrefix_ = new ExprAndDeclList(lineNumber);	// for implicit constructor
+			hasManualBaseClassConstructorInvocations_ = false;
 			
 			if (associatedDeclaration instanceof ContextDeclaration ||
 					associatedDeclaration instanceof ClassDeclaration) {
@@ -555,16 +556,21 @@ public abstract class Declaration implements BodyPart {
 				// If there's a constructor, set up to call it from the beginning
 				// of this constructor. Very first thing.
 				if (null != constructor) {
-					MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
-					
-					originMessageClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-					targetMessageClass = methodScope.methodInvocationEnvironmentClass();
-					assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
-					
-					final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
-					final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
-							originMessageClass, targetMessageClass);
-					bodyPrefix_.addBodyPart(messageExpr);
+					if (constructor.accessQualifier() == AccessQualifier.PublicAccess) {
+						MethodInvocationEnvironmentClass originMessageClass, targetMessageClass;
+						
+						originMessageClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						targetMessageClass = methodScope.methodInvocationEnvironmentClass();
+						assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
+						
+						final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
+						final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
+								originMessageClass, targetMessageClass, true);
+						bodyPrefix_.addBodyPart(messageExpr);
+					} else {
+						// If it's not public, we simply don't call it
+						;
+					}
 				}
 			}
 		}
@@ -669,6 +675,7 @@ public abstract class Declaration implements BodyPart {
 				// if the programmer is doing his or her own
 				bodyPrefix_ = new ExprAndDeclList(lineNumber_);
 			}
+			hasManualBaseClassConstructorInvocations_ = tf;
 		}
 		
 		public MethodDeclaration copyWithNewEnclosingScopeAndTemplateParameters(
@@ -696,6 +703,10 @@ public abstract class Declaration implements BodyPart {
 			return retval;
 		}
 		
+		public boolean hasManualBaseClassConstructorInvocations() {
+			return hasManualBaseClassConstructorInvocations_;
+		}
+		
 		private Type returnType_;
 		private StaticScope myEnclosedScope_;
 		private AccessQualifier accessQualifier_;
@@ -703,6 +714,7 @@ public abstract class Declaration implements BodyPart {
 		private ExprAndDeclList body_;
 		private MethodSignature signature_;
 		private ExprAndDeclList bodyPrefix_;
+		private boolean hasManualBaseClassConstructorInvocations_;
 	}
 	
 	public static class MethodSignature extends Declaration

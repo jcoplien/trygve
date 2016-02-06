@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -579,11 +579,11 @@ public abstract class RTExpression extends RTCode {
 			if (false == isStatic) {
 				fakeSelfExpression = actualParameters.parameterAtPosition(0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-					returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_);
+					returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_, true);
 			} else {
 				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope(), 0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-						returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_);
+						returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_, true);
 			}
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
@@ -2017,14 +2017,14 @@ public abstract class RTExpression extends RTCode {
 				final MethodInvocationEnvironmentClass targetMessageClass = constructor.enclosedScope().methodInvocationEnvironmentClass();
 				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope, expr.lineNumber());
 				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber(),
-						false, originMessageClass, targetMessageClass);
+						false, originMessageClass, targetMessageClass, true);
 				
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
 				final RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
 				rTConstructor_ = RTMessage.makeRTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
 				
-				// In the past, there was code in RTContext::run that checked to see if
+				// In the past, there was code in RTContext.run that checked to see if
 				// rTConstructor was set and, if so, put t$his in the activation record
 				// and then called called on rTConstructor.run(), which just does the
 				// standard message thing: push the return value and arguments, create

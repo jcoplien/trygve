@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.3
+ * Trygve IDE 1.4
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -136,6 +136,7 @@ import info.fulloo.trygve.parser.KantParser.Method_signatureContext;
 import info.fulloo.trygve.parser.KantParser.Object_declContext;
 import info.fulloo.trygve.parser.KantParser.ProgramContext;
 import info.fulloo.trygve.parser.KantParser.Switch_exprContext;
+import info.fulloo.trygve.parser.KantParser.Type_and_expr_and_decl_listContext;
 import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
 import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
@@ -312,6 +313,10 @@ public class Pass1Listener extends Pass0Listener {
 		// Pass 1 - 4 version
 		final ContextDeclaration contextDecl = currentScope_.lookupContextDeclarationRecursive(name);
 		assert null != contextDecl;  // maybe turn into an error message later
+		
+		// TRIAL -seems to work
+		contextDecl.enclosedScope().setParentScope(currentScope_);
+
 		currentScope_ = contextDecl.enclosedScope();
 		assert null != currentScope_;	// maybe turn into an error message later
 		return contextDecl;
@@ -972,8 +977,21 @@ public class Pass1Listener extends Pass0Listener {
 		// class_body_element
 	    //	: method_decl
 	    //	| object_decl
+		//  | type_declaration
 	    
 		/* nothing */
+		
+		if (printProductionsDebug) {
+			if (null != ctx.method_decl()) {
+				System.err.println("class_body_element : method_decl");
+			} else if (null != ctx.object_decl()) {
+				System.err.println("class_body_element : object_decl");
+			} else if (null != ctx.type_declaration()) {
+				System.err.println("class_body_element : type_declaration");
+			} else {
+				assert false;
+			}
+		}
 	}
 	
 	@Override public void enterInterface_body(KantParser.Interface_bodyContext ctx) {
@@ -1130,10 +1148,12 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void exitMethod_decl(KantParser.Method_declContext ctx)
 	{
-		// : method_decl_hook '{' expr_and_decl_list '}'
+		// : method_decl_hook '{' type_and_expr_and_decl_list '}'
 		
 		// Declare parameters in the new scope
 		// This is definitely a Pass2 thing, so there is a special Pass 2 version
+		
+		assert currentScope_.associatedDeclaration() instanceof MethodDeclaration;
 		
 		final MethodDeclaration currentMethod = (MethodDeclaration)currentScope_.associatedDeclaration();
 		assert currentMethod instanceof MethodDeclaration;
@@ -1153,7 +1173,7 @@ public class Pass1Listener extends Pass0Listener {
 		parsingData_.popExprAndDecl();  // Move to Context, Role, Class, StageProp productions???
 		
 		if (printProductionsDebug) {
-			System.err.println("method_decl : method_decl_hook '{' expr_and_decl_list '}'");
+			System.err.println("method_decl : method_decl_hook '{' type_and_expr_and_decl_list '}'");
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
@@ -1246,6 +1266,28 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 		}
+	}
+	
+	@Override public void exitType_and_expr_and_decl_list(KantParser.Type_and_expr_and_decl_listContext ctx)
+	{
+		// type_and_expr_and_decl_list : expr_and_decl_list
+ 		//                             | expr_and_decl_list type_declaration
+		//                             | type_declaration expr_and_decl_list
+
+		;	// nothing
+		
+		if (printProductionsDebug) {
+			if (null != ctx.type_declaration()) {
+				if (ctx.type_declaration().start.getStartIndex() < ctx.expr_and_decl_list().start.getStartIndex()) {
+					System.err.println("type_expr_and_decl_list : type_declaration expr_and_decl_list");
+				} else {
+					System.err.println("type_expr_and_decl_list : expr_and_decl_list type_declaration");
+				}
+			} else  {
+				System.err.println("type_expr_and_decl_list : expr_and_decl_list");
+			}
+		}
+		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
 	@Override public void exitExpr_and_decl_list(KantParser.Expr_and_decl_listContext ctx)
@@ -1943,8 +1985,16 @@ public class Pass1Listener extends Pass0Listener {
 						} else {
 							targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 						}
+						boolean isPolymorphic = true;
+						if (amInConstructor()) {
+							if (expression instanceof IdentifierExpression) {
+								if (((IdentifierExpression)expression).name().equals("this")) {
+									isPolymorphic = false;
+								}
+							}
+						}
 						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
-								originMethodClass, targetMethodClass);
+								originMethodClass, targetMethodClass, isPolymorphic);
 					} else if (expression.type() instanceof RoleType){
 						// Check if it is in the requires section for a Role
 						
@@ -1963,7 +2013,7 @@ public class Pass1Listener extends Pass0Listener {
 							targetMethodClass = associatedDeclaration.type().enclosedScope().methodInvocationEnvironmentClass();
 						final Message message = new Message(operatorAsString, params, lineNumber, enclosingMegaType);
 							expression = new MessageExpression(expression, message, expr2.type(), lineNumber, false,
-									originMethodClass, targetMethodClass);
+									originMethodClass, targetMethodClass, !amInConstructor());
 						} else {
 							expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 						}
@@ -2129,7 +2179,7 @@ public class Pass1Listener extends Pass0Listener {
 				targetMethodClass = lhs.type().enclosedScope().methodInvocationEnvironmentClass();
 			
 				expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false,
-						originMethodClass, targetMethodClass);
+						originMethodClass, targetMethodClass, !amInConstructor());
 				expression.setResultIsConsumed(true);
 				
 				// Assign result of compareTo
@@ -2161,7 +2211,7 @@ public class Pass1Listener extends Pass0Listener {
 				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 				targetMethodClass = convertMessage.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
-						lineNumber, true, originMethodClass, targetMethodClass);
+						lineNumber, true, originMethodClass, targetMethodClass, !amInConstructor());
 				expression.setResultIsConsumed(true);
 
 				// This sucks. Expression lists usually take the first seed
@@ -4250,6 +4300,19 @@ public class Pass1Listener extends Pass0Listener {
 	public void ctorCheck(final Type type, final Message message, final int lineNumber) {
 		/* Nothing */
 	}
+	
+	protected boolean amInConstructor() {
+		boolean retval = false;
+		final Declaration declaration = currentScope_.associatedDeclaration();
+		if (declaration instanceof MethodDeclaration) {
+			final MethodDeclaration currentMethodDeclaration = (MethodDeclaration)declaration;
+			final Type methodsMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			final String methodName = currentMethodDeclaration.name();
+			final String megaTypeName = methodsMegaType.name();
+			retval = methodName.equals(megaTypeName);
+		}
+		return retval;
+	}
 
 	// This is a template function mainly for historial reasons data back to
 	// expr and sexpr, and should be updated. We separated those non-terminals
@@ -4366,8 +4429,9 @@ public class Pass1Listener extends Pass0Listener {
 				MethodInvocationEnvironmentClass.ClassEnvironment:
 				message.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
+		final boolean polymorphic = !amInConstructor();
 		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
-				originMethodClass, targetMethodClass);
+				originMethodClass, targetMethodClass, polymorphic);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
@@ -4457,6 +4521,14 @@ public class Pass1Listener extends Pass0Listener {
 									baseClassName,
 									"' must be the first statement in the derived class constructor.",
 									"");
+							noerrors = false;
+						}
+						if (mdecl.accessQualifier() != AccessQualifier.PublicAccess) {
+							errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+									"Call of base class constructor for class `",
+									baseClassName,
+									"', which is not accessible to class `",
+									classDecl.name() + "'.");
 							noerrors = false;
 						}
 					}
@@ -4744,6 +4816,8 @@ public class Pass1Listener extends Pass0Listener {
 			// } else if (walker instanceof Expr_listContext) {
 			// 	;
 			} else if (walker instanceof Expr_and_decl_listContext) {
+				;
+			} else if (walker instanceof Type_and_expr_and_decl_listContext) {
 				;
 			} else if (walker instanceof Method_declContext) {
 				retval = true;
