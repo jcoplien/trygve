@@ -728,7 +728,8 @@ public abstract class RTMessageDispatcher {
 			methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			
 			if (null == methodDecl) {
-				assert null != methodDecl;
+				;	// we propagate the error upstream and it
+					// eventually will generate an RTHalt
 			}
 			return methodDecl;
 		}

@@ -977,8 +977,18 @@ public class Pass2Listener extends Pass1Listener {
 			}
 			
 			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
+			
+			boolean isPolymorphic = true;
+			if (amInConstructor()) {
+				if (object instanceof IdentifierExpression) {
+					if (((IdentifierExpression)object).name().equals("this")) {
+						isPolymorphic = false;
+					}
+				}
+			}
+			
 			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic(),
-					originMethodClass, targetMethodClass, !amInConstructor());
+					originMethodClass, targetMethodClass, isPolymorphic);
 			if (null == methodDeclaration) {
 				// Could be a "required" method in a Role. It's O.K.
 				assert true;

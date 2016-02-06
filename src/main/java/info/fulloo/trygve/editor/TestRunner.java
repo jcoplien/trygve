@@ -150,6 +150,7 @@ public class TestRunner {
 		"nestedContext3.k",
 		"runeInitialization1.k",
 		"runeInitialization2.k",
+		"runeInitialization3.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

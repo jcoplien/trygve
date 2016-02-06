@@ -698,6 +698,9 @@ public abstract class RTExpression extends RTCode {
             RTCode retval = dispatcher.hasError();
             if (null == retval) {
             	retval = dispatcher.methodDecl();
+            	if (null == retval) {
+            		retval = new RTHalt();
+            	}
             }
             return retval;
         }

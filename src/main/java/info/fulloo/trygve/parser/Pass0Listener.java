@@ -105,12 +105,16 @@ public class Pass0Listener extends KantBaseListener {
 			
 			if (null != baseClassNode) {
 				final String baseTypeName = baseClassNode.getText();
-				final Type rawBaseType = currentScope_.lookupTypeDeclarationRecursive(baseTypeName);
+				Type rawBaseType = currentScope_.lookupTypeDeclarationRecursive(baseTypeName);
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
 				if ((rawBaseType instanceof ClassType) == false) {
 					// Leave to pass 2
 					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
 							"' is not a declared class type as base of `", name, "'.", "");
+					
+					// Stumbling measures
+					rawBaseType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+					rawBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 				} else {
 					baseType = (ClassType)rawBaseType;
 					if (baseType.name().equals(name)) {
@@ -271,7 +275,8 @@ public class Pass0Listener extends KantBaseListener {
 	
 	// -------------------------------------------------------------------------------
 	
-	protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
+	protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass,
+			final ClassType baseType, final int lineNumber) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
 		final ClassDeclaration newClass = this.lookupOrCreateNewClassDeclaration(name, newScope, rawBaseClass, lineNumber);
@@ -289,7 +294,8 @@ public class Pass0Listener extends KantBaseListener {
 		newClass.setType(newClassType);
 	}
 
-    protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope, final ClassDeclaration rawBaseClass, final int lineNumber) {
+    protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope,
+    		final ClassDeclaration rawBaseClass, final int lineNumber) {
 		if (null == rawBaseClass) {
 			assert null != rawBaseClass;
 		}

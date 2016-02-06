@@ -1985,6 +1985,7 @@ public class Pass1Listener extends Pass0Listener {
 						} else {
 							targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 						}
+						
 						boolean isPolymorphic = true;
 						if (amInConstructor()) {
 							if (expression instanceof IdentifierExpression) {
@@ -1993,6 +1994,7 @@ public class Pass1Listener extends Pass0Listener {
 								}
 							}
 						}
+						
 						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
 								originMethodClass, targetMethodClass, isPolymorphic);
 					} else if (expression.type() instanceof RoleType){
@@ -4429,9 +4431,18 @@ public class Pass1Listener extends Pass0Listener {
 				MethodInvocationEnvironmentClass.ClassEnvironment:
 				message.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 		final boolean isStatic = (null != mdecl) && (null != mdecl.signature()) && mdecl.signature().isStatic();
-		final boolean polymorphic = !amInConstructor();
+	
+		boolean isPolymorphic = true;
+		if (amInConstructor()) {
+			if (object instanceof IdentifierExpression) {
+				if (((IdentifierExpression)object).name().equals("this")) {
+					isPolymorphic = false;
+				}
+			}
+		}
+		
 		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
-				originMethodClass, targetMethodClass, polymorphic);
+				originMethodClass, targetMethodClass, isPolymorphic);
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
