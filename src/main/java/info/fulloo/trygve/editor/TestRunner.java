@@ -75,6 +75,7 @@ public class TestRunner {
 		"simpletemplate.k",
 		"basectortest.k",
 		"rolevec1.k",
+		"rolevec2.k",
 		"access1.k",
 		"roleclass1.k",
 		"roleclass2.k",

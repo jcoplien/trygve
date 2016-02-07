@@ -45,6 +45,7 @@ import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
+import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -4904,7 +4905,6 @@ public class Pass1Listener extends Pass0Listener {
 			
 		final Type lhsType = lhs.type(), rhsType = rhs.type();
 		
-		@SuppressWarnings("unused")
 		boolean tf = lhsType instanceof RoleType;
 		tf = null != rhsType;
 		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
@@ -4924,7 +4924,7 @@ public class Pass1Listener extends Pass0Listener {
 			errorHook5p2(ErrorType.Noncompliant, lineNumber,
 					"You're on your own here.", "", "", "");
 		}
-		
+
 		if (lhs.name().equals("index")) {
 			errorHook5p2(ErrorType.Fatal, lineNumber,
 					"`index' is a reserved word which is a read-only property of a Role vector element,",
@@ -4932,21 +4932,35 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
 			if (lhsType.canBeConvertedFrom(baseType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Role vector ", lhsType.name(), " cannot be played by vector of objects of type ",
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Role vector elements of type ", lhsType.name(),
+						" cannot be played by objects of type ",
 						((ArrayType)rhsType).baseType().name(), ":", "");
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
 		} else if (lhsType instanceof RoleType && null != rhsType) {
-			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(), "' cannot be played by object of type `", rhsType.name(), "':", "");
+			if (lhsType instanceof RoleType && ((RoleType)lhsType).associatedDeclaration() instanceof RoleArrayDeclaration
+					&& rhsType instanceof ClassType && rhsType.name().startsWith("List<")) {
+				final String ofWhatThisIsAList = rhsType.name().substring(5, rhsType.name().length() - 1);
+				final Type rhsBaseType = currentScope_.lookupTypeDeclarationRecursive(ofWhatThisIsAList);
+				tf = lhsType.canBeConvertedFrom(rhsBaseType, lineNumber, this);
+				if (false == tf) {
+					errorHook6p2(ErrorType.Fatal, lineNumber, "Roles in `", lhsType.name(),
+							"' cannot be played by objects of type `", rhsBaseType.name(), "':", "");
+					this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsBaseType);
+				}
+			} else if (lhsType.canBeConvertedFrom(rhsType) == false) {
+				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(),
+						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhsType.name(), "' is incompatible with expression type `", rhsType.name(), "'.", "");
+			errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhsType.name(),
+					"' is incompatible with expression type `", rhsType.name(), "'.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
-			if (null != anotherLhsType && null != rhsType && anotherLhsType.canBeConvertedFrom(rhsType) == false) {
+			if (null != anotherLhsType && null != rhsType &&
+					anotherLhsType.canBeConvertedFrom(rhsType) == false) {
 				errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
@@ -4958,7 +4972,9 @@ public class Pass1Listener extends Pass0Listener {
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
 				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Can assign only to an identifier, qualified identifier, or vector element.", "", "", "");
+			errorHook5p2(ErrorType.Fatal, lineNumber,
+					"Can assign only to an identifier, qualified identifier, or vector element.",
+					"", "", "");
 		}
 		
 		rhs.setResultIsConsumed(true);

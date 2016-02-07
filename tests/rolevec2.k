@@ -27,5 +27,13 @@ class AClass {
 }
 
 {
-    new C1(new List<AClass>()).trigger();
+   List<AClass> list = new List<AClass>();
+   list.add(new AClass());
+   new C1(list).trigger();
 }
+
+/* GOLD:
+line 3: Roles in `CollectionRole' cannot be played by objects of type `AClass':
+line 3: 	`size' needed by Role `CollectionRole' does not appear in interface of `AClass'.
+___________________________________________________________
+*/

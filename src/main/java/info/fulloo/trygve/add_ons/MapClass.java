@@ -79,6 +79,22 @@ public final class MapClass {
 		methodDecl.setHasConstModifier(isConst);
 		mapType_.enclosedScope().declareMethod(methodDecl);
 	}
+	private static void declarePutAllMethod() {
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		
+		final FormalParameterList formals = new FormalParameterList();
+		final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
+		final ObjectDeclaration m = new ObjectDeclaration("m", mapType_, 0);
+		formals.addFormalParameter(m);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
+		formals.addFormalParameter(self);
+		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration("putAll", methodScope, voidType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		methodDecl.setReturnType(voidType);
+		methodDecl.setHasConstModifier(false);
+		mapType_.enclosedScope().declareMethod(methodDecl);
+	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -111,7 +127,7 @@ public final class MapClass {
 			
 			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K), false);
 			
-			declareMapMethod("putAll", voidType, asList("m"), asList(mapType_), false);
+			declarePutAllMethod();
 			
 			declareMapMethod("get", V, asList("key"), asList(K), true);
 			
