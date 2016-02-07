@@ -47,7 +47,8 @@ public class TemplateInstantiationInfo {
 		classType_ = classType;
 	}
 	public Type parameterAtIndex(final int i) {
-		assert i < actualParameters_.size();
+		final int size = actualParameters_.size();
+		assert i < size;
 		return actualParameters_.get(i);
 	}
 	public Type get(final int i) {
@@ -62,7 +63,8 @@ public class TemplateInstantiationInfo {
 	public Type classSubstitionForTemplateTypeNamed(final String templateTypeName) {
 		final TypeParameter formalTypeParam = templateDeclaration_.typeParameterNamed(templateTypeName);
 		final int parameterPositionOfFormalParam = formalTypeParam.argumentPosition();
-		return this.parameterAtIndex(parameterPositionOfFormalParam);
+		final int numberOfParameters = this.actualParameters_.size();
+		return this.parameterAtIndex(numberOfParameters - parameterPositionOfFormalParam - 1);
 	}
 	public final String templateName() {
 		return templateDeclaration_.name();

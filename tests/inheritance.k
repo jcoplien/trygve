@@ -44,4 +44,9 @@ context AContext {
 /* GOLD:
 ___________________________________________________________
 line 33: FATAL: TERMINATED: Attempting to invoke method bar on a null object
+popping stack: type is RTStringObject
+popping stack: type is RTNullObject
+	In script `bar'
+	Called from script `role1Method'
+	Called from script `trigger'
 */

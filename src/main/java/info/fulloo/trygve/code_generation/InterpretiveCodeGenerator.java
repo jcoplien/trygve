@@ -331,6 +331,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("isEmpty")) {
 			listCode.add(new ListClass.RTIsEmptyCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("sort")) {
+			listCode.add(new ListClass.RTSortCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("remove")) {
 			if (methodDeclaration.returnType().name().equals("boolean")) {
 				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
@@ -391,13 +394,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		rtMapTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
 		final List<RTCode> mapCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("Map")) {
-			mapCode.add(new  MapClass.RTMapCtorCode(methodDeclaration.enclosedScope()));
+			mapCode.add(new MapClass.RTMapCtorCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("size")) {
 			mapCode.add(new MapClass.RTSizeCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingInt;
 		} else if (methodDeclaration.name().equals("put")) {
 			mapCode.add(new MapClass.RTPutCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("putAll")) {
+			mapCode.add(new MapClass.RTPutAllCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get")) {
 			mapCode.add(new MapClass.RTGetCode(methodDeclaration.enclosedScope()));

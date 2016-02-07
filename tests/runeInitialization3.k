@@ -30,19 +30,19 @@ class Derived extends Base {
       System.out.println("never used");
    }
 
-   public Derived(int h, Base b) {                             // 4
-      Base(b);                                                 // 5
-      if (h == 0) {                                            // 12
+   public Derived(int h, Base b) { 
+      Base(b);
+      if (h == 0) {
          System.out.println("Can't use 0. Choosing a sensible default instead");
          h_ = 1442233;
       } else {
-         h_ = h.clone;                                         // 13
+         h_ = h.clone; 
       }
    }
 
    public void DoIt() {
-      foo = new Foo("Derived initializer");                   // 16,23
-      foo.Bar("10/" + h_.toString() + " is " + (10/h_).toString()); // 17,24
+      foo = new Foo("Derived initializer");
+      foo.Bar("10/" + h_.toString() + " is " + (10/h_).toString());
    }
 }
 
@@ -75,5 +75,16 @@ Base constructor
 -------
 Blah
 line 45: FATAL: TERMINATED: Attempting to invoke method toString on a null object
+popping stack: type is RTNullObject
+	In script `toString'
+	Called from script `+'
+	Called from script `+'
+	Called from script `+'
+	Called from script `Bar'
+	Called from script `DoIt'
+	Called from script `Blah'
+	Called from script `Base'
+	Called from script `Derived'
+	Called from script `MoreDerived'
 */
 

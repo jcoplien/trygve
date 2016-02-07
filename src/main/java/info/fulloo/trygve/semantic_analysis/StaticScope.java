@@ -32,6 +32,7 @@ import java.util.LinkedHashMap;
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
+import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
@@ -183,6 +184,7 @@ public class StaticScope {
 			MathClass.setup();
 			DateClass.setup();
 			ScannerClass.setup();
+			MapClass.setup();
 		}
 	}
 	

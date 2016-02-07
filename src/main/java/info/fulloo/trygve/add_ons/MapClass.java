@@ -18,13 +18,13 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
+import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTMapObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
-import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
@@ -52,9 +52,11 @@ import static java.util.Arrays.asList;
  */
 
 public final class MapClass {
-	private static void declareMapMethod(final String methodSelector, final Type returnType,
+	private static void declareMapMethod(final String methodSelector,
+			final Type returnType,
 			final List<String> paramNames,
-			final List<Type> paramTypes) {
+			final List<Type> paramTypes,
+			final boolean isConst) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		
 		final Iterator<Type> typeIterator = null == paramTypes? null: paramTypes.iterator();
@@ -70,11 +72,11 @@ public final class MapClass {
 		}
 		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
 		formals.addFormalParameter(self);
-		StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
-		MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
-		methodDecl.setHasConstModifier(false);
+		methodDecl.setHasConstModifier(isConst);
 		mapType_.enclosedScope().declareMethod(methodDecl);
 	}
 	public static void setup() {
@@ -105,19 +107,21 @@ public final class MapClass {
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
-			declareMapMethod("Map", mapType_, null, null);
+			declareMapMethod("Map", mapType_, null, null, false);
 			
-			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K));
+			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K), false);
 			
-			declareMapMethod("get", V, asList("key"), asList(K));
+			declareMapMethod("putAll", voidType, asList("m"), asList(mapType_), false);
 			
-			declareMapMethod("containsKey", booleanType, asList("key"), asList(K));
+			declareMapMethod("get", V, asList("key"), asList(K), true);
 			
-			declareMapMethod("containsValue", booleanType, asList("value"), asList(V));
+			declareMapMethod("containsKey", booleanType, asList("key"), asList(K), true);
 			
-			declareMapMethod("remove", V, asList("key"), asList(K));
+			declareMapMethod("containsValue", booleanType, asList("value"), asList(V), true);
 			
-			declareMapMethod("size", intType, null, null);
+			declareMapMethod("remove", V, asList("key"), asList(K), false);
+			
+			declareMapMethod("size", intType, null, null, true);
 			
 			// Declare the type
 			globalScope.declareType(mapType_);
@@ -125,7 +129,7 @@ public final class MapClass {
 		}
 	}
 	
-	public static class RTMapCommon extends RTMessage {
+	public static class RTMapCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTMapCommon(final String className, final String methodName, final List<String> parameterNames,
 				final List<String> parameterTypeNames,
 				final StaticScope enclosingMethodScope, final Type returnType) {
@@ -183,16 +187,31 @@ public final class MapClass {
 			return super.nextCode();
 		}
 	}
+	public static class RTPutAllCode extends RTMapCommon {
+		public RTPutAllCode(final StaticScope enclosingMethodScope) {
+			super("Map", "putAll", asList("m"), asList("Map"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTObject rawArg = activationRecord.getObject("m");
+			theMapObject.putAll(rawArg);
+			return super.nextCode();
+		}
+	}
 	public static class RTGetCode extends RTMapCommon {
 		public RTGetCode(final StaticScope enclosingMethodScope) {
-			super("Map", "get", asList("key"), asList("K"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			super("Map", "get", asList("key"), asList("K"), enclosingMethodScope, new TemplateParameterType("V", null));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final RTObject rawKey = activationRecord.getObject("key");
-			final RTObject value = theMapObject.get(rawKey);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+			final RTObject answer = theMapObject.get(rawKey);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", answer);
+			
 			return super.nextCode();
 		}
 	}
@@ -204,8 +223,12 @@ public final class MapClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject key = (RTIntegerObject)activationRecord.getObject("key");
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theMapObject.containsKey(key);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTStackable answer = (RTStackable)theMapObject.containsKey(key);
+			assert answer instanceof RTObject;
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)answer);
+			
 			return super.nextCode();
 		}
 	}
@@ -217,8 +240,12 @@ public final class MapClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject value = (RTIntegerObject)activationRecord.getObject("key");
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theMapObject.containsValue(value);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTStackable answer = (RTStackable)theMapObject.containsValue(value);
+			assert answer instanceof RTObject;
+
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)answer);
+			
 			return super.nextCode();
 		}
 	}
@@ -230,8 +257,12 @@ public final class MapClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject key = (RTIntegerObject)activationRecord.getObject("key");
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
-			final RTStackable result = (RTStackable)theMapObject.remove(key);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTStackable answer = (RTStackable)theMapObject.remove(key);
+			assert answer instanceof RTObject;
+
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)answer);
+			
 			return super.nextCode();
 		}
 	}
@@ -243,8 +274,12 @@ public final class MapClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final int rawResult = theMapObject.size();
-			final RTIntegerObject result = new RTIntegerObject(rawResult);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			final RTIntegerObject answer = new RTIntegerObject(rawResult);
+			assert answer instanceof RTObject;
+
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)answer);
+			
 			return super.nextCode();
 		}
 	}

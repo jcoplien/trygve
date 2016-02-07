@@ -310,7 +310,10 @@ public abstract class RTExpression extends RTCode {
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
 			stringRep_ = qie.getText();
 			
-			qualifier_ = RTExpression.makeExpressionFrom(qie.qualifier(), nearestEnclosingType);
+			// Stumbling check
+			final RTExpression qualifier = RTExpression.makeExpressionFrom(qie.qualifier(), nearestEnclosingType);
+			qualifier_ = null == qualifier? new RTNullExpression(): qualifier;
+			
 			qualifier_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
@@ -909,6 +912,27 @@ public abstract class RTExpression extends RTCode {
 		
 		public boolean isStatic() {
 			return isStatic_;
+		}
+		
+		protected static void printMiniStackStatus() {
+			// Experiment: Pop down stack looking for information about the method
+			RTStackable topOfStack;
+			while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
+				topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if (topOfStack instanceof RTPostReturnProcessing) {
+					RTPostReturnProcessing currentMethodReturn = (RTPostReturnProcessing)topOfStack;
+					ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.name(), "'", "");
+					while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
+						topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
+						if (topOfStack instanceof RTPostReturnProcessing) {
+							currentMethodReturn = (RTPostReturnProcessing)topOfStack;
+							ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.name(), "'", "");
+						}
+					}
+					break;
+				}
+				System.err.format("popping stack: type is %s\n", topOfStack.getClass().getSimpleName());
+			}
 		}
 
 
@@ -1676,10 +1700,17 @@ public abstract class RTExpression extends RTCode {
 					final StaticScope declaringScope = ((RTRoleIdentifier)lhs_).declaringScope();
 					final RoleDeclaration lhsDecl = declaringScope.lookupRoleOrStagePropDeclaration(((RTRoleIdentifier)lhs_).name());
 					if (lhsDecl.isArray()) {
-						assert rhs instanceof RTArrayObject;
-						final RTArrayObject aRhs = (RTArrayObject)rhs;
-						assert lhs_ instanceof RTRoleIdentifier;
-						this.processRoleArrayBinding2(aRhs);
+						if (rhs instanceof RTArrayObject) {
+							final RTArrayObject aRhs = (RTArrayObject)rhs;
+							assert lhs_ instanceof RTRoleIdentifier;
+							this.processRoleArrayBinding2(aRhs);
+						} else if (rhs instanceof RTListObject) {
+							final RTListObject aRhs = (RTListObject)rhs;
+							assert lhs_ instanceof RTRoleIdentifier;
+							this.processRoleArrayBinding2b((RTListObject)aRhs);
+						} else {
+							assert false;
+						}
 					} else {
 						this.processRoleOrStagePropBinding(rhs);
 					}
@@ -1801,6 +1832,7 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			
+			// Array
 			private void processRoleArrayBinding2(final RTArrayObject rhs) {
 				// Analogous to processRoleBinding(RTObject rhs) but the Role type
 				// is declared as an array, and we're handling the binding of an array object
@@ -1813,6 +1845,21 @@ public abstract class RTExpression extends RTCode {
 				assert contextScope.rTType() instanceof RTContext;
 				
 				contextScope.setRoleArrayBindingToArray(lhs, rhs);
+			}
+			
+			// List
+			private void processRoleArrayBinding2b(final RTListObject rhs) {
+				// Analogous to processRoleBinding(RTObject rhs) but the Role type
+				// is declared as an array, and we're handling the binding of an array object
+				// to that role
+				
+				final RTRoleIdentifier lhs = (RTRoleIdentifier)lhs_;
+				final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
+				
+				assert contextScope.rTType() instanceof RTContext;
+				
+				contextScope.setRoleArrayBindingToList(lhs, rhs);
 			}
 			
 			private void processRoleArrayBinding(final RTArrayExpression lhs, final RTArrayObject rhs) {
@@ -2467,8 +2514,12 @@ public abstract class RTExpression extends RTCode {
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
 			final RTObject rolePlayer = contextInfo.rolePlayerNamedAndIndexed(roleName_, indexResult);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(rolePlayer);
-			return nextCode_;
+			if (null != rolePlayer) {
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(rolePlayer);
+				return nextCode_;
+			} else {
+				return new RTHalt();
+			}
 		}
 		public final String roleName() {
 			return roleName_;
@@ -2487,7 +2538,10 @@ public abstract class RTExpression extends RTCode {
 			super();
 			conditionalExpression_ = RTExpression.makeExpressionFrom(expr.conditional(), nearestEnclosingType);
 			part2_ = new RTIfPart2(expr, nearestEnclosingType);
-			conditionalExpression_.setNextCode(part2_);
+			if (null != conditionalExpression_) {
+				// Stumbling check
+				conditionalExpression_.setNextCode(part2_);
+			}
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
 			lineNumber_ = expr.lineNumber();
@@ -3699,10 +3753,8 @@ public abstract class RTExpression extends RTCode {
 			// it on the stack, and to get it back to the caller
 			if (null != returnExpression) {
 				rTRe_ = new ArrayList<RTCode>();
-				assert returnExpression instanceof NullExpression == false;
-				// if (returnExpression instanceof ReturnExpression == false) {
-				// 	assert returnExpression instanceof ReturnExpression;
-				// }
+				
+				// Can be a NullExpression under error conditions
 				if (returnExpression instanceof ReturnExpression) {
 					assert returnExpression instanceof ReturnExpression == false;
 				}

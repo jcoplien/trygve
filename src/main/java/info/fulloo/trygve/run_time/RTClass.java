@@ -252,27 +252,6 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					activationRecord.addObjectDeclaration("ret$val", null);
 				}
 			}
-			
-			protected void printMiniStackStatus() {
-				// Experiment: Pop down stack looking for information about the method
-				RTStackable topOfStack;
-				while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
-					topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
-					if (topOfStack instanceof RTPostReturnProcessing) {
-						RTPostReturnProcessing currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-						ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.name(), "'", "");
-						while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
-							topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
-							if (topOfStack instanceof RTPostReturnProcessing) {
-								currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-								ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.name(), "'", "");
-							}
-						}
-						break;
-					}
-					System.err.format("popping stack: type is %s\n", topOfStack.getClass().getSimpleName());
-				}
-			}
 		}
 		public static class RTAssertCode extends RTObjectCommon {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
@@ -447,7 +426,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					ErrorLogger.error(ErrorType.Runtime,
 							"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on left-hand side of operation involving `",
 							parameterName_ + "'.");
-					this.printMiniStackStatus();
+					RTMessage.printMiniStackStatus();
 					nextPC = new RTHalt();
 				} else {
 					final RTStackable rhs = dynamicScope.getObject("rhs");
@@ -455,7 +434,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 						ErrorLogger.error(ErrorType.Runtime,
 								"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on right-hand side, named `",
 								parameterName_ + "'.");
-						this.printMiniStackStatus();
+						RTMessage.printMiniStackStatus();
 						nextPC = new RTHalt();
 					} else {
 						assert self instanceof RTIntegerObject;

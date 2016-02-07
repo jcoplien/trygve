@@ -43,6 +43,7 @@ import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
@@ -236,6 +237,7 @@ public abstract class RTMessageDispatcher {
 		RTCode pc = start;
 		final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 		RTObject self = null;
+		RTStackable retval = null;
 		while (null != pc) {
 			// This evaluation leaves a result on the stack -
 			// a result which will be a parameter to the method
@@ -269,8 +271,13 @@ public abstract class RTMessageDispatcher {
 		
 		self = isStatic_? null:
 			(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
-		assert null != self || isStatic_;
-		return self;
+		if (self == null && !isStatic_) {
+			// Some kind of error. Assume we're in the stumbling business
+			retval = (RTStackable)new RTHalt();
+		} else {
+			retval = self;
+		}
+		return retval;
 	}
 	
 	protected void populateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
@@ -581,7 +588,8 @@ public abstract class RTMessageDispatcher {
 		if (self instanceof RTNullObject) {
 			ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 					methodSelectorName_, " on a null object", "");
-
+			RTMessage.printMiniStackStatus();
+			
 			// Halt the machine
 			return null;
 		} else if (null == rTTypeOfSelf) {
@@ -796,7 +804,8 @@ public abstract class RTMessageDispatcher {
 				if (self instanceof RTNullObject) {
 					ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 							methodSelectorName_, " on a null object", "");
-
+					RTMessage.printMiniStackStatus();
+					
 					// Halt the machine
 					return null;
 				} else if (null == rTTypeOfSelf) {

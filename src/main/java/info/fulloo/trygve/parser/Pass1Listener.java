@@ -121,6 +121,8 @@ import info.fulloo.trygve.parser.KantParser.Abelian_unary_opContext;
 import info.fulloo.trygve.parser.KantParser.Argument_listContext;
 import info.fulloo.trygve.parser.KantParser.BlockContext;
 import info.fulloo.trygve.parser.KantParser.Boolean_exprContext;
+import info.fulloo.trygve.parser.KantParser.Boolean_productContext;
+import info.fulloo.trygve.parser.KantParser.Boolean_unary_opContext;
 import info.fulloo.trygve.parser.KantParser.Builtin_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Compound_type_nameContext;
 import info.fulloo.trygve.parser.KantParser.Do_while_exprContext;
@@ -1889,6 +1891,8 @@ public class Pass1Listener extends Pass0Listener {
 					if (null != methodReturnType && null != expressionType) {
 						if (methodReturnType.pathName().equals(expressionType.pathName())) {
 							;  // we're cool
+						} else if (expressionType.pathName().equals("Null")) {
+							;	// Null converts to anything
 						} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
 							// We're almost cool...
 							errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
@@ -1903,7 +1907,7 @@ public class Pass1Listener extends Pass0Listener {
 									"Type mismatch in return statement. Expected `",
 									methodReturnType.name(),
 									"' and found `",
-									expression.getText() + "'.");
+									expression.type().getText() + "'.");
 						}
 					}
 				}
@@ -4861,6 +4865,10 @@ public class Pass1Listener extends Pass0Listener {
 			} else if (walker instanceof Boolean_exprContext) {
 				;
 			} else if (walker instanceof If_exprContext) {
+				;
+			} else if (walker instanceof Boolean_unary_opContext) {
+				;
+			} else if (walker instanceof Boolean_productContext) {
 				;
 			} else {
 				assert false;

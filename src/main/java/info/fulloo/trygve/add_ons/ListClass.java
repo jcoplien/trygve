@@ -160,6 +160,8 @@ public final class ListClass {
 			
 			declareListMethod("isEmpty", booleanType, null, null, true);
 			
+			declareListMethod("sort", voidType, null, null, false);
+			
 			// kludge.
 			assert null != stringType;
 			
@@ -373,6 +375,19 @@ public final class ListClass {
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", result);
 			
+			return super.nextCode();
+		}
+	}
+	public static class RTSortCode extends RTListCommon {
+		public RTSortCode(final StaticScope enclosingMethodScope) {
+			super("List", "sort", "", "", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			
+			theListObject.sort();
+	
 			return super.nextCode();
 		}
 	}

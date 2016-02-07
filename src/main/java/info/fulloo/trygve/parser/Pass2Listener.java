@@ -916,7 +916,7 @@ public class Pass2Listener extends Pass1Listener {
 			// Is a template type. Change the return type into a bona fide type here
 			final StaticScope objectScope = objectType.enclosedScope();
 			final TemplateInstantiationInfo newTemplateInstantiationInfo = objectScope.templateInstantiationInfo();
-			returnType = newTemplateInstantiationInfo.classSubstitionForTemplateTypeNamed("T");
+			returnType = newTemplateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType.name());
 		}
 		
 		if (objectType.name().equals(message.selectorName())) {
@@ -1048,8 +1048,8 @@ public class Pass2Listener extends Pass1Listener {
 				  numberOfActualParameters = (null == actuals)? 0: actuals.count();
 		if (null == actuals) {
 			if (numberOfActualParameters != 0) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in call of method ", mdecl.name(),
-						" does not match declaration of ", mdecl.name());
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+						"' does not match declaration of `", mdecl.name() + "'.");
 				int lineNumber = mdecl.lineNumber();
 				if (0 == lineNumber) {
 					// e.g., for a built-in type
@@ -1129,8 +1129,8 @@ public class Pass2Listener extends Pass1Listener {
 			if (formalParameterIndex != numberOfFormalParameters ||
 						actualParameterIndex != numberOfActualParameters) {
 				if (null != mdecl) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in call of method ", mdecl.name(),
-						" does not match declaration of ", mdecl.name());
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+						"' does not match declaration of `", mdecl.name() + "'.");
 				}
 					
 				int lineNumber = null == mdecl ? 0 : mdecl.lineNumber();
@@ -1139,7 +1139,7 @@ public class Pass2Listener extends Pass1Listener {
 					lineNumber = ctxGetStart.getLine();
 				}
 				if (null != classdecl && null != mdecl) {
-					errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+					errorHook5p2(ErrorType.Fatal, lineNumber, "\tScript ", mdecl.name(), " is declared in ", classdecl.name());
 				}	
 			}
 		}
@@ -1152,14 +1152,16 @@ public class Pass2Listener extends Pass1Listener {
 		final long numberOfFormalParameters = formals.count();
 
 		if (numberOfFormalParameters != numberOfActualParameters) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in call of method ", mdecl.name(),
-					" does not match declaration of ", mdecl.name());
+			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+					"' does not match declaration of `", mdecl.name() + "'.");
 			int lineNumber = mdecl.lineNumber();
 			if (0 == lineNumber) {
 				// e.g., for a built-in type
 				lineNumber = ctxGetStart.getLine();
 			}
-			errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+			if (null != classdecl) {
+				errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+			}
 		} else {
 			for (int j = 0; j < numberOfActualParameters; j++) {
 				final Object rawParameter = actuals.argumentAtPosition(j);

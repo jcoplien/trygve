@@ -299,7 +299,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		public void setRoleArrayBindingToArray(final RTRoleIdentifier lhs, final RTArrayObject rhs) {
 			rhs.incrementReferenceCount();
 			final String roleName = lhs.name();
-			RTArrayObject oldValue = null;
+			RTObject oldValue = null;
 			if (nameToRoleBindingMap_.containsKey(roleName)) {
 				oldValue = (RTArrayObject)nameToRoleBindingMap_.get(roleName);
 			}
@@ -310,7 +310,57 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			assert null != contextInfo;
 			
 			if (null != oldValue) {
-				for (int i = 0; i < oldValue.size(); i++) {
+				int size = 0;
+				if (oldValue instanceof RTArrayObject) {
+					size = ((RTArrayObject)oldValue).size();
+				} else if (oldValue instanceof RTListObject) {
+					size = ((RTListObject)oldValue).size();
+				} else {
+					assert false;
+				}
+				for (int i = 0; i < size; i++) {
+					final RTObject value = rhs.get(i);
+					if (value instanceof RTStageProp == false) {
+						value.decrementReferenceCount();
+						contextInfo.removeRoleArrayPlayer(roleName, i);
+					}
+				}
+			}
+			
+			for (Map.Entry<String, String> iter : isRoleArrayMap_.entrySet()) {
+				contextInfo.designateRoleAsArray(iter.getKey());
+			}
+			
+			for (int i = 0; i < rhs.size(); i++) {
+				final RTObject value = rhs.get(i);
+				if (value instanceof RTStageProp == false) {
+					contextInfo.addRoleArrayPlayer(roleName, i, value);
+				}
+			}
+		}
+		public void setRoleArrayBindingToList(final RTRoleIdentifier lhs, final RTListObject rhs) {
+			rhs.incrementReferenceCount();
+			final String roleName = lhs.name();
+			RTObject oldValue = null;
+			if (nameToRoleBindingMap_.containsKey(roleName)) {
+				oldValue = (RTObject)nameToRoleBindingMap_.get(roleName);
+			}
+			
+			nameToRoleBindingMap_.put(roleName, rhs);
+			
+			final RTContextInfo contextInfo = this.contextInfo();
+			assert null != contextInfo;
+			
+			if (null != oldValue) {
+				int size = 0;
+				if (oldValue instanceof RTArrayObject) {
+					size = ((RTArrayObject)oldValue).size();
+				} else if (oldValue instanceof RTListObject) {
+					size = ((RTListObject)oldValue).size();
+				} else {
+					assert false;
+				}
+				for (int i = 0; i < size; i++) {
 					final RTObject value = rhs.get(i);
 					if (value instanceof RTStageProp == false) {
 						value.decrementReferenceCount();

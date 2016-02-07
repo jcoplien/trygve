@@ -31,6 +31,9 @@ import java.util.Set;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 
@@ -273,8 +276,25 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			}
 		}
 		public RTObject rolePlayerNamedAndIndexed(final String roleName, final RTIntegerObject theIndex) {
+			RTObject retval = null;
 			final Map<Integer,RTObject> intToObjectMap = roleArrayPlayers_.get(roleName);
-			final RTObject retval = intToObjectMap.get(Integer.valueOf((int)theIndex.intValue()));
+			final int iIndex = (int)theIndex.intValue();
+			if (null == intToObjectMap) {
+				// The map at roleArrayPlayers_[roleName] would never have been set
+				// up if the vector / array size were zero. Treat as an out-of-range
+				// error
+				ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+				RTMessage.printMiniStackStatus(); 
+				retval = null;
+			} else {
+				if (iIndex > intToObjectMap.size()) {
+					ErrorLogger.error(ErrorType.Runtime, 0, "Role vector ", roleName, " indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+					RTMessage.printMiniStackStatus();
+					retval = null;
+				} else {
+					retval = intToObjectMap.get(Integer.valueOf(iIndex));
+				}
+			}
 			return retval;
 		}
 		

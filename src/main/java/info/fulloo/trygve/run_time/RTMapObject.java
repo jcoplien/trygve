@@ -149,6 +149,10 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 	public void put(final RTObject key, final RTObject value) {
 		theMap_.put(key, value);
 	}
+	public void putAll(final RTObject map) {
+		assert map instanceof RTMapObject;
+		theMap_.putAll(((RTMapObject)map).theMap_);
+	}
 	public RTObject containsKey(final RTObject key) {
 		final boolean rawRetval = theMap_.containsKey(key);
 		final RTObject retval = new RTBooleanObject(rawRetval);

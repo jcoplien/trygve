@@ -526,18 +526,24 @@ public abstract class Declaration implements BodyPart {
 						}
 					} else {
 						if (null == returnType) {
-							assert returnType != null;
+							// In the best of circumstances just check to make
+							// sure returnType isn't null. We do stumbling handling below.
+							;
 						}
 					}
 				} else {
-					assert returnType != null;
+					// In the best of circumstances just check to make
+					// sure returnType isn't null. We do stumbling handling below.
+					;
 				}
 				ctorCheck(myEnclosedScope, parentScope, lineNumber);
 			} else {
-				assert returnType != null;
+				// In the best of circumstances just check to make
+				// sure returnType isn't null. We do stumbling handling below.
+				;
 			}
 			
-			returnType_ = returnType;
+			returnType_ = null == returnType? StaticScope.globalScope().lookupTypeDeclaration("void") : returnType;
 			myEnclosedScope_ = myEnclosedScope;
 			accessQualifier_ = accessQualifier;
 			lineNumber_ = lineNumber;

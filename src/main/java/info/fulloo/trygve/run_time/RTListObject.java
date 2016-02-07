@@ -24,6 +24,8 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,6 +190,15 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public int compareTo(final RTObject other) {
 		assert false;
 		return 0;
+	}
+	
+	static class RTObjectComparator implements Comparator<RTObject> {
+        public int compare(final RTObject o1, final RTObject o2) {
+            return o1.compareTo(o2);
+        }
+    }
+	public void sort() {
+		Collections.sort(theList_, new RTObjectComparator());
 	}
 	
 	private final List<RTObject> theList_;

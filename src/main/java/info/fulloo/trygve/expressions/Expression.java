@@ -1472,8 +1472,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			super("", null, null);
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
-			assert false;
-			return null;
+			// assert false;	Seem to get here, albeit if there are parser errors
+			return new ArrayList<RTCode>();
 		}
 	}
 	
