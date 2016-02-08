@@ -322,6 +322,11 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			}
 			return retval;
 		}
+		public RTIntegerObject indexOfLastRolePlayer(final String roleName) {
+			final Map<Integer,RTObject> roleVecElements = roleArrayPlayers_.get(roleName);
+			final RTIntegerObject retval = new RTIntegerObject(roleVecElements.size());
+			return retval;
+		}
 		
 		private final Map<String, RTObject> rolePlayers_, stagePropPlayers_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;

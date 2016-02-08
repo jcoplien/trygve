@@ -802,7 +802,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			// We tentatively set the type above. Do a better job.
 			final Type thenPartType = thenPart.type(), elsePartType = (null != elsePart)? elsePart.type(): null;
 			if (null != elsePartType) {
-				if (thenPartType.canBeConvertedFrom(elsePartType)) {
+				// Null check is stumbling measure
+				if (null != thenPartType && thenPartType.canBeConvertedFrom(elsePartType)) {
 					// Close enough to being the same type
 					type_ = thenPartType;
 				} else {
@@ -1676,6 +1677,36 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileIndexExpression(this);
+		}
+		public String roleName() {
+			return enclosingRole_.name();
+		}
+		@Override public int lineNumber() {
+			return enclosingRole_.lineNumber();
+		}
+		
+		final private RoleDeclaration enclosingRole_;
+		
+		@SuppressWarnings("unused")
+		final private ContextDeclaration enclosingContext_;
+	}
+	
+	public static class LastIndexExpression extends Expression {
+		// LastIndexExpression is simply an invocation of the identifier "lastIndex",
+		// but its use is limited to specific contexts. Currently it can
+		// be used only inside a Role method where the Role is declared
+		// as a Role vector. The resulting type is an integer reflecting
+		// the total number of Roles in the vector, minus one
+		public LastIndexExpression(final RoleDeclaration currentRole, final ContextDeclaration currentContext) {
+			super("lastIndex", StaticScope.globalScope().lookupTypeDeclaration("int"), currentRole.type());
+			enclosingRole_ = currentRole;
+			enclosingContext_ = currentContext;
+		}
+		@Override public String getText() {
+			return name();
+		}
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileLastIndexExpression(this);
 		}
 		public String roleName() {
 			return enclosingRole_.name();

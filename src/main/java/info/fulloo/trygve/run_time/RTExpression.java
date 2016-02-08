@@ -62,6 +62,7 @@ import info.fulloo.trygve.expressions.BreakableExpression;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
+import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.expressions.Constant.BooleanConstant;
@@ -249,6 +250,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTNullExpression();
 		} else if (expr instanceof IndexExpression) {
 			retval = new RTIndexExpression((IndexExpression)expr);
+		} else if (expr instanceof LastIndexExpression) {
+			retval = new RTLastIndexExpression((LastIndexExpression)expr);
 		} else if (expr instanceof TopOfStackExpression) {
 			retval = new RTTopOfStackExpression((TopOfStackExpression)expr);
 		} else {
@@ -4025,6 +4028,25 @@ public abstract class RTExpression extends RTCode {
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
 			final RTIntegerObject theIndex = contextInfo.indexOfRolePlayer(roleName_, self);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
+			return nextCode_;
+		}
+		
+		final private String roleName_;
+	}
+	public static class RTLastIndexExpression extends RTExpression {
+		public RTLastIndexExpression(final LastIndexExpression expr) {
+			super();
+			roleName_ = expr.roleName();
+		}
+		@Override public RTCode run() {
+			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject currentContext = RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
+			final RTObject rawContextInfo = currentContext.getObject("context$info");
+			assert rawContextInfo instanceof RTContextInfo;
+			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
+			
+			final RTIntegerObject theIndex = contextInfo.indexOfLastRolePlayer(roleName_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
 			return nextCode_;
 		}

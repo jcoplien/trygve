@@ -72,6 +72,7 @@ public interface CodeGenerator {
 	public List<RTCode> compileRoleArrayIndexExpression(RoleArrayIndexExpression expr, RTType nearestEnclosingType, StaticScope scope);
 	public List<RTCode> compilePromoteToDoubleExpression(PromoteToDoubleExpr expr, StaticScope scope, RTType t);
 	public List<RTCode> compileIndexExpression(IndexExpression indexExpression);
+	public List<RTCode> compileLastIndexExpression(LastIndexExpression indexExpression);
 	public RunTimeEnvironment virtualMachine();
 	public RTExpression mainExpr();
 }

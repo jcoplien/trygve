@@ -89,6 +89,7 @@ import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
 import info.fulloo.trygve.expressions.Expression.IndexExpression;
+import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.IfExpression;
@@ -4747,7 +4748,7 @@ public class Pass1Listener extends Pass0Listener {
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(idName);
 		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-		if (idName.equals("index")) {
+		if (idName.equals("index") || idName.equals("lastIndex")) {
 			// This is a legal identifier if invoked from within the
 			// scope of a Role, where the Role is declared as a Role
 			// vector type
@@ -4755,13 +4756,15 @@ public class Pass1Listener extends Pass0Listener {
 			expression = new NullExpression();
 			if (null == currentRole_) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-						"Symbol index may be used only within certain Role methods.", "", "", "");
+						"Symbol `", idName, "' may be used only within certain Role methods.", "");
 			} else {
 				if (currentRole_.isArray()) {
-					expression = new IndexExpression(currentRole_, currentContext_);
+					expression = idName.equals("index")?
+							new IndexExpression(currentRole_, currentContext_):
+								new LastIndexExpression(currentRole_, currentContext_);
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-							"Symbol index may be used only within a Role vector method. The role ",
+					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							"Symbol `", idName, "' may be used only within a Role vector method. The role ",
 							currentRole_.name(), " is a scalar.", "");
 				}
 			}
@@ -4925,7 +4928,7 @@ public class Pass1Listener extends Pass0Listener {
 					"You're on your own here.", "", "", "");
 		}
 
-		if (lhs.name().equals("index")) {
+		if (lhs.name().equals("index") || lhs.name().equals("lastIndex")) {
 			errorHook5p2(ErrorType.Fatal, lineNumber,
 					"`index' is a reserved word which is a read-only property of a Role vector element,",
 					" and may not be assigned.", "", "");
@@ -5038,8 +5041,11 @@ public class Pass1Listener extends Pass0Listener {
 	}
 	
 	public void nameCheck(final String name, int lineNumber) {
-		if (name.equals("this") || name.equals("Ralph") || name.equals("Sue") || name.equals("index")) {
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Please avoid the use of the names `this', `Sue', `index' and `Ralph' for identifiers.", "", "", "");
+		if (name.equals("this") || name.equals("Ralph") || name.equals("Sue") || name.equals("index")||
+				name.equals("lastIndex")) {
+			errorHook5p2(ErrorType.Fatal, lineNumber,
+					"Please avoid the use of the names `this', `Sue', `index', `lastIndex' and `Ralph' for identifiers.",
+					"", "", "");
 		}
 	}
 	

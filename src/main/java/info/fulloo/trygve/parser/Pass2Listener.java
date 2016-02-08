@@ -70,6 +70,7 @@ import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.IndexExpression;
+import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.QualifiedClassMemberExpression;
@@ -1305,11 +1306,13 @@ public class Pass2Listener extends Pass1Listener {
 			final StaticScope possibleContextScope = null ==  possibleRoleScope? null: possibleRoleScope.parentScope();
 			final Declaration associatedDeclaration = null == possibleContextScope? null: possibleContextScope.associatedDeclaration();
 			
-			if (null != possibleRoleScope && idText.equals("index")) {
+			if (null != possibleRoleScope && (idText.equals("index") || idText.equals("lastIndex"))) {
 				// It's O.K.
 				final RoleDeclaration roleDeclaration = (RoleDeclaration)possibleRoleScope.associatedDeclaration();
 				if (roleDeclaration.isArray()) {
-					retval = new IndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
+					retval = idText.equals("index")?
+							new IndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration):
+								new LastIndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
 				} else {
 					retval = new NullExpression();
 					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
