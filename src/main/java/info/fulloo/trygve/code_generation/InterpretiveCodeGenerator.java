@@ -763,6 +763,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 							"' to String.join.", "", "", "");
 				}
 				retvalType = RetvalTypes.usingString;
+			} else if (methodDeclaration.name().equals("split")) {
+				code.add(new RTStringClass.RTSplitCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.undefined;
 				assert false;
@@ -770,6 +773,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (3 == formalParameterList.count()) {
 			if (methodDeclaration.name().equals("substring")) {
 				code.add(new RTStringClass.RTSubstringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
+			} else if (methodDeclaration.name().equals("replaceFirst")) {
+				code.add(new RTStringClass.RTReplaceFirstCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.undefined;
@@ -1010,9 +1016,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 							lhs.name(), "'.", "");
 					newLhs = new NullExpression();
 				}
+				
+				boolean isWellFormedInitialization = false;
 				if (rhs instanceof Constant) {
-					;	// O.K.
-				} else {
+					isWellFormedInitialization = true;	// O.K.
+				} else if (rhs instanceof UnaryAbelianopExpression) {
+					// Negative numbers. Generalize this later to constant expressions?
+					final UnaryAbelianopExpression abelianRhs = (UnaryAbelianopExpression)rhs;
+					final Expression innerExpr = abelianRhs.rhs();
+					isWellFormedInitialization = innerExpr instanceof Constant;
+				}
+				if (false == isWellFormedInitialization) {
 					ErrorLogger.error(ErrorType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
 							lhs.name() + "': non-constant right-hand side `", rhs.getText(), "'.");
 					rhs = new NullExpression();

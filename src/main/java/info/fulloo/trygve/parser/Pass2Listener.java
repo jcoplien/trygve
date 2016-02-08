@@ -392,6 +392,9 @@ public class Pass2Listener extends Pass1Listener {
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, aBaseType);
 			arrayBase.setResultIsConsumed(true);
 			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
+		} else if (baseType instanceof BuiltInType && baseType.name().equals("void")) {
+			// Stumbling error
+			expression = new NullExpression();
 		} else {
 			assert false;
 		}

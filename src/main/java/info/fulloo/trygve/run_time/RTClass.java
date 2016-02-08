@@ -35,6 +35,7 @@ import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -59,7 +60,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 	public RTClass(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof ClassDeclaration;
-		
+
 		stringToContextDeclMap_ = new LinkedHashMap<String, RTContext>();
 		stringToClassDeclMap_ = new LinkedHashMap<String, RTClass>();
 		nameToObjectDeclMap_ = new LinkedHashMap<String, RTObject>();
@@ -140,10 +141,14 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		assert false;
 	}
 	@Override public void addStageProp(final String stagePropName, final RTStageProp stagePropType) {
-		assert false;
+		// Can get here with stumbling (e.g., adding Roles to a Context that has
+		// the same name as an existing class, like Scanner). Ignore it.
+		// assert false;
 	}
 	@Override public void addRole(final String roleName, final RTRole roleType) {
-		assert false;
+		// Can get here with stumbling (e.g., adding Roles to a Context that has
+		// the same name as an existing class, like Scanner). Ignore it.
+		// assert false;
 	}
 	@Override public Map<String, RTRole> nameToRoleDeclMap() {
 		assert false;
@@ -818,6 +823,28 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTReplaceFirstCode extends RTStringCommon {
+			public RTReplaceFirstCode(final StaticScope methodEnclosedScope) {
+				super("String", "replaceFirst", asList("regex", "replacement"), asList("String", "String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTStringObject;
+				final RTStringObject stringObject = (RTStringObject)self;
+				final RTObject regex = dynamicScope.getObject("regex");
+				assert regex instanceof RTStringObject;
+				final RTObject replacement = dynamicScope.getObject("replacement");
+				assert replacement instanceof RTStringObject;
+				final RTStringObject retval = stringObject.replaceFirst(regex, replacement);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
 		public static class RTToStringCode extends RTStringCommon {
 			public RTToStringCode(final StaticScope methodEnclosedScope) {
 				super("String", "toString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
@@ -883,6 +910,50 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				
 				return super.nextCode();
 			}
+		}
+		public static class RTSplitCode extends RTStringCommon {
+			public RTSplitCode(final StaticScope methodEnclosedScope) {
+				super("String", "split", asList("regex"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String_$array"));
+				arrayType_ = (ArrayType)StaticScope.globalScope().lookupTypeDeclaration("String_$array");
+				assert null != arrayType_;
+				stringType_ = StaticScope.globalScope().lookupTypeDeclaration("String");
+				assert null != stringType_;
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTStringObject;
+				final RTStringObject thisStringObject = (RTStringObject)self;
+				final String thisString = thisStringObject.stringValue();
+				final RTStackable regexStringObject = dynamicScope.getObject("regex");
+				assert regexStringObject instanceof RTStringObject;
+				final RTStringObject regexString = (RTStringObject)regexStringObject;
+				final String rxstring = regexString.stringValue();
+				final String [] sRetval = thisString.split(rxstring);
+				
+				final RTType type = new RTArrayType(stringType_, arrayType_);
+				assert null != type;
+				assert type instanceof RTArrayType;
+				final RTArrayObject retval = new RTArrayObject(sRetval.length, (RTArrayType)type);
+				
+				// Now copy the String empire results into the RT* empire
+				int runningIndex = 0;
+				for (final String object : sRetval) {
+					final RTStringObject rTString = new RTStringObject(object);
+					final RTIntegerObject rTRunningIndex = new RTIntegerObject(runningIndex);
+					retval.setObject(rTRunningIndex, rTString);
+					runningIndex++;
+				}
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+			
+			final ArrayType arrayType_;
+			final Type stringType_;
 		}
 		
 		public static class RTContainsCode extends RTStringCommon {
@@ -1177,8 +1248,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			err.setObject("printStreamInfo", printStreamInfo);
 			
 			final RTObject in = nameToStaticObjectMap_.get("in");
-			// final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
-			final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(RunTimeEnvironment.runTimeEnvironment_.redirectedInputStream());
+			final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			// final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(RunTimeEnvironment.runTimeEnvironment_.redirectedInputStream());
 			in.addObjectDeclaration("inputStreamInfo", null);
 			in.setObject("inputStreamInfo", inputStreamInfo);
 		}

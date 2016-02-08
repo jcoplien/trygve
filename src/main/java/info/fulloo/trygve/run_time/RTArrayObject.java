@@ -72,7 +72,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		assert theIndex < size_;
 		return theIndex;
 	}
-	public RTObject getObject(RTObject theIndexObject) {
+	public RTObject getObject(final RTObject theIndexObject) {
 		final int theIndex = calculateIndexFrom(theIndexObject);
 		
 		// final RTObject oldValue = theArray_[theIndex];
@@ -82,7 +82,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		final RTObject retval = theArray_[theIndex];
 		return retval;
 	}
-	public RTObject get(int theIndex) {
+	public RTObject get(final int theIndex) {
 		return theArray_[theIndex];
 	}
 	public int size() {
@@ -100,7 +100,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		// and do everything with String selectors
 		assert false;
 	}
-	public void setObject(final RTObject theIndexObject,final  RTObject rhs) {			
+	public void setObject(final RTObject theIndexObject, final  RTObject rhs) {			
 		final int theIndex = calculateIndexFrom(theIndexObject);
 		
 		final RTObject oldValue = theArray_[theIndex];

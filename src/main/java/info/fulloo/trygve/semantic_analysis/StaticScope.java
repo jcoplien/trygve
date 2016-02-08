@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
@@ -430,6 +431,8 @@ public class StaticScope {
 		
 		addStringMethod(stringType, "substring", stringType, asList("end", "start"), asList(intType, intType), false);
 		
+		addStringMethod(stringType, "replaceFirst", stringType, asList("regex", "replacement"), asList(stringType, stringType), false);
+		
 		addStringMethod(stringType, "indexOf", intType, asList("searchString"), asList(stringType), false);
 		
 		addStringMethod(stringType, "contains", booleanType, asList("searchString"), asList(stringType), false);
@@ -446,6 +449,9 @@ public class StaticScope {
 		stringDeclaration.setType(stringType);
 		
 		typeDeclarationList_.add(stringDeclaration);
+		
+		final Type arrayOfStringType = new ArrayType("String_$array", stringType);
+		globalScope_.declareType(arrayOfStringType);
 	}
 	
 	private static void reinitializeBoolean(final Type integerType) {
@@ -590,6 +596,10 @@ public class StaticScope {
 		addObjectMethod(objectType, "assert", voidType, asList("msg", "tf"), asList(stringType, booleanType), false, true);
 		addObjectMethod(objectType, "assert", voidType, asList("tf"), asList(booleanType), false, true);
 		addObjectMethod(objectType, "compareTo$toBoolean", booleanType, asList("operator", "code"), asList(stringType, intType), true, true);
+		
+		final Type arrayOfStringType = StaticScope.globalScope().lookupTypeDeclaration("String_$array");
+		assert null != arrayOfStringType;
+		addStringMethod(stringType, "split", arrayOfStringType, asList("regex"), asList(stringType), false);
 	}
 	
 	public static StaticScope globalScope() { return globalScope_; }

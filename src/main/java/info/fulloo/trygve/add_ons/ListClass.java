@@ -30,7 +30,6 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
-import info.fulloo.trygve.declarations.Type.ArrayType;
 import static java.util.Arrays.asList;
 
 /*
@@ -169,7 +168,8 @@ public final class ListClass {
 			
 			// Yeah, parameters are backwards in order for addStringMethod.
 			StaticScope.addStringMethod(stringType, "join", stringType, asList("elements", "delimiter"), asList(listOfStringType, stringType), true);
-			final Type arrayOfStringType = new ArrayType("String_$array", stringType);
+			final Type arrayOfStringType = StaticScope.globalScope().lookupTypeDeclaration("String_$array");
+			assert null != arrayOfStringType;
 			StaticScope.addStringMethod(stringType, "join", stringType, asList("elements", "delimiter"), asList(arrayOfStringType, stringType), true);
 			
 			// Declare the type
