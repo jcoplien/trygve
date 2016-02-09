@@ -23,7 +23,6 @@ package info.fulloo.trygve.code_generation;
  *  
  */
 
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -56,6 +55,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
+import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
@@ -123,11 +123,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
 		interpretiveCodeGenerator = justThis;
 	}
-	public InterpretiveCodeGenerator(final Program program, final ParsingData parsingData, final InputStream redirectedInputStream) {
+	public InterpretiveCodeGenerator(final Program program, final ParsingData parsingData, final TextEditorGUI gui) {
 		super();
 		program_ = program;
 		parsingData_ = parsingData;
-		virtualMachine_ = new RunTimeEnvironment(redirectedInputStream);
+		virtualMachine_ = new RunTimeEnvironment(gui);
 		setStaticHandle(this);
 	}
 	@Override public RunTimeEnvironment virtualMachine() {

@@ -63,6 +63,7 @@ context SpellCheck {
          String retval =
             switch (word) {
             case "teh": "the" break
+            case "lasy": "lazy" break
             default: word
             }
          return retval
@@ -82,8 +83,8 @@ context SpellCheck {
                        .print("' with `").print(suggestedSpelling)
                        .print("'?");
              Scanner scanner = new Scanner(System.in);
-             // String answer = scanner.nextLine();
-             String answer = "Y";
+             String answer = scanner.nextLine();
+             // String answer = "Y";
              if (answer == "y" || answer == "Y" ||
                  answer == "Yes" || answer == "yes") {
                  CurrentWord.replaceWith(suggestedSpelling)
@@ -113,7 +114,7 @@ context SpellCheck {
 {
    OnlineDictionary dict = new OnlineDictionary();
    SpellCheck spellChecker = new SpellCheck(
-      "teh quick brown fox jumped over the lazy dog",
+      "teh quick brown fox jumped over the lasy dog",
       dict
    )
    spellChecker.spellCheck()

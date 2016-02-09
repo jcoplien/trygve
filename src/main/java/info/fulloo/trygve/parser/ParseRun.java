@@ -72,7 +72,7 @@ public class ParseRun {
         		// Pass 4 mainly does template instantiations
         		this.pass4(parsingData, tree);
         		
-        		this.generateCode(parsingData, gui.getIn());
+        		this.generateCode(parsingData, gui);
         	}
         	catch (final NoSuchMethodException nsme) {
         		System.err.println("No method for rule "+startRuleName+" or it has arguments");
@@ -111,9 +111,9 @@ public class ParseRun {
         ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
-	private void generateCode(final ParsingData parsingData, final InputStream redirectedInputStream) {
+	private void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
 		final Program program = Program.program();
-		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, redirectedInputStream);
+		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, gui);
 		codeGenerator.compile();
 		virtualMachine_ = codeGenerator.virtualMachine();
 		mainExpr_ = codeGenerator.mainExpr();

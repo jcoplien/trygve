@@ -48,7 +48,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.4.8";
+    final String TrygveVersion = "1.4.9";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -88,6 +88,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	public String editPanelContents() {
 		return editPane.getText();
+	}
+	
+	public void flush2() {
+		// EXPERIMENTAL
+		console_.flush2();
 	}
 	
     private void initComponents() {

@@ -12,6 +12,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
@@ -140,6 +141,8 @@ public final class ScannerClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final Scanner theScanner) {
 			assert null != theScanner;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final TextEditorGUI gui = RunTimeEnvironment.runTimeEnvironment_.gui();
+			gui.flush2();
 			final String sNextLine = theScanner.nextLine();
 			final RTStringObject retval = new RTStringObject(sNextLine);
 			

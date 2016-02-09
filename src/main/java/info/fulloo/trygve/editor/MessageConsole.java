@@ -81,8 +81,21 @@ public class MessageConsole
 		this.document = textComponent.getDocument();
 		this.isAppend = isAppend;
 		textComponent.setEditable( true );
+		
+		// Here we set in_ to the MessageConsole's textComponent,
+		// for fetching from elsewhere. I wonder if it should be
+		// instead set to the error panel? That's passed in the
+		// above constructor. But that ends up here, bound anyhow
+		// to the error panel.
+
 		in_ = new DocInputStream(textComponent);
         // textComponent.addKeyListener(in_);
+	}
+	
+	public void flush2() {
+		// EXPERIMENTAL
+    	// http://stackoverflow.com/questions/629315/dynamically-refresh-jtextarea-as-processing-occurs
+		textComponent.update(textComponent.getGraphics());
 	}
 
 	/*
@@ -300,7 +313,7 @@ public class MessageConsole
 
         @Override
         public int read() throws IOException {
-        	requestFocus();
+        	// requestFocus();
             Integer i=null;
             try {
                 i = queue.take();

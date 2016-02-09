@@ -36,6 +36,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
@@ -449,6 +450,10 @@ public final class SystemClass {
 			// RTMessage
 			// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			// 		Yes, but...: assert returnCode instanceof RTCode;
+			
+			// Flush the screen
+			final TextEditorGUI gui = RunTimeEnvironment.runTimeEnvironment_.gui();
+			gui.flush2();
 			
 			// Parameters have all been packaged into the
 			// activation record

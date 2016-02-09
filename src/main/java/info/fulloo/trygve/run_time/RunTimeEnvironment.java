@@ -34,6 +34,7 @@ import java.util.Stack;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
+import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.run_time.RTClass.*;
@@ -60,7 +61,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RunTimeEnvironment {
 	public static RunTimeEnvironment runTimeEnvironment_;
-	public RunTimeEnvironment(final InputStream redirectedInputStream) {
+	public RunTimeEnvironment(final TextEditorGUI gui) {
 		super();
 		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
 		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
@@ -70,7 +71,8 @@ public class RunTimeEnvironment {
 		setRunTimeEnvironment(this);
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
-		redirectedInputStream_ = redirectedInputStream;
+		redirectedInputStream_ = gui.getIn();
+		gui_ = gui;
 	}
 	private static void setRunTimeEnvironment(final RunTimeEnvironment theThis) {
 		runTimeEnvironment_ = theThis;
@@ -376,6 +378,9 @@ public class RunTimeEnvironment {
 	public InputStream redirectedInputStream() {
 		return redirectedInputStream_;
 	}
+	public TextEditorGUI gui() {
+		return gui_;
+	}
 	
 	public void printStack() {
 		final int stackSize = stack.size();
@@ -421,4 +426,5 @@ public class RunTimeEnvironment {
 	private final List<RTClass> allClassList_;
 	public        RTDynamicScope globalDynamicScope;
 	private final InputStream redirectedInputStream_;
+	private final TextEditorGUI gui_;
 }
