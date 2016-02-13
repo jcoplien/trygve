@@ -51,7 +51,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5";
+    final String TrygveVersion = "1.5.2";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -93,10 +93,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	public String editPanelContents() {
 		return editPane.getText();
-	}
-	
-	public void flush2() {
-		// console_.flush2();
 	}
 	
     private void initComponents() {
@@ -603,6 +599,7 @@ private void clearLogButtonActionPerformed(final java.awt.event.ActionEvent evt)
 }//GEN-LAST:event_clearLogButtonActionPerformed
 
 public void simpleRun() {
+	console_.reinitialize();
 	final RTExpression rTMainExpr = parseRun_.mainExpr();
 	virtualMachine_.reboot();
     virtualMachine_.run(rTMainExpr);
@@ -613,10 +610,13 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 		volatile Color returnColor_;
 		
 	    @Override public Integer doInBackground() {
-	    	console_.reinitialize();
 	    	returnColor_ = runButton.getForeground();
 	    	runButton.setForeground(Color.RED);
+	    	parseButton.setEnabled(false);
+	    	testButton.setEnabled(false);
 	    	simpleRun();
+	    	parseButton.setEnabled(true);
+	    	testButton.setEnabled(true);
 	        runButton.setForeground(returnColor_);
 	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
 	    }
@@ -624,22 +624,6 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    @Override public void done() {
 	        // Just wrap up.
 	       runButton.setForeground(Color.BLACK);
-	       /*
-	        try {
-	       		JOptionPane.showMessageDialog(null, "Done", lastFileLoaded_, get());
-	        } catch (InterruptedException ignore) {
-	        	;
-	        } catch (java.util.concurrent.ExecutionException e) {
-	            String why = null;
-	            final Throwable cause = e.getCause();
-	            if (cause != null) {
-	                why = cause.getMessage();
-	            } else {
-	                why = e.getMessage();
-	            }
-	            System.err.println("Internal thread glitch: " + why);
-	        }
-	        */
 	    }
 	};
 
@@ -870,6 +854,8 @@ private void updateButtons() {
     private ParseRun parseRun_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
+    
+    @SuppressWarnings("unused")
     private String lastFileLoaded_;
     
     MessageConsole console_;

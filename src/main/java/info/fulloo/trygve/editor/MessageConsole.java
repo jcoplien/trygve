@@ -119,6 +119,7 @@ public class MessageConsole
 		int l = text.length() - 1;
 		if (l < 0) l = 0;
 		textComponent.setText(text.substring(0, l));
+		textComponent.setCaretPosition( document.getLength() );
 	}
 	
 	public void processLinekill(int i) {
@@ -126,6 +127,7 @@ public class MessageConsole
 		int l = text.length() - i;
 		if (l < 0) l = 0;
 		textComponent.setText(text.substring(0, l));
+		textComponent.setCaretPosition( document.getLength() );
 	}
 	
 	public void flush2() {
@@ -380,8 +382,7 @@ public class MessageConsole
             return -1;
         }
 
-        @Override public int read(byte[] b, int off, int len) throws IOException {
-        	requestFocus();
+        @Override public int read(byte[] b, int off, int len) throws IOException {        	requestFocus();
         	available_ = 0;
             if (b == null) {
                 throw new NullPointerException();
@@ -406,10 +407,10 @@ public class MessageConsole
             	break;
             case CR:
             case LF:
-            	b[off] = '\r';
+            	b[off+0] = '\r';
             	b[off+1] = '\n';
             	available_ = 2;
-            	return i;
+            	return 2;
             default:
             	b[off] = (byte)c;
             	i = 1;
@@ -417,15 +418,20 @@ public class MessageConsole
             }
 
             try {
-                for (; i < len; i++) {
+                for (; i < len;) {
                     c = read();	// blocking read
                     
-                    switch (c) {
+                    if (c < 010 || (c >= 016 && c <= 031) || (c == 013)) {
+                    	// Ignore control characters
+                    	continue;
+                    } else switch (c) {
                     case -1:
                     	return -1;
                     case BACKSPACE:
                     	i--;
                     	if (i >= 0) {
+                    		b[off + i] = '\0';
+                    		
                     		// Remove one character from the end
                     		// of the console display, buffer, etc.
                     		console_.processBackspace();
@@ -452,6 +458,7 @@ public class MessageConsole
                     	return i;
                     default:
                         b[off + i] = (byte)c;
+                        i++;
                         break;
                     }
                 }
@@ -467,7 +474,13 @@ public class MessageConsole
         }
         
         @Override public void keyReleased(KeyEvent e) {
-            int c = e.getKeyChar();
+        }
+
+        @Override public void keyPressed(KeyEvent e) {
+        }
+
+        @Override public void keyTyped(KeyEvent e) {
+            final int c = e.getKeyChar();
             try {
                 queue.put(c);
             } catch (InterruptedException ex) {
@@ -475,12 +488,5 @@ public class MessageConsole
                         log(Level.SEVERE, null, ex);
             }
         }
-
-        @Override public void keyPressed(KeyEvent e) {
-        }
-
-        @Override public void keyTyped(KeyEvent e) {
-        }
-
     }
 }

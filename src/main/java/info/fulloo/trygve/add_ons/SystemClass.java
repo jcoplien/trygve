@@ -451,10 +451,6 @@ public final class SystemClass {
 			// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			// 		Yes, but...: assert returnCode instanceof RTCode;
 			
-			// Flush the screen
-			final TextEditorGUI gui = RunTimeEnvironment.runTimeEnvironment_.gui();
-			gui.flush2();
-			
 			// Parameters have all been packaged into the
 			// activation record
 			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();

@@ -141,8 +141,6 @@ public final class ScannerClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final Scanner theScanner) {
 			assert null != theScanner;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final TextEditorGUI gui = RunTimeEnvironment.runTimeEnvironment_.gui();
-			gui.flush2();
 			final String sNextLine = theScanner.nextLine();
 			final RTStringObject retval = new RTStringObject(sNextLine);
 			
