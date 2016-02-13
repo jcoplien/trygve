@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 1.4
+ * Trygve IDE 1.5
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -247,10 +247,13 @@ public class TestRunner {
 		this.loadFile(filename);
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {
-			gui_.runButtonActionPerformed(null);
+			// No: gui_.runButtonActionPerformed(null);
+			// Don't run it on a separate thread — it messes up
+			// the interleaving of the output.
+			gui_.simpleRun();
 			
 			// Special case - running this twice in a row
-			// is a problem
+			// once elicited bugs.
 			if (filename.equals("chord_identifier2.k")) {
 				gui_.runButtonActionPerformed(null);
 			}

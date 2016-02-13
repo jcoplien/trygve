@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.4
+ * Trygve IDE 1.5
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -1248,8 +1248,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			err.setObject("printStreamInfo", printStreamInfo);
 			
 			final RTObject in = nameToStaticObjectMap_.get("in");
-			final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
-			// final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(RunTimeEnvironment.runTimeEnvironment_.redirectedInputStream());
+			// final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(System.in);
+			final RTInputStreamInfo inputStreamInfo = new RTInputStreamInfo(RunTimeEnvironment.runTimeEnvironment_.redirectedInputStream());
 			in.addObjectDeclaration("inputStreamInfo", null);
 			in.setObject("inputStreamInfo", inputStreamInfo);
 		}

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.4
+ * Trygve IDE 1.5
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,6 @@ import org.antlr.v4.runtime.tree.*;
 
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 
-import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

@@ -72,6 +72,11 @@ context SpellCheck {
       boolean isSpelledOK(String word) const
    }
    role CopyEditor {
+      private boolean isYes(String answer) {
+          return (answer == "y" || answer == "Y" ||
+                 answer == "Yes" || answer == "yes" ||
+                 answer == "")
+      }
       public void dispatchWord() {
          String word = CurrentWord.text();
          boolean isSpelledCorrectly =
@@ -81,13 +86,20 @@ context SpellCheck {
                         Dictionary.suggestedSpellingOf(word)
              System.out.print("Replace `").print(word)
                        .print("' with `").print(suggestedSpelling)
-                       .print("'?");
+                       .print("'? ");
              Scanner scanner = new Scanner(System.in);
-             String answer = scanner.nextLine();
-             // String answer = "Y";
-             if (answer == "y" || answer == "Y" ||
-                 answer == "Yes" || answer == "yes") {
+             String theAnswer = scanner.nextLine();
+             if (isYes(theAnswer)) {
                  CurrentWord.replaceWith(suggestedSpelling)
+             } else {
+                suggestedSpelling = theAnswer.clone;
+                System.out.print("Replace `").print(word)
+                          .print("' with `").print(theAnswer)
+                          .print("'? ");
+                theAnswer = scanner.nextLine();
+                if (isYes(theAnswer)) {
+                   CurrentWord.replaceWith(suggestedSpelling)
+                }
              }
          }
       }

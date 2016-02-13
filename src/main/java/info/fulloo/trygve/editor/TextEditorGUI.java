@@ -6,7 +6,7 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 1.4
+ * Trygve IDE 1.5
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ package info.fulloo.trygve.editor;
  * 
  */
 
+import java.awt.Color;
 import java.io.*;
 import java.util.Arrays;
 
@@ -39,16 +40,18 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
+import javax.swing.JOptionPane;
+import javax.swing.SwingWorker;
 
 
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/myspellcheck1.k";
+	private final static String defaultFile = "tests/input_test1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.4.9";
+    final String TrygveVersion = "1.5";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -59,8 +62,10 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	super();
     	parseRun_ = null;
     	compiledWithoutError_ = false;
-        initComponents();
+    	
+		initComponents();
         loadFile(defaultFile);
+    	
         updateButtons();
         oslMsg();
     }
@@ -91,8 +96,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	
 	public void flush2() {
-		// EXPERIMENTAL
-		console_.flush2();
+		// console_.flush2();
 	}
 	
     private void initComponents() {
@@ -115,11 +119,15 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             frame.setSize(400, 120);
             frame.setVisible(true);
             */
+        	
+        	// Here is the zoo:
+        	//		errorPanel is a JTextPane
+        	//		editPane comes from JTextPane.editPane, of type JEditorPane
+        	//		errorScrollPane created for errorPane
 
             console_ = new MessageConsole(errorPanel);
             console_.redirectOut();
             console_.redirectErr(java.awt.Color.RED, null);
-            console_.keyListenerSetup();
         }
         editPane = super.editPane(); // new javax.swing.JEditorPane();
         if (OLD) {
@@ -127,6 +135,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         } else {
         	;
         }
+        
         cutButton = new javax.swing.JButton();
         pasteButton = new javax.swing.JButton();
         selectAllButton = new javax.swing.JButton();
@@ -593,10 +602,49 @@ private void clearLogButtonActionPerformed(final java.awt.event.ActionEvent evt)
     this.errorPanel.setText("");
 }//GEN-LAST:event_clearLogButtonActionPerformed
 
-public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+public void simpleRun() {
 	final RTExpression rTMainExpr = parseRun_.mainExpr();
 	virtualMachine_.reboot();
     virtualMachine_.run(rTMainExpr);
+}
+
+public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+	SwingWorker<Integer, Void> worker = new SwingWorker<Integer, Void>() {
+		volatile Color returnColor_;
+		
+	    @Override public Integer doInBackground() {
+	    	console_.reinitialize();
+	    	returnColor_ = runButton.getForeground();
+	    	runButton.setForeground(Color.RED);
+	    	simpleRun();
+	        runButton.setForeground(returnColor_);
+	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
+	    }
+
+	    @Override public void done() {
+	        // Just wrap up.
+	       runButton.setForeground(Color.BLACK);
+	       /*
+	        try {
+	       		JOptionPane.showMessageDialog(null, "Done", lastFileLoaded_, get());
+	        } catch (InterruptedException ignore) {
+	        	;
+	        } catch (java.util.concurrent.ExecutionException e) {
+	            String why = null;
+	            final Throwable cause = e.getCause();
+	            if (cause != null) {
+	                why = cause.getMessage();
+	            } else {
+	                why = e.getMessage();
+	            }
+	            System.err.println("Internal thread glitch: " + why);
+	        }
+	        */
+	    }
+	};
+
+	worker.execute();
+	
 }//GEN-LAST:event_runButtonActionPerformed
 
 public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed
@@ -616,6 +664,7 @@ public void wwwButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
     URLGet urlTest = new URLGet();
     
     final String url = urlTextField.getText();
+    lastFileLoaded_ = url.toString();
     
     this.editPane.setText(urlTest.getSite(url));
     this.fileSystemTextField.setText("");
@@ -749,6 +798,7 @@ private void loadFile(final String pathName) {
         reader.close();
         this.editPane.setText(stringBuilder.toString());
         this.fileName = new File(pathName);
+        lastFileLoaded_ = this.fileName.getName();
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
@@ -820,6 +870,7 @@ private void updateButtons() {
     private ParseRun parseRun_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
+    private String lastFileLoaded_;
     
     MessageConsole console_;
 

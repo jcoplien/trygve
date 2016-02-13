@@ -13,13 +13,13 @@ class Product {
 }
 
 class User {
-   public User(String name, double cash, Map<int,Product> owns) {
+   public User(String name, double cash, List<Product> owns) {
       name_ = name.clone;
       cash_ = cash.clone;
       owns_ = owns.clone
    }
-   public void takesOwnershipOf(Map<int,Product> products) {
-      owns_.addAll(products)
+   public void takesOwnershipOf(List<Product> products) {
+      // owns_.addAll(products)
    }
    public void debitCash(double amount) {
       cash_ = cash_ - amount
@@ -30,7 +30,7 @@ class User {
 
    String name_;
    double cash_;
-   Map<int,Product> owns_
+   List<Product> owns_
 }
 
 class Company {
@@ -42,7 +42,7 @@ class Company {
       goldMembers_ = goldMembers
    }
    public void removeFromStock(Product p) {
-      stock_.removeValue(p);
+      // stock_.removeValue(p);
    }
    public Product lookupProductID(int productId) const {
       return stock_.get(productId)

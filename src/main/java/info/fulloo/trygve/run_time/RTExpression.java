@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.4
+ * Trygve IDE 1.5
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -127,22 +127,24 @@ public abstract class RTExpression extends RTCode {
 	}
 	public static RTExpressionList bodyPartsToRTExpressionList(final List<BodyPart> bodyParts, final RTType enclosingMegaType) {
 		final RTExpressionList retval = new RTExpressionList();
-		RTExpression last = null;
-		for (final BodyPart statement : bodyParts) {
-			RTExpression rTStatement = null;
-			if (statement instanceof Expression) {
-				rTStatement = RTExpression.makeExpressionFrom((Expression)statement, enclosingMegaType);
-			} else if (statement instanceof Declaration) {
-				// ignore
-				continue;
-			} else {
-				assert false;	// something wrong...
+		if (null != retval) {
+			RTExpression last = null;
+			for (final BodyPart statement : bodyParts) {
+				RTExpression rTStatement = null;
+				if (statement instanceof Expression) {
+					rTStatement = RTExpression.makeExpressionFrom((Expression)statement, enclosingMegaType);
+				} else if (statement instanceof Declaration) {
+					// ignore
+					continue;
+				} else {
+					assert false;	// something wrong...
+				}
+				if (null != last) {
+					last.setNextCode(rTStatement);
+				}
+				last = rTStatement;
+				retval.addExpression(rTStatement);
 			}
-			if (null != last) {
-				last.setNextCode(rTStatement);
-			}
-			last = rTStatement;
-			retval.addExpression(rTStatement);
 		}
 		return retval;
 	}
@@ -3147,16 +3149,18 @@ public abstract class RTExpression extends RTCode {
 			last_ = null;
 		}
 		public void addExpression(final RTExpression rTNewExpr) {
-			RTExpression lastExpression = null;
-			final int sizeOfExpressionList = expressionList_.size();
-			if (0 < sizeOfExpressionList) {
-				lastExpression = expressionList_.get(sizeOfExpressionList - 1);
-				rTNewExpr.setNextCode(lastExpression.nextCode());
-				lastExpression.setNextCode(rTNewExpr);
-			} else {
-				;
+			if (null != rTNewExpr) {
+				RTExpression lastExpression = null;
+				final int sizeOfExpressionList = expressionList_.size();
+				if (0 < sizeOfExpressionList) {
+					lastExpression = expressionList_.get(sizeOfExpressionList - 1);
+					rTNewExpr.setNextCode(lastExpression.nextCode());
+					lastExpression.setNextCode(rTNewExpr);
+				} else {
+					;
+				}
+				expressionList_.add((last_ = rTNewExpr));
 			}
-			expressionList_.add((last_ = rTNewExpr));
 		}
 		@Override public RTCode run() {
 			RTCode retval = null;
