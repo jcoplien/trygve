@@ -51,7 +51,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.2";
+    final String TrygveVersion = "1.5.3";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -60,6 +60,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     /** Creates new form TextEditorGUI */
     public TextEditorGUI() {
     	super();
+    	worker_ = null;
     	parseRun_ = null;
     	compiledWithoutError_ = false;
     	
@@ -96,7 +97,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	}
 	
     private void initComponents() {
- 
+    	worker_ = null;
         copyButton = new javax.swing.JButton();
         jScrollPane1 = super.scrollPane(); // new javax.swing.JScrollPane(); 
         if (OLD) {
@@ -125,6 +126,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             console_.redirectOut();
             console_.redirectErr(java.awt.Color.RED, null);
         }
+        
         editPane = super.editPane(); // new javax.swing.JEditorPane();
         if (OLD) {
         	editPane2 = new javax.swing.JEditorPane();
@@ -618,6 +620,11 @@ public void simpleRun() {
 }
 
 public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+	if (null != worker_) {
+		worker_.cancel(true);
+		worker_ = null;
+	}
+	
 	worker_ = new SwingWorker<Integer, Void>() {
 		volatile Color returnColor_;
 		
@@ -644,6 +651,8 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	};
 
 	worker_.execute();
+	
+	worker_ = null;
 	
 }//GEN-LAST:event_runButtonActionPerformed
 
@@ -723,7 +732,9 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
 private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerformed
 	this.errorPanel.setText("");
 	final TestRunner testRunner = new TestRunner(this);
+	interruptButton.setEnabled(true);
 	testRunner.runTests();
+	interruptButton.setEnabled(false);
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
 private void showWButtonActionPerformed() {//GEN-FIRST:event_showWButtonActionPerformed

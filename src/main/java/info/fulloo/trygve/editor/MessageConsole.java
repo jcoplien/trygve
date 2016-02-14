@@ -93,6 +93,16 @@ public class MessageConsole
 		// instead set to the error panel? That's passed in the
 		// above constructor. But that ends up here, bound anyhow
 		// to the error panel.
+		
+		if (null != in_) {
+			textComponent.removeKeyListener(in_);
+			try {
+				in_.close();
+			} catch (IOException ioex) {
+				// who cares?
+			}
+			in_ =  null;
+		}
 
 		in_ = new DocInputStream(textComponent, this);
 		
