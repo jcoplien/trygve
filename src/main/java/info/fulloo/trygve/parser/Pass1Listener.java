@@ -139,6 +139,7 @@ import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
 import info.fulloo.trygve.parser.KantParser.Method_signatureContext;
 import info.fulloo.trygve.parser.KantParser.Object_declContext;
 import info.fulloo.trygve.parser.KantParser.ProgramContext;
+import info.fulloo.trygve.parser.KantParser.Switch_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Switch_exprContext;
 import info.fulloo.trygve.parser.KantParser.Type_and_expr_and_decl_listContext;
 import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
@@ -4873,6 +4874,10 @@ public class Pass1Listener extends Pass0Listener {
 			} else if (walker instanceof Boolean_unary_opContext) {
 				;
 			} else if (walker instanceof Boolean_productContext) {
+				;
+			} else if (walker instanceof Switch_bodyContext) {
+				;
+			} else if (walker instanceof Switch_exprContext) {
 				;
 			} else {
 				assert false;
