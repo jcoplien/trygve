@@ -63,6 +63,7 @@ public class RunTimeEnvironment {
 	public static RunTimeEnvironment runTimeEnvironment_;
 	public RunTimeEnvironment(final TextEditorGUI gui) {
 		super();
+		gui_ = gui;
 		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
 		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
 		stringToRTInterfaceMap_ = new LinkedHashMap<String, RTInterface>();
@@ -72,7 +73,6 @@ public class RunTimeEnvironment {
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
 		redirectedInputStream_ = gui.getIn();
-		gui_ = gui;
 	}
 	private static void setRunTimeEnvironment(final RunTimeEnvironment theThis) {
 		runTimeEnvironment_ = theThis;
