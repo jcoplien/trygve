@@ -82,6 +82,7 @@ public class RunTimeEnvironment {
 		stack = new Stack<RTStackable>();
 		dynamicScopes = new Stack<RTDynamicScope>();
 		framePointers_ = new Stack<IntWrapper>();
+		redirectedInputStream_ = gui_.getIn();
 	}
 	private void preDeclareTypes() {
 		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
@@ -425,6 +426,6 @@ public class RunTimeEnvironment {
 	private       Stack<RTDynamicScope> dynamicScopes;
 	private final List<RTClass> allClassList_;
 	public        RTDynamicScope globalDynamicScope;
-	private final InputStream redirectedInputStream_;
+	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
 }

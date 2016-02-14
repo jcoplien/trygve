@@ -51,7 +51,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.2";
+    final String TrygveVersion = "1.5.3";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -138,6 +138,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         clearButton = new javax.swing.JButton();
         clearButton2 = new javax.swing.JButton();
         runButton = new javax.swing.JButton();
+        interruptButton = new javax.swing.JButton();
         parseButton = new javax.swing.JButton();
         wwwButton = new javax.swing.JButton();
         urlTextField = new javax.swing.JTextField();
@@ -230,6 +231,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 runButtonActionPerformed(evt);
             }
         });
+
+        interruptButton.setText("Interrupt");
+        interruptButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                interruptButtonActionPerformed(evt);
+            }
+        });
+        interruptButton.setEnabled(false);
         
         parseButton.setText("Parse");
         parseButton.addActionListener(new java.awt.event.ActionListener() {
@@ -421,6 +430,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 		.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                 				.addComponent(clearButton2)
                 				.addComponent(runButton)
+                				.addComponent(interruptButton)
                 				.addComponent(testButton))
                 		.addComponent(errorScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE))
                 .addContainerGap())
@@ -449,6 +459,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 	.addComponent(saveFileButton)
                 	.addComponent(clearButton2)
                 	.addComponent(runButton)
+                	.addComponent(interruptButton)
                 	.addComponent(testButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -564,6 +575,7 @@ private void saveMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 
 private void loadTestCaseMenuActionPerformed(final java.awt.event.ActionEvent evt) {
 	runButton.setEnabled(false);
+	interruptButton.setEnabled(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
 }
@@ -606,30 +618,38 @@ public void simpleRun() {
 }
 
 public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
-	SwingWorker<Integer, Void> worker = new SwingWorker<Integer, Void>() {
+	worker_ = new SwingWorker<Integer, Void>() {
 		volatile Color returnColor_;
 		
 	    @Override public Integer doInBackground() {
 	    	returnColor_ = runButton.getForeground();
 	    	runButton.setForeground(Color.RED);
+	    	interruptButton.setEnabled(true);
 	    	parseButton.setEnabled(false);
 	    	testButton.setEnabled(false);
 	    	simpleRun();
 	    	parseButton.setEnabled(true);
 	    	testButton.setEnabled(true);
 	        runButton.setForeground(returnColor_);
+	        interruptButton.setEnabled(false);
 	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
 	    }
 
 	    @Override public void done() {
 	        // Just wrap up.
 	       runButton.setForeground(Color.BLACK);
+	       interruptButton.setEnabled(false);
+	       worker_ = null;
 	    }
 	};
 
-	worker.execute();
+	worker_.execute();
 	
 }//GEN-LAST:event_runButtonActionPerformed
+
+public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+	worker_.cancel(true);
+}//GEN-LAST:event_interruptButtonActionPerformed
 
 public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed
 	final String program = editPane.getText();
@@ -684,7 +704,6 @@ public boolean compiledWithoutError() {
 public void resetCompiledWithoutError() {
 	compiledWithoutError_ = false;
 }
-
 
 private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
 	final String pathName = fileSystemTextField.getText();
@@ -816,6 +835,7 @@ private void updateButtons() {
     private javax.swing.JButton clearButton;
     private javax.swing.JButton clearButton2;
     private javax.swing.JButton runButton;
+    private javax.swing.JButton interruptButton;
     private javax.swing.JButton parseButton;
     private javax.swing.JMenuItem clearMenu;
     private javax.swing.JMenuItem jMenu3Files[];
@@ -852,6 +872,7 @@ private void updateButtons() {
     // End of variables declaration//GEN-END:variables
     
     private ParseRun parseRun_;
+    SwingWorker<Integer, Void> worker_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
     
