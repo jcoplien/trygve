@@ -91,6 +91,10 @@ public class StaticScope {
 		hasDeclarationsThatAreLostBetweenPasses_ = losesMemory;
 	}
 	
+	public void resetTemplateInstationInfo(final TemplateInstantiationInfo newTemplateInstantiationInfo) {
+		templateInstantiationInfo_ = newTemplateInstantiationInfo;
+	}
+	
 	public StaticScope(final StaticScope scope, final String copy, final StaticScope newEnclosingScope,
 			final Declaration newAssociatedDeclaration, final TemplateInstantiationInfo newTypes) {
 		// Special copy constructor, mainly for instantiating templates

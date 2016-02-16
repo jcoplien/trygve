@@ -69,6 +69,9 @@ public class TemplateInstantiationInfo {
 	public final String templateName() {
 		return templateDeclaration_.name();
 	}
+	public final TemplateDeclaration templateDeclaration() {
+		return templateDeclaration_;
+	}
 	public final String fullTypeName() {
 		return typeName_;
 	}

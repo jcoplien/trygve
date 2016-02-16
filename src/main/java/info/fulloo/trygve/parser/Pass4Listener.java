@@ -72,7 +72,8 @@ public class Pass4Listener extends Pass3Listener {
 		super.exitAbelian_atom(ctx);
 	}
 	
-	@Override protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final int lineNumber) {
+	@Override protected Type lookupOrCreateTemplateInstantiation(final String templateName,
+			final List<String> parameterTypeNames, final int lineNumber) {
 		// This varies by pass. Here we first remove the instantiation, so that the
 		// new one picks up the body created in Pass 3.
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);

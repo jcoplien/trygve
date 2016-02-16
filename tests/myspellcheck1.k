@@ -109,7 +109,8 @@ context SpellCheck {
       MyScanner parser = new MyScanner();
       Words = parser.wordsFor(buffer);
       CurrentWord = this;
-      Dictionary = dictionary
+      Dictionary = dictionary;
+      CopyEditor = null
    }
 
    public void spellCheck() {

@@ -23,6 +23,7 @@ package info.fulloo.trygve.parser;
  * 
  */
 
+import java.util.List;
 import java.util.Map;
 
 import org.antlr.v4.runtime.RuleContext;
@@ -1419,6 +1420,23 @@ public class Pass2Listener extends Pass1Listener {
 			}
 		}
 		return retval;
+	}
+	
+	@Override protected void updateTypesAccordingToPass(final /*Class*/Type type, final List<String> typeNameList) {
+		// nothing
+
+		final StaticScope templateScope = type.enclosedScope();
+		final TemplateInstantiationInfo currentTemplateInstantiationInfo = templateScope.templateInstantiationInfo();
+		final TemplateDeclaration templateDeclaration = currentTemplateInstantiationInfo.templateDeclaration();
+		final TemplateInstantiationInfo newTemplateInstantiationInfo = new TemplateInstantiationInfo(templateDeclaration, type.name());
+		newTemplateInstantiationInfo.setClassType(currentTemplateInstantiationInfo.classType());
+
+		for (final String typeName: typeNameList) {
+			final Type templateParameterType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			newTemplateInstantiationInfo.add(templateParameterType);
+		}
+		
+		templateScope.resetTemplateInstationInfo(newTemplateInstantiationInfo);
 	}
 	
 	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {

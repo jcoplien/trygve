@@ -47,11 +47,11 @@ import javax.swing.SwingWorker;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/input_test1.k";
+	private final static String defaultFile = "tests/listrole2.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.3";
+    final String TrygveVersion = "1.5.4";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -645,6 +645,7 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    @Override public void done() {
 	        // Just wrap up.
 	       runButton.setForeground(Color.BLACK);
+	       parseButton.setEnabled(true);
 	       interruptButton.setEnabled(false);
 	       worker_ = null;
 	    }
@@ -657,6 +658,8 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 }//GEN-LAST:event_runButtonActionPerformed
 
 public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+	parseButton.setEnabled(true);
+	interruptButton.setEnabled(false);
 	worker_.cancel(true);
 }//GEN-LAST:event_interruptButtonActionPerformed
 

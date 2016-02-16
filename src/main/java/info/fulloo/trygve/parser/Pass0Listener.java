@@ -272,6 +272,81 @@ public class Pass0Listener extends KantBaseListener {
 		// nothing on Pass 0
 	}
 	
+	@Override public void enterRole_decl(KantParser.Role_declContext ctx)
+	{
+		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' '}'
+		// | access_qualifier 'role' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		//
+		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isRoleArray = vecText.length() > 0;	// "[]"
+		
+		if (null != ctx.access_qualifier()) {
+			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+					ctx.access_qualifier().getText(), "' ignored", ".");
+		}
+		
+		final TerminalNode JAVA_ID = ctx.JAVA_ID();
+		
+		if (null != JAVA_ID) {
+			// It *can* be null. Once had an object declaration inside
+			// a role - resulting grammar error got here with that
+			// null condition. Not much to do but to punt
+
+			final String roleName = JAVA_ID.getText();
+		
+			// Return value is through currentRole_
+			lookupOrCreateRoleDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
+		
+			assert null != currentRole_;
+		
+			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
+			if (!(currentScopesDecl instanceof ContextDeclaration)) {
+				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
+			}
+			currentScope_ = currentRole_.enclosedScope();
+		} else {
+			currentRole_ = null;
+		}
+	}
+	
+	@Override public void exitRole_decl(KantParser.Role_declContext ctx)
+	{
+		// : 'role' role_vec_modifier JAVA_ID '{' role_body '}'
+		// | 'role' role_vec_modifier JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'role' JAVA_ID '{' role_body '}'
+		// | access_qualifier 'role' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
+		
+		// All three passes. INVOKED BY PASS 2 VERSION (probably shouldn't
+		// be, as it does nothing in pass 2. FIXME)
+		
+		// In the self_methods rule we've been gathering signatures
+		// in the "requires" section and storing them in the Role
+		// declaration. Just tell the type about the declaration so
+		// that type checking can track it back.
+		
+		if (null != currentRole_) {
+			// The IF statement is just to recover from bad
+			// behaviour elicited by syntax errors. See
+			// the comment above on entry to the production.
+
+			final Type rawRoleType = currentRole_.type();
+			assert rawRoleType instanceof RoleType;
+			final RoleType type = (RoleType)rawRoleType;
+			type.setBacklinkToRoleDecl(currentRole_);
+
+			currentRole_ = null;
+			currentScope_ = currentScope_.parentScope();
+		}
+	}
+	
 	
 	// -------------------------------------------------------------------------------
 	
@@ -331,9 +406,7 @@ public class Pass0Listener extends KantBaseListener {
 		if (null != requestedRole) {
 			currentRole_ = requestedRole;
 			
-			// The way parsing is designed, these things should
-			// be defined once on pass 1 and then referenced only
-			// on subsequent passes.
+			// Something wrong
 			assert false;
 		} else {
 			final StaticScope rolesScope = new StaticRoleScope(currentScope_);
@@ -416,7 +489,7 @@ public class Pass0Listener extends KantBaseListener {
 	}
 	
 	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
+		/* Nothing */
 	}
 	public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* nothing */
