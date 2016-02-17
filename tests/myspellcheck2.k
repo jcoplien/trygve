@@ -26,11 +26,49 @@ class OnlineDictionary {
 }
 
 context MyScanner {
-   public List<String> wordsFor(String document) {
-      String [] results = document.split("[ ,;.]");
+   public MyScanner(String doc) {
+      document = doc;
+   }
+   private boolean isDelim(String c) const {
+      boolean isAlpha = (c >= "a" && c <= "z") ||
+                        (c >= "A" && c <= "Z");
+      return (!isAlpha)
+   }
+   private String wordStartingAt(int start) {
+      String retval = "";
+      String c = document.charAt(start);
+      if (isDelim(c)) {
+         retval = c.clone;
+      } else {
+         for (int i = start.clone; i < document.len(); i++) {
+             c = document.charAt(i);
+             if (isDelim(c)) break;
+             retval = retval + c;
+         }
+      }
+      System.err.print("retval=").println(retval);
+      return retval;
+   }
+   public List<String> words() {
       List<String> retval = new List<String>();
-      for (String word : results) retval.add(word);
+      int i = 0;
+      do {
+         String nextWord = wordStartingAt(i);
+         retval.add(nextWord);
+         i = i + nextWord.length()
+      } while (i < document.len());
+     
       return retval
+   }
+   stageprop document {
+      public int len() { return length() }
+      public String charAt(int i) {
+         String retval = substring(i, i+1);
+         return retval
+      }
+   } requires {
+      int length() const;
+      String substring(int start, int end) const;
    }
 }
 
@@ -49,7 +87,7 @@ context SpellCheck {
    }
    role [] Words {
       public void check() {
-         CopyEditor.dispatchWord();
+         CopyEditor.reviewWord();
          if (index < lastIndex) {
             CurrentWord.setIndex(index + 1)
             Words[index+1].check()
@@ -81,8 +119,9 @@ context SpellCheck {
                  answer == "Yes" || answer == "yes" ||
                  answer == "")
       }
-      public void dispatchWord() {
+      public void reviewWord() {
          String word = CurrentWord.text();
+         if (isDelim(word)) return;
          boolean isSpelledCorrectly =
                               Dictionary.isSpelledCorrectly(word);
          if (isSpelledCorrectly == false) {
@@ -110,8 +149,8 @@ context SpellCheck {
    }
 
    public SpellCheck(String buffer, OnlineDictionary dictionary) {
-      MyScanner parser = new MyScanner();
-      Words = parser.wordsFor(buffer);
+      MyScanner parser = new MyScanner(buffer);
+      Words = parser.words();
       CurrentWord = this;
       Dictionary = dictionary;
       CopyEditor = null

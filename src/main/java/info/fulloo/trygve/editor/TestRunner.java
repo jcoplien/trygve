@@ -152,6 +152,7 @@ public class TestRunner {
 		"runeInitialization1.k",
 		"runeInitialization2.k",
 		"runeInitialization3.k",
+		"listrole2.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

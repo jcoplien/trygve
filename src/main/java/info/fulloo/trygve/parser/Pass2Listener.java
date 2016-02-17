@@ -1423,7 +1423,17 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	
 	@Override protected void updateTypesAccordingToPass(final /*Class*/Type type, final List<String> typeNameList) {
-		// nothing
+		// This little ditty is mainly for Pass2. It updates the template
+		// instantiation information of classes like List<Foobar> where Foobar
+		// is a forward type reference. Normally, template stuff can't take
+		// advantage of type information again until Pass4 when templates
+		// are fully instantiated. This is a bit of a cheat that at least
+		// makes the template parameter mappings current, so that the appearance
+		// of a template-typed script parameter will match properly on
+		// lookup. It helps avoid some false warnings about type mismatches
+		// when in fact there are none. Perhaps a rare occurrence (forward
+		// references, templates, etc.) but nonetheless part of what we must
+		// deal with....
 
 		final StaticScope templateScope = type.enclosedScope();
 		final TemplateInstantiationInfo currentTemplateInstantiationInfo = templateScope.templateInstantiationInfo();

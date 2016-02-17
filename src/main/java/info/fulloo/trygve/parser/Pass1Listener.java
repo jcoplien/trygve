@@ -2270,8 +2270,12 @@ public class Pass1Listener extends Pass0Listener {
 			//	| abelian_expr op=('&&') abelian_expr
 			final Token relationalOperator = ctx.op;
 	
-			final Expression rhs = parsingData_.popExpression();
-			final Expression lhs = parsingData_.popExpression();
+			final Expression rhs = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
+			final Expression lhs = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {

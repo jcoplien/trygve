@@ -7,8 +7,17 @@ context Account {
  
     stageprop Amount {
     }
+
+    public Account() {
+       test_ = new List<Amount>()
+    }
 }
 
 {
     Account src = new Account();
-    src.increaseBalance(30);}
+    src.increaseBalance(30);
+}
+
+/* GOLD:
+___________________________________________________________
+*/

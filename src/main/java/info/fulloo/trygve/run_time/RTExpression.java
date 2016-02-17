@@ -2655,6 +2655,7 @@ public abstract class RTExpression extends RTCode {
 			super();
 			
 			objectDeclarations_ = new LinkedHashMap<String, RTType>();
+			evaluationResult_ = null;
 			
 			// Copy from the compiler data, the local variable names
 			// declared in the FOR scope
@@ -2663,10 +2664,6 @@ public abstract class RTExpression extends RTCode {
 				objectDeclarations_.put(objectDecl.name(), objectType);
 			}
 
-			// OLD: deprecated
-			// initializations_ = this.expressionListFromObjectDeclarations(expr.initDecl());
-			
-			// NEW:
 			RTExpression anInitialization = null;
 			final List<BodyPart> rawInitializations = expr.initExprs();
 			initializations_ = new ArrayList<RTExpression>();
@@ -2686,7 +2683,7 @@ public abstract class RTExpression extends RTCode {
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope_);
 						
 			// Declare local variables
-			for (Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
+			for (final Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
 				// "for (int i = 0 ..." ==> i
 				final String objectName = iter.getKey();
 				final RTType type = iter.getValue();
@@ -2726,7 +2723,8 @@ public abstract class RTExpression extends RTCode {
 			return last_;
 		}
 		public RTCode breakExit() {
-			return popScope_;
+			// return popScope_;
+			return evaluationResult_;
 		}
 		@Override public void setNextCode(final RTCode code) {
 			assert null != last_;
@@ -2740,6 +2738,7 @@ public abstract class RTExpression extends RTCode {
 		protected RTPopDynamicScope popScope_;
 		protected final List<RTExpression> initializations_;
 		protected final Map<String, RTType> objectDeclarations_;
+		protected       RTExpression evaluationResult_;
 	}
 	
 	public static class RTFor extends RTForCommon implements RTBreakableExpression {
@@ -2774,7 +2773,8 @@ public abstract class RTExpression extends RTCode {
 				evaluationResult_ = new RTPushEvaluationResult();
 				body.addExpression(evaluationResult_);
 			} else {
-				evaluationResult_ = null;
+				evaluationResult_ = new RTNullExpression();
+				body.addExpression(evaluationResult_);
 			}
 			
 			last_ = new RTNullExpression();
@@ -2798,7 +2798,6 @@ public abstract class RTExpression extends RTCode {
 		
 		private final RTExpression increment_;
 		private final RTPopDynamicScope popScope_;
-		private final RTPushEvaluationResult evaluationResult_;
 	}
 	
 	private static class RTForIterationTestRunner extends RTExpression {
@@ -2875,7 +2874,8 @@ public abstract class RTExpression extends RTCode {
 				evaluationResult_ = new RTPushEvaluationResult();
 				body.addExpression(evaluationResult_);
 			} else {
-				evaluationResult_ = null;
+				evaluationResult_ = new RTNullExpression();
+				body.addExpression(evaluationResult_);
 			}
 			
 			last_ = new RTNullExpression();
@@ -2919,7 +2919,6 @@ public abstract class RTExpression extends RTCode {
 		}
 	
 		private RTExpression rTThingToIterateOverExpr_;
-		private final RTPushEvaluationResult evaluationResult_;
 	}
 	
 	private static class RTWhileTestRunner extends RTExpression {
@@ -2982,7 +2981,7 @@ public abstract class RTExpression extends RTCode {
 			((RTExpressionList)body_).addExpression(goBackToTest);
 			
 			if (expr.resultIsConsumed()) {
-			last_ = new RTPushEvaluationResult();
+				last_ = new RTPushEvaluationResult();
 			} else {
 				last_ = new RTNullExpression();
 			}
@@ -3488,6 +3487,7 @@ public abstract class RTExpression extends RTCode {
 				associatedBreakable_ = allBreakablesMap.get(label_);
 				assert null != associatedBreakable_;
 				breakExit_ = associatedBreakable_.breakExit();
+				assert null != breakExit_;
 				firstIter_ = false;
 			}
 			
