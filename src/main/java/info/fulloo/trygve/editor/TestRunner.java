@@ -29,8 +29,11 @@ import java.util.List;
 public class TestRunner {
 	private enum TestSource { UseUrl, UseLocalFile };
 	TestSource testSource_;
-	private final static String urlPrefix_ = "file:tests/";
-	private final static String localTestDir_ = "file:tests/";
+	private final static String testPrefix_ = "tests/";
+	private final static String examplePrefix_ = "examples";
+	private final static String urlTestPrefix_ = "file:" + testPrefix_;
+	private final static String localTestDir_ = "file:" + testPrefix_;
+	private final static String urlExamplePrefix_ = "file:" + examplePrefix_;
 	private final static String fileNames_[] = {
 		"ctor1.k",
 		"exprtest.k",
@@ -156,14 +159,26 @@ public class TestRunner {
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};
+	private final static String exampleNames_[] = {
+		"spellcheck.k",
+	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
 	}
+	public static int numberOfExampleCases() {
+		return exampleNames_.length;
+	}
 	public static String urlForTestCase(final int i) {
-		return urlPrefix_ + fileNames_[i];
+		return urlTestPrefix_ + fileNames_[i];
 	}
 	public static String fileNameForTestCase(final int i) {
 		return fileNames_[i];
+	}
+	public static String urlForExample(final int i) {
+		return urlExamplePrefix_ + exampleNames_[i];
+	}
+	public static String fileNameForExample(final int i) {
+		return exampleNames_[i];
 	}
 	public TestRunner(final TextEditorGUI gui) {
 		gui_ = gui;
@@ -221,13 +236,13 @@ public class TestRunner {
 				System.err.println();
 			}
 			final String firstFailure = failures_.get(0);
-			loadFile(firstFailure);
-			gui_.setFileNameField("tests/" + firstFailure);
+			loadTestFile(firstFailure);
+			gui_.setFileNameField(testPrefix_ + firstFailure);
 		}
 	}
-	private void loadFile(final String filename) {
+	private void loadTestFile(final String filename) {
 		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
-		gui_.setWWWFileNameField(urlPrefix_ + filename);
+		gui_.setWWWFileNameField(urlTestPrefix_ + filename);
 		gui_.wwwButtonActionPerformed(null);
 	}
 	private void runATest(final String filename) {
@@ -235,7 +250,7 @@ public class TestRunner {
 		String url = null;
 		switch (testSource_) {
 		case UseUrl:
-			url = urlPrefix_ + filename; break;
+			url = urlTestPrefix_ + filename; break;
 		case UseLocalFile:
 			url = localTestDir_ + filename; break;
 		}
@@ -245,7 +260,7 @@ public class TestRunner {
 		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
-		this.loadFile(filename);
+		this.loadTestFile(filename);
 		gui_.parseButtonActionPerformed(null);
 		if (gui_.compiledWithoutError()) {
 			// No: gui_.runButtonActionPerformed(null);

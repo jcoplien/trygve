@@ -148,6 +148,7 @@ public class ParsingData {
 	public DoWhileExpression  	     popDoWhileExpression() { popBreakableExpression(); return doWhileExpressionStack_.pop(); }
 	public void 				    pushDoWhileExpression(final DoWhileExpression expr) { doWhileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public DoWhileExpression 	 currentDoWhileExpression() { return doWhileExpressionStack_.peek(); }
+	public boolean               currentDoWhileExpressionExists() { return doWhileExpressionStack_.size() > 0; }
 	public ExprAndDeclList			 popExprAndDecl() { return exprAndDeclListStack_.pop(); }
 	public void						pushExprAndDecl(final ExprAndDeclList e) { exprAndDeclListStack_.push(e); }
 	public ExprAndDeclList	     currentExprAndDecl() { return exprAndDeclListStack_.peek(); }

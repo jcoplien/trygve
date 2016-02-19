@@ -47,11 +47,11 @@ import javax.swing.SwingWorker;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/myspellcheck2.k";
+	private final static String defaultFile = "examples/spellcheck.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.5";
+    final String TrygveVersion = "1.5.6";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -390,6 +390,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         jMenuBar1.add(jMenu2);
         
         this.initLoadTestMenu();
+        this.initExampleMenu();
 
         setJMenuBar(jMenuBar1);
 
@@ -527,6 +528,60 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	
         jMenuBar1.add(jMenu3);
     }
+    private void initExampleMenu() {
+    	final int numberOfExampleCases = TestRunner.numberOfExampleCases();
+    	
+        jMenu4 = new javax.swing.JMenu();
+        jMenu4Files = new javax.swing.JMenuItem [numberOfExampleCases];
+        for (int i = 0; i < numberOfExampleCases; i++) {
+        	jMenu4Files[i] = new javax.swing.JMenuItem();
+        }
+        
+        jMenu4.setText("Load Example");
+    	
+    	final String [] allFileNames = new String [numberOfExampleCases], allURLs = new String [numberOfExampleCases];
+    	for (int i = 0; i < numberOfExampleCases; i++) {
+    		allFileNames[i] = TestRunner.fileNameForExample(i);
+    		allURLs[i] = TestRunner.urlForExample(i);
+    	}
+    	
+    	Arrays.sort(allFileNames);
+    	Arrays.sort(allURLs);
+    	
+    	
+    	final char [] menuBreaks = { 'n', 'z' }; int j = 0;
+		JMenu submenu = new JMenu("a-" + (char)(menuBreaks[0] - 1));
+    	for (int i = 0; i < numberOfExampleCases; i++) {
+    		assert 'a' > 'A';
+    		final String fileName = allFileNames[i];
+    		char firstChar = fileName.charAt(0);
+    		if (firstChar > 'z') {
+    			firstChar += 'a' - 'A';
+    		}
+    		if (firstChar >= menuBreaks[j]) {
+    			jMenu4.add(submenu);
+    			if (j < menuBreaks.length && menuBreaks[j+1] == 'z') {
+    				final String newRange = menuBreaks[j] + "-" + 'z';
+	    			submenu = new JMenu(newRange);
+    			} else if (menuBreaks[j] != 'z') {
+	    			final String newRange = menuBreaks[j] + "-" + (char)(menuBreaks[j+1]-1);
+	    			submenu = new JMenu(newRange);
+    			}
+    			j++;
+    		}
+        	jMenu4Files[i].setText(allURLs[i]);
+        	jMenu4Files[i].addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                     loadExampleMenuActionPerformed(evt);
+                }
+            });
+        	
+            submenu.add(jMenu4Files[i]);
+    	}
+    	jMenu4.add(submenu);
+    	
+        jMenuBar1.add(jMenu4);
+    }
 
 private void copyButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_copyButtonActionPerformed
     this.editPane.copy();
@@ -577,6 +632,14 @@ private void saveMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 
 private void loadTestCaseMenuActionPerformed(final java.awt.event.ActionEvent evt) {
 	runButton.setEnabled(false);
+	parseButton.setEnabled(true);
+	interruptButton.setEnabled(true);
+	urlTextField.setText(evt.getActionCommand());
+	this.wwwButtonActionPerformed(evt);
+}
+private void loadExampleMenuActionPerformed(final java.awt.event.ActionEvent evt) {
+	runButton.setEnabled(false);
+	parseButton.setEnabled(true);
 	interruptButton.setEnabled(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
@@ -643,7 +706,7 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    }
 
 	    @Override public void done() {
-	        // Just wrap up.
+	       // Just wrap up.
 	       runButton.setForeground(Color.BLACK);
 	       parseButton.setEnabled(true);
 	       interruptButton.setEnabled(false);
@@ -738,7 +801,7 @@ private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerfo
 	this.errorPanel.setText("");
 	final TestRunner testRunner = new TestRunner(this);
 	interruptButton.setEnabled(true);
-	testRunner.runTests();
+	testRunner.runTests();	
 	interruptButton.setEnabled(false);
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
@@ -855,6 +918,7 @@ private void updateButtons() {
     private javax.swing.JButton parseButton;
     private javax.swing.JMenuItem clearMenu;
     private javax.swing.JMenuItem jMenu3Files[];
+    private javax.swing.JMenuItem jMenu4Files[];
     private javax.swing.JButton copyButton;
     private javax.swing.JMenuItem copyMenu;
     private javax.swing.JButton cutButton;
@@ -865,6 +929,7 @@ private void updateButtons() {
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
+    private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;

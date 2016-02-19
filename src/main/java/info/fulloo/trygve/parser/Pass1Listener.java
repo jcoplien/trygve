@@ -2892,9 +2892,13 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (null != ctx.abelian_atom() && null == ctx.JAVA_ID() && null == ctx.CLONE()
 				&& null == ctx.message() && null != ctx.expr() && (ctx.expr().size() == 1) && null == ctx.ABELIAN_INCREMENT_OP()) {
 			//	| abelian_atom '[' expr ']'
-			final Expression indexExpr = parsingData_.popExpression();
+			final Expression indexExpr = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
 			indexExpr.setResultIsConsumed(true);
-			final Expression rawArrayBase = parsingData_.popExpression();
+			final Expression rawArrayBase = parsingData_.currentExpressionExists()?
+					parsingData_.popExpression():
+					new NullExpression();
 			
 			// The fidelity of this varies according to how much
 			// type information we have at hand
@@ -3488,9 +3492,15 @@ public class Pass1Listener extends Pass0Listener {
 		// do_while_expr
 		//	: 'do' expr 'while' '(' expr ')'
 
-		final Expression conditional = parsingData_.popExpression();
-		final Expression body = parsingData_.popExpression();
-		final DoWhileExpression expression = parsingData_.popDoWhileExpression();
+		final Expression conditional = parsingData_.currentExpressionExists()?
+				parsingData_.popExpression():
+				new NullExpression();
+		final Expression body = parsingData_.currentExpressionExists()?
+				parsingData_.popExpression():
+				new NullExpression();
+		final Expression expression = parsingData_.currentDoWhileExpressionExists()?
+				parsingData_.popDoWhileExpression():
+				new NullExpression();
 		
 		body.setResultIsConsumed(true);
 		conditional.setResultIsConsumed(true);
@@ -3500,7 +3510,9 @@ public class Pass1Listener extends Pass0Listener {
 					" of type ", conditional.type().name());
 		}
 		
-		expression.reInit(conditional, body);
+		if (expression instanceof DoWhileExpression) {
+			((DoWhileExpression)expression).reInit(conditional, body);
+		}
 		
 		parsingData_.pushExpression(expression);
 		
@@ -4910,11 +4922,13 @@ public class Pass1Listener extends Pass0Listener {
 					&& rhsType instanceof ClassType && rhsType.name().startsWith("List<")) {
 				final String ofWhatThisIsAList = rhsType.name().substring(5, rhsType.name().length() - 1);
 				final Type rhsBaseType = currentScope_.lookupTypeDeclarationRecursive(ofWhatThisIsAList);
-				tf = lhsType.canBeConvertedFrom(rhsBaseType, lineNumber, this);
-				if (false == tf) {
-					errorHook6p2(ErrorType.Fatal, lineNumber, "Roles in `", lhsType.name(),
-							"' cannot be played by objects of type `", rhsBaseType.name(), "':", "");
-					this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsBaseType);
+				if (null != rhsBaseType) {	// error stumbling check
+					tf = lhsType.canBeConvertedFrom(rhsBaseType, lineNumber, this);
+					if (false == tf) {
+						errorHook6p2(ErrorType.Fatal, lineNumber, "Roles in `", lhsType.name(),
+								"' cannot be played by objects of type `", rhsBaseType.name(), "':", "");
+						this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsBaseType);
+					}
 				}
 			} else if (lhsType.canBeConvertedFrom(rhsType) == false) {
 				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(),

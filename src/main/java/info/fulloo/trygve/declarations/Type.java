@@ -583,11 +583,12 @@ public abstract class Type implements ExpressionStackAPI
 				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
 					final String methodName = entry.getKey();
 					final MethodSignature rolesSignature = entry.getValue();
-					final MethodSignature signatureForMethodSelector =
-							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
+					final MethodSignature signatureForMethodSelector = null != t?
+							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature):
+							null;
 					if (null == signatureForMethodSelector) {
 						// See if RHS is itself a Role / StageProp, and compare
-						if (t instanceof RoleType || t instanceof StagePropType) {
+						if (null != t && (t instanceof RoleType || t instanceof StagePropType)) {
 							final RoleType otherAsRole = (RoleType)t;
 							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
 							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);

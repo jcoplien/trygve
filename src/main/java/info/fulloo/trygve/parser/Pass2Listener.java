@@ -396,6 +396,9 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (baseType instanceof BuiltInType && baseType.name().equals("void")) {
 			// Stumbling error
 			expression = new NullExpression();
+		} else if (baseType instanceof BuiltInType && baseType.name().equals("Null")) {
+			// Stumbling error
+			expression = new NullExpression();
 		} else {
 			assert false;
 		}
