@@ -2136,6 +2136,10 @@ public abstract class RTExpression extends RTCode {
 				newlyCreatedObject = new RTDateObject(rTType_);
 			} else if (classType_.name().equals("Scanner")) {
 				newlyCreatedObject = new RTScannerObject(rTType_);
+			} else if (classType_.name().equals("Color")) {
+				newlyCreatedObject = new RTColorObject(rTType_);
+			} else if (classType_.name().equals("Panel")) {
+				newlyCreatedObject = new RTPanelObject(rTType_);
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}

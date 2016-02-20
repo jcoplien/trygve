@@ -30,7 +30,7 @@ public class TestRunner {
 	private enum TestSource { UseUrl, UseLocalFile };
 	TestSource testSource_;
 	private final static String testPrefix_ = "tests/";
-	private final static String examplePrefix_ = "examples";
+	private final static String examplePrefix_ = "examples/";
 	private final static String urlTestPrefix_ = "file:" + testPrefix_;
 	private final static String localTestDir_ = "file:" + testPrefix_;
 	private final static String urlExamplePrefix_ = "file:" + examplePrefix_;
@@ -160,7 +160,9 @@ public class TestRunner {
 		"twelve_days_of_christmas2.k",
 	};
 	private final static String exampleNames_[] = {
+		"borrow_library_items.k",
 		"spellcheck.k",
+		"WINDOWSspellcheck.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

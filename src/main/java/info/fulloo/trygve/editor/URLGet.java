@@ -43,7 +43,7 @@ public class URLGet {
 
        try {
            final URLConnection connection = (new URL(url)).openConnection();
-           final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+           final BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream() , "UTF-8"));
 
            while (reader.ready()) {
                sb.append(reader.readLine() + "\n");

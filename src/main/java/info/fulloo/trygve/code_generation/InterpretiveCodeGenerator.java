@@ -27,10 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import info.fulloo.trygve.add_ons.ColorClass;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
@@ -158,6 +160,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = ScannerClass.typeDeclarationList();	// "Scanner"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = ColorClass.typeDeclarationList();	// "Color"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = PanelClass.typeDeclarationList();	// "Panel"
 		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
@@ -586,6 +594,98 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		assert readCode.size() > 0;
 		*/
+		
+		rtMethod.addCode(readCode);
+	}
+	private void processPanelMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		if (formalParameterList.count() == 1) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
+			if (methodDeclaration.name().equals("Panel")) {
+				readCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+			if (methodDeclaration.name().equals("setBackground")) {
+				readCode.add(new PanelClass.RTSetBackgroundCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("setForeground")) {
+				readCode.add(new PanelClass.RTSetForegroundCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 4) {
+			if (methodDeclaration.name().equals("drawText")) {
+				readCode.add(new PanelClass.RTDrawTextCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("drawEllipse")) {
+				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 5) {
+			if (methodDeclaration.name().equals("drawLine")) {
+				readCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("drawRect")) {
+				readCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("drawEllipse")) {
+				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, RetvalTypes.none, readCode);
+		
+		rtMethod.addCode(readCode);
+	}
+	private void processColorMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.none;
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		if (formalParameterList.count() == 4) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+			if (methodDeclaration.name().equals("Color")) {
+				readCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 1) {
+			if (methodDeclaration.name().equals("getRed")) {
+				retvalType = RetvalTypes.usingInt;
+				readCode.add(new ColorClass.RTGetRedCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getGreen")) {
+				retvalType = RetvalTypes.usingInt;
+				readCode.add(new ColorClass.RTGetGreenCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getBlue")) {
+				retvalType = RetvalTypes.usingInt;
+				readCode.add(new ColorClass.RTGetBlueCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, readCode);
 		
 		rtMethod.addCode(readCode);
 	}
@@ -1118,6 +1218,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("InputStream")) {
 				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Color")) {
+				processColorMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Panel")) {
+				processPanelMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
