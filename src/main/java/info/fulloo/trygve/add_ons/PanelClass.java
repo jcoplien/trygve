@@ -235,7 +235,7 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTPanelObject thePanelObject = (RTPanelObject)activationRecord.getObject("this");
-			thePanelObject.ctor();
+			thePanelObject.ctor1();
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
 			return super.nextCode();
 		}

@@ -32,6 +32,7 @@ import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.FrameClass;
 import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
@@ -166,6 +167,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = PanelClass.typeDeclarationList();	// "Panel"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = FrameClass.typeDeclarationList();	// "Frame"
 		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
@@ -639,6 +643,49 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				readCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawEllipse")) {
 				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, RetvalTypes.none, readCode);
+		
+		rtMethod.addCode(readCode);
+	}
+	private void processFrameMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		if (formalParameterList.count() == 1) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
+			if (methodDeclaration.name().equals("show")) {
+				readCode.add(new FrameClass.RTShowCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
+			if (methodDeclaration.name().equals("Frame")) {
+				readCode.add(new FrameClass.RTFrameCtorCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 3) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+			if (methodDeclaration.name().equals("add")) {
+				readCode.add(new FrameClass.RTAddCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("resize")) {
+				readCode.add(new FrameClass.RTResizeCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -1224,6 +1271,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("Panel")) {
 				processPanelMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Frame")) {
+				processFrameMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
