@@ -621,7 +621,7 @@ private void exampleTextMenuActionPerformed(final java.awt.event.ActionEvent evt
 
 private void saveMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveMenuActionPerformed
     try {
-    	final BufferedWriter writer = new BufferedWriter(new FileWriter(this.fileName));
+    	final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
         writer.write(this.editPane.getText());
         writer.close();
     }
@@ -651,7 +651,7 @@ private void loadMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 
     	final StringBuilder stringBuilder = new StringBuilder();
         try {
-            final BufferedReader reader = new BufferedReader(new FileReader(fileChooser.getSelectedFile()));
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileChooser.getSelectedFile()), "UTF-8"));
             while (reader.ready()) {
                 stringBuilder.append(reader.readLine() + "\n");
             }
@@ -757,7 +757,7 @@ public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) 
 
     final StringBuilder stringBuilder = new StringBuilder();
     try {
-        final BufferedReader reader = new BufferedReader(new FileReader(pathName));
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
         while (reader.ready()) {
             stringBuilder.append(reader.readLine() + "\n");
         }
@@ -786,7 +786,7 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
 	final String pathName = fileSystemTextField.getText();
 	
     try {
-        final BufferedWriter writer = new BufferedWriter(new FileWriter(pathName));
+        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
         writer.write(this.editPane.getText());
         writer.close();
     }
@@ -873,7 +873,7 @@ private void urlTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {
 private void loadFile(final String pathName) {
 	final StringBuilder stringBuilder = new StringBuilder();
     try {
-        final BufferedReader reader = new BufferedReader(new FileReader(pathName));
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
         while (reader.ready()) {
             stringBuilder.append(reader.readLine() + System.getProperty("line.separator"));
         }
@@ -896,7 +896,7 @@ private void saveAsMenuActionPerformed(final java.awt.event.ActionEvent evt) {//
 	final JFileChooser fileChooser = new JFileChooser();
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
         try {
-        	final BufferedWriter writer = new BufferedWriter(new FileWriter(fileChooser.getSelectedFile()));
+        	final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
             writer.write(this.editPane.getText());
             writer.close();
         }
