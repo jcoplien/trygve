@@ -100,8 +100,7 @@ public final class PanelClass {
 			declarePanelMethod("drawLine", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawRect", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawEllipse", voidType, asList("radius", "centerY", "centerX"), asList(intType, intType, intType), false);
-			declarePanelMethod("drawText", voidType, asList("text", "x", "y"), asList(stringType, intType, intType), false);
-			
+			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
 			globalScope.declareType(panelType_);
 			globalScope.declareClass(classDecl);
 		}
@@ -214,9 +213,9 @@ public final class PanelClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTDrawTextCode extends RTPanelCommon {
-		public RTDrawTextCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawText", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTDrawStringCode extends RTPanelCommon {
+		public RTDrawStringCode(final StaticScope enclosingMethodScope) {
+			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
 			assert null != thePanel;
@@ -224,7 +223,7 @@ public final class PanelClass {
 			final RTObject x = (RTObject)activationRecord.getObject("x");
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject text = (RTObject)activationRecord.getObject("text");
-			thePanel.drawText(x, y, text);
+			thePanel.drawString(x, y, text);
 			
 			return super.nextCode();
 		}

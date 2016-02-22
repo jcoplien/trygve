@@ -15,6 +15,9 @@ public class GraphicsPanel extends Panel implements ActionListener {
 			y_ = y;
 			string_ = string;
 			color_ = color;
+			if (null == color_) {
+				color_ = Color.black;
+			}
 		}
 		
 		public String toString() {
@@ -37,8 +40,10 @@ public class GraphicsPanel extends Panel implements ActionListener {
 	@Override public boolean handleEvent(final Event e) {
 		switch (e.id) {
 		  case Event.MOUSE_DOWN:
+			assert false;
 		    return true;
 		  case Event.MOUSE_UP:
+			assert false;
 		    repaint();
 		    return true;
 		  case Event.MOUSE_MOVE:
@@ -50,10 +55,8 @@ public class GraphicsPanel extends Panel implements ActionListener {
 		    System.exit(0);
 		    return true;
 		  case Event.MOUSE_EXIT:
-		  	assert false;
 		  	return true;
 		  case Event.MOUSE_ENTER:
-			assert false;
 			return true;
 		  default:
 		    return false;
@@ -92,10 +95,10 @@ public class GraphicsPanel extends Panel implements ActionListener {
 		    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
 		}
 		
-		/* draw the current textx */
+		/* draw the current texts */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i=0; i < ellipses_.size(); i++) {
+		for (int i=0; i < strings_.size(); i++) {
 		    final StringRecord p = strings_.elementAt(i);
 		    g.setColor((Color)strings_.elementAt(i).color());
 		    g.drawString(p.toString(), p.x(), p.y());

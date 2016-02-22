@@ -155,7 +155,7 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 		thePanel_.addEllipse(x, y, width, height, null);
 	}
-	public void drawText(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
+	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
 		assert stringArg instanceof RTStringObject;

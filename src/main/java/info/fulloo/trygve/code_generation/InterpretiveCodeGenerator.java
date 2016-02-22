@@ -662,14 +662,18 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 4) {
-			if (methodDeclaration.name().equals("drawText")) {
-				readCode.add(new PanelClass.RTDrawTextCode(methodDeclaration.enclosedScope()));
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
+			if (methodDeclaration.name().equals("drawString")) {
+				readCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawEllipse")) {
 				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 5) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
 			if (methodDeclaration.name().equals("drawLine")) {
 				readCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawRect")) {

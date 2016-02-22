@@ -7,9 +7,9 @@ class PanelTest {
       Color intColor = new Color(255, 255, 255);
       Panel panel = new Panel();
       Frame frame = new Frame("First Frame");
-      frame.add("South", panel);
+      frame.add("Center", panel);
       frame.resize(300, 300);
-      panel.drawText(150, 150, "Hello world");
+      panel.drawString(120, 120, "Hello world");
       frame.setVisible(true)
    }
 }
