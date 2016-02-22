@@ -20,6 +20,7 @@ import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTFrameObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.run_time.RTPanelObject;
@@ -86,6 +87,7 @@ public final class FrameClass {
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
 			final Type panelType = globalScope.lookupTypeDeclaration("Panel");
+			final Type booleanType = globalScope.lookupTypeDeclaration("boolean");
 			assert null != panelType;
 			
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
@@ -98,10 +100,13 @@ public final class FrameClass {
 			classDecl.setType(frameType_);
 			typeDeclarationList_.add(classDecl);
 
-			declareFrameMethod("Frame", null, asList("panel"), asList(panelType), false);
-			declareFrameMethod("add", voidType, asList("name", "panel"), asList(stringType, panelType), false);
-			declareFrameMethod("resize", voidType, asList("width", "height"), asList(intType, intType), false);
+			// NOTE: asList things are in reverse order...
+			declareFrameMethod("Frame", null, asList("name"), asList(stringType), false);
+			declareFrameMethod("add", voidType, asList("panel", "name"), asList(panelType, stringType), false);
+			declareFrameMethod("resize", voidType, asList("height", "width"), asList(intType, intType), false);
+			declareFrameMethod("setSize", voidType, asList("height", "width"), asList(intType, intType), false);
 			declareFrameMethod("show", voidType, null, null, false);
+			declareFrameMethod("setVisible", voidType, asList("tf"), asList(booleanType), false);
 			
 			globalScope.declareType(frameType_);
 			globalScope.declareClass(classDecl);
@@ -146,14 +151,14 @@ public final class FrameClass {
 		public RTAddCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "add", asList("name", "panel"), asList("String", "Panel"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject thePanel) {
-			assert null != thePanel;
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject nameArg = (RTObject)activationRecord.getObject("name");
 			final RTObject panelArg = (RTObject)activationRecord.getObject("panel");
 			final String name = ((RTStringObject)nameArg).stringValue();
 			final Panel panel = ((RTPanelObject)panelArg).panel();
-			thePanel.add(name, panel);
+			theFrame.add(name, panel);
 			
 			return super.nextCode();
 		}
@@ -173,6 +178,21 @@ public final class FrameClass {
 			return super.nextCode();
 		}
 	}
+	public static class RTSetSizeCode extends RTFrameCommon {
+		public RTSetSizeCode(final StaticScope enclosingMethodScope) {
+			super("Frame", "setSize", asList("width", "height"), asList("int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+			assert null != theFrame;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject widthArg = (RTObject)activationRecord.getObject("width");
+			final RTObject heightArg = (RTObject)activationRecord.getObject("height");
+			final int width = (int) ((RTIntegerObject)widthArg).intValue();
+			final int height = (int) ((RTIntegerObject)heightArg).intValue();
+			theFrame.resize(width, height);
+			return super.nextCode();
+		}
+	}
 	public static class RTShowCode extends RTFrameCommon {
 		public RTShowCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "show", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
@@ -180,6 +200,20 @@ public final class FrameClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
 			assert null != theFrame;
 			theFrame.show();
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTSetVisibleCode extends RTFrameCommon {
+		public RTSetVisibleCode(final StaticScope enclosingMethodScope) {
+			super("Frame", "setVisible", asList("tf"), asList("boolean"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+			assert null != theFrame;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject tfArg = (RTObject)activationRecord.getObject("tf");
+			final boolean tf = ((RTBooleanObject)tfArg).value();
+			theFrame.setVisible(tf);
 			
 			return super.nextCode();
 		}

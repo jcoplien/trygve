@@ -123,6 +123,7 @@ public final class MapClass {
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
+			// these arguments are backwards
 			declareMapMethod("Map", mapType_, null, null, false);
 			
 			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K), false);

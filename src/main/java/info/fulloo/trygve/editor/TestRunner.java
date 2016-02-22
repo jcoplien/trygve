@@ -162,7 +162,7 @@ public class TestRunner {
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",
 		"spellcheck.k",
-		"WINDOWSspellcheck.k",
+		"spellcheck2.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

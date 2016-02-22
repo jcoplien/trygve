@@ -447,6 +447,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		assert null != rtMathTypeDeclaration;
 		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 		rtMathTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final Type firstParamType = formalParameterList.count() > 1?
+				formalParameterList.typeOfParameterAtPosition(1):
+					null;
+		boolean firstParameterIsInteger = (null != firstParamType) &&
+				(firstParamType.pathName().equals("int.") ||
+						firstParamType.pathName().equals("Integer."));
+		
 		final List<RTCode> mathCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("Math")) {
 			ErrorLogger.error(ErrorType.Fatal, "Cannot instantiate class Math", "", "", "");
@@ -454,6 +463,30 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("random")) {
 			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("abs")) {
+			if (firstParameterIsInteger) {
+				mathCode.add(new MathClass.RTIntAbsCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else {
+				mathCode.add(new MathClass.RTRealAbsCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingDouble;
+			}
+		} else if (methodDeclaration.name().equals("max")) {
+			if (firstParameterIsInteger) {
+				mathCode.add(new MathClass.RTIntMaxCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else {
+				mathCode.add(new MathClass.RTRealMaxCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingDouble;
+			}
+		} else if (methodDeclaration.name().equals("min")) {
+			if (firstParameterIsInteger) {
+				mathCode.add(new MathClass.RTIntMinCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else {
+				mathCode.add(new MathClass.RTRealMinCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingDouble;
+			}
 		} else if (methodDeclaration.name().equals("sqrt")) {
 			mathCode.add(new MathClass.RTSqrtCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingDouble;
@@ -676,6 +709,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			if (methodDeclaration.name().equals("Frame")) {
 				readCode.add(new FrameClass.RTFrameCtorCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("setVisible")) {
+				readCode.add(new FrameClass.RTSetVisibleCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -686,6 +721,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				readCode.add(new FrameClass.RTAddCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("resize")) {
 				readCode.add(new FrameClass.RTResizeCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("setSize")) {
+				readCode.add(new FrameClass.RTSetSizeCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -711,7 +748,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		
 			if (methodDeclaration.name().equals("Color")) {
-				readCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
+				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
+				if (elementsParamType.pathName().equals("int.") || elementsParamType.pathName().equals("Integer.")) {
+					readCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
+				} else {
+					readCode.add(new ColorClass.RTColorCtor2Code(methodDeclaration.enclosedScope()));
+				}
 			} else {
 				assert false;
 			}

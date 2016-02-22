@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.awt.BorderLayout;
 import java.awt.Frame;
 import java.awt.Panel;
 import java.util.ArrayList;
@@ -106,13 +107,20 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 	
 	public void ctor1(final String name) {
 		theFrame_ = new Frame(name);
+		theFrame_.setLayout(new BorderLayout());
 	}
 	
 	public void resize(final int width, final int height) {
-		theFrame_.resize(width, height);
+		theFrame_.setSize(width, height);
+	}
+	public void setSize(final int width, final int height) {
+		theFrame_.setSize(width, height);
 	}
 	public void show() {
-		theFrame_.show();
+		setVisible(true);
+	}
+	public void setVisible(final boolean tf) {
+		theFrame_.setVisible(tf);
 	}
 	public void add(final String name, final Panel panel) {
 		theFrame_.add(name, panel);

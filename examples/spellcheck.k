@@ -1,274 +1,260 @@
-class OnlineDictionary {
-   public boolean isSpelledOK(String word) const {
-      boolean retval = false;
-      for (String aWord : words_) {
-         if (aWord == word) {
-            retval = true;
-            break
-         }
-      }
-      return retval
-   }
-   public String correctionFor(String word) {
-      double winningScore = 0.0;
-      int winningIndex = -1;
-      int dictSize = words_.size();
-      int wordLength = word.length();
-      for (int wordIndex = 0; wordIndex < dictSize; wordIndex++) {
-         String dictWord = words_.get(wordIndex);
-         int dictWordLength = dictWord.length();
-         double score = 0.0;
-         for (int column = 0; column < wordLength; column++) {
-            String c = word.substring(column, column + 1);
-            int highestColumnScore = 0;
+class Person {
+    public Person(String name) {
+        assert(
+            name.length() > 0, 
+            "Existence comes with a nameth upon thy should'rs"
+        );
 
-            // See if c appears in the current dict word. Take a
-            // single match (where the columns best align)
-            for (int dictWordColumn = 0; dictWordColumn < dictWordLength; 
-                                                               dictWordColumn++) {
-               if (dictWord.substring(dictWordColumn, dictWordColumn+1) == c) {
-                  int indexDifference = column - dictWordColumn;
-                  indexDifference = if (indexDifference < 0) -indexDifference
-                                    else indexDifference;
+        name_ = name.clone;
+        gifts_ = new List<String>();
+    }
 
-                  highestColumnScore =
-                      if (highestColumnScore < (wordLength - indexDifference))
-                           (wordLength - indexDifference)
-                      else highestColumnScore
-               }
-            }
-            score = score + highestColumnScore
-         }
+    public String name() const { return name_ }
+    public List<String> gifts() const { return gifts_ }
 
-         if (score > winningScore) {
-            winningScore = score.clone;
-            winningIndex = wordIndex.clone
-         }
-      }
-      assert (-1 != winningIndex);
-      return words_.get(winningIndex)
-   }
-   
-   public OnlineDictionary() {
-      words_ = new List<String>();
-      words_.add("the");
-      words_.add("quick");
-      words_.add("brown");
-      words_.add("fox");
-      words_.add("jumped");
-      words_.add("over");
-      words_.add("lazy");
-      words_.add("dog");
-   }
-   List<String> words_;
+    private String name_;
+    private List<String> gifts_;
 }
 
-// -------------------------------------------------------------------
+class Ordinal {
+    public Ordinal(int order) {
+        assert(order >= 1 && order <= 12, 
+            "'rdinals only supp'rt'd from one to twelve");
 
-class MutableString {
-   public MutableString(String init) {
-      string_ = init.clone
-   }
-   public int length() const { return string_.length() }
-   public String substring(int start, int end) const {
-      return string_.substring(start, end)
-   }
-   public String replaceFirstInSitu(String regex, String rep) {
-      string_ = string_.replaceFirst(regex, rep);
-      return string_
-   }
-   public String replaceAll(String replacement) {
-      string_ = replacement.clone;
-      return string_
-   }
-   private String string_
+        order_ = order.clone;
+    }
+
+    public String name() const {
+        return switch (order_) {
+            case 1:  "first"; break;
+            case 2:  "second"; break;
+            case 3:  "third"; break;
+            case 4:  "fourth"; break;
+            case 5:  "fifth"; break;
+            case 6:  "sixth"; break;
+            case 7:  "seventh"; break;
+            case 8:  "eighth"; break;
+            case 9:  "ninth"; break;
+            case 10: "tenth";  break;
+            case 11: "eleventh"; break;
+            case 12: "twelveth"; break;
+            default: "error"
+       }
+    }
+
+    private int order_;
 }
 
-// -------------------------------------------------------------------
+// Based upon 
+// https://groups.google.com/d/msg/object-composition/LKlJEHzFJSg/MYcjYMtFBQAJ
+// with some assertion help from http://lingojam.com/EnglishtoShakespearean
+context TwelveDaysOfChristmas {
+    stageprop Giver {
+        public String giftGiverName() const { return name() }
+        public void giveAGift() {
+            String gift = gifts().remove(0);
+            Receiver.receiveGift(gift);
+        }
+        public boolean hasGiftsLeft() { return gifts().size() > 0 }
+    } requires {
+        String name() const;
+        List<String> gifts() const;
+    }
 
-class Range {
-   public Range(int a, int b) {
-      start_ = a.clone;
-      end_ = b.clone
-   }
-   public int start() { return start_ }
-   public int end() { return end_ }
+    stageprop Receiver {
+        public String giftGetterName() const { return name() }
+        public void receiveGift(String gift) {
+            gifts().add(gift);
+        }
+        public String giftNumber(int number) {
+            return gifts().get(number-1);
+        }
+        public int numberOfGifts() {
+            return gifts().size();
+        }
+    } requires {
+        String name() const;
+        List<String> gifts() const;
+    }
 
-   private int start_, end_
-}
+    stageprop Singers {
+        public void singAboutGivingAGift() {
+            int currentDay = 25 + Receiver.numberOfGifts();
+            Date currentDate = new Date(2015, 12, currentDay);
+            String ordinal = Christmas.dayOfTheSeason(currentDate);
 
-// -------------------------------------------------------------------
+            Singers.sing(
+                "On the " + ordinal + " day of Christmas " +
+                Giver.giftGiverName() + " gave to " + Receiver.giftGetterName()
+            );
+            Singers.pause();
 
-context SpellCheck {
-   role Utilities {
-      public boolean isDelim(String c) const {
-         boolean retval = switch (c) {
-         case "ø": case "Ø": case "æ": case "Æ": case "å": case "Å": false; break
-         default: (c < "a" || c > "z") && (c < "A" || c > "Z")
-         }
-         return retval
-      }
-   }
+            Giver.giveAGift();
 
-   // -------------------------------------------------------------------
-
-   role [] Words {
-      public void check() {
-          Words[lastIndex-1].review()
-      }
-
-      public void replaceWith(String correction) {
-         Document.replace(start(), end(), correction)
-      }
-
-      private String text() const {
-         return Document.charsFrom(start(), end())
-      }
-      private boolean isYes(String answer) const {
-          return (answer == "y" || answer == "Y" ||
-                 answer == "Yes" || answer == "yes" ||
-                 answer == "")
-      }
-      private boolean isNo(String answer) const {
-          return (answer == "n" || answer == "N" ||
-                 answer == "No" || answer == "no")
-      }
-      private void review() {
-         reviewAWord();
-         if (index != 0) Words[index-1].review()
-      }
-      private void reviewAWord() {
-         Scanner scanner = new Scanner(System.in);
-         String word = this.text();
-         if (Utilities.isDelim(word)) return;
-         boolean isSpelledCorrectly = Dictionary.isSpelledCorrectly(word);
-         if (isSpelledCorrectly == false) {
-            String suggestedSpelling =
-                        Dictionary.suggestedSpellingOf(word)
-            System.out.print("Replace `").print(word)
-                       .print("' with `").print(suggestedSpelling)
-                       .print("'? ");
-            String theAnswer = scanner.nextLine();
-            if (isYes(theAnswer)) {
-               this.replaceWith(suggestedSpelling)
-            } else if (isNo(theAnswer)) {
-               ;
-            } else {
-               suggestedSpelling = theAnswer.clone;
-               System.out.print("Replace `").print(word)
-                         .print("' with `").print(theAnswer)
-                         .print("'? ");
-               theAnswer = scanner.nextLine();
-               if (isYes(theAnswer)) {
-                  this.replaceWith(suggestedSpelling)
-               }
+            for(int i = Receiver.numberOfGifts(); i > 0; i--) {
+                Singers.singAboutGift(Receiver.giftNumber(i));
             }
-         }
-      }
-   } requires {
-      int start() const;
-      int end() const;
-   }
+            Singers.pause();
 
-   // -------------------------------------------------------------------
+            if(Giver.hasGiftsLeft())
+                Singers.singAboutGivingAGift();
+        }
 
-   role Document {
-      public int len() const { return length() }
+        private void sing(String lyrics) {
+            System.out.print(lyrics);
+        }
+        private void pause() {
+            System.out.println();
+        }
+        private void singAboutGift(String gift) {
+            sing(gift);
 
-      public String charsFrom(int start, int end) const {
-         return substring(start, end)
-      }
+            switch(gift) {
+                // The beautiful rings deserve a longer pause
+                case "five gold rings":
+                    sing(";"); pause();
+                    break;
 
-      public void replace(int start, int end, String correction) {
-         String newDocument = substring(0, start);
-         newDocument = newDocument + correction;
-         newDocument = newDocument + substring(end, length());
-         replaceAll(newDocument)
-      }
+                case "seven swans a-swimming":
+                case "ten lords a-leaping":
+                    sing(","); pause();
+                    break;
 
-      public String text() {
-         return substring(0, length())
-      }
+                // End the dove gift (second one) with "and" to complete the sentence
+                case "two turtle doves":
+                    pause(); sing("and ");
+                    break;
 
-      public List<Range> words() {
-         List<Range> retval = new List<Range>();
-         int i = 0;
-         do {
-            String nextWordText = Document.wordStartingAt(i);
-            int len = nextWordText.length();
-            Range newWord = new Range(i, i = i + len);
-            retval.add(newWord);
-         } while (i < Document.len());
-         return retval
-      }
+                // The partridge ends the verse.
+                case "a partridge in a pear tree":
+                    sing("."); pause();
+                    break;
 
-      private String wordStartingAt(int start) {
-         String retval = "";
-         String c = charAt(start);
-         if (Utilities.isDelim(c)) {
-            retval = c.clone;
-         } else {
-            for (int i = start.clone; i < Document.len(); i++) {
-               c = Document.charAt(i);
-               if (Utilities.isDelim(c)) break;
-               retval = retval + c;
+                // Anything else, separate with a comma
+                default:
+                    sing(", ");
+                    break;
             }
-         }
-         return retval;
-      }
+        }        
+    } requires {
+        void print(String text) const;
+        void println(String text) const;
+    }
 
-      private String charAt(int i) const {
-         return substring(i, i+1)
-      }
-   } requires {
-      int length() const;
-      String substring(int start, int end) const;
-      String replaceFirst(String regex, String rep);
-      String replaceAll(String replacement)
-   }
+    stageprop Christmas {
+        public String dayOfTheSeason(Date date) {
+            int startDate = this.getDate();
+            int currentDate = date.getDate() + (if (date.getDate() < startDate) 31 else 0);
 
-   // -------------------------------------------------------------------
+            return new Ordinal(currentDate - startDate + 1).name();
+        }
+    } requires {
+        int getDate() const;
+    }
 
-   role Dictionary {
-      public boolean isSpelledCorrectly(String word) {
-         return isSpelledOK(word)
-      }
-      public String suggestedSpellingOf(String word) {
-         return correctionFor(word)
-      }
-   } requires {
-      boolean isSpelledOK(String word) const;
-      String correctionFor(String word)
-   }
+    public TwelveDaysOfChristmas(Giver giver, Receiver receiver) {
+        assert(giver != null, 
+            "Certes elusive, a gift without a giv'r");
 
-   // -------------------------------------------------------------------
+        assert(receiver != null, 
+            "'tis still thy owneth gift, with nay one to receiveth it");
 
-   public SpellCheck(String buffer, OnlineDictionary dictionary) {
-      Utilities = this;
-      MutableString mutableBuffer = new MutableString(buffer);
-      Document = mutableBuffer;
-      Words = Document.words();
-      Dictionary = dictionary
-   }
+        Giver = giver;
+        Receiver = receiver;
+        Christmas = new Date(2015, 12, 25);
+        Singers = System.out;
+    }
 
-   public void spellCheck() {
-      Words.check()
-   }
-
-   public String resultsText() {
-     return Document.text()
-   }
+    public void carol() {
+        Singers.singAboutGivingAGift();
+    }
 }
 
 {
-   OnlineDictionary dict = new OnlineDictionary();
-   String text = "teh quick brown føx jumped over the lasy dog";
-   System.out.println(text);
-   SpellCheck spellChecker = new SpellCheck(text, dict);
-   spellChecker.spellCheck();
-   System.out.println(spellChecker.resultsText())
+    Person giver = new Person("my true love");
+    Person receiver = new Person("me");
+
+        List<String> gifts = giver.gifts();
+        gifts.add("a partridge in a pear tree");
+        gifts.add("two turtle doves");
+        gifts.add("three french hens");
+        gifts.add("four calling birds");
+        gifts.add("five gold rings");
+        gifts.add("six geese a-laying");
+        gifts.add("seven swans a-swimming");
+        gifts.add("eight maids a-milking");
+        gifts.add("nine ladies dancing");
+        gifts.add("ten lords a-leaping");
+        gifts.add("eleven pipers piping");
+        gifts.add("twelve drummers drumming");
+
+    new TwelveDaysOfChristmas(giver, receiver).carol();
 }
 
 /* GOLD:
+___________________________________________________________
 
+On the first day of Christmas my true love gave to me
+a partridge in a pear tree.
+
+On the second day of Christmas my true love gave to me
+two turtle doves
+and a partridge in a pear tree.
+
+On the third day of Christmas my true love gave to me
+three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the fourth day of Christmas my true love gave to me
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the fifth day of Christmas my true love gave to me
+five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the sixth day of Christmas my true love gave to me
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the seventh day of Christmas my true love gave to me
+seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the eighth day of Christmas my true love gave to me
+eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the ninth day of Christmas my true love gave to me
+nine ladies dancing, eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the tenth day of Christmas my true love gave to me
+ten lords a-leaping,
+nine ladies dancing, eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the eleventh day of Christmas my true love gave to me
+eleven pipers piping, ten lords a-leaping,
+nine ladies dancing, eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
+
+On the twelveth day of Christmas my true love gave to me
+twelve drummers drumming, eleven pipers piping, ten lords a-leaping,
+nine ladies dancing, eight maids a-milking, seven swans a-swimming,
+six geese a-laying, five gold rings;
+four calling birds, three french hens, two turtle doves
+and a partridge in a pear tree.
 */

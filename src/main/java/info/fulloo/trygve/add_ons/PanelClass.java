@@ -93,13 +93,14 @@ public final class PanelClass {
 			classDecl.setType(panelType_);
 			typeDeclarationList_.add(classDecl);
 
+			// arguments are in reverse order
 			declarePanelMethod("Panel", null, null, null, false);
 			declarePanelMethod("setBackground", voidType, asList("color"), asList(colorType), false);
 			declarePanelMethod("setForeground", voidType, asList("color"), asList(colorType), false);
-			declarePanelMethod("drawLine", voidType, asList("fromX", "fromY", "toX", "toY"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawRect", voidType, asList("fromX", "fromY", "toX", "toY"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawEllipse", voidType, asList("centerX", "centerY", "radius"), asList(intType, intType, intType), false);
-			declarePanelMethod("drawText", voidType, asList("x", "y", "text"), asList(intType, intType, stringType), false);
+			declarePanelMethod("drawLine", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
+			declarePanelMethod("drawRect", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
+			declarePanelMethod("drawEllipse", voidType, asList("radius", "centerY", "centerX"), asList(intType, intType, intType), false);
+			declarePanelMethod("drawText", voidType, asList("text", "x", "y"), asList(stringType, intType, intType), false);
 			
 			globalScope.declareType(panelType_);
 			globalScope.declareClass(classDecl);
