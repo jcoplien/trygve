@@ -35,6 +35,7 @@ import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.FrameClass;
 import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
@@ -194,6 +195,7 @@ public class StaticScope {
 			MapClass.setup();
 			ColorClass.setup();
 			PanelClass.setup();
+			FrameClass.setup();
 		}
 	}
 	

@@ -103,7 +103,7 @@ context SpellCheck {
    role Utilities {
       public boolean isDelim(String c) const {
          boolean retval = switch (c) {
-         case "ø": case "Ø": case "æ": case "Æ": case "å": case "Å": false; break
+         case "Ã¸": case "Ã˜": case "Ã¦": case "Ã†": case "Ã¥": case "Ã…": false; break
          default: (c < "a" || c > "z") && (c < "A" || c > "Z")
          }
          return retval
@@ -262,7 +262,7 @@ context SpellCheck {
 
 {
    OnlineDictionary dict = new OnlineDictionary();
-   String text = "teh quick brown føx jumped over the lasy dog";
+   String text = "teh quick brown fÃ¸x jumped over the lasy dog";
    System.out.println(text);
    SpellCheck spellChecker = new SpellCheck(text, dict);
    spellChecker.spellCheck();
