@@ -2140,6 +2140,8 @@ public abstract class RTExpression extends RTCode {
 				newlyCreatedObject = new RTColorObject(rTType_);
 			} else if (classType_.name().equals("Panel")) {
 				newlyCreatedObject = new RTPanelObject(rTType_);
+			} else if (classType_.name().equals("Frame")) {
+				newlyCreatedObject = new RTFrameObject(rTType_);
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}

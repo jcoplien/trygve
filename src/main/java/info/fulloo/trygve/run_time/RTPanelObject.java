@@ -24,6 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.awt.Color;
+import java.awt.Panel;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -105,7 +106,7 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 		return panelType_;
 	}
 	
-	public void ctor() {
+	public void ctor1() {
 		thePanel_ = new GraphicsPanel();
 	}
 	
@@ -162,6 +163,9 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final String string = ((RTStringObject)stringArg).stringValue();
 		thePanel_.addString(x, y, string, null);
+	}
+	public Panel panel() {
+		return thePanel_;
 	}
 	
 	private       GraphicsPanel thePanel_;

@@ -67,7 +67,7 @@ public class URLGet {
        BufferedWriter writer = 
            new BufferedWriter(
                new OutputStreamWriter(
-                   new FileOutputStream("labcast.xml")
+                   new FileOutputStream("labcast.xml"), "UTF-8"
                )
            );
        writer.write(test.getSite("http://feeds.media.mit.edu/labcast?format=xml"));

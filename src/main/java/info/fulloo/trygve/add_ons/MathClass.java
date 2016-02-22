@@ -50,13 +50,19 @@ import static java.util.Arrays.asList;
 
 public final class MathClass {
 	private static void addSimpleStaticMethodDeclaration(
-			final String methodName, final Type argumentType, final Type returnType) {
+			final String methodName, final List<String> argumentNames, final List<Type> argumentTypes, final Type returnType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		final ObjectDeclaration formalParameter = null == argumentType ? null
-				: new ObjectDeclaration("x", argumentType, 0);
+		
 		final FormalParameterList formals = new FormalParameterList();
-		if (null != formalParameter) {
-			formals.addFormalParameter(formalParameter);
+		
+		if (null != argumentNames) {
+			for (int i = 0; i < argumentNames.size(); i++) {
+				final ObjectDeclaration formalParameter = 
+						new ObjectDeclaration(argumentNames.get(i), argumentTypes.get(i), 0);
+				formals.addFormalParameter(formalParameter);
+			}
+		} else {
+			;
 		}
 		
 		final StaticScope methodScope = new StaticScope(
@@ -85,8 +91,16 @@ public final class MathClass {
 			typeDeclarationList_.add(mathDecl);
 
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
-			addSimpleStaticMethodDeclaration("random", null, doubleType);
-			addSimpleStaticMethodDeclaration("sqrt", doubleType, doubleType);
+			final Type intType = globalScope.lookupTypeDeclaration("int");
+			
+			addSimpleStaticMethodDeclaration("random", null, null, doubleType);
+			addSimpleStaticMethodDeclaration("sqrt", asList("x"), asList(doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(intType), intType);
+			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(doubleType, doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(intType, intType), intType);
+			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(doubleType, doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(intType, intType), intType);
 
 			// Declare the type
 			globalScope.declareType(mathType_);
@@ -94,11 +108,13 @@ public final class MathClass {
 		}
 	}
 	public static class RTMathCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
-		public RTMathCommon(final String className, final String methodName, final String parameterName,
-				final String parameterTypeName, final StaticScope enclosingMethodScope, final Type returnType) {
+		public RTMathCommon(final String className, final String methodName,
+				final List<String> parameterNames,
+				final List<String> parameterTypeNames,
+				final StaticScope enclosingMethodScope, final Type returnType) {
 			super(methodName, RTMessage.buildArguments(className, methodName, 
-					null == parameterName? null: asList(parameterName),
-					null == parameterTypeName? null: asList(parameterTypeName),
+					parameterNames,
+					parameterTypeNames,
 					enclosingMethodScope, true), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 					true);
 		}
@@ -131,7 +147,7 @@ public final class MathClass {
 	}
 	public static class RTRandomCode extends RTMathCommon {
 		public RTRandomCode(StaticScope enclosingMethodScope) {
-			super("Math", "random", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+			super("Math", "random", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {
 			final RTDoubleObject answer = new RTDoubleObject(Math.random());
@@ -145,7 +161,7 @@ public final class MathClass {
 	}
 	public static class RTSqrtCode extends RTMathCommon {
 		public RTSqrtCode(final StaticScope enclosingMethodScope) {
-			super("Math", "sqrt", "x", "double", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+			super("Math", "sqrt", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode nextPC = null;
@@ -176,6 +192,180 @@ public final class MathClass {
 			
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", answer);
+			
+			return nextPC;
+		}
+	}
+	public static class RTRealMaxCode extends RTMathCommon {
+		public RTRealMaxCode(final StaticScope enclosingMethodScope) {
+			super("Math", "max", asList("x", "y"), asList("double", "double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			final RTObject rawYElement = activationRecord.getObject("y");
+			
+			RTDoubleObject result = null;
+			if (rawXElement instanceof RTDoubleObject) {
+				double xArgument = 0.0, yArgument = 0.0;
+				xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+				yArgument = ((RTDoubleObject)rawYElement).doubleValue();
+				final double rawResult = Math.max(xArgument, yArgument);
+				result = new RTDoubleObject(rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTIntMaxCode extends RTMathCommon {
+		public RTIntMaxCode(final StaticScope enclosingMethodScope) {
+			super("Math", "max", asList("x", "y"), asList("int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			final RTObject rawYElement = activationRecord.getObject("y");
+			
+			RTIntegerObject result = null;
+			if (rawXElement instanceof RTIntegerObject) {
+				int xArgument = 0, yArgument = 0;
+				xArgument = (int)((RTIntegerObject)rawXElement).intValue();
+				yArgument = (int)((RTIntegerObject)rawYElement).intValue();
+				final int rawResult = Math.max(xArgument, yArgument);
+				result = new RTIntegerObject((long)rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTRealMinCode extends RTMathCommon {
+		public RTRealMinCode(final StaticScope enclosingMethodScope) {
+			super("Math", "min", asList("x", "y"), asList("double", "double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			final RTObject rawYElement = activationRecord.getObject("y");
+			
+			RTDoubleObject result = null;
+			if (rawXElement instanceof RTDoubleObject) {
+				double xArgument = 0.0, yArgument = 0.0;
+				xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+				yArgument = ((RTDoubleObject)rawYElement).doubleValue();
+				final double rawResult = Math.min(xArgument, yArgument);
+				result = new RTDoubleObject(rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTIntMinCode extends RTMathCommon {
+		public RTIntMinCode(final StaticScope enclosingMethodScope) {
+			super("Math", "min", asList("x", "y"), asList("int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			final RTObject rawYElement = activationRecord.getObject("y");
+			
+			RTIntegerObject result = null;
+			if (rawXElement instanceof RTIntegerObject) {
+				int xArgument = 0, yArgument = 0;
+				xArgument = (int)((RTIntegerObject)rawXElement).intValue();
+				yArgument = (int)((RTIntegerObject)rawYElement).intValue();
+				final int rawResult = Math.min(xArgument, yArgument);
+				result = new RTIntegerObject((long)rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTRealAbsCode extends RTMathCommon {
+		public RTRealAbsCode(final StaticScope enclosingMethodScope) {
+			super("Math", "abs", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			
+			RTObject result = null;
+			if (rawXElement instanceof RTIntegerObject) {
+				int xArgument = (int)((RTIntegerObject)rawXElement).intValue();
+				final int rawResult = Math.abs(xArgument);
+				result = new RTIntegerObject(rawResult);
+			} else if (rawXElement instanceof RTDoubleObject) {
+				double xArgument = 0.0;
+				xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+				final double rawResult = Math.abs(xArgument);
+				result = new RTDoubleObject(rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTIntAbsCode extends RTMathCommon {
+		public RTIntAbsCode(final StaticScope enclosingMethodScope) {
+			super("Math", "abs", asList("x"), asList("int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			
+			RTIntegerObject result = null;
+			if (rawXElement instanceof RTIntegerObject) {
+				int xArgument = 0;
+				xArgument = (int)((RTIntegerObject)rawXElement).intValue();
+				final int rawResult = Math.abs(xArgument);
+				result = new RTIntegerObject((long)rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
 			
 			return nextPC;
 		}

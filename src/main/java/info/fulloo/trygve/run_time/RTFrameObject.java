@@ -23,8 +23,14 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+<<<<<<< HEAD
 import java.awt.*;
 import java.awt.Rectangle;
+=======
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.Panel;
+>>>>>>> origin/master
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,7 +39,10 @@ import java.util.Map;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+<<<<<<< HEAD
 import info.fulloo.trygve.graphics.GraphicsPanel;
+=======
+>>>>>>> origin/master
 
 public class RTFrameObject extends RTObjectCommon implements RTObject {
 	public RTFrameObject(final RTType frameType) {
@@ -105,6 +114,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		return frameType_;
 	}
 	
+<<<<<<< HEAD
 	public void ctor() {
 		theFrame_ = new Frame();
 	}
@@ -135,6 +145,28 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		theFrame_.show();
 	}
 	
+=======
+	public void ctor1(final String name) {
+		theFrame_ = new Frame(name);
+		theFrame_.setLayout(new BorderLayout());
+	}
+	
+	public void resize(final int width, final int height) {
+		theFrame_.setSize(width, height);
+	}
+	public void setSize(final int width, final int height) {
+		theFrame_.setSize(width, height);
+	}
+	public void show() {
+		setVisible(true);
+	}
+	public void setVisible(final boolean tf) {
+		theFrame_.setVisible(tf);
+	}
+	public void add(final String name, final Panel panel) {
+		theFrame_.add(name, panel);
+	}
+>>>>>>> origin/master
 	
 	private       Frame theFrame_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
