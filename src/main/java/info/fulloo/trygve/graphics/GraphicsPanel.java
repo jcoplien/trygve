@@ -1,12 +1,14 @@
 package info.fulloo.trygve.graphics;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.util.Vector;
 
 // From DrawText.java
 
-public class GraphicsPanel extends Panel {
+public class GraphicsPanel extends Panel implements ActionListener {
 	private static class StringRecord {
 		public StringRecord(final int x, final int y, final String string, final Color color) {
 			x_ = x;
@@ -28,19 +30,31 @@ public class GraphicsPanel extends Panel {
 		private Color color_;
 	}
 	
-	@Override public boolean handleEvent(Event e) {
+	@Override public void actionPerformed(final ActionEvent event) {
+		assert false;
+	}
+	
+	@Override public boolean handleEvent(final Event e) {
 		switch (e.id) {
 		  case Event.MOUSE_DOWN:
 		    return true;
 		  case Event.MOUSE_UP:
 		    repaint();
 		    return true;
+		  case Event.MOUSE_MOVE:
+			return true;
 		  case Event.MOUSE_DRAG:
 		    repaint();
 		    return true;
 		  case Event.WINDOW_DESTROY:
 		    System.exit(0);
 		    return true;
+		  case Event.MOUSE_EXIT:
+		  	assert false;
+		  	return true;
+		  case Event.MOUSE_ENTER:
+			assert false;
+			return true;
 		  default:
 		    return false;
 		}

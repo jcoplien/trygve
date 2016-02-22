@@ -22,15 +22,10 @@ package info.fulloo.trygve.run_time;
  *  Jim Coplien at jcoplien@gmail.com
  * 
  */
-
-<<<<<<< HEAD
-import java.awt.*;
-import java.awt.Rectangle;
-=======
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Panel;
->>>>>>> origin/master
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,10 +34,6 @@ import java.util.Map;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
-<<<<<<< HEAD
-import info.fulloo.trygve.graphics.GraphicsPanel;
-=======
->>>>>>> origin/master
 
 public class RTFrameObject extends RTObjectCommon implements RTObject {
 	public RTFrameObject(final RTType frameType) {
@@ -114,11 +105,6 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		return frameType_;
 	}
 	
-<<<<<<< HEAD
-	public void ctor() {
-		theFrame_ = new Frame();
-	}
-	
 	public void setBackground(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
@@ -134,18 +120,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		final String name = ((RTStringObject)nameArg).stringValue();
 		theFrame_ = new Frame(name);
 	}
-	public void resize(final RTObject widthArg, final RTObject heightArg) {
-		assert widthArg instanceof RTIntegerObject;
-		assert heightArg instanceof RTIntegerObject;
-		final int width = (int)((RTIntegerObject)widthArg).intValue();
-		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		theFrame_.resize(width, height);
-	}
-	public void show() {
-		theFrame_.show();
-	}
 	
-=======
 	public void ctor1(final String name) {
 		theFrame_ = new Frame(name);
 		theFrame_.setLayout(new BorderLayout());
@@ -166,7 +141,6 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 	public void add(final String name, final Panel panel) {
 		theFrame_.add(name, panel);
 	}
->>>>>>> origin/master
 	
 	private       Frame theFrame_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
