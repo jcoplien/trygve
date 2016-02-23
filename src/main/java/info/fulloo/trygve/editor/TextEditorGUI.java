@@ -47,11 +47,11 @@ import javax.swing.SwingWorker;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/split1.k";
+	private final static String defaultFile = "tests/panel1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.11";
+    final String TrygveVersion = "1.5.12";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -722,6 +722,7 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 
 public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
 	parseButton.setEnabled(true);
+	testButton.setEnabled(true);
 	runButton.setForeground(Color.BLACK);
 	interruptButton.setEnabled(false);
 	worker_.cancel(true);

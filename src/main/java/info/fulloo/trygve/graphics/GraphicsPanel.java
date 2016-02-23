@@ -10,6 +10,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
+import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
@@ -125,15 +126,26 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		// Just do a procedure call
 		final RTCode halt = null;
 		final ClassType eventType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Event");
-		RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
+		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
 		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt");
 		final RTEventObject event = new RTEventObject(e, rTType);
-		RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
-		RunTimeEnvironment.runTimeEnvironment_.pushStack(rTPanel_);	// this
+		
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(event);
-		RTCode pc = null;
+		RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
+		RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+		
+		final RTDynamicScope activationRecord = new RTDynamicScope(
+				method.name(),
+				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+		activationRecord.addObjectDeclaration("event", rTType);
+		activationRecord.addObjectDeclaration("this", null);
+		activationRecord.setObject("event", event);
+		activationRecord.setObject("this", rTPanel_);
+		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+		
+		RTCode pc = method;
 		do {
-			pc = RunTimeEnvironment.runTimeEnvironment_.runner(method);
+			pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 		} while (null != pc);
 	}
 	
@@ -170,7 +182,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	@Override public boolean handleEvent(final Event e) {
 		switch (e.id) {
 		  case Event.MOUSE_DOWN:
-			assert false;
 		    return true;
 		  case Event.MOUSE_UP:
 			this.handleEventProgrammatically(e);
