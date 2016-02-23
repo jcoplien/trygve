@@ -47,11 +47,11 @@ import javax.swing.SwingWorker;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/panel1.k";
+	private final static String defaultFile = "tests/split1.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.10";
+    final String TrygveVersion = "1.5.11";
     
     public InputStream getIn() {
     	return console_.getIn();

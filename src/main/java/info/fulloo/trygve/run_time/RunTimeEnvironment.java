@@ -344,7 +344,7 @@ public class RunTimeEnvironment {
 						lineNumber = Integer.toString(iLineNumber) + ".";
 					}
 				}
-				
+
 				stream.format("> %4s  %s", lineNumber, code.getClass().getSimpleName());
 				
 				if (code instanceof RTMessage) {

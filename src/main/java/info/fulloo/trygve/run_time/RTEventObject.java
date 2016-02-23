@@ -22,10 +22,8 @@ package info.fulloo.trygve.run_time;
  *  Jim Coplien at jcoplien@gmail.com
  * 
  */
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Frame;
-import java.awt.Panel;
+
+import java.awt.Event;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,11 +33,11 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
-public class RTFrameObject extends RTObjectCommon implements RTObject {
-	public RTFrameObject(final RTType frameType) {
-		super(frameType);
-		frameType_ = frameType;	// e.g. an instance of RTClass
-		theFrame_ = null;
+public class RTEventObject extends RTObjectCommon implements RTObject {
+	public RTEventObject(final RTType eventType) {
+		super(eventType);
+		eventType_ = eventType;	// e.g. an instance of RTClass
+		theEvent_ = null;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
@@ -48,7 +46,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		return 0;
 	}
 	@Override public int hashCode() {
-		return theFrame_.hashCode();
+		return theEvent_.hashCode();
 	}
 	@Override public boolean equals(final Object other) {
 		assert false;
@@ -91,54 +89,26 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		assert false;
 		return null;
 	}
-	private RTFrameObject(final Frame theFrame, final RTType frameType) {
-		super(frameType);
-		theFrame_ = theFrame;
-		frameType_ = frameType;
+	public RTEventObject(final Event theEvent, final RTType eventType) {
+		super(eventType);
+		theEvent_ = theEvent;
+		eventType_ = eventType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	@Override public RTObject dup() {
-		final RTFrameObject retval = new RTFrameObject(theFrame_, frameType_);
+		final RTEventObject retval = new RTEventObject(theEvent_, eventType_);
 		return retval;
 	}
 	@Override public RTType rTType() {
-		return frameType_;
+		return eventType_;
+	}
+
+	public void ctor1() {
+		theEvent_ = new Event(null, 0, null);
 	}
 	
-	public void setBackground(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
-		theFrame_.setBackground(color);
-	}
-	public void setForeground(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
-		theFrame_.setBackground(color);
-	}
 	
-	public void ctor1(final String name) {
-		theFrame_ = new Frame(name);
-		theFrame_.setLayout(new BorderLayout());
-	}
-	
-	public void resize(final int width, final int height) {
-		theFrame_.setSize(width, height);
-	}
-	public void setSize(final int width, final int height) {
-		theFrame_.setSize(width, height);
-	}
-	public void show() {
-		setVisible(true);
-	}
-	public void setVisible(final boolean tf) {
-		theFrame_.setVisible(tf);
-	}
-	public void add(final String name, final Panel panel) {
-		assert true;
-		theFrame_.add(name, panel);
-	}
-	
-	private       Frame theFrame_;
+	private       Event theEvent_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
-	private final RTType frameType_;
+	private final RTType eventType_;
 }

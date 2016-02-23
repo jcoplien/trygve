@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.PatternSyntaxException;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
@@ -930,7 +931,13 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				assert regexStringObject instanceof RTStringObject;
 				final RTStringObject regexString = (RTStringObject)regexStringObject;
 				final String rxstring = regexString.stringValue();
-				final String [] sRetval = thisString.split(rxstring);
+				String [] sRetval = null;
+				try {
+					sRetval = thisString.split(rxstring);
+				} catch (final PatternSyntaxException e) {
+					ErrorLogger.error(ErrorType.Runtime, 0, "Bad pattern to regex: `", rxstring, "'.", "");
+					return null;
+				}
 				
 				final RTType type = new RTArrayType(stringType_, arrayType_);
 				assert null != type;

@@ -23,9 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.awt.Color;
 import java.awt.Panel;
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -87,7 +85,6 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 		}
 	}
 	
-	
 	public RTObject performUnaryOpOnObject(final RTObject theIndex, final String operation, final PreOrPost preOrPost) {
 		assert false;
 		return null;
@@ -97,6 +94,7 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 		thePanel_ = thePanel;
 		panelType_ = panelType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		this.setObject("panelObject", thePanel_);
 	}
 	@Override public RTObject dup() {
 		final RTPanelObject retval = new RTPanelObject(thePanel_, panelType_);
@@ -107,63 +105,11 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 	}
 	
 	public void ctor1() {
-		thePanel_ = new GraphicsPanel();
+		// thePanel_ = new GraphicsPanel(this);
+		// this.setObject("panelObject", thePanel_);
 	}
 	
-	public void setBackground(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
-		thePanel_.setBackground(color);
-	}
-	public void setForeground(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
-		thePanel_.setBackground(color);
-	}
-	public void drawLine(final RTObject fromXArg, final RTObject fromYArg, final RTObject toXArg, final RTObject toYArg) {
-		assert fromXArg instanceof RTIntegerObject;
-		assert fromYArg instanceof RTIntegerObject;
-		assert toXArg instanceof RTIntegerObject;
-		assert toYArg instanceof RTIntegerObject;
-		final int fromX = (int)((RTIntegerObject)fromXArg).intValue();
-		final int fromY = (int)((RTIntegerObject)fromYArg).intValue();
-		final int toX = (int)((RTIntegerObject)toXArg).intValue();
-		final int toY = (int)((RTIntegerObject)toYArg).intValue();
-		final Rectangle newRect = new Rectangle(fromX, fromY, Math.abs(toX-fromX), Math.abs(toY-fromY));
-		thePanel_.addLine(newRect, null);
-	}
-	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject heightArg, final RTObject widthArg) {
-		assert fromXArg instanceof RTIntegerObject;
-		assert fromYArg instanceof RTIntegerObject;
-		assert widthArg instanceof RTIntegerObject;
-		assert heightArg instanceof RTIntegerObject;
-		final int fromX = (int)((RTIntegerObject)fromXArg).intValue();
-		final int fromY = (int)((RTIntegerObject)fromYArg).intValue();
-		final int width = (int)((RTIntegerObject)widthArg).intValue();
-		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		final Rectangle newRect = new Rectangle(fromX, fromY, width, height);
-		thePanel_.addRectangle(newRect, null);
-	}
-	public void drawEllipse(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
-		assert xArg instanceof RTIntegerObject;
-		assert yArg instanceof RTIntegerObject;
-		assert widthArg instanceof RTIntegerObject;
-		assert heightArg instanceof RTIntegerObject;
-		final int x = (int)((RTIntegerObject)xArg).intValue();
-		final int y = (int)((RTIntegerObject)yArg).intValue();
-		final int width = (int)((RTIntegerObject)widthArg).intValue();
-		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		thePanel_.addEllipse(x, y, width, height, null);
-	}
-	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
-		assert xArg instanceof RTIntegerObject;
-		assert yArg instanceof RTIntegerObject;
-		assert stringArg instanceof RTStringObject;
-		final int x = (int)((RTIntegerObject)xArg).intValue();
-		final int y = (int)((RTIntegerObject)yArg).intValue();
-		final String string = ((RTStringObject)stringArg).stringValue();
-		thePanel_.addString(x, y, string, null);
-	}
+	
 	public Panel panel() {
 		return thePanel_;
 	}

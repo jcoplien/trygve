@@ -242,4 +242,24 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return stringBuffer.toString();
 	}
+	public String selflessGetText() {
+		final StringBuffer stringBuffer = new StringBuffer();
+		final int numberOfParameters = this.count();
+		stringBuffer.append("(");
+		if (numberOfParameters == 1) {
+			stringBuffer.append(")");
+		} else for (int i = 1; i < numberOfParameters; i++) {
+			final Type argumentType = this.typeOfParameterAtPosition(i);
+			final ObjectDeclaration argument = this.parameterAtPosition(i);
+			stringBuffer.append(argumentType.name());
+			stringBuffer.append(" ");
+			stringBuffer.append(argument.name());
+			if (i == numberOfParameters - 1) {
+				stringBuffer.append(")");
+			} else {
+				stringBuffer.append(", ");
+			}
+		}
+		return stringBuffer.toString();
+	}
 }

@@ -82,7 +82,7 @@ public class ReturnStatementAudit {
 			if (null == returnType_) {
 				if (null != retExpr.returnExpression()) {
 					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
-							null == retExpr.type()? "unknwon": retExpr.type().name(), " when no return value was expected.", "");
+							null == retExpr.type()? "unknown": retExpr.type().name(), " when no return value was expected.", "");
 				}
 			} else if (null == retExpr.type()) {
 				pass_.errorHook5p2(ErrorType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",

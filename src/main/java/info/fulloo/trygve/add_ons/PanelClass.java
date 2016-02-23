@@ -15,11 +15,16 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTEventObject;
+import info.fulloo.trygve.run_time.RTObjectCommon;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RTPanelObject;
 import info.fulloo.trygve.run_time.RTObject;
+import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
@@ -101,6 +106,14 @@ public final class PanelClass {
 			declarePanelMethod("drawRect", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawEllipse", voidType, asList("radius", "centerY", "centerX"), asList(intType, intType, intType), false);
 			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
+			
+			// add the pointer to the GraphicsPanel object
+			// that contains all the goodies
+			final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+			final ObjectDeclaration objectDecl = new ObjectDeclaration("panelObject", objectType, 0);
+			newScope.declareObject(objectDecl);
+			
+			// standard wrap-up
 			globalScope.declareType(panelType_);
 			globalScope.declareClass(classDecl);
 		}
@@ -124,8 +137,37 @@ public final class PanelClass {
 			// activation record
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject self = (RTObject)activationRecord.getObject("this");
-			assert self instanceof RTPanelObject;
-			final RTCode retval = this.runDetails(activationRecord, (RTPanelObject)self);
+			if (self instanceof RTPanelObject) {
+				;	// O.K.
+			} else if (self instanceof RTObjectCommon){
+				final RTType taype = ((RTObjectCommon)self).rTType();
+				if (taype instanceof RTClass) {
+					final RTClass theClass = (RTClass)taype;
+					ClassDeclaration baseClass = theClass.baseClassDeclaration();
+					do {
+						if (baseClass.type().pathName().equals("Panel.")) {
+							break;	// found it
+						} else {
+							baseClass = baseClass.baseClassDeclaration();
+						}
+					} while (null != baseClass);
+					
+					if (null != baseClass && baseClass.type().pathName().equals("Panel.")) {
+						;	// O.K.
+					} else {
+						assert false;	// got a non-panel object — what's it doing here?
+					}
+				}
+			}
+			
+			// Get the real driver
+			final RTObject rawGraphicsPanel = self.getObject("panelObject");
+			
+			// Can be null on a ctor call, because it hasn't yet been set up
+			assert rawGraphicsPanel instanceof RTNullObject || rawGraphicsPanel instanceof GraphicsPanel;
+			final GraphicsPanel graphicsPanel = rawGraphicsPanel instanceof GraphicsPanel? (GraphicsPanel)rawGraphicsPanel: null;
+			
+			final RTCode retval = this.runDetails(activationRecord, graphicsPanel);
 			
 			// All dogs go to heaven, and all return statements that
 			// have something to return do it. We deal with consumption
@@ -134,7 +176,7 @@ public final class PanelClass {
 			
 			return retval;
 		}
-		public RTCode runDetails(final RTObject scope, final RTPanelObject thePanel) {
+		public RTCode runDetails(final RTObject scope, final GraphicsPanel thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
 			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
 			return null;	// halt the machine
@@ -144,7 +186,7 @@ public final class PanelClass {
 		public RTSetBackgroundCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "setBackground", asList("color"), asList("Color"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject color = (RTObject)activationRecord.getObject("color");
@@ -157,7 +199,7 @@ public final class PanelClass {
 		public RTSetForegroundCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "setForeground", asList("color"), asList("Color"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject color = (RTObject)activationRecord.getObject("color");
@@ -169,7 +211,7 @@ public final class PanelClass {
 		public RTDrawLineCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "drawLine", asList("fromX", "fromY", "toX", "toY"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject fromX = (RTObject)activationRecord.getObject("fromX");
@@ -185,7 +227,7 @@ public final class PanelClass {
 		public RTDrawRectCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "drawRect", asList("fromX", "fromY", "toX", "toY"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject fromX = (RTObject)activationRecord.getObject("fromX");
@@ -201,7 +243,7 @@ public final class PanelClass {
 		public RTDrawEllipseCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "drawEllipse", asList("x", "y", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject x = (RTObject)activationRecord.getObject("x");
@@ -217,7 +259,7 @@ public final class PanelClass {
 		public RTDrawStringCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject x = (RTObject)activationRecord.getObject("x");
@@ -232,10 +274,11 @@ public final class PanelClass {
 		public RTPanelCtorCode(final StaticScope enclosingMethodScope) {
 			super("Panel", "Panel", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTPanelObject thePanel) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTPanelObject thePanelObject = (RTPanelObject)activationRecord.getObject("this");
-			thePanelObject.ctor1();
+			final RTObjectCommon thePanelObject = (RTObjectCommon)activationRecord.getObject("this");
+			final GraphicsPanel theGraphicsPanel = new GraphicsPanel(thePanelObject);
+			thePanelObject.setObject("panelObject", theGraphicsPanel);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
 			return super.nextCode();
 		}
@@ -244,6 +287,117 @@ public final class PanelClass {
 
 	public static List<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;
+	}
+	
+	public static class EventClass {
+		private static void declareEventMethod(final String methodSelector,
+				final Type returnType,
+				final List<String> paramNames,
+				final List<Type> paramTypes,
+				final boolean isConst) {
+			final AccessQualifier Public = AccessQualifier.PublicAccess;
+			
+			final Iterator<Type> typeIterator = null == paramTypes? null: paramTypes.iterator();
+			final FormalParameterList formals = new FormalParameterList();
+			if (null != paramNames) {
+				for (final String paramName : paramNames) {
+					if (null != paramName) {
+						final Type paramType = typeIterator.next();
+						final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+						formals.addFormalParameter(formalParameter);
+					}
+				}
+			}
+			final ObjectDeclaration self = new ObjectDeclaration("this", eventType_, 0);
+			formals.addFormalParameter(self);
+			final StaticScope methodScope = new StaticScope(eventType_.enclosedScope());
+			final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+			methodDecl.addParameterList(formals);
+			methodDecl.setReturnType(returnType);
+			methodDecl.setHasConstModifier(isConst);
+			eventType_.enclosedScope().declareMethod(methodDecl);
+		}
+		public static void setup() {
+			final StaticScope globalScope = StaticScope.globalScope();
+			if (null == globalScope.lookupTypeDeclaration("Event")) {
+				typeDeclarationList_ = new ArrayList<TypeDeclaration>();
+				final Type panelType = globalScope.lookupTypeDeclaration("Panel");
+				assert null != panelType;
+				
+				final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
+				assert null != objectBaseClass;
+
+				final StaticScope newScope = new StaticScope(globalScope);
+				final ClassDeclaration classDecl = new ClassDeclaration("Event", newScope, objectBaseClass, 0);
+				newScope.setDeclaration(classDecl);
+				eventType_ = new ClassType("Event", newScope, null);
+				classDecl.setType(eventType_);
+				typeDeclarationList_.add(classDecl);
+
+				// arguments are in reverse order
+				declareEventMethod("Event", null, null, null, false);
+				
+				globalScope.declareType(eventType_);
+				globalScope.declareClass(classDecl);
+			}
+		}
+		
+		public static class RTEventCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
+			public RTEventCommon(final String className, final String methodName, final List<String> parameterNames,
+					final List<String> parameterTypeNames,
+					final StaticScope enclosingMethodScope, final Type returnType) {
+				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+			}
+			@Override public RTCode run() {
+				// Don't need to push or pop anything. The return code stays
+				// until the RTReturn statement processes it, and everything
+				// else has been popped into the activation record by
+				// RTMessage
+				// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				// 		Yes, but...: assert returnCode instanceof RTCode;
+				
+				// Parameters have all been packaged into the
+				// activation record
+				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTObject self = (RTObject)activationRecord.getObject("this");
+				assert self instanceof RTEventObject;
+				final RTCode retval = this.runDetails(activationRecord, (RTEventObject)self);
+				
+				// All dogs go to heaven, and all return statements that
+				// have something to return do it. We deal with consumption
+				// in the message. This function's return statement will be
+				// set for a consumed result in higher-level logic.
+				
+				return retval;
+			}
+			public RTCode runDetails(final RTObject scope, final RTEventObject theEvent) {
+				// Effectively a pure virtual method, but Java screws us again...
+				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				return null;	// halt the machine
+			}
+		}
+
+		
+		public static class RTEventCtorCode extends RTEventCommon {
+			public RTEventCtorCode(final StaticScope enclosingMethodScope) {
+				super("Event", "Event", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTEventObject theFrame) {
+				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTEventObject theEventObject = (RTEventObject)activationRecord.getObject("this");
+				theEventObject.ctor1();
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(theEventObject);
+				return super.nextCode();
+			}
+		}
+		
+
+		public static List<TypeDeclaration> typeDeclarationList() {
+			return typeDeclarationList_;
+		}
+		
+		private static List<TypeDeclaration> typeDeclarationList_;
+		private static ClassType eventType_;
 	}
 	
 	private static List<TypeDeclaration> typeDeclarationList_;

@@ -1130,6 +1130,32 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
+	
+	private Type customStringToType(final String returnTypeName) {
+		// This mainly turns both String and String[] into
+		// reasonable types
+		Type returnType = null;
+		final int lastRightBracket = returnTypeName.trim().lastIndexOf(']');
+		if (lastRightBracket == returnTypeName.length()-1) {
+			// It is an array. Get the base type
+			final int lastLeftBracket = returnTypeName.lastIndexOf('[');
+			if (lastLeftBracket != -1) {
+				final String baseType = returnTypeName.substring(0, lastLeftBracket).trim();
+				returnType = currentScope_.lookupTypeDeclarationRecursive(baseType);
+				if (null != returnType) {
+					returnType = new ArrayType(baseType + "_$array", returnType);
+				}
+			} else {
+				// This probably never works, and is probably some kind
+				// of syntax error. Hope it pops up somewhere
+				returnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
+			}
+		} else {
+			returnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
+			// null is O.K. as a return type!
+		}
+		return returnType;
+	}
 
 	@Override public void enterMethod_signature(KantParser.Method_signatureContext ctx)
 	{
@@ -1147,9 +1173,7 @@ public class Pass1Listener extends Pass0Listener {
 		final KantParser.Return_typeContext returnTypeContext = ctx.return_type();
 		if (null != returnTypeContext) {
 			returnTypeName = returnTypeContext.getText();
-			returnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
-		
-			// null is O.K. as a return type!
+			returnType = customStringToType(returnTypeName);
 		}
 		
 		final int lineNumber = ctx.getStart().getLine();
@@ -1174,7 +1198,8 @@ public class Pass1Listener extends Pass0Listener {
 		if (null != returnTypeContext) {
 			final String returnTypeName = returnTypeContext.getText();
 			
-			final Type updatedReturnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
+			// final Type updatedReturnType = currentScope_.lookupTypeDeclarationRecursive(returnTypeName);
+			final Type updatedReturnType = customStringToType(returnTypeName);
 			final MethodSignature currentMethodSignature = parsingData_.currentMethodSignature();
 			assert null != currentMethodSignature;
 			currentMethodSignature.setReturnType(updatedReturnType);
@@ -1306,6 +1331,7 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void exitReturn_type(KantParser.Return_typeContext ctx)
 	{
 		// return_type
+        //		: type_name '[' ']'
         //		: type_name
 		//		| /* null */
 
@@ -4452,13 +4478,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		return retval;
 	}
-	/*
-	protected MethodDeclaration processReturnTypeLookupMethodDeclarationRecursiveIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
-		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature
-		// and checks the signature
-		return classDecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, parameterList, true);
-	}
-	*/
+
 	protected Type processReturnType(final Token ctxGetStart, final Expression object, final Type objectType, final Message message) {
 		final String objectTypeName = objectType.name();
 		final ClassDeclaration classDecl = currentScope_.lookupClassDeclarationRecursive(objectTypeName);

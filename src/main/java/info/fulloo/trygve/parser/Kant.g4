@@ -191,7 +191,8 @@ type_and_expr_and_decl_list
  		;
 
 return_type
-        : type_name
+        : type_name '[' ']'
+        | type_name
         | /* null */
         ;
 

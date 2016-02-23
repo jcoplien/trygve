@@ -196,6 +196,7 @@ public class StaticScope {
 			ColorClass.setup();
 			PanelClass.setup();
 			FrameClass.setup();
+			PanelClass.EventClass.setup();
 		}
 	}
 	

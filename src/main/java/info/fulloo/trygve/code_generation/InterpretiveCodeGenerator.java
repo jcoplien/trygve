@@ -734,6 +734,32 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 		
+		// Yes, it's always "none."
+		addReturn(methodDeclaration, RetvalTypes.none, readCode);
+		
+		rtMethod.addCode(readCode);
+	}
+	private void processEventMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> readCode = new ArrayList<RTCode>();
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		
+		if (formalParameterList.count() == 1) {
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			
+			if (methodDeclaration.name().equals("Event")) {
+				readCode.add(new PanelClass.EventClass.RTEventCtorCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
 		addReturn(methodDeclaration, RetvalTypes.none, readCode);
 		
 		rtMethod.addCode(readCode);
@@ -1320,6 +1346,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("Frame")) {
 				processFrameMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Event")) {
+				processEventMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);

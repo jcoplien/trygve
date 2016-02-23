@@ -1,6 +1,5 @@
 package info.fulloo.trygve.add_ons;
 
-import java.awt.Panel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,6 +15,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTClass;
@@ -23,7 +23,6 @@ import info.fulloo.trygve.run_time.RTFrameObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
-import info.fulloo.trygve.run_time.RTPanelObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -151,14 +150,14 @@ public final class FrameClass {
 		public RTAddCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "add", asList("name", "panel"), asList("String", "Panel"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject thePanel) {
-			assert null != thePanel;
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject nameArg = (RTObject)activationRecord.getObject("name");
 			final RTObject panelArg = (RTObject)activationRecord.getObject("panel");
 			final String name = ((RTStringObject)nameArg).stringValue();
-			final Panel panel = ((RTPanelObject)panelArg).panel();
-			thePanel.add(name, panel);
+			final GraphicsPanel panel = (GraphicsPanel)panelArg.getObject("panelObject");
+			theFrame.add(name, panel);
 			
 			return super.nextCode();
 		}

@@ -560,7 +560,9 @@ public abstract class Type implements ExpressionStackAPI
 					final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`", rolesSignature.name(), "' needed by Role `", name(),
+						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+								rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+								"' needed by Role `", name(),
 								"' does not appear in interface of `", type.name() + "'.");
 					}
 				}
