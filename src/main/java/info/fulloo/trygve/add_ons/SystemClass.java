@@ -250,9 +250,9 @@ public final class SystemClass {
 			final RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 			
 			if (rawToPrint instanceof RTNullExpression) {
-				finalStream.print("<null>");
+				finalStream.println("<null>");
 			} else if (rawToPrint instanceof RTNullObject) {
-				finalStream.print("<null>");
+				finalStream.println("<null>");
 			} else {
 				assert rawToPrint instanceof RTStringObject;
 				final RTStringObject toPrint = (RTStringObject) rawToPrint;

@@ -157,7 +157,14 @@ public final class FrameClass {
 			final RTObject panelArg = (RTObject)activationRecord.getObject("panel");
 			final String name = ((RTStringObject)nameArg).stringValue();
 			final GraphicsPanel panel = (GraphicsPanel)panelArg.getObject("panelObject");
-			theFrame.add(name, panel);
+			
+			try {
+				theFrame.add(name, panel);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.add.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -173,7 +180,15 @@ public final class FrameClass {
 			final RTObject heightArg = (RTObject)activationRecord.getObject("height");
 			final int width = (int) ((RTIntegerObject)widthArg).intValue();
 			final int height = (int) ((RTIntegerObject)heightArg).intValue();
-			theFrame.resize(width, height);
+			
+			try {
+				theFrame.resize(width, height);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.resize.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
 			return super.nextCode();
 		}
 	}
@@ -188,7 +203,15 @@ public final class FrameClass {
 			final RTObject heightArg = (RTObject)activationRecord.getObject("height");
 			final int width = (int) ((RTIntegerObject)widthArg).intValue();
 			final int height = (int) ((RTIntegerObject)heightArg).intValue();
-			theFrame.resize(width, height);
+
+			try {
+				theFrame.resize(width, height);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.setSize.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
 			return super.nextCode();
 		}
 	}
@@ -212,7 +235,14 @@ public final class FrameClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject tfArg = (RTObject)activationRecord.getObject("tf");
 			final boolean tf = ((RTBooleanObject)tfArg).value();
-			theFrame.setVisible(tf);
+
+			try {
+				theFrame.setVisible(tf);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.setVisible.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -226,7 +256,15 @@ public final class FrameClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTStringObject name = (RTStringObject)activationRecord.getObject("name");
 			final RTFrameObject theFrameObject = (RTFrameObject)activationRecord.getObject("this");
-			theFrameObject.ctor1(name.stringValue());
+
+			try {
+				theFrameObject.ctor1(name.stringValue());
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame constructor.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theFrameObject);
 			return super.nextCode();
 		}

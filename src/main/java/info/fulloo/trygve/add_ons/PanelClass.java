@@ -22,6 +22,7 @@ import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RTObjectCommon;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.run_time.RTPanelObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTType;
@@ -190,7 +191,14 @@ public final class PanelClass {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject color = (RTObject)activationRecord.getObject("color");
-			thePanel.setBackground(color);
+			
+			try {
+				thePanel.setBackground(color);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.setBackground.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -203,7 +211,15 @@ public final class PanelClass {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject color = (RTObject)activationRecord.getObject("color");
-			thePanel.setForeground(color);
+			
+			try {
+				thePanel.setForeground(color);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.setForeground.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
 			return super.nextCode();
 		}
 	}
@@ -218,7 +234,14 @@ public final class PanelClass {
 			final RTObject fromY = (RTObject)activationRecord.getObject("fromY");
 			final RTObject toX = (RTObject)activationRecord.getObject("toX");
 			final RTObject toY = (RTObject)activationRecord.getObject("toY");
-			thePanel.drawLine(fromX, fromY, toX, toY);
+			
+			try {
+				thePanel.drawLine(fromX, fromY, toX, toY);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawLine.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -234,7 +257,14 @@ public final class PanelClass {
 			final RTObject fromY = (RTObject)activationRecord.getObject("fromY");
 			final RTObject toX = (RTObject)activationRecord.getObject("toX");
 			final RTObject toY = (RTObject)activationRecord.getObject("toY");
-			thePanel.drawRect(fromX, fromY, toX, toY);
+			
+			try {
+				thePanel.drawRect(fromX, fromY, toX, toY);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawRect.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -250,7 +280,14 @@ public final class PanelClass {
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject width = (RTObject)activationRecord.getObject("width");
 			final RTObject height = (RTObject)activationRecord.getObject("height");
-			thePanel.drawEllipse(x, y, width, height);
+			
+			try {
+				thePanel.drawEllipse(x, y, width, height);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawEllipse.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -265,7 +302,13 @@ public final class PanelClass {
 			final RTObject x = (RTObject)activationRecord.getObject("x");
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject text = (RTObject)activationRecord.getObject("text");
-			thePanel.drawString(x, y, text);
+			try{
+				thePanel.drawString(x, y, text);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
 			
 			return super.nextCode();
 		}
@@ -277,9 +320,17 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObjectCommon thePanelObject = (RTObjectCommon)activationRecord.getObject("this");
-			final GraphicsPanel theGraphicsPanel = new GraphicsPanel(thePanelObject);
-			thePanelObject.setObject("panelObject", theGraphicsPanel);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
+			
+			try {
+				final GraphicsPanel theGraphicsPanel = new GraphicsPanel(thePanelObject);
+				thePanelObject.setObject("panelObject", theGraphicsPanel);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel constructor.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
 			return super.nextCode();
 		}
 	}

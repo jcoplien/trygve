@@ -24,8 +24,10 @@ package info.fulloo.trygve.run_time;
  */
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Event;
 import java.awt.Frame;
 import java.awt.Panel;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,9 +118,37 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		theFrame_.setBackground(color);
 	}
 	
+	private static class MyFrame extends Frame implements RTWindowRegistryEntry {
+		public MyFrame(final String loc, final RTFrameObject frameObject) {
+			super(loc);
+			frameObject_ = frameObject;
+			RunTimeEnvironment.runTimeEnvironment_.gui().windowCreate(this);
+		}
+		@Override public boolean handleEvent(final Event e) {
+			if (e.id == WindowEvent.WINDOW_CLOSING) {
+				shutDown();
+				return true;
+			}
+			return false;
+		}
+		public void shutDown() {
+			frameObject_.windowIsClosing();
+			RunTimeEnvironment.runTimeEnvironment_.gui().windowCloseDown(this);
+			frameObject_ = null;
+		}
+		
+		private final static long serialVersionUID = 438492109;
+		RTFrameObject frameObject_;
+	}
+	
 	public void ctor1(final String name) {
-		theFrame_ = new Frame(name);
+		theFrame_ = new MyFrame(name, this);
 		theFrame_.setLayout(new BorderLayout());
+	}
+	
+	public void windowIsClosing() {
+		theFrame_.dispose();
+		theFrame_ = null;
 	}
 	
 	public void resize(final int width, final int height) {

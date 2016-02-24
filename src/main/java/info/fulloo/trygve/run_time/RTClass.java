@@ -935,7 +935,8 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					sRetval = thisString.split(rxstring);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "Bad pattern to regex: `", rxstring, "'.", "");
+					ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
+					RTMessage.printMiniStackStatus();
 					return null;
 				}
 				

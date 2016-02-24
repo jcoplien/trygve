@@ -31,11 +31,15 @@ package info.fulloo.trygve.editor;
 import java.awt.Color;
 import java.io.*;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.run_time.RTExpression;
+import info.fulloo.trygve.run_time.RTWindowRegistryEntry;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 import javax.swing.JFileChooser;
@@ -43,6 +47,7 @@ import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
+enum RunButtonState { Idle, Running, Disabled } ;
 
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
@@ -51,7 +56,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.12";
+    final String TrygveVersion = "1.5.13";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -66,6 +71,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	
 		initComponents();
         loadFile(defaultFile);
+        
+        appWindowsExtantMap_ = new HashMap<RTWindowRegistryEntry, Boolean>();
     	
         updateButtons();
         oslMsg();
@@ -682,6 +689,46 @@ public void simpleRun() {
     virtualMachine_.run(rTMainExpr);
 }
 
+private void setRunButtonState(final RunButtonState state) {
+	if (userWindowsAreOpen()) {
+		runButton.setEnabled(true);
+    	runButton.setForeground(Color.RED);
+	} else {
+		switch (state) {
+		case Idle:
+			runButton.setEnabled(true);
+	    	runButton.setForeground(Color.BLACK);
+			break;
+		case Running:
+			runButton.setEnabled(true);
+	    	runButton.setForeground(Color.RED);
+			break;
+		case Disabled:
+			runButton.setEnabled(false);
+	    	runButton.setForeground(Color.BLACK);
+			break;
+		}
+	}
+}
+
+private void setInterruptButtonState(final RunButtonState state) {
+	if (userWindowsAreOpen()) {
+		interruptButton.setEnabled(true);
+	} else {
+		switch (state) {
+		case Idle:
+			interruptButton.setEnabled(false);
+			break;
+		case Running:
+			interruptButton.setEnabled(true);
+			break;
+		case Disabled:
+			interruptButton.setEnabled(false);
+			break;
+		}
+	}
+}
+
 public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
 	if (null != worker_) {
 		worker_.cancel(true);
@@ -689,43 +736,48 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	}
 	
 	worker_ = new SwingWorker<Integer, Void>() {
-		volatile Color returnColor_;
-		
 	    @Override public Integer doInBackground() {
-	    	returnColor_ = runButton.getForeground();
-	    	runButton.setForeground(Color.RED);
-	    	interruptButton.setEnabled(true);
+	    	setRunButtonState(RunButtonState.Running);
+	    	setInterruptButtonState(RunButtonState.Running);
 	    	parseButton.setEnabled(false);
 	    	testButton.setEnabled(false);
 	    	simpleRun();
 	    	parseButton.setEnabled(true);
 	    	testButton.setEnabled(true);
-	        runButton.setForeground(returnColor_);
-	        interruptButton.setEnabled(false);
+	    	setRunButtonState(RunButtonState.Idle);
+	    	setInterruptButtonState(RunButtonState.Idle);
 	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
 	    }
 
 	    @Override public void done() {
 	       // Just wrap up.
-	       runButton.setForeground(Color.BLACK);
+	       setRunButtonState(RunButtonState.Idle);
 	       parseButton.setEnabled(true);
-	       interruptButton.setEnabled(false);
+	       setInterruptButtonState(RunButtonState.Idle);
 	       worker_ = null;
 	    }
 	};
 
 	worker_.execute();
-	
-	worker_ = null;
-	
 }//GEN-LAST:event_runButtonActionPerformed
 
 public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
+	killAppWindows();
 	parseButton.setEnabled(true);
 	testButton.setEnabled(true);
-	runButton.setForeground(Color.BLACK);
-	interruptButton.setEnabled(false);
-	worker_.cancel(true);
+	setRunButtonState(RunButtonState.Idle);
+	setInterruptButtonState(RunButtonState.Idle);
+	if (null != worker_) {
+		try {
+			worker_.cancel(true);
+		} catch (final Exception e) {
+			ErrorLogger.error(ErrorType.Runtime,
+					"Program enactment interrupted by user.", "", "", "");
+		} finally {
+			ErrorLogger.error(ErrorType.Runtime,
+					"Program enactment interrupted by user.", "", "", "");
+		}
+	}
 	worker_ = null;
 }//GEN-LAST:event_interruptButtonActionPerformed
 
@@ -908,8 +960,52 @@ private void saveAsMenuActionPerformed(final java.awt.event.ActionEvent evt) {//
 }//GEN-LAST:event_saveAsMenuActionPerformed
 
 private void updateButtons() {
-	runButton.setEnabled(compiledWithoutError_);
+	if (compiledWithoutError_) {
+		setRunButtonState(RunButtonState.Idle);
+	} else {
+		setRunButtonState(RunButtonState.Disabled);
+	}
 }
+
+//------------- Application window management ----------------------
+
+private void resetButtonsBasedOnWindowQueue() {
+	if (appWindowsExtantMap_.size() > 0) {
+		setRunButtonState(RunButtonState.Running);
+		setInterruptButtonState(RunButtonState.Running);
+	} else {
+		setRunButtonState(RunButtonState.Idle);
+		setInterruptButtonState(RunButtonState.Idle);
+	}
+	this.update(getGraphics());
+}
+
+public void windowCreate(final RTWindowRegistryEntry window) {
+	appWindowsExtantMap_.put(window, true);
+	assert appWindowsExtantMap_.size() > 0;
+	resetButtonsBasedOnWindowQueue();
+}
+
+public void windowCloseDown(final RTWindowRegistryEntry window) {
+	appWindowsExtantMap_.remove(window);
+	resetButtonsBasedOnWindowQueue();
+}
+
+public boolean userWindowsAreOpen() {
+	return appWindowsExtantMap_.size() > 0;
+}
+
+private void killAppWindows() {
+	final HashMap<RTWindowRegistryEntry, Boolean> appMap = new HashMap<RTWindowRegistryEntry, Boolean>();
+	appMap.putAll(appWindowsExtantMap_);
+	for (final RTWindowRegistryEntry aWindow : appMap.keySet()) {
+		aWindow.shutDown();
+	}
+}
+
+// ------------- Private data ----------------------
+
+	private Map<RTWindowRegistryEntry, Boolean> appWindowsExtantMap_;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
@@ -954,7 +1050,7 @@ private void updateButtons() {
     // End of variables declaration//GEN-END:variables
     
     private ParseRun parseRun_;
-    SwingWorker<Integer, Void> worker_;
+    private SwingWorker<Integer, Void> worker_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
     
