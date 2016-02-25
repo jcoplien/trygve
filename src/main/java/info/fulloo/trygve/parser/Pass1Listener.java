@@ -2375,14 +2375,18 @@ public class Pass1Listener extends Pass0Listener {
 						lhs.type().getText(), "'.");
 			}
 			
-			if (rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
+			if (null != rhs && null != rhs.type() &&
+					rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
 				;	// O.K.
 			} else if (rhs instanceof NullExpression) {
 				;	// can always compare with NULL
 			} else {
 				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"You may not use an object of type '" + rhs.type().getText(), "' as an argument to `",
-						operationAsString, "'.");
+						"You may not use an object of type '" +
+								(null == rhs || null == rhs.type()?
+										"<unknown>": rhs.type().getText()),
+								"' as an argument to `",
+								operationAsString, "'.");
 			}
 			
 			if (lhs.type() instanceof RoleType) {
@@ -4172,7 +4176,7 @@ public class Pass1Listener extends Pass0Listener {
 		Expression expression = null;
 		final String javaIdString = ctxJAVA_ID.getText();
 		preOrPost = UnaryopExpressionWithSideEffect.PreOrPost.Post;
-		
+
 		if (null != ctxABELIAN_INCREMENT_OP) {
 			final Interval JavaIDInterval = ctxJAVA_ID.getSourceInterval();
 			final Interval OperatorInterval = ctxABELIAN_INCREMENT_OP.getSourceInterval();
@@ -4190,7 +4194,19 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final ObjectDeclaration odecl = theClass.type().enclosedScope().lookupObjectDeclaration(javaIdString);
 			if (null != odecl) {
-				type = odecl.type();
+				// It must be static
+				final ObjectDeclaration odecl2 = theClass.type().enclosedScope().lookupStaticDeclaration(javaIdString);
+				if (null == odecl2) {
+					errorHook5p2(ErrorType.Fatal,
+							ctxGetStart.getLine(),
+							"Attempt to access instance member `",
+							javaIdString,
+							"' as a member of class `" + theClass.name(),
+							"'.");
+					type = odecl.type();	// why not?  stops parser error babbling.
+				} else {
+					type = odecl.type();
+				}
 				assert type != null;
 			}
 			

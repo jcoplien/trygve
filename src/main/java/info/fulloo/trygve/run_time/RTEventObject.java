@@ -29,16 +29,38 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RTEventObject extends RTObjectCommon implements RTObject {
 	public RTEventObject(final RTType eventType) {
 		super(eventType);
 		eventType_ = eventType;	// e.g. an instance of RTClass
 		theEvent_ = null;
+		
+		this.setupCommon();
+		
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+	}
+	
+	private void setupCommon() {
+		final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+		final StaticScope intScope = intType.enclosedScope();
+		final RTType rTIntType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(intScope);
+		
+		final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+		final StaticScope stringScope = stringType.enclosedScope();
+		final RTType rTStringType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(stringScope);
+		
+		this.addObjectDeclaration("id", rTIntType);
+		this.addObjectDeclaration("key", rTIntType);
+		this.addObjectDeclaration("keyString", rTStringType);
+		this.addObjectDeclaration("x", rTIntType);
+		this.addObjectDeclaration("y", rTIntType);
 	}
 	
 	public int size() {
@@ -89,10 +111,14 @@ public class RTEventObject extends RTObjectCommon implements RTObject {
 		assert false;
 		return null;
 	}
+	
 	public RTEventObject(final Event theEvent, final RTType eventType) {
 		super(eventType);
 		theEvent_ = theEvent;
 		eventType_ = eventType;
+		
+		this.setupCommon();
+		
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	@Override public RTObject dup() {

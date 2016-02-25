@@ -518,21 +518,22 @@ public abstract class Type implements ExpressionStackAPI
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
-			if (null == t) {
-				assert null != t;
+			boolean retval = false;
+			
+			// t can be null on error conditions, so stumble elegantly
+			if (null != t) {
+				if (t.name().equals(name_)) {
+					retval = true;
+				} else if (name().equals("double") && (t.name().equals("int") || t.name().equals("Integer"))) {
+					retval = true;
+				} else if ((t.name().equals("int") || t.name().equals("Integer")) && t.name().equals("double")) {
+					// TODO: Issue truncation warning?
+					retval = true;
+				} else if (t.name().equals("Null")) {
+					retval = true;
+				}
 			}
 			
-			boolean retval = false;
-			if (t.name().equals(name_)) {
-				retval = true;
-			} else if (name().equals("double") && (t.name().equals("int") || t.name().equals("Integer"))) {
-				retval = true;
-			} else if ((t.name().equals("int") || t.name().equals("Integer")) && t.name().equals("double")) {
-				// TODO: Issue truncation warning?
-				retval = true;
-			} else if (t.name().equals("Null")) {
-				retval = true;
-			}
 			return retval;
 		}
 		@Override public Type type() {

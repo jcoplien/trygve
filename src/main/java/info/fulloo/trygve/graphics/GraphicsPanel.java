@@ -71,7 +71,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Rectangle newRect = new Rectangle(fromX, fromY, Math.abs(toX-fromX), Math.abs(toY-fromY));
 		this.addLine(newRect, null);
 	}
-	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject heightArg, final RTObject widthArg) {
+	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject widthArg, final RTObject heightArg) {
 		assert fromXArg instanceof RTIntegerObject;
 		assert fromYArg instanceof RTIntegerObject;
 		assert widthArg instanceof RTIntegerObject;
@@ -83,7 +83,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Rectangle newRect = new Rectangle(fromX, fromY, width, height);
 		this.addRectangle(newRect, null);
 	}
-	public void drawEllipse(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
+	public void drawOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
 		assert widthArg instanceof RTIntegerObject;
@@ -92,7 +92,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		this.addEllipse(x, y, width, height, null);
+		this.addOval(x, y, width, height, null);
 	}
 	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -130,6 +130,14 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt");
 		final RTEventObject event = new RTEventObject(e, rTType);
 		
+		event.setObject("x", new RTIntegerObject(e.x));
+		event.setObject("y", new RTIntegerObject(e.y));
+		event.setObject("id", new RTIntegerObject(e.id));
+		event.setObject("key", new RTIntegerObject(e.key));
+		final char cKey = (char)e.key;
+		final String keyAsString = "" + cKey;
+		event.setObject("keyString", new RTStringObject(keyAsString));
+
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(event);
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
 		RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
@@ -180,24 +188,26 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	
 	@Override public boolean handleEvent(final Event e) {
+		// These need to be coordinated only with stuff in the
+		// setup and postSetupInitialization methods in PanelClass.java
+		
 		switch (e.id) {
+		  case Event.KEY_PRESS:
+		  case Event.KEY_RELEASE:
+			  this.handleEventProgrammatically(e);
+			  return true;
+		  case Event.MOUSE_DRAG:
 		  case Event.MOUSE_DOWN:
-		    return true;
 		  case Event.MOUSE_UP:
 			this.handleEventProgrammatically(e);
-		    repaint();
-		    return true;
-		  case Event.MOUSE_MOVE:
-			return true;
-		  case Event.MOUSE_DRAG:
 		    repaint();
 		    return true;
 		  case Event.WINDOW_DESTROY:
 		    System.exit(0);
 		    return true;
 		  case Event.MOUSE_EXIT:
-		  	return true;
 		  case Event.MOUSE_ENTER:
+			this.handleEventProgrammatically(e);
 			return true;
 		  default:
 		    return false;
@@ -212,9 +222,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		    final Rectangle p = rectangles_.elementAt(i);
 		    g.setColor((Color)rectColors_.elementAt(i));
 		    if (p.width != -1) {
-		    	g.drawLine(p.x, p.y, p.width, p.height);
+		    	g.drawRect(p.x, p.y, p.width, p.height);
 		    } else {
-		    	g.drawLine(p.x, p.y, p.x, p.y);
+		    	g.drawLine(p.x, p.y, p.width, p.height);
 		    }
 		}
 		
@@ -256,8 +266,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		lineColors_.addElement(color);
 	}
 	
-	public void addEllipse(int x, int y, int width, int height, final Color color) {
+	public void addOval(int x, int y, int width, int height, final Color color) {
 		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
+System.err.format("addOval called x=%d y=%d width=%d height=%d\n", x, y, width, height);
 		ellipses_.addElement(ellipse);
 		ellipseColors_.addElement(color);
 	}

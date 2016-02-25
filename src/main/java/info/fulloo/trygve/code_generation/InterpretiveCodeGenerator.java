@@ -238,10 +238,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				
 				// Some classes have special hooks. For example, SystemClass has two statics
 				// (System.err and System.out) that need to be initialized. We use the
-				// postSetupInitializtion method to do that, and it is overridden
+				// postSetupInitialization method to do that, and it is overridden
 				// in RTSystemClass
 				if (classDeclaration.type().pathName().equals("System.")) {
 					rTClassDeclaration = new RTSystemClass(classDeclaration);
+				} else if (classDeclaration.type().pathName().equals("Event.")) {
+					rTClassDeclaration = new PanelClass.RTEventClass(classDeclaration);
 				} else {
 					// Kludge. But it's direct, and effective.
 					rTClassDeclaration = new RTClass(classDeclaration);
@@ -666,8 +668,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			if (methodDeclaration.name().equals("drawString")) {
 				readCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("drawEllipse")) {
-				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -678,7 +678,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				readCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawRect")) {
 				readCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("drawEllipse")) {
+			} else if (methodDeclaration.name().equals("drawOval")) {
 				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;

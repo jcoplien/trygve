@@ -204,7 +204,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	
-	public void postSetupInitializtion() { }	// mainly for use in initializing statics
+	public void postSetupInitialization() { }	// mainly for use in initializing statics
 												// of built-in types (like System)
 	
 	public static RTDoubleObject makeDouble(final RTObject object) {
@@ -1243,7 +1243,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			
 			private final InputStream inputStream_;
 		}
-		@Override public void postSetupInitializtion() {
+		@Override public void postSetupInitialization() {
 			// Lookup "out" and "err" and set them up
 			final RTObject out = nameToStaticObjectMap_.get("out");
 			RTPrintStreamInfo printStreamInfo = new RTPrintStreamInfo(System.out);

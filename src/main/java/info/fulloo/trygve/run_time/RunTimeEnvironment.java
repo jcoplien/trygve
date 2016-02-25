@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
@@ -95,12 +96,15 @@ public class RunTimeEnvironment {
 		assert null != stringClassDecl;
 		final ClassDeclaration booleanClassDecl = StaticScope.globalScope().lookupClassDeclaration("boolean");
 		assert null != booleanClassDecl;
+		final ClassDeclaration eventClassDecl = StaticScope.globalScope().lookupClassDeclaration("Event");
+		assert null != eventClassDecl;
 		
 		this.addTopLevelClass("int",     new RTIntegerClass(intClassDecl));
 		this.addTopLevelClass("Integer", new RTIntegerClass(int2ClassDecl));
 		this.addTopLevelClass("double",  new RTDoubleClass(doubleClassDecl));
 		this.addTopLevelClass("boolean", new RTBooleanClass(booleanClassDecl));
 		this.addTopLevelClass("String",  new RTStringClass(stringClassDecl));
+		this.addTopLevelClass("Event",  new PanelClass.RTEventClass(eventClassDecl));
 	}
 	public void addTopLevelContext(final String contextName, final RTContext context) {
 		stringToRTContextMap_.put(contextName, context);
@@ -217,7 +221,7 @@ public class RunTimeEnvironment {
 	private void handleMetaInits() {
 		for (final RTClass aRunTimeClass : allClassList_) {
 			aRunTimeClass.metaInit();
-			aRunTimeClass.postSetupInitializtion();
+			aRunTimeClass.postSetupInitialization();
 		}
 	}
 	public void addToListOfAllClasses(final RTClass aClass) {

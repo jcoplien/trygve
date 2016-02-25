@@ -445,14 +445,13 @@ public abstract class RTExpression extends RTCode {
 			final QualifiedClassMemberExpression qcme = (QualifiedClassMemberExpression) expr;
 			theClassItself_ = qcme.qualifier();
 			
-			setResultIsConsumed(expr.resultIsConsumed());
-		}
-		@Override public RTCode run() {
-			// FIXME. Shouldn't this go in the constructor?
 			final RTType wannabeClass = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(theClassItself_.enclosedScope());
 			assert wannabeClass instanceof RTClass;
 			rTClass_ = (RTClass)wannabeClass; 
 			
+			setResultIsConsumed(expr.resultIsConsumed());
+		}
+		@Override public RTCode run() {
 			final RTObject value = rTClass_.getStaticObject(idName_);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
 			setLastExpressionResult(value, lineNumber_);

@@ -3,7 +3,23 @@ class MyPanel extends Panel {
       Panel()
    }
    public void handleEvent(Event event) {
-      System.err.println("handled event")
+      int eventId = event.id.clone;
+      if (eventId == Event.MOUSE_DOWN) {
+          System.out.print("MOUSE_DOWN event: ")
+      } else if (eventId == Event.MOUSE_UP) {
+          System.out.print("MOUSE_UP event: ")
+      } else if (eventId == Event.MOUSE_DRAG) {
+          System.out.print("MOUSE_DRAG event: ")
+      } else if (eventId == Event.KEY_PRESS) {
+          System.out.print("KEY_PRESS event: \"");
+          String key = event.keyString.clone;
+          System.out.print(key).print("\" ")
+      } else {
+          System.out.print(eventId).print(" ")
+      }
+      System.out.print("handled event at (")
+                .print(event.x).print(", ")
+                .print(event.y).println(")")
    }
 }
 
@@ -19,6 +35,9 @@ class PanelTest {
       frame.add("Center", panel);
       frame.resize(300, 300);
       panel.drawString(120, 120, "Hello world");
+      panel.drawLine(120, 122, 190, 122);
+      panel.drawRect(20, 20, 70, 100);
+      panel.drawOval(45, 100, 80, 80);
       frame.setVisible(true)
    }
 }

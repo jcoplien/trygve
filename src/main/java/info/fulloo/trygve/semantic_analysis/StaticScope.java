@@ -1066,6 +1066,15 @@ public class StaticScope {
 		return retval;
 	}
 	
+	public ObjectDeclaration lookupStaticDeclaration(final String simpleIDName) {
+		ObjectDeclaration retval = null;
+		if (staticObjectDeclarationDictionary_.containsKey(simpleIDName)) {
+			final TypeDeclaration associatedDeclaration = (TypeDeclaration)this.associatedDeclaration();
+			retval = associatedDeclaration.lookupStaticObjectDeclaration(simpleIDName);
+		}
+		return retval;
+	}
+	
 	public MethodDeclaration lookupMethodDeclarationRecursive(final String methodSelector,
 			final ActualOrFormalParameterList parameterList,
 			final boolean ignoreSignature) {

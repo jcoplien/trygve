@@ -1,5 +1,6 @@
 package info.fulloo.trygve.add_ons;
 
+import java.awt.Event;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -16,11 +17,13 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.graphics.GraphicsPanel;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RTObjectCommon;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.run_time.RTPanelObject;
@@ -104,8 +107,8 @@ public final class PanelClass {
 			declarePanelMethod("setBackground", voidType, asList("color"), asList(colorType), false);
 			declarePanelMethod("setForeground", voidType, asList("color"), asList(colorType), false);
 			declarePanelMethod("drawLine", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawRect", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawEllipse", voidType, asList("radius", "centerY", "centerX"), asList(intType, intType, intType), false);
+			declarePanelMethod("drawRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
+			declarePanelMethod("drawOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
 			
 			// add the pointer to the GraphicsPanel object
@@ -248,18 +251,19 @@ public final class PanelClass {
 	}
 	public static class RTDrawRectCode extends RTPanelCommon {
 		public RTDrawRectCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawRect", asList("fromX", "fromY", "toX", "toY"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			// super("Panel", "drawRect", asList("fromX", "fromY", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Panel", "drawRect", asList("height", "width", "fromY", "fromX"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject fromX = (RTObject)activationRecord.getObject("fromX");
 			final RTObject fromY = (RTObject)activationRecord.getObject("fromY");
-			final RTObject toX = (RTObject)activationRecord.getObject("toX");
-			final RTObject toY = (RTObject)activationRecord.getObject("toY");
+			final RTObject width = (RTObject)activationRecord.getObject("width");
+			final RTObject height = (RTObject)activationRecord.getObject("height");
 			
 			try {
-				thePanel.drawRect(fromX, fromY, toX, toY);
+				thePanel.drawRect(fromX, fromY, width, height);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawRect.", "", "", "");
 				RTMessage.printMiniStackStatus();
@@ -271,20 +275,20 @@ public final class PanelClass {
 	}
 	public static class RTDrawEllipseCode extends RTPanelCommon {
 		public RTDrawEllipseCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawEllipse", asList("x", "y", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Panel", "drawOval", asList("leftX", "topY", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject x = (RTObject)activationRecord.getObject("x");
-			final RTObject y = (RTObject)activationRecord.getObject("y");
+			final RTObject leftX = (RTObject)activationRecord.getObject("leftX");
+			final RTObject topY = (RTObject)activationRecord.getObject("topY");
 			final RTObject width = (RTObject)activationRecord.getObject("width");
 			final RTObject height = (RTObject)activationRecord.getObject("height");
 			
 			try {
-				thePanel.drawEllipse(x, y, width, height);
+				thePanel.drawOval(leftX, topY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawEllipse.", "", "", "");
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -368,12 +372,15 @@ public final class PanelClass {
 			methodDecl.setHasConstModifier(isConst);
 			eventType_.enclosedScope().declareMethod(methodDecl);
 		}
+		
 		public static void setup() {
 			final StaticScope globalScope = StaticScope.globalScope();
 			if (null == globalScope.lookupTypeDeclaration("Event")) {
 				typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 				final Type panelType = globalScope.lookupTypeDeclaration("Panel");
 				assert null != panelType;
+				final Type intType = globalScope.lookupTypeDeclaration("int");
+				final Type stringType = globalScope.lookupTypeDeclaration("String");
 				
 				final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 				assert null != objectBaseClass;
@@ -387,6 +394,37 @@ public final class PanelClass {
 
 				// arguments are in reverse order
 				declareEventMethod("Event", null, null, null, false);
+				
+				// Attributes
+				final ObjectDeclaration idDeclaration = new ObjectDeclaration("id", intType, 0);
+				idDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				eventType_.enclosedScope().declareObject(idDeclaration);
+				
+				final ObjectDeclaration keyDeclaration = new ObjectDeclaration("key", intType, 0);
+				keyDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				eventType_.enclosedScope().declareObject(keyDeclaration);
+				
+				final ObjectDeclaration keyStringDeclaration = new ObjectDeclaration("keyString", stringType, 0);
+				keyStringDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				eventType_.enclosedScope().declareObject(keyStringDeclaration);
+				
+				final ObjectDeclaration locXDeclaration = new ObjectDeclaration("x", intType, 0);
+				locXDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				eventType_.enclosedScope().declareObject(locXDeclaration);
+				
+				final ObjectDeclaration locYDeclaration = new ObjectDeclaration("y", intType, 0);
+				locYDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				eventType_.enclosedScope().declareObject(locYDeclaration);
+				
+				// These need to be coordinated only with what is in the postSetupInitialization
+				// method below, and what is in the driver (GraphicsPanel.java)
+				for (final String attributeName : asList("MOUSE_UP", "MOUSE_DOWN", "MOUSE_ENTER", "MOUSE_EXIT", "MOUSE_DRAG",
+						"KEY_PRESS", "KEY_RELEASE")) {
+					final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, 0);
+					attributeDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+					eventType_.enclosedScope().declareStaticObject(attributeDeclaration);
+					eventType_.declareStaticObject(attributeDeclaration);
+				}
 				
 				globalScope.declareType(eventType_);
 				globalScope.declareClass(classDecl);
@@ -449,6 +487,38 @@ public final class PanelClass {
 		
 		private static List<TypeDeclaration> typeDeclarationList_;
 		private static ClassType eventType_;
+	}
+	
+	public static class RTEventClass extends RTObjectClass {
+		public RTEventClass(final TypeDeclaration decl) {
+			super(decl);
+		}
+
+		@Override public void postSetupInitialization() {
+			// These need to be coordinated only with what is in the setup
+			// method above, and what is in the driver (GraphicsPanel.java)
+			
+			final RTIntegerObject mouseUpValue = new RTIntegerObject(Event.MOUSE_UP);
+			nameToStaticObjectMap_.put("MOUSE_UP", mouseUpValue);
+
+			final RTIntegerObject mouseDownValue = new RTIntegerObject(Event.MOUSE_DOWN);
+			nameToStaticObjectMap_.put("MOUSE_DOWN", mouseDownValue);
+			
+			final RTIntegerObject mouseEnterValue = new RTIntegerObject(Event.MOUSE_ENTER);
+			nameToStaticObjectMap_.put("MOUSE_ENTER", mouseEnterValue);
+			
+			final RTIntegerObject mouseExitValue = new RTIntegerObject(Event.MOUSE_EXIT);
+			nameToStaticObjectMap_.put("MOUSE_EXIT", mouseExitValue);
+
+			final RTIntegerObject mouseDragValue = new RTIntegerObject(Event.MOUSE_DRAG);
+			nameToStaticObjectMap_.put("MOUSE_DRAG", mouseDragValue);
+			
+			final RTIntegerObject keyPressValue = new RTIntegerObject(Event.KEY_PRESS);
+			nameToStaticObjectMap_.put("KEY_PRESS", keyPressValue);
+
+			final RTIntegerObject keyReleaseValue = new RTIntegerObject(Event.KEY_RELEASE);
+			nameToStaticObjectMap_.put("KEY_RELEASE", keyReleaseValue);
+		}
 	}
 	
 	private static List<TypeDeclaration> typeDeclarationList_;
