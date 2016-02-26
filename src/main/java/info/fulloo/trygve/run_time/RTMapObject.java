@@ -25,15 +25,17 @@ package info.fulloo.trygve.run_time;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
-import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
+import info.fulloo.trygve.run_time.RTIterator.RTMapIterator;
 
 public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable {
 	@Override public RTObject getObject(final RTObject theIndexObject) {
@@ -119,7 +121,7 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	public RTIterator makeIterator() {
-		final RTIterator retval = new RTListIterator(this);
+		final RTIterator retval = new RTMapIterator(this);
 		return retval;
 	}
 	@Override public RTObject dup() {
@@ -162,6 +164,10 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		final boolean rawRetval = theMap_.containsValue(value);
 		final RTObject retval = new RTBooleanObject(rawRetval);
 		return retval;
+	}
+	public Iterator<RTObject> RTIterator() {
+		final Set<RTObject> keySet = theMap_.keySet();
+		return keySet.iterator();
 	}
 	
 	private final Map<RTObject, RTObject> theMap_;

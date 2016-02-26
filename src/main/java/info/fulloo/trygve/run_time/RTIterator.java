@@ -35,7 +35,7 @@ public abstract class RTIterator extends RTCommonRunTimeCrap {
 	public abstract void advance();
 	public abstract RTObject next();
 	
-	public static RTIterator makeIterator(RTIterable iterable) {
+	public static RTIterator makeIterator(final RTIterable iterable) {
 		return iterable.makeIterator();
 	}
 	
@@ -136,52 +136,44 @@ public abstract class RTIterator extends RTCommonRunTimeCrap {
 			return theIterator_.next();
 		}
 		@Override public void advance() {
-			theIterator_.next();
+			// NO ADVANCE! We should consider getting rid of
+			// advance because it can't be separated from
+			// next()
+			
+			// theIterator_.next();
 		}
 
 		private final RTSetObject whatIAmIteratingOver_;
 		private final Iterator<RTObject> theIterator_;
 	}
+	
+	public static class RTMapIterator extends RTIterator {
+		public RTMapIterator(final RTIterable whatIAmIteratingOver) {
+			super();
+			assert whatIAmIteratingOver instanceof RTMapObject;
+			whatIAmIteratingOver_ = (RTMapObject)whatIAmIteratingOver;
+			theIterator_ = whatIAmIteratingOver_.RTIterator();
+		}
+		@Override public boolean isThereANext() {
+			return theIterator_.hasNext();
+		}
+		@Override public int compareTo(final Object rawOther) {
+			assert false;
+			return 0;
+		}
+		@Override public boolean equals(final RTObject other) {
+			assert false;
+			return false;
+		}
+		@Override public RTObject next() {
+			return theIterator_.next();
+		}
+		@Override public void advance() {
+			// Like list — see above
+			// theIterator_.next();
+		}
 
-	/*
-	@Override public RTObject getObject(String name) { assert false; return null; }
-	@Override public void addObjectDeclaration(String objectName, RTType type) { assert false; }
-	@Override public Map<String, RTType> objectDeclarations() { assert false; return null; }
-	@Override public void setObject(String objectName, RTObject object) { assert false; }
-	@Override public RTType rTType() { assert false; return null; }
-	@Override public boolean isEqualTo(Object another) { assert false; return false; }
-	@Override public boolean gt(RTObject another) { assert false; return false; }
-	@Override public RTObject plus(RTObject other) { assert false; return null; }
-	@Override public RTObject minus(RTObject other) { assert false; return null; }
-	@Override public RTObject logicalAnd(final RTObject other) { assert false; return null; }
-	@Override public RTObject logicalOr(final RTObject other) { assert false; return null; }
-	@Override public RTObject logicalXor(final RTObject other) { assert false; return null; }
-	@Override public RTObject times(RTObject other) { assert false; return null; }
-	@Override public RTObject divideBy(RTObject other) { assert false; return null; }
-	@Override public RTObject modulus(RTObject other) { assert false; return null; }
-	@Override public RTObject unaryPlus() { assert false; return null; }
-	@Override public RTObject unaryMinus() { assert false; return null; }
-	@Override public RTObject unaryLogicalNegation() { assert false; return null; }
-	@Override public RTObject preIncrement() { assert false; return null; }
-	@Override public RTObject postIncrement() { assert false; return null; }
-	@Override public RTObject preDecrement() { assert false; return null; }
-	@Override public RTObject postDecrement() { assert false; return null; }
-	@Override public RTObject performUnaryOpOnObjectNamed(String idName, String operator,
-			PreOrPost preOrPost_) { assert false; return null; }
-	@Override public RTObject toThePowerOf(RTObject exponent) { assert false; return null; }
-	@Override public RTObject dup() { assert false; return null; }
-	@Override public void incrementReferenceCount() { referenceCount_++; }
-	@Override public void decrementReferenceCount() { --referenceCount_; }
-	@Override public long referenceCount() { return referenceCount_; }
-	@Override public void enlistAsRolePlayerForContext(final String roleName,
-			final RTContextObject contextInstance) { assert false; }
-	@Override public void unenlistAsRolePlayerForContext(final String roleName,
-			final RTContextObject contextInstance) { assert false; }
-	@Override public void enlistAsStagePropPlayerForContext(final String stagePropName,
-			final RTContextObject contextInstance) { assert false; }
-	@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName,
-			final RTContextObject contextInstance) { assert false; }
-
-	private int referenceCount_;
-	*/
+		private final RTMapObject whatIAmIteratingOver_;
+		private final Iterator<RTObject> theIterator_;
+	}
 }

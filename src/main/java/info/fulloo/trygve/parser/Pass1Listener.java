@@ -3380,7 +3380,9 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final Type typeIncrementingOver = thingToIncrementOver.type();
 			if (typeIncrementingOver instanceof ArrayType == false &&
-					typeIncrementingOver.name().startsWith("List<") == false) {
+					typeIncrementingOver.name().startsWith("List<") == false &&
+					typeIncrementingOver.name().startsWith("Set<") == false &&
+					typeIncrementingOver.name().startsWith("Map<") == false) {
 				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}
@@ -3417,7 +3419,9 @@ public class Pass1Listener extends Pass0Listener {
 			final Type typeIncrementingOver = thingToIncrementOver.type();
 			if (typeIncrementingOver instanceof ArrayType == false &&
 					null != typeIncrementingOver &&
-					typeIncrementingOver.name().startsWith("List<") == false) {
+					typeIncrementingOver.name().startsWith("List<") == false &&
+					typeIncrementingOver.name().startsWith("Set<") == false &&
+					typeIncrementingOver.name().startsWith("Map<") == false) {
 				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}

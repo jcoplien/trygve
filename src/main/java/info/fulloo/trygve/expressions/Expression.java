@@ -897,11 +897,18 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			initDecl_.addAll(declarations);
 		}
 		@Override public String getText() {
-			return "for (" + "<declarations>" + " " +
-							test_.getText() + "; " +
-							increment_.getText() +
-						") " + 
-					body_.getText();
+			if (null == thingToIterateOver_) {
+				return "for (" + "<declarations>" + " " +
+								test_.getText() + "; " +
+								increment_.getText() +
+							") " + 
+						body_.getText();
+			} else {
+				return "for ( " + iterationVariable_.getText() + " : " +
+						        thingToIterateOver_.getText() +
+					       ") " + 
+					    body_.getText();
+			}
 		}
 		public List<ObjectDeclaration> initDecl() {
 			return initDecl_;
