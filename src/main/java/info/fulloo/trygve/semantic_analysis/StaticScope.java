@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
@@ -87,6 +88,8 @@ public class StaticScope {
 		interfaceDeclarationDictionary_ =  new LinkedHashMap<String,InterfaceDeclaration>();
 		hasDeclarationsThatAreLostBetweenPasses_ = false;
 		templateInstantiationInfo_ = null;
+		previousMethodSelector_ = null;
+		previousArgumentList_ = null;
 	}
 	
 	public StaticScope(final StaticScope parentScope, final boolean losesMemory) {
@@ -1123,9 +1126,19 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	public MethodDeclaration lookupMethodDeclarationWithConversion(final String methodSelector, final ActualOrFormalParameterList parameterList,
-			boolean ignoreSignature) {
+	
+	public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(final String methodSelector,
+			final ActualOrFormalParameterList parameterList,
+			final boolean ignoreSignature, final String parameterToIgnore) {
 		MethodDeclaration retval = null;
+		
+		if (methodSelector == previousMethodSelector_ && previousArgumentList_ == parameterList) {	// yes, I really mean ==
+			ErrorLogger.error(ErrorType.Fatal, "Method lookup argument type recursion for method `", methodSelector, "':", "");
+			return null;
+		} else {
+			previousMethodSelector_ = methodSelector;
+			previousArgumentList_ = parameterList;
+		}
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
 			for (final MethodDeclaration aDecl : oldEntry) {
@@ -1138,7 +1151,8 @@ public class StaticScope {
 					retval = aDecl; break;
 				} else if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWith(mappedParameterList)) {
+				} else if (null != mappedLoggedSignature && FormalParameterList.
+						alignsWithParameterListIgnoringParamNamed(mappedLoggedSignature, mappedParameterList, parameterToIgnore, true)) {
 					// exact matches get preference
 					retval = aDecl; break;
 				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWithUsingConversion(mappedParameterList)) {
@@ -1147,6 +1161,10 @@ public class StaticScope {
 				}
 			}
 		}
+
+		previousMethodSelector_ = null;
+		previousArgumentList_ = null;
+
 		return retval;
 	}
 	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,
@@ -1431,6 +1449,46 @@ public class StaticScope {
 		private Map<String,ArrayList<MethodDeclaration>> requiredMethodDeclarationDictionary_;
 	}
 	
+	public static class StaticInterfaceScope extends StaticScope {
+		public StaticInterfaceScope(final StaticScope parentScope) {
+			super(parentScope);
+		}
+
+		@Override public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(
+				final String methodSelector,
+				final ActualOrFormalParameterList parameterList,
+				final boolean ignoreSignature, final String parameterToIgnore) {
+			MethodDeclaration retval = null;
+			final Declaration associatedDeclaration = this.associatedDeclaration();
+			assert associatedDeclaration instanceof InterfaceDeclaration;
+			final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration)associatedDeclaration;
+			
+			if (null != interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector)) {
+				final List<MethodSignature> oldEntry = interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector);
+				
+				for (final MethodSignature aSignature : oldEntry) {
+					// Create a dummy declaration to return
+					final MethodDeclaration mDecl = null == aSignature?
+								null:
+								new MethodDeclaration(aSignature, this, 0);
+					
+					if (ignoreSignature) {
+						retval = mDecl; break;
+					} else if (null != aSignature && FormalParameterList.
+							alignsWithParameterListIgnoringParamNamed(aSignature.formalParameterList(), parameterList, parameterToIgnore, true)) {
+						// exact matches get preference
+						retval = mDecl; break;
+					} else if (null != aSignature && (aSignature.formalParameterList()).alignsWithUsingConversion(parameterList)) {
+						// no exact match; try with conversion
+						retval = mDecl; break;
+					}
+				}
+			}
+
+			return retval;
+		}
+	}
+	
 	public final TemplateInstantiationInfo templateInstantiationInfo() {
 		return templateInstantiationInfo_;
 	}
@@ -1602,6 +1660,8 @@ public class StaticScope {
 	private boolean hasDeclarationsThatAreLostBetweenPasses_;
 	private TemplateInstantiationInfo templateInstantiationInfo_;
 	private static ArrayList<TypeDeclaration> typeDeclarationList_;
+	private String previousMethodSelector_ = null;
+	private ActualOrFormalParameterList previousArgumentList_ = null;
 	
 	private static StaticScope globalScope_ = new StaticScope(null);
 }

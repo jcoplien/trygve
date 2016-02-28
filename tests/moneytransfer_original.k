@@ -45,15 +45,16 @@ context TransferMoney {
 class Account {
     private double balance_;
 
-    void increaseBalance(double amount) {
+    // All must be public to be accessible as Role-player methods
+    public void increaseBalance(double amount) {
         this.balance_ = this.balance_ + amount;
     }
     
-    void decreaseBalance(double amount) {
+    public void decreaseBalance(double amount) {
         this.balance_ = this.balance_ - amount;
     }
     
-    double getBalance() {
+    public double getBalance() {
         return this.balance_;
     }
 }

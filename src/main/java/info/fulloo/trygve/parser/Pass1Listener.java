@@ -761,7 +761,7 @@ public class Pass1Listener extends Pass0Listener {
 			plInProgress.addFormalParameter(self);
 		
 			signature.addParameterList(plInProgress);
-			currentRole_.addRequiredSignatureOnSelf(signature);
+			currentRole_.addRequiredSignatureOnSelf(signature, this);
 		}
 		
 		if (printProductionsDebug) {
@@ -1949,7 +1949,11 @@ public class Pass1Listener extends Pass0Listener {
 					params.addActualArgument(expr2);
 					params.addFirstActualParameter(expression);
 					final MethodDeclaration myOperatorFunc =
-							expression.type().enclosedScope().lookupMethodDeclarationWithConversion(operatorAsString, params, false);
+							null != expression && null != expression.type() &&
+							null != expression.type().enclosedScope()?
+									expression.type().enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+											operatorAsString, params, false, /*parameterToIgnore*/ null):
+										null;
 					if (null != myOperatorFunc) {
 						// This dude or dudette has defined their own
 						// operator. Arrange a full-blown method call
@@ -4599,6 +4603,8 @@ public class Pass1Listener extends Pass0Listener {
 				final MethodSignature aRequiredFunction = requiresSection.get(methodSelectorName);
 				if (null != aRequiredFunction) {
 					mdecl = new MethodDeclaration(aRequiredFunction, roleDecl.enclosedScope(), aRequiredFunction.lineNumber());
+					mdecl.addParameterList(aRequiredFunction.formalParameterList());
+					mdecl.setReturnType(mdecl.returnType());
 				} else {
 					// If this is a Role variable, it's fair game to look for
 					// methods in what will be a base class for every Role-player:
@@ -4648,7 +4654,8 @@ public class Pass1Listener extends Pass0Listener {
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
-					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversion(methodSelectorName, actualArgumentList, false);
+					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+							methodSelectorName, actualArgumentList, false, /*parameterToIgnore*/ null);
 					if (null == mdecl) {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 								"Cannot find static script `" + methodSelectorName

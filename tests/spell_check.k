@@ -275,8 +275,9 @@ if(suggestions.size() == 0) assert(false, "theoretically unreachable")
         }
     }
 
-    private int currentPosition() const { return currentPos_; }
-    private void setPosition(int pos) { currentPos_ = pos.clone; }
+    // If private, they are inaccessible to role SpellChecker
+    public int currentPosition() const { return currentPos_; }
+    public void setPosition(int pos) { currentPos_ = pos.clone; }
 
     private int currentPos_;
 }

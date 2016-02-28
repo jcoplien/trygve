@@ -653,7 +653,8 @@ public abstract class RTExpression extends RTCode {
 				}
 				retval = receiverScope.lookupMethodDeclaration(methodSelectorName, parameterList, false);
 				if (null == retval) {
-					retval = receiverScope.lookupMethodDeclarationWithConversion(methodSelectorName, parameterList, false);
+					retval = receiverScope.lookupMethodDeclarationWithConversionIgnoringParameter(methodSelectorName, parameterList,
+							false, /*parameterToIgnore*/ null);
 				}
 				if (null == retval) {
 					// Check out the base class
@@ -665,7 +666,8 @@ public abstract class RTExpression extends RTCode {
 							final StaticScope huntingScope = classOfCurrent.enclosedScope();
 							retval = huntingScope.lookupMethodDeclaration(methodSelectorName, parameterList, false);
 							if (null == retval) {
-								retval = huntingScope.lookupMethodDeclarationWithConversion(methodSelectorName, parameterList, false);
+								retval = huntingScope.lookupMethodDeclarationWithConversionIgnoringParameter(methodSelectorName, parameterList,
+										false, /*parameterToIgnore*/ null);
 							}
 							if (null != retval) {
 								break;
@@ -2061,9 +2063,9 @@ public abstract class RTExpression extends RTCode {
 					constructorSelectorName,
 					actualArguments, false);
 			if (null == constructor) {
-				constructor = classScope.lookupMethodDeclarationWithConversion(
+				constructor = classScope.lookupMethodDeclarationWithConversionIgnoringParameter(
 						constructorSelectorName,
-						actualArguments, false);
+						actualArguments, false, /*parameterToIgnore*/ null);
 			}
 			
 			if (null == constructor) {

@@ -45,6 +45,7 @@ import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
+import info.fulloo.trygve.parser.Pass0Listener;
 import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
@@ -388,8 +389,10 @@ public abstract class Declaration implements BodyPart {
 			assert t instanceof InterfaceType;
 			type_ = t;
 		}
-		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
-			return signatures_.get(name);
+		public List<MethodSignature> lookupMethodSignatureDeclaration(final String name) {
+			final List<MethodSignature> retval = new ArrayList<MethodSignature>();
+			retval.add(signatures_.get(name));
+			return retval;
 		}
 		public MethodSignature lookupMethodSignatureDeclaration(final String methodSelectorName, final ActualOrFormalParameterList argumentList) {
 			return ((InterfaceType)type_).lookupMethodSignature(methodSelectorName, argumentList);
@@ -420,7 +423,30 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
 		}
-		public void addRequiredSignatureOnSelf(final MethodSignature signature) {
+		private boolean checkParameterConcretenessOf(final FormalParameterList pl,
+				final Pass0Listener parserPass, final int lineNumber) {
+			boolean retval = true;
+			final int numberOfParameters = pl.count();
+			for (int i = 0; i < numberOfParameters; i++) {
+				final Type paramType = pl.typeOfParameterAtPosition(i);
+				final String paramName = pl.nameOfParameterAtPosition(i);
+				if (paramName.equals("this")) {
+					// Role methods quack out the type of the object
+					continue;
+				} else if (paramType instanceof RoleType) {
+					parserPass.errorHook5p2(ErrorType.Fatal, lineNumber,
+							"You cannot require that a Role-player have a script that takes a Role argument such as `",
+							paramType.name(), "'.", "");
+					retval = false;
+				}
+			}
+			return retval;
+		}
+		public void addRequiredSignatureOnSelf(final MethodSignature signature,
+				final Pass0Listener parserPass) {
+			// Make sure none of the parameters are role types
+			checkParameterConcretenessOf(signature.formalParameterList(),
+					parserPass, signature.lineNumber());
 			requiredSelfSignatures_.put(signature.name(), signature);
 		}
 		public Map<String, MethodSignature> requiredSelfSignatures() {

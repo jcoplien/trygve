@@ -45,6 +45,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
 
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -380,7 +381,11 @@ public class Pass0Listener extends KantBaseListener {
 	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
 		assert null == currentInterface_;
 		assert null != currentScope_;
-		final StaticScope newScope = new StaticScope(currentScope_);
+		
+		// We use a special scope for interfaces, since method lookup
+		// will fail if using the usual Scope method lookup — an interface
+		// has not methods — only interfaces
+		final StaticScope newScope = new StaticInterfaceScope(currentScope_);
 		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
 		currentScope_.declareInterface(currentInterface_);
 		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);

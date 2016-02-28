@@ -1,25 +1,54 @@
 // bb10.k
 
-class Activity {
+interface Time {
+   public int compareTo(int other);
+   public int +(int other);
+   public int -(int other);
+}
+
+class DBaseType {
+   public DBaseType dBase() {
+      assert(false, "Unimplemented");
+      return null
+   }
+   public int projectFinish() {
+      assert(false, "Unimplemented");
+      return 0
+   }
+   public List<ActivityClass> successorsOf(ActivityClass activity) {
+      assert(false, "Unimplemented");
+      return null
+   }
+   public ActivityClass predecessorOf(ActivityClass activity) {
+      assert(false, "Unimplemented");
+      return null
+   }
+   public List<Activitiy> allActivities() {
+      assert(false, "Unimplemented");
+      return null
+   }
+}
+
+class ActivityClass {
    public int duration() const { return duration_ }
    public void setDuration(int duration) { duration_ = duration.clone }
-   public int earlyFinish() const {
-      int retval = null;
+   public Time earlyFinish() const {
+      Time retval = null;
       if (earlyStart_ != null)
          retval = earlyStart_ + duration() - 1;
      return retval
    }
-   public void setEarlyStart(int earlyStart) {
+   public void setEarlyStart(Time earlyStart) {
       earlyStart_ = earlyStart.clone
    }
-   public int lateFinish() const {
+   public Time lateFinish() const {
       return lateFinish_
    }
-   public void setLateFinish(int lateFinish) {
+   public void setLateFinish(Time lateFinish) {
       lateFinish_ = lateFinish.clone
    }
-   public int lateStart() const {
-      int retval = null;
+   public Time lateStart() const {
+      Time retval = null;
       if (lateFinish() != null)
          retval = lateFinish() - duration() + 1;
       return retval
@@ -27,13 +56,13 @@ class Activity {
    public String name() {
       return name_
    }
-   public int plannedFinish() const {
-      int retval = null;
+   public Time plannedFinish() const {
+      Time retval = null;
       if (plannedStart() != null) 
          retval = plannedStart() + duration() - 1;
       return retval
    }
-   public int plannedStart() const {
+   public Time plannedStart() const {
       return plannedStart_
    }
    public void setPlannedStart(int plannedStart) {
@@ -71,10 +100,11 @@ class Activity {
 
    private void initialize() {
       // super initialize.
-      duration_ = earlyStart_ = lateFinish_ = plannedStart_ =
+      duration_ = 0;
+      earlyStart_ = lateFinish_ = plannedStart_ =
          resourceRequirement_ = null
    }
-   private Activity(String name, int duration,
+   private ActivityClass(String name, int duration,
                     int resourceRequirement, String details) {
       name_ = name_.clone;
       duration_ = duration.clone;
@@ -85,7 +115,7 @@ class Activity {
 
    // -------------------------------------------
 
-   public Activity(String name) {
+   public ActivityClass(String name) {
       name_ = name.clone;
       text_ = "Further details about the activity named " + name()
    }
@@ -96,22 +126,22 @@ class Activity {
    
 
    int duration_;
-   int earlyStart_;
-   int lateFinish_;
-   int plannedStart_;
+   Time earlyStart_;
+   Time lateFinish_;
+   Time plannedStart_;
    String name_;
    int resourceRequirement_;
    String text_
 }
 
 class Dependency extends Object {
-   public Activity fromActivity() const {
+   public ActivityClass fromActivity() const {
       return fromActivity_
    }
-   public Activity toActivity() const {
+   public ActivityClass toActivity() const {
       return toActivity_
    }
-   public Dependency(Activity from, Activity to) {
+   public Dependency(ActivityClass from, ActivityClass to) {
       // Dependency fromActivity: activity1 toActivity: activity2
       fromActivity_ = from;
       toActivity_ = to
@@ -125,41 +155,153 @@ class Dependency extends Object {
       stream.print(")")
    }
 
-   Activity fromActivity_;
-   Activity toActivity_
+   ActivityClass fromActivity_, toActivity_
 }
 
 class Resource {
-   public Map<int, List<Activity> > allocations() {
+   public Map<int, List<ActivityClass> > allocations() {
       return allocations_
    }
-   public List<Activity> allocationsAt(int weekNo) {
+   public List<ActivityClass> allocationsAt(int weekNo) {
       if (allocations_.containsKey(weekNo) == false)
-         allocations_.put(weekNo, new List<Activity>());
+         allocations_.put(weekNo, new List<ActivityClass>());
       return allocations_.get(weekNo)
    }
    public int maxHeight() {
       int max = 0;
-      for (List<Activity> list : allocations_) {
+      for (List<ActivityClass> list : allocations_) {
          max = Math.max(max, list.size())
       }
       return max
    }
    public void reset() {
-      allocations_ = new Map<int, List<Activity> >();
+      allocations_ = new Map<int, List<ActivityClass> >();
    }
-   public void allocateActivityFromWeek(Activity activity, int weekNo) {
-      assert (false, "Method moved to Interaction.")
+   public void allocateActivityFromWeek(ActivityClass activity, int weekNo) {
+      // Simplest possible allocation assuming infinite capacity.
+      assert(false, "Method moved to interaction")
    }
    public Resource() {
-      name_ = "The only Resource";
-      allocations_ = new Map<int, List<Activity> >()
+      name_ = "The Only Resource";
+      allocations_ = new Map<int, List<ActivityClass> >()
    }
 
    String name_;
-   Map<int, List<Activity> > allocations_;
+   Map<int, List<ActivityClass> > allocations_;
 }
 
+context BackloadCtx {
+   public DBaseType dBase() {
+      assert (false, "Unimplemented");
+      return null
+   }
+   public Time projectFinish() {
+     return this.projectFinish_
+   }
+   private boolean lateStartIsNilDetector(Activity act) {
+      boolean retval = true;
+      for (Activity b : this.dBase().successorsOf(act)) {
+         Activity predecessor = b.pred();
+         if (predecessor.activityLateStart() == null) {
+            retval = false;
+            break
+         }
+      }
+      return retval
+   }
+   role Activity {
+      public void backload() {
+         this.setLateFinish(ProjectFinish);
+         Activity minSucc = Successors.findMinLateStart();
+         if (minSucc != null) {
+            setLateFinish(minSucc.lateStart() - 1)
+         }
+      }
+      public Activity pred() {
+         return dBase.predecessorOf(this)
+      }
+      public Time activityLateStart() {
+         return lateStart()
+      }
+      public void activitySetLateFinish(ProjectFinish act) {
+         setLateFinish(act)
+      }
+   } requires {
+      void setLateFinish(Time finish);
+      Time lateStart() const;
+   }
+   role AllActivities {
+      public int count() { return size(); }
+      public Activity getActivityAt(int i) { return get(i) }
+   } requires {
+      int size() const;
+      Activity get(int i) const
+   }
+   role Backloader {
+      public Time backload() {
+         ProjectStart projectStart;
+         for (int i = 0; i < AllActivities.count(); i++) {
+            Activity act = AllActivities.getActivityAt(i);
+            act.activitySetLateFinish(null)
+         }
+         projectStart = ProjectFinish;
+         do {
+            this.remap();
+            if (Activity == null) break;
+            Activity.backload();
+            projectStart = Math.min(projectStart, Activity.activityLateStart() - 1)
+         } while (Activity != null);
+         return projectStart
+      }
+   } requires {
+      void remap()
+   }
 
+   role ProjectFinish {
+   } requires {
+      int compareTo(int finish)
+   }
+   role Successors {
+      public Activity findMinLateStart() {
+         int min = 999999;
+         Activity minStartActivity = null;
+         for (int i = 0; i < size(); i++) {
+            Activity current = get(i);
+            if (current.lateStart() < min) {
+               min = current.lateStart();
+               minStartActivity = current
+            }
+         }
+         return minStartActivity;
+      }
+   } requires {
+      Activity get(int i) const;
+      int size() const;
+   }
+   private void remap() {
+      Activity = activity();
+      AllActivities = this.dBase().allActivities();
+      Backloader = this;
+      ProjectFinish = this.dBase().projectFinish();
+      Successors = this.dBase().successorsOf(Activity)
+   }
+   public void backloadProject() {
+      lateProjectStart_ = this.triggerInteractionFromWith(Backloader, "backload")
+   }
+   public Activity activity() {
+      Activity retval = null;
+      List<Activity> acta = this.dBase().allActivities().clone();
+      for (Activity act : acta) {
+         if (act.lateFinish() == null) {
+            if (lateStartIsNilDetector(act)) {
+               retval = act; break
+            }
+         }
+      }
+      return retval
+   }
+
+   Time projectStart_, projectFinish_, lateProjectStart_
+}
 
 

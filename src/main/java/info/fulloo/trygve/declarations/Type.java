@@ -91,8 +91,37 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
 		// Type
-		assert false;
-		return false;
+		boolean retval = false;
+		if ((operator.equals("!=") || operator.equals("==")) && type.pathName().equals("Null")) {
+			// Can always compare with null
+			retval = true;
+		} else if (operator.equals("!=") || operator.equals("==") || operator.equals("<") ||
+				operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
+			// Valid it compareTo(X) is defined on us. Probably needs some loosening up
+			final FormalParameterList parameterList = new FormalParameterList();
+			ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+			parameterList.addFormalParameter(self);
+			ObjectDeclaration other = new ObjectDeclaration("other", this, 0);
+			parameterList.addFormalParameter(other);
+			MethodDeclaration compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+					"compareTo", parameterList, false, /*parameterToIgnore*/ null);
+			if (null == compareTo) {
+				self = new ObjectDeclaration("this", type, 0);
+				parameterList.addFormalParameter(self);
+				other = new ObjectDeclaration("other", type, 0);
+				parameterList.addFormalParameter(other);
+				compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+						"compareTo", parameterList, false, /*parameterToIgnore*/ null);
+				if (null == compareTo) {
+					retval = false;
+				} else {
+					retval = true;
+				}
+			} else {
+				retval = true;
+			}
+		}
+		return retval;
 	}
 	public String pathName() {
 		// pathName is just a unique String for this type. We
@@ -318,6 +347,25 @@ public abstract class Type implements ExpressionStackAPI
 					}
 				}
 			}
+			
+			if (retval == false) {
+				// See if all of my operations are supported by t
+				retval = true;
+				for (final String methodName : this.selectorSignatureMap().keySet()) {
+					final List<MethodSignature> signatures = this.selectorSignatureMap().get(methodName);
+					for (final MethodSignature interfaceSignature : signatures) {
+						final MethodDeclaration otherTypesMethod = t.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+								methodName,
+								interfaceSignature.formalParameterList(),
+								false,
+								/*parameterToIgnore*/ "this");
+						if (null == otherTypesMethod) {
+							retval = false;
+							break;
+						}
+					}
+				}
+			}
 			return retval;
 		}
 		@Override public Type type() {
@@ -335,7 +383,10 @@ public abstract class Type implements ExpressionStackAPI
 			if (selectorSignatureMap_.containsKey(methodSelector)) {
 				signatures = selectorSignatureMap_.get(methodSelector);
 				for (final MethodSignature signature : signatures) {
-					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(signature.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true)) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(
+							signature.formalParameterList(),
+							methodSignatureFormalParameterList,
+							paramToIgnore, /*conversionAllowed*/ true)) {
 						retval = signature;
 						break;
 					}
@@ -531,6 +582,37 @@ public abstract class Type implements ExpressionStackAPI
 					retval = true;
 				} else if (t.name().equals("Null")) {
 					retval = true;
+				} else if (t instanceof RoleType|| t instanceof StagePropType) {
+					// Then make sure that everything in the "requires" list of
+					// the this is supported by the Role type
+					
+					final RoleType roleType = (RoleType)t;
+					final StaticScope roleScope = roleType.enclosedScope();
+					final Declaration associatedDecl = roleScope.associatedDeclaration();
+					assert associatedDecl instanceof RoleDeclaration;
+					final List<MethodDeclaration> requiredMethodDecls = this.enclosedScope().methodDeclarations();
+					if (this.pathName().equals("Null")) {
+						// Can always have a null object
+						retval = true;
+					} else {
+						retval = true;
+						for (final MethodDeclaration declaration : requiredMethodDecls) {
+							final String requiredMethodName = declaration.name();
+							final MethodSignature requiredMethodSignature = declaration.signature();
+							
+							// Does the Role have it?
+							final MethodDeclaration mdecl = roleScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+									requiredMethodName,
+									requiredMethodSignature.formalParameterList(),
+									/*ignoreSignature*/ false,
+									/*parameterToIgnore*/ "this");
+							
+							if (null == mdecl) {
+								retval = false;
+								break;
+							}
+						}
+					}
 				}
 			}
 			
@@ -551,7 +633,7 @@ public abstract class Type implements ExpressionStackAPI
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
-			if (type instanceof RoleType && type.name().equals(name())) {
+			if (type instanceof RoleType && type.pathName().equals(pathName())) {
 				// it's just one of us...
 				;
 			} else {
@@ -559,12 +641,18 @@ public abstract class Type implements ExpressionStackAPI
 				for (final String methodName : requiredSelfSignatures.keySet()) {
 					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
 					final MethodSignature signatureForMethodSelector =
-							type.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
+							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 					if (null == signatureForMethodSelector) {
 						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
 								rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 								"' needed by Role `", name(),
 								"' does not appear in interface of `", type.name() + "'.");
+					} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+								rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+								"' needed by Role `", name(),
+								"' is declared as private in interface of `", type.name() +
+								"' and is therefore inaccessible to the Role.");
 					}
 				}
 			}
@@ -577,7 +665,11 @@ public abstract class Type implements ExpressionStackAPI
 			// is satisfied in the signature of t
 
 			boolean retval = false;
-			if (t instanceof RoleType && t.name().equals(name())) {
+			
+			if (null != t && t.pathName().equals("Null")) {
+				// Anything can be associated with a null object
+				retval = true;
+			} else if (t instanceof RoleType && t.name().equals(name())) {
 				// it's just one of us...
 				retval = true;
 			} else if (null != associatedDeclaration_){
@@ -609,7 +701,13 @@ public abstract class Type implements ExpressionStackAPI
 							break;
 						}
 					} else {
-						retval = true;
+						if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+							// It would violate encapsulation of the object by the Role
+							// if Role scripts could invoke private scripts of their Role-player
+							retval = false;
+						} else {
+							retval = true;
+						}
 						break;
 					}
 				}
@@ -624,7 +722,10 @@ public abstract class Type implements ExpressionStackAPI
 			// RoleType
 			assert true;
 			boolean retval;
-			if (operator.equals(">") || operator.equals(">=") || operator.equals("<") || operator.equals("<=") ||
+			if ((operator.equals("==") || operator.equals("!=")) && type.pathName().equals("Null")) {
+				// Can always compare with null
+				retval = true;
+			} else if (operator.equals(">") || operator.equals(">=") || operator.equals("<") || operator.equals("<=") ||
 					operator.equals("==") || operator.equals("!=")) {
 				retval = this.hasCompareToOrHasOperatorForArgOfType(operator, type);
 			} else {
@@ -965,7 +1066,7 @@ public abstract class Type implements ExpressionStackAPI
 		return staticObjects_.get(name);
 	}
 	public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
-			String paramToIgnore, HierarchySelector baseClassSearch) {
+			final String paramToIgnore, final HierarchySelector baseClassSearch) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 		if (null == enclosedScope_) {
 			assert null != enclosedScope_;
@@ -996,6 +1097,36 @@ public abstract class Type implements ExpressionStackAPI
 		
 		return retval;
 	}
+	public MethodSignature signatureForMethodSelectorGeneric(final String methodSelector, final MethodSignature methodSignature) {
+		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
+		if (null == enclosedScope_) {
+			assert null != enclosedScope_;
+		}
+		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector,
+				methodSignatureFormalParameterList,
+				/* paramToIgnore */ "this",
+				/* conversionAllowed = */ true);
+		
+		// mDecl can be null under error conditions
+		MethodSignature retval = null == mDecl? null: mDecl.signature();
+	
+		// We need to explore base class signatures
+		if (null == retval) {
+			if (this instanceof ClassType) {
+				final ClassType classType = (ClassType) this;
+				if (null != classType.baseClass()) {
+					// Recur. Good code reuse.
+					retval = classType.baseClass().signatureForMethodSelectorGeneric(methodSelector, methodSignature);
+				} else {
+					retval = null;	// redundant
+				}
+			} else {
+				retval = null;	// redundant
+			}
+		}
+		
+		return retval;
+	}
 	public MethodSignature signatureForMethodSelectorInHierarchyIgnoringThis(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, "this",
 				HierarchySelector.AlsoSearchBaseClass);
@@ -1003,6 +1134,13 @@ public abstract class Type implements ExpressionStackAPI
 	public MethodSignature signatureForMethodSelectorIgnoringThis(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, "this",
 				HierarchySelector.ThisClassOnly);
+	}
+	public MethodSignature signatureForMethodSelectorIgnoringThisWithPromotion(final String methodSelector, final MethodSignature methodSignature) {
+		return signatureForMethodSelectorCommon(methodSelector, methodSignature, "this",
+				HierarchySelector.AlsoSearchBaseClass);
+	}
+	public MethodSignature signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(final String methodSelector, final MethodSignature methodSignature) {
+		return signatureForMethodSelectorGeneric(methodSelector, methodSignature);
 	}
 	public MethodSignature signatureForMethodSelector(final String methodSelector, final MethodSignature methodSignature) {
 		return signatureForMethodSelectorCommon(methodSelector, methodSignature, null,

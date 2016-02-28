@@ -452,7 +452,8 @@ public class Pass2Listener extends Pass1Listener {
 		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
 		
-		MethodDeclaration mdecl = enclosedScope.lookupMethodDeclarationWithConversion(operationAsString, argList, false);
+		MethodDeclaration mdecl = enclosedScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+				operationAsString, argList, false, /*parameterToIgnore*/ null);
 		if (null == mdecl) {
 			mdecl = enclosedScope.lookupMethodDeclarationRecursive(operationAsString, argList, false);
 			if (null == mdecl) {
@@ -469,7 +470,8 @@ public class Pass2Listener extends Pass1Listener {
 		argumentList.addActualArgument(rightExpr);
 		argumentList.addFirstActualParameter(leftExpr);
 		final MethodDeclaration checkMethodOverload =
-				leftExprType.enclosedScope().lookupMethodDeclarationWithConversion(operationAsString, argumentList, false);
+				leftExprType.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+						operationAsString, argumentList, false, /*parameterToIgnore*/ null);
 		
 		if (null != checkMethodOverload) {
 			;	// then the class overloads the operator. O.K.
@@ -540,7 +542,8 @@ public class Pass2Listener extends Pass1Listener {
 			// Can be null in error condition
 			if (null != declarationScope) {
 				final String typeName = type.name();
-				final MethodDeclaration constructor = declarationScope.lookupMethodDeclarationWithConversion(typeName, actualArgumentList, false);
+				final MethodDeclaration constructor = declarationScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+						typeName, actualArgumentList, false, /*parameterToIgnore*/ null);
 				if (null != actualArgumentList && 1 < actualArgumentList.count()) {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor
@@ -723,8 +726,8 @@ public class Pass2Listener extends Pass1Listener {
 			methodDeclaration = type.enclosedScope().lookupMethodDeclaration(
 					message.selectorName(), message.argumentList(), false);
 			if (null == methodDeclaration) {
-				methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversion(
-					message.selectorName(), message.argumentList(), false);
+				methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+					message.selectorName(), message.argumentList(), false, /*parameterToIgnore*/ null);
 			}
 			if (null == methodDeclaration) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
@@ -840,7 +843,9 @@ public class Pass2Listener extends Pass1Listener {
 					while (null != baseClassType) {
 						final StaticScope baseClassScope = baseClassType.enclosedScope();
 						assert null != baseClassScope;
-						methodDeclaration = baseClassScope.lookupMethodDeclarationWithConversion(message.selectorName(), argumentList, false);
+						methodDeclaration = baseClassScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+								message.selectorName(),
+								argumentList, false, /*parameterToIgnore*/ null);
 						if (null != methodDeclaration) {
 							break;
 						}
@@ -1438,18 +1443,25 @@ public class Pass2Listener extends Pass1Listener {
 		// references, templates, etc.) but nonetheless part of what we must
 		// deal with....
 
-		final StaticScope templateScope = type.enclosedScope();
-		final TemplateInstantiationInfo currentTemplateInstantiationInfo = templateScope.templateInstantiationInfo();
-		final TemplateDeclaration templateDeclaration = currentTemplateInstantiationInfo.templateDeclaration();
-		final TemplateInstantiationInfo newTemplateInstantiationInfo = new TemplateInstantiationInfo(templateDeclaration, type.name());
-		newTemplateInstantiationInfo.setClassType(currentTemplateInstantiationInfo.classType());
-
-		for (final String typeName: typeNameList) {
-			final Type templateParameterType = currentScope_.lookupTypeDeclarationRecursive(typeName);
-			newTemplateInstantiationInfo.add(templateParameterType);
-		}
+		final StaticScope templateScope = null != type? type.enclosedScope(): null;
+		final TemplateInstantiationInfo currentTemplateInstantiationInfo = null != templateScope?
+				templateScope.templateInstantiationInfo(): null;
+		final TemplateDeclaration templateDeclaration = null != currentTemplateInstantiationInfo?
+				currentTemplateInstantiationInfo.templateDeclaration(): null;
+		final TemplateInstantiationInfo newTemplateInstantiationInfo = null != type?
+				new TemplateInstantiationInfo(templateDeclaration, type.name()):
+					null;
 		
-		templateScope.resetTemplateInstationInfo(newTemplateInstantiationInfo);
+		if (null != currentTemplateInstantiationInfo) {
+			newTemplateInstantiationInfo.setClassType(currentTemplateInstantiationInfo.classType());
+		
+			for (final String typeName: typeNameList) {
+				final Type templateParameterType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+				newTemplateInstantiationInfo.add(templateParameterType);
+			}
+			
+			templateScope.resetTemplateInstationInfo(newTemplateInstantiationInfo);
+		}
 	}
 	
 	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
