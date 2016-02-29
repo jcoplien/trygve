@@ -838,8 +838,16 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				assert regex instanceof RTStringObject;
 				final RTObject replacement = dynamicScope.getObject("replacement");
 				assert replacement instanceof RTStringObject;
-				final RTStringObject retval = stringObject.replaceFirst(regex, replacement);
-
+			
+				RTStringObject retval = null;
+				try {
+					retval = stringObject.replaceFirst(regex, replacement);
+				} catch (final PatternSyntaxException e) {
+					ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
+					RTMessage.printMiniStackStatus();
+					return null;
+				}
+				
 				addRetvalTo(dynamicScope);
 				dynamicScope.setObject("ret$val", retval);
 				
