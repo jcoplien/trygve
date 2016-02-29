@@ -844,14 +844,16 @@ public class Pass1Listener extends Pass0Listener {
 			
 			// Make sure self_methods are const
 			if (currentRole_.requiresConstMethods()) {
-				final Map<String, MethodSignature> requiredSelfSignatures = currentRole_.requiredSelfSignatures();
-				for (Map.Entry<String, MethodSignature> iter : requiredSelfSignatures.entrySet()) {
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = currentRole_.requiredSelfSignatures();
+				for (Map.Entry<String, List<MethodSignature>> iter : requiredSelfSignatures.entrySet()) {
 					final String methodName = iter.getKey();
-					final MethodSignature signature = iter.getValue();
-					if (signature.hasConstModifier() == false) {
-						errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(),
-								"WARNING: Signatures for functions required by stageprops like ", currentRole_.name(),
-								" should have a const modifier: method ", methodName, " does not.", "");
+					final List<MethodSignature> signatures = iter.getValue();
+					for (final MethodSignature signature : signatures) {
+						if (signature.hasConstModifier() == false) {
+							errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(),
+									"WARNING: Signatures for functions required by stageprops like ", currentRole_.name(),
+									" should have a const modifier: method ", methodName, " does not.", "");
+						}
 					}
 				}
 			}
@@ -1985,7 +1987,8 @@ public class Pass1Listener extends Pass0Listener {
 							}
 						}
 						
-						expression = new MessageExpression(expression, message, expression.type(), lineNumber, false,
+						message.setReturnType(myOperatorFunc.type());
+						expression = new MessageExpression(expression, message, myOperatorFunc.type(), lineNumber, false,
 								originMethodClass, targetMethodClass, isPolymorphic);
 					} else if (expression.type() instanceof RoleType){
 						// Check if it is in the requires section for a Role
@@ -1994,12 +1997,14 @@ public class Pass1Listener extends Pass0Listener {
 						final Declaration associatedDeclaration =
 								(type instanceof StagePropType)? ((StagePropType)type).associatedDeclaration():
 																 ((RoleType)type).associatedDeclaration();
-						final Map<String, MethodSignature> requiresSection =
+						final Map<String, List<MethodSignature>> requiresSection =
 								(associatedDeclaration instanceof StagePropDeclaration)?
 										((StagePropDeclaration)associatedDeclaration).requiredSelfSignatures():
 										((RoleDeclaration)associatedDeclaration).requiredSelfSignatures();
-						final MethodSignature newMethodSignature = requiresSection.get(operatorAsString);
-						if (null != newMethodSignature) {
+						final List<MethodSignature> newMethodSignatures = requiresSection.get(operatorAsString);
+						if (null != newMethodSignatures) {
+							// TODO: Should probably do more signature-checking here to make
+							// sure this is going to fly at run time. Tests?
 							final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 							originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 							targetMethodClass = associatedDeclaration.type().enclosedScope().methodInvocationEnvironmentClass();
@@ -4599,13 +4604,31 @@ public class Pass1Listener extends Pass0Listener {
 			
 			if (null == mdecl) {
 				// First, check in requires list
-				final Map<String, MethodSignature> requiresSection = roleDecl.requiredSelfSignatures();
-				final MethodSignature aRequiredFunction = requiresSection.get(methodSelectorName);
-				if (null != aRequiredFunction) {
-					mdecl = new MethodDeclaration(aRequiredFunction, roleDecl.enclosedScope(), aRequiredFunction.lineNumber());
-					mdecl.addParameterList(aRequiredFunction.formalParameterList());
-					mdecl.setReturnType(mdecl.returnType());
-				} else {
+				final Map<String, List<MethodSignature>> requiresSection = roleDecl.requiredSelfSignatures();
+				final List<MethodSignature> possibleRequiredFunctions = requiresSection.get(methodSelectorName);
+				if (null != possibleRequiredFunctions) {
+					for (final MethodSignature aRequiredFunction : possibleRequiredFunctions) {
+						// We don't insist on parameter type matching in Pass 1. Pass 2 will catch that.
+						// But we'll try.
+						if (aRequiredFunction.formalParameterList().alignsWithUsingConversion(actualArgumentList)) {
+							mdecl = new MethodDeclaration(aRequiredFunction, roleDecl.enclosedScope(), aRequiredFunction.lineNumber());
+							mdecl.addParameterList(aRequiredFunction.formalParameterList());
+							mdecl.setReturnType(mdecl.returnType());
+							break;
+						}
+					}
+					
+					// Even if the signatures don't match, it may be because we have incomplete
+					// type information. For now, give it a pass if the selector name is O.K.
+					if (possibleRequiredFunctions.size() > 0) {
+						final MethodSignature aRequiredFunction = possibleRequiredFunctions.get(0);
+						mdecl = new MethodDeclaration(aRequiredFunction, roleDecl.enclosedScope(), aRequiredFunction.lineNumber());
+						mdecl.addParameterList(aRequiredFunction.formalParameterList());
+						mdecl.setReturnType(mdecl.returnType());
+					}
+				}
+				
+				if (null == mdecl) {
 					// If this is a Role variable, it's fair game to look for
 					// methods in what will be a base class for every Role-player:
 					// class object
@@ -4637,7 +4660,7 @@ public class Pass1Listener extends Pass0Listener {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
 				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
-						"' not declared in Context ", contextDecl.name());
+						"' not declared in Context `", contextDecl.name() + "'.");
 			}
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
@@ -4659,7 +4682,7 @@ public class Pass1Listener extends Pass0Listener {
 					if (null == mdecl) {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 								"Cannot find static script `" + methodSelectorName
-								+ actualArgumentList.selflessGetText(),
+								+ actualArgumentList.getText(),
 							"' of class `", object.name(), "'.");
 					}
 				}

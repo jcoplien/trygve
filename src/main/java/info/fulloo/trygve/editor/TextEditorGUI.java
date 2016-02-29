@@ -52,11 +52,11 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/missing_error1.k";
+	private final static String defaultFile = "tests/money_transfer3.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.15";
+    final String TrygveVersion = "1.5.16";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -837,6 +837,7 @@ public void resetCompiledWithoutError() {
 
 private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
 	final String pathName = fileSystemTextField.getText();
+	this.fileName = new File(pathName);
 	
     try {
         final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
@@ -846,8 +847,6 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't write file. Ask Cope to have a look at the code");
     }
-    
-    this.fileName = new File(pathName);
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
 private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerformed

@@ -309,6 +309,15 @@ public class StaticScope {
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl);
 		
+		methodScope = new StaticScope(intType.enclosedScope());
+		formals = new FormalParameterList();
+		formals.addFormalParameter(self);
+		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
+		methodScope.setDeclaration(methodDecl);
+		intScope.declareMethod(methodDecl);
+		
 		globalScope_.declareType(intType);
 		globalScope_.declareClass(intDeclaration);
 		intType.enclosedScope().setDeclaration(intDeclaration);
@@ -1426,23 +1435,54 @@ public class StaticScope {
 			}
 			return retval;
 		}
-		public MethodDeclaration lookupRequiredMethod(final MethodDeclaration decl) {
+		private MethodDeclaration lookupRequiredMethodSelectorAndParameterList(final String methodSelector,
+				final ActualOrFormalParameterList declParameterList) {
 			MethodDeclaration retval = null;
-			final String methodName = decl.name();
-			
-			if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
-				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
-				for (final MethodDeclaration aDecl : oldEntry) {
-					final FormalParameterList loggedSignature = aDecl.formalParameterList();
-					if (null == loggedSignature && null == decl.formalParameterList()) {
-						retval = aDecl;
+			MethodSignature signatureForRetval = null;
+			final Declaration associatedDeclaration = this.associatedDeclaration();
+			assert associatedDeclaration instanceof RoleDeclaration;
+			final RoleDeclaration roleDecl = (RoleDeclaration) associatedDeclaration;
+			final Map <String, List<MethodSignature>> requiredSignatures = roleDecl.requiredSelfSignatures();
+			final List<MethodSignature> oldEntry = requiredSignatures.get(methodSelector);
+			if (null != oldEntry) {
+				for (final MethodSignature aSignature : oldEntry) {
+					assert null != aSignature;
+					final FormalParameterList loggedSignature = aSignature.formalParameterList();
+					if (null == loggedSignature && null == declParameterList) {
+						signatureForRetval = aSignature;
 						break;
-					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
-						retval = aDecl;
+					} else if (null != loggedSignature && loggedSignature.alignsWith(declParameterList)) {
+						signatureForRetval = aSignature;
 						break;
 					}
 				}
 			}
+			if (null != signatureForRetval) {
+				// Return a dummy declaration
+				retval = new MethodDeclaration(signatureForRetval, this, 0);
+			}
+			return retval;
+		}
+		public MethodDeclaration lookupRequiredMethod(final MethodDeclaration decl) {
+			MethodDeclaration retval = null;
+			final String methodName = decl.name();
+			if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
+				retval = lookupRequiredMethodSelectorAndParameterList(methodName, decl.formalParameterList());
+			}
+			return retval;
+		}
+		public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(final String methodSelector,
+				final ActualOrFormalParameterList parameterList,
+				final boolean ignoreSignature, final String parameterToIgnore) {
+			// First, try an ordinary method
+			MethodDeclaration retval = super.lookupMethodDeclarationWithConversionIgnoringParameter(methodSelector,
+					parameterList, ignoreSignature, parameterToIgnore);
+			
+			// If that doesn't work, try the requires interface
+			if (null == retval) {
+				retval = this.lookupRequiredMethodSelectorAndParameterList(methodSelector, parameterList);
+			}
+			
 			return retval;
 		}
 		

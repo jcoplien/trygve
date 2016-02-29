@@ -355,10 +355,7 @@ public abstract class Type implements ExpressionStackAPI
 					final List<MethodSignature> signatures = this.selectorSignatureMap().get(methodName);
 					for (final MethodSignature interfaceSignature : signatures) {
 						final MethodDeclaration otherTypesMethod = t.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
-								methodName,
-								interfaceSignature.formalParameterList(),
-								false,
-								/*parameterToIgnore*/ "this");
+								methodName, interfaceSignature.formalParameterList(), false, /*parameterToIgnore*/ "this");
 						if (null == otherTypesMethod) {
 							retval = false;
 							break;
@@ -375,7 +372,7 @@ public abstract class Type implements ExpressionStackAPI
 				final String paramToIgnore, final HierarchySelector baseClassSearch) {
 			MethodSignature retval = null;
 			
-			assert true;		// ever called? Yup. spell=check2.k
+			assert true;		// ever called? Yup. spell_check2.k
 			
 			final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 			
@@ -637,22 +634,25 @@ public abstract class Type implements ExpressionStackAPI
 				// it's just one of us...
 				;
 			} else {
-				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 				for (final String methodName : requiredSelfSignatures.keySet()) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
-					final MethodSignature signatureForMethodSelector =
+					final List<MethodSignature> rolesSignatures = requiredSelfSignatures.get(methodName);
+					
+					for (final MethodSignature rolesSignature : rolesSignatures) {
+						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
-					if (null == signatureForMethodSelector) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
-								rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
-								"' needed by Role `", name(),
-								"' does not appear in interface of `", type.name() + "'.");
-					} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
-								rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
-								"' needed by Role `", name(),
-								"' is declared as private in interface of `", type.name() +
-								"' and is therefore inaccessible to the Role.");
+						if (null == signatureForMethodSelector) {
+							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+									"' needed by Role `", name(),
+									"' does not appear in interface of `", type.name() + "'.");
+						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+									"' needed by Role `", name(),
+									"' is declared as private in interface of `", type.name() +
+									"' and is therefore inaccessible to the Role.");
+						}
 					}
 				}
 			}
@@ -673,43 +673,53 @@ public abstract class Type implements ExpressionStackAPI
 				// it's just one of us...
 				retval = true;
 			} else if (null != associatedDeclaration_){
-				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 				retval = true;
-				for (final Map.Entry<String, MethodSignature> entry : requiredSelfSignatures.entrySet()) {
+				for (final Map.Entry<String, List<MethodSignature>> entry : requiredSelfSignatures.entrySet()) {
 					final String methodName = entry.getKey();
-					final MethodSignature rolesSignature = entry.getValue();
-					final MethodSignature signatureForMethodSelector = null != t?
-							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature):
-							null;
-					if (null == signatureForMethodSelector) {
-						// See if RHS is itself a Role / StageProp, and compare
-						if (null != t && (t instanceof RoleType || t instanceof StagePropType)) {
-							final RoleType otherAsRole = (RoleType)t;
-							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
-							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
-							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
-							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
-								retval = true;
+					final List<MethodSignature> rolesSignatures = entry.getValue();
+					
+					// It's doubtful there are many, but it's possible. Cover them all.
+					for (final MethodSignature rolesSignature : rolesSignatures) {
+						final MethodSignature signatureForMethodSelector = null != t?
+								t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature):
+								null;
+						if (null == signatureForMethodSelector) {
+							// See if RHS is itself a Role / StageProp, and compare
+							if (null != t && (t instanceof RoleType || t instanceof StagePropType)) {
+								final RoleType otherAsRole = (RoleType)t;
+								final Map<String, List<MethodSignature>> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+								
+								// Any one of the "otherSignatures" will do if it matches
+								boolean found = false;
+								final List<MethodSignature> appearancesOfThisSignatureInOther = otherSignatures.get(methodName);
+								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
+									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
+									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+										found = true;
+										break;
+									}
+								}
+								retval = found;
 								break;
 							} else {
 								retval = false;
 								break;
 							}
 						} else {
-							retval = false;
+							if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+								// It would violate encapsulation of the object by the Role
+								// if Role scripts could invoke private scripts of their Role-player
+								retval = false;
+							} else {
+								retval = true;
+							}
 							break;
 						}
-					} else {
-						if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							// It would violate encapsulation of the object by the Role
-							// if Role scripts could invoke private scripts of their Role-player
-							retval = false;
-						} else {
-							retval = true;
-						}
-						break;
 					}
+
+					if (false == retval) break;
 				}
 			} else {
 				// associatedDeclaration_ is null?
@@ -761,17 +771,19 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public boolean hasCompareToOrHasOperatorForArgOfType(final String operator, final Type rhs) {
 			boolean retval = false;
-			final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+			final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 			for (final String methodName : requiredSelfSignatures.keySet()) {
+				final List<MethodSignature> requiredSignatureList = requiredSelfSignatures.get(methodName);
 				if (methodName.equals("compareTo") || methodName.equals(operator)) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
-					final FormalParameterList formalParameters = rolesSignature.formalParameterList();
-					if (formalParameters.count() > 1) {
-						final ObjectDeclaration wannabeRhsArg = formalParameters.parameterAtPosition(1);
-						final Type argType = wannabeRhsArg.type();
-						if (rhs.pathName().equals(argType.pathName())) {
-							retval = true;
-							break;
+					for (final MethodSignature rolesSignature: requiredSignatureList) {
+						final FormalParameterList formalParameters = rolesSignature.formalParameterList();
+						if (formalParameters.count() > 1) {
+							final ObjectDeclaration wannabeRhsArg = formalParameters.parameterAtPosition(1);
+							final Type argType = wannabeRhsArg.type();
+							if (rhs.pathName().equals(argType.pathName())) {
+								retval = true;
+								break;
+							}
 						}
 					}
 				}
@@ -791,151 +803,177 @@ public abstract class Type implements ExpressionStackAPI
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
-			if (type instanceof StagePropType && type.name().equals(name())) {
+			if (type instanceof StagePropType && type.pathName().equals(pathName())) {
 				// it's just one of us...
 				;
 			} else {
-				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
 				for (final String methodName : requiredSelfSignatures.keySet()) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
-					final MethodSignature signatureForMethodSelector =
-							type.signatureForMethodSelectorIgnoringThis(methodName, rolesSignature);
-					boolean retval = true;
-					if (null == signatureForMethodSelector) {
-						// See if RHS is itself a Role / StageProp, and compare
-						if (type instanceof RoleType || type instanceof StagePropType) {
-							final RoleType otherAsRole = (RoleType)type;
-							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
-							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
-							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
-							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
-								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
-									retval = true;
-									break;
-								} else {
-									retval = false;
-								}
-							} else {
-								retval = false;
-							}
-						} else {
-							retval = false;
-						}
-						if (false == retval) {
-							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`", rolesSignature.name(), "' needed by Stage Prop `", name(),
-								"' does not appear in interface of `", type.name() + "'.");
-							break;
+					final List<MethodSignature> rolesSignatures = requiredSelfSignatures.get(methodName);
+					
+					for (final MethodSignature rolesSignature : rolesSignatures) {
+						final MethodSignature signatureForMethodSelector =
+							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
+						if (null == signatureForMethodSelector) {
+							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+									"' needed by Stage Prop `", name(),
+									"' does not appear in interface of `", type.name() + "'.");
+						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+									"' needed by Stage Prop `", name(),
+									"' is declared as private in interface of `", type.name() +
+									"' and is therefore inaccessible to the Stage Prop.");
 						}
 					}
 				}
 			}
 		}
-		public Map<String, MethodSignature> requiredSelfSignatures() {
+		public Map<String, List<MethodSignature>> requiredSelfSignatures() {
 			return associatedDeclaration_.requiredSelfSignatures();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
-			boolean retval = true;
-			if (t instanceof StagePropType && t.name().equals(name())) {
+
+			boolean retval = false;
+			
+			if (null != t && t.pathName().equals("Null")) {
+				// Anything can be associated with a null object
+				retval = true;
+			} else if (t instanceof RoleType && t.name().equals(name())) {
 				// it's just one of us...
-				;
-			} else {
-				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
-				for (final String methodName : requiredSelfSignatures.keySet()) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
-					final MethodSignature signatureForMethodSelector =
-							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
-					if (null == signatureForMethodSelector) {
-						// See if RHS is itself a Role / StageProp, and compare
-						if (t instanceof RoleType || t instanceof StagePropType) {
-							final RoleType otherAsRole = (RoleType)t;
-							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
-							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
-							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
-							final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-							if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
-								if (appearanceOfThisSignatureInOther.hasConstModifier()) {
-									retval = true;
-								} else {
-									retval = false;
+				retval = true;
+			} else if (null != associatedDeclaration_){
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				retval = true;
+				for (final Map.Entry<String, List<MethodSignature>> entry : requiredSelfSignatures.entrySet()) {
+					final String methodName = entry.getKey();
+					final List<MethodSignature> rolesSignatures = entry.getValue();
+					
+					// It's doubtful there are many, but it's possible. Cover them all.
+					for (final MethodSignature rolesSignature : rolesSignatures) {
+						final MethodSignature signatureForMethodSelector = null != t?
+								t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature):
+								null;
+						if (null == signatureForMethodSelector) {
+							// See if RHS is itself a Role / StageProp, and compare
+							if (t instanceof RoleType || t instanceof StagePropType) {
+								final RoleType otherAsRole = (RoleType)t;
+								final Map<String, List<MethodSignature>> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+								
+								// Any one of the "otherSignatures" will do if it matches
+								boolean found = false;
+								final List<MethodSignature> appearancesOfThisSignatureInOther = otherSignatures.get(methodName);
+								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
+									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
+									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
+									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+										found = true;
+										break;
+									}
 								}
-								break;
+								retval = found;
 							} else {
 								retval = false;
-								break;
 							}
-						} else {
+							break;
+						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
+							// It would violate encapsulation of the object by the Role
+							// if Role scripts could invoke private scripts of their Role-player
 							retval = false;
 							break;
+						} else if (signatureForMethodSelector.hasConstModifier() == false) {
+							final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
+									" does not match the contract at line " +
+									Integer.toString(rolesSignature.lineNumber());
+							parserPass.errorHook5p2(ErrorType.Warning, lineNumber,
+									"WARNING: Required methods for stage props should be const. The declaration of method ",
+									signatureForMethodSelector.name(), " at line ",
+									roleSignatureLineNumber);
+							break;
 						}
-					} else if (signatureForMethodSelector.hasConstModifier() == false) {
-						final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
-								" does not match the contract at line " +
-								Integer.toString(rolesSignature.lineNumber());
-						parserPass.errorHook5p2(ErrorType.Warning, lineNumber,
-								"WARNING: Required methods for stage props should be const. The declaration of method ",
-								signatureForMethodSelector.name(), " at line ",
-								roleSignatureLineNumber);
 					}
+
+					if (false == retval) break;
 				}
+			} else {
+				// associatedDeclaration_ is null?
+				// assert false;
+				retval = false;	// probably just a Pass1 stumble. chainable1.k
 			}
 			return retval;
 		}
+
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 
-			boolean retval = true;
+			boolean retval = false;
 			if (t instanceof StagePropType && t.name().equals(name())) {
 				// it's just one of us...
-				;
+				retval = true;
 			} else if (t.pathName().equals("Null")) {
 				// can always compare with Null
-				;
+				retval = true;
 			} else {
-				final Map<String, MethodSignature> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				retval = true;
+				
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = associatedDeclaration_.requiredSelfSignatures();
+				
+				// Must cover them all
 				for (final String methodName : requiredSelfSignatures.keySet()) {
-					final MethodSignature rolesSignature = requiredSelfSignatures.get(methodName);
-					final MethodSignature signatureForMethodSelector =
-							t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
-					if (null == signatureForMethodSelector) {
-						// See if RHS is itself a Role / StageProp, and compare
-						if (t instanceof RoleType || t instanceof StagePropType) {
-							final RoleType otherAsRole = (RoleType)t;
-							final Map<String, MethodSignature> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
-							final MethodSignature appearanceOfThisSignatureInOther = otherSignatures.get(methodName);
-							final FormalParameterList myParameterList = rolesSignature.formalParameterList();
-							if (null != appearanceOfThisSignatureInOther) {
-								final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-								if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
-									if (appearanceOfThisSignatureInOther.hasConstModifier()) {
-										retval = true;
-									} else {
-										retval = false;
-									}
-									break;
-								} else {
-									retval = false;
-									break;
-								}
-							} else {
-								// punt. dunno.
-								retval = false;
-							}
-						} else {
-							retval = false;
-							break;
+					final List<MethodSignature> roleSignatures = requiredSelfSignatures.get(methodName);
+					
+					// Have to cover all of them
+					for (final MethodSignature rolesSignature : roleSignatures) {
+						final MethodSignature signatureForMethodSelector =
+								t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
+						if (null == signatureForMethodSelector) {
+							retval = lookForRoleRHSThatMatches(t, methodName, rolesSignature);
+						} else if (signatureForMethodSelector.hasConstModifier() == false) {
+							// Now handled by error-reporting version above...
+							// final String roleSignatureLineNumber = Integer.toString(rolesSignature.lineNumber());
+							// ErrorLogger.error(ErrorType.Warning, signatureForMethodSelector.lineNumber(),
+							// 		"Required methods for stage props should be const. The declaration of method ",
+							//		signatureForMethodSelector.name(), " does not match the contract at line ", roleSignatureLineNumber);
 						}
-					} else if (signatureForMethodSelector.hasConstModifier() == false) {
-						// Now handled by error-reporting version above...
-						// final String roleSignatureLineNumber = Integer.toString(rolesSignature.lineNumber());
-						// ErrorLogger.error(ErrorType.Warning, signatureForMethodSelector.lineNumber(),
-						// 		"Required methods for stage props should be const. The declaration of method ",
-						//		signatureForMethodSelector.name(), " does not match the contract at line ", roleSignatureLineNumber);
+						
+						if (false == retval) break;
+					}
+					
+					if (false == retval) break;
+				}
+			}
+			return retval;
+		}
+		
+		private boolean lookForRoleRHSThatMatches(final Type t, final String methodName,
+				final MethodSignature lhsRoleSignature) {
+			// See if RHS is itself a Role / StageProp, and compare
+			
+			boolean retval = false;
+			if (t instanceof RoleType || t instanceof StagePropType) {
+				final RoleType otherAsRole = (RoleType)t;
+				final Map<String, List<MethodSignature>> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+				final List<MethodSignature> appearancesOfThisSignatureInOther = otherSignatures.get(methodName);
+				
+				// Any one will do
+				for (final MethodSignature appearanceOfThisSignatureInOther : appearancesOfThisSignatureInOther) {
+					final FormalParameterList myParameterList = lhsRoleSignature.formalParameterList();
+					if (null != appearanceOfThisSignatureInOther) {
+						final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
+						if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+							if (appearanceOfThisSignatureInOther.hasConstModifier()) {
+								retval = true;
+								break;
+							}
+						}
 					}
 				}
+			} else {
+				retval = false;
 			}
 			return retval;
 		}

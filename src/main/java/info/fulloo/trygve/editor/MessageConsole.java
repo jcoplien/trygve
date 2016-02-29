@@ -23,6 +23,9 @@ package info.fulloo.trygve.editor;
  * 
  */
 
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+
 import java.io.*;
 import java.util.EventListener;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -380,8 +383,12 @@ public class MessageConsole
             try {
                 i = queue.take();
             } catch (InterruptedException ex) {
-                Logger.getLogger(Console.class.getName()).
-                        log(Level.SEVERE, null, ex);
+                // Logger.getLogger(Console.class.getName()).
+                //        log(Level.SEVERE, null, ex);
+            	//
+            	// Do less noisy logging
+            	ErrorLogger.error(ErrorType.Runtime, "\n! ! ! Enactment interrupted.\n",
+            			"", "", "");
             }
             if (i != null) {
             	if (i != BACKSPACE && i != LINEKILL) {

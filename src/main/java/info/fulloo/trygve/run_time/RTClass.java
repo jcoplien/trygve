@@ -419,6 +419,25 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTToIntegerCode extends RTIntegerCommon {
+			public RTToIntegerCode(final StaticScope methodEnclosedScope) {
+				super("int", "toInteger", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTIntegerObject;
+				final RTIntegerObject intObject = (RTIntegerObject)self;
+				final long iRetval = intObject.intValue();
+				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
 		public static class RTBinaryOpCode extends RTIntegerCommon {
 			public RTBinaryOpCode(final StaticScope methodEnclosedScope, final String operation) {
 				super("int", operation, "rhs", "int", methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));

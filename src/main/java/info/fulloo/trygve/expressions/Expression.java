@@ -50,6 +50,7 @@ import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
+import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
@@ -1325,13 +1326,18 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 							final Declaration associatedDeclaration =
 									(type instanceof StagePropType)? ((StagePropType)type).associatedDeclaration():
 																	 ((RoleType)type).associatedDeclaration();
-							final Map<String, MethodSignature> requiresSection =
+							final Map<String, List<MethodSignature>> requiresSection =
 									(associatedDeclaration instanceof StagePropDeclaration)?
 											((StagePropDeclaration)associatedDeclaration).requiredSelfSignatures():
 											((RoleDeclaration)associatedDeclaration).requiredSelfSignatures();
-							final MethodSignature newMethodSignature = requiresSection.get(operator_);
-							if (null != newMethodSignature) {
-								retval = newMethodSignature.returnType();
+							final List<MethodSignature> newMethodSignatures = requiresSection.get(operator_);
+							if (null != newMethodSignatures) {
+								if (newMethodSignatures.size() > 1) {
+									ErrorLogger.error(ErrorType.Fatal, lhs_.lineNumber(),
+											"Overloading ambiguity in operator `", operator_, "'.", "");
+								} else {
+									retval = newMethodSignatures.get(0).returnType();
+								}
 							} else {
 								retval = StaticScope.globalScope().lookupTypeDeclaration("void");
 							}

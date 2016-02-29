@@ -449,8 +449,14 @@ public abstract class Declaration implements BodyPart {
 					parserPass, signature.lineNumber());
 			requiredSelfSignatures_.put(signature.name(), signature);
 		}
-		public Map<String, MethodSignature> requiredSelfSignatures() {
-			return requiredSelfSignatures_;
+		public Map<String, List<MethodSignature> > requiredSelfSignatures() {
+			final Map<String, List<MethodSignature> > retval = new LinkedHashMap<String, List<MethodSignature> >();
+			for (final String methodName : requiredSelfSignatures_.keySet()) {
+				final List<MethodSignature> signatureList = new ArrayList<MethodSignature>();
+				signatureList.add(requiredSelfSignatures_.get(methodName));
+				retval.put(methodName, signatureList);
+			}
+			return retval;
 		}
 		public void processRequiredDeclarations(final int lineno) {
 			// Declare requiredSelfSignatures_ in my scope

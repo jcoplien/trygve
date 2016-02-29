@@ -54,6 +54,7 @@ public class TestRunner {
 		"roletest3.k",
 		"roletest4.k",
 		"roletest5.k",
+		"rolemethod_primacy.k",
 		"returntest1.k",
 		"returntest2.k",
 		"trygve1.k",

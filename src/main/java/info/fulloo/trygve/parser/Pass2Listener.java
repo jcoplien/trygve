@@ -573,18 +573,21 @@ public class Pass2Listener extends Pass1Listener {
 	private MethodSignature declarationForMessageFromRequiresSectionOfRole(final Message message,
 			final RoleDeclaration roleDecl) {
 		MethodSignature retval = null;
-		final Map<String, MethodSignature> requiresDecls = roleDecl.requiredSelfSignatures();
-		for (Map.Entry<String, MethodSignature> entry : requiresDecls.entrySet()) {
+		final Map<String, List<MethodSignature>> requiresDecls = roleDecl.requiredSelfSignatures();
+		for (Map.Entry<String, List<MethodSignature>> entry : requiresDecls.entrySet()) {
 			if (entry.getKey().equals(message.selectorName())) {
-				final MethodSignature potentialRequiresMethod = entry.getValue();
-				if (null != potentialRequiresMethod) {
-					final FormalParameterList requiresSignature = potentialRequiresMethod.formalParameterList();
-					final ActualArgumentList callingSignature = message.argumentList();
-					if (requiresSignature.alignsWithUsingConversion(callingSignature)) {
-						retval = potentialRequiresMethod;
-						break;
+				final List<MethodSignature> potentialRequiresMethods = entry.getValue();
+				for (final MethodSignature potentialRequiresMethod : potentialRequiresMethods) {
+					if (null != potentialRequiresMethod) {
+						final FormalParameterList requiresSignature = potentialRequiresMethod.formalParameterList();
+						final ActualArgumentList callingSignature = message.argumentList();
+						if (requiresSignature.alignsWithUsingConversion(callingSignature)) {
+							retval = potentialRequiresMethod;
+							break;
+						}
 					}
 				}
+				if (null != retval) break;
 			}
 		}
 		return retval;
@@ -1176,6 +1179,7 @@ public class Pass2Listener extends Pass1Listener {
 				errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 			}
 		} else {
+
 			for (int j = 0; j < numberOfActualParameters; j++) {
 				final Object rawParameter = actuals.argumentAtPosition(j);
 				assert rawParameter != null && rawParameter instanceof Expression;
@@ -1184,7 +1188,7 @@ public class Pass2Listener extends Pass1Listener {
 
 				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
 				final Type formalParameterType = formalParameter.type();
-
+				
 				if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
 					continue;
 				} else if (formalParameter.name().equals(parameterToIgnore)) {

@@ -4,6 +4,7 @@ interface Time {
    public int compareTo(int other);
    public int +(int other);
    public int -(int other);
+   public int toInteger() const;
 }
 
 class DBaseType {
@@ -23,7 +24,7 @@ class DBaseType {
       assert(false, "Unimplemented");
       return null
    }
-   public List<Activitiy> allActivities() {
+   public List<ActivityClass> allActivities() {
       assert(false, "Unimplemented");
       return null
    }
@@ -65,7 +66,7 @@ class ActivityClass {
    public Time plannedStart() const {
       return plannedStart_
    }
-   public void setPlannedStart(int plannedStart) {
+   public void setPlannedStart(Time plannedStart) {
       plannedStart_ = plannedStart.clone
    }
    public int resourceRequirement() const {
@@ -85,11 +86,11 @@ class ActivityClass {
 
    // ---------------------------------------------
 
-   public int earliestStart() const {
-      return Math.min(earlyStart_, lateStart())
+   public Time earliestStart() const {
+      return Math.min(earlyStart_.toInteger(), lateStart().toInteger())
    }
-   public int latestFinish() const {
-      return Math.max(earlyFinish(), lateFinish())
+   public Time latestFinish() const {
+      return Math.max(earlyFinish().toInteger(), lateFinish().toInteger())
    }
    public void printOn(PrintStream stream) {
       // super printOn(stream)
@@ -101,8 +102,8 @@ class ActivityClass {
    private void initialize() {
       // super initialize.
       duration_ = 0;
-      earlyStart_ = lateFinish_ = plannedStart_ =
-         resourceRequirement_ = null
+      earlyStart_ = lateFinish_ = plannedStart_ = null;
+      resourceRequirement_ = null
    }
    private ActivityClass(String name, int duration,
                     int resourceRequirement, String details) {
@@ -239,7 +240,7 @@ context BackloadCtx {
    }
    role Backloader {
       public Time backload() {
-         ProjectStart projectStart;
+         Time projectStart;
          for (int i = 0; i < AllActivities.count(); i++) {
             Activity act = AllActivities.getActivityAt(i);
             act.activitySetLateFinish(null)
@@ -249,7 +250,8 @@ context BackloadCtx {
             this.remap();
             if (Activity == null) break;
             Activity.backload();
-            projectStart = Math.min(projectStart, Activity.activityLateStart() - 1)
+            projectStart = Math.min(projectStart.toInteger(),
+                               Activity.activityLateStart().toInteger() - 1)
          } while (Activity != null);
          return projectStart
       }
@@ -259,16 +261,20 @@ context BackloadCtx {
 
    role ProjectFinish {
    } requires {
-      int compareTo(int finish)
+      int compareTo(int other) const;
+      int +(int other);
+      int -(int other);
+      int toInteger() const
    }
+
    role Successors {
       public Activity findMinLateStart() {
          int min = 999999;
          Activity minStartActivity = null;
          for (int i = 0; i < size(); i++) {
             Activity current = get(i);
-            if (current.lateStart() < min) {
-               min = current.lateStart();
+            if (current.activityLateStart() < min) {
+               min = current.activityLateStart();
                minStartActivity = current
             }
          }
@@ -278,7 +284,7 @@ context BackloadCtx {
       Activity get(int i) const;
       int size() const;
    }
-   private void remap() {
+   public void remap() {	// have to make public to play the Role
       Activity = activity();
       AllActivities = this.dBase().allActivities();
       Backloader = this;

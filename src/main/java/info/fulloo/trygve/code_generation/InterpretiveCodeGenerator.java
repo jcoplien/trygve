@@ -1062,6 +1062,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
+			RetvalTypes retvalType;
 			
 			// Odd that these built-ins have survived this long without designating a
 			// return expression... The primitives just put it on top the stack.
@@ -1074,7 +1075,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 						expressionToReturn, 0,
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
 						methodDeclaration.enclosedScope());
+				retvalType = RetvalTypes.usingString;
+			} else if (methodDeclaration.name().equals("toInteger")) {
+				final Expression expressionToReturn = new TopOfStackExpression();
+				returnExpr = new ReturnExpression(
+						methodDeclaration.name(),
+						expressionToReturn, 0,
+						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						methodDeclaration.enclosedScope());
+				retvalType = RetvalTypes.usingInt;
 			} else {
+				retvalType = RetvalTypes.none;
 				assert false;
 			}
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpr);
@@ -1083,11 +1094,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final List<RTCode> code = new ArrayList<RTCode>();
 			if (methodDeclaration.name().equals("toString")) {
 				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("toInteger")) {
+				code.add(new RTIntegerClass.RTToIntegerCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
 			
-			addReturn(methodDeclaration, RetvalTypes.usingString, code);
+			addReturn(methodDeclaration, retvalType, code);
 			
 			assert code.size() > 0;
 			
