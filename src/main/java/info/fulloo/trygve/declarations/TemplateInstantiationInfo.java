@@ -66,6 +66,17 @@ public class TemplateInstantiationInfo {
 		final int numberOfParameters = this.actualParameters_.size();
 		return this.parameterAtIndex(numberOfParameters - parameterPositionOfFormalParam - 1);
 	}
+	public Type classSubstitionForFormalParameterNamed(final String templateTypeName) {
+		// This is a bit kludgy...  FIXME?
+		Type retval = null;
+		for (final Type aType : actualParameters_) {
+			if (aType.name().equals(templateTypeName)) {
+				retval = aType;
+				break;
+			}
+		}
+		return retval;
+	}
 	public final String templateName() {
 		return templateDeclaration_.name();
 	}

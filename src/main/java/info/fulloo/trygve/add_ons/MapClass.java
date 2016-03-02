@@ -238,8 +238,10 @@ public final class MapClass {
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTIntegerObject key = (RTIntegerObject)activationRecord.getObject("key");
-			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final RTObject key = activationRecord.getObject("key");
+			final RTObject theRawMapObject = activationRecord.getObject("this");
+			assert theRawMapObject instanceof RTMapObject;
+			final RTMapObject theMapObject = (RTMapObject)theRawMapObject;
 			final RTStackable answer = (RTStackable)theMapObject.containsKey(key);
 			assert answer instanceof RTObject;
 			

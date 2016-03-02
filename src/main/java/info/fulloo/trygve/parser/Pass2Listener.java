@@ -1025,9 +1025,17 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
-		final StaticScope classScope = classDecl.enclosedScope();
-		return classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+		final StaticScope classOrRoleOrWhateverScope = classDecl.enclosedScope();
+		
+		// Give exact match the first chance
+		MethodDeclaration retval = classOrRoleOrWhateverScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
 				/* conversionAllowed = */ false);
+		if (null == retval) {
+			// If exact match doesn't work, try promition
+			retval = classOrRoleOrWhateverScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+					/* conversionAllowed = */ true);
+		}
+		return retval;
 	}
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
@@ -1188,7 +1196,7 @@ public class Pass2Listener extends Pass1Listener {
 
 				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
 				final Type formalParameterType = formalParameter.type();
-				
+
 				if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
 					continue;
 				} else if (formalParameter.name().equals(parameterToIgnore)) {

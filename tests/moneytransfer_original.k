@@ -67,7 +67,7 @@ class Account {
 }
 
 /* GOLD:
-line 24: Expression 'current$context.Amount' is not of the right type (double).
+line 24: Expression `current$context.Amount' is not of the right type (double).
 line 24: You may not use an object of type 'Amount' as an argument to `>='.
 line 25: Type of actual parameter `current$context.Amount' (Amount) in call of `decreaseBalance' does not match type of formal parameter `amt' (double amt)
 line 35: Type of actual parameter `current$context.Amount' (Amount) in call of `increaseBalance' does not match type of formal parameter `amt' (double amt)

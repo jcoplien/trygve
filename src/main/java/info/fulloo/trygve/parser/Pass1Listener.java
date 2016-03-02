@@ -146,6 +146,7 @@ import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
 import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
@@ -2368,7 +2369,7 @@ public class Pass1Listener extends Pass0Listener {
 			
 			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
 				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"Expression '" + rhs.getText(), "' is not of the right type (",
+						"Expression `" + rhs.getText(), "' is not of the right type (",
 						lhs.type().getText(), ").");
 			}
 			
@@ -2383,8 +2384,24 @@ public class Pass1Listener extends Pass0Listener {
 						"You may not apply '" + operationAsString, "' to objects of type `",
 						lhs.type().getText(), "'.");
 			}
-			
-			if (null != rhs && null != rhs.type() &&
+
+			final ActualArgumentList parameterList = new ActualArgumentList();
+			parameterList.addActualArgument(lhs);
+			parameterList.addActualArgument(rhs);
+			if (null != lhs && null != rhs && null != lhs.type() && (lhs.type() instanceof InterfaceType) == false &&
+					(operationAsString.equals("<") || operationAsString.equals(">") ||
+							operationAsString.equals("<=") || operationAsString.equals(">=") ||
+							operationAsString.equals("==") || operationAsString.equals("!=")) &&
+					null != lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
+				;	// then, yeah...
+			} else if (null != lhs && null != rhs && null != lhs.type() && lhs.type() instanceof InterfaceType &&
+					(operationAsString.equals("<") || operationAsString.equals(">") ||
+							operationAsString.equals("<=") || operationAsString.equals(">=") ||
+							operationAsString.equals("==") || operationAsString.equals("!=")) &&
+					null != ((StaticInterfaceScope)lhs.type().enclosedScope()).
+						lookupMethodDeclarationWithConversionIgnoringParameter("compareTo", parameterList, false, "this")) {
+				;	// then, yeah...
+			} else if (null != rhs && null != rhs.type() &&
 					rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
 				;	// O.K.
 			} else if (rhs instanceof NullExpression) {
@@ -3989,9 +4006,10 @@ public class Pass1Listener extends Pass0Listener {
 			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(j);
 			      Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
-			
+
 			if (null != declarationType && null != expressionType &&
 					declarationType.canBeConvertedFrom(expressionType)) {
+				
 				// Still need this, though old initialization framework is gone
 				objectDecls.add(objDecl);
 				
@@ -4396,7 +4414,7 @@ public class Pass1Listener extends Pass0Listener {
 			// Because this here is Pass 1 code this really does nothing.
 			// We'll catch it again on Pass 2
 			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
+					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");
 		} else {
 			final Type objectType = object.type();
 			if (null == objectType) return new NullExpression();	// error stumbling avoidance
@@ -4407,13 +4425,15 @@ public class Pass1Listener extends Pass0Listener {
 							classdecl.enclosedScope().lookupMethodDeclaration(methodSelectorName, null, true):
 							null;
 							
-			if (null != mdecl && objectType.name().equals("Class")) {
-				// Is of the form ClassType.classMethod()
-				assert object instanceof IdentifierExpression;
-				if (false == mdecl.signature().isStatic()) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-							"Attempt to call instance method `" + mdecl.signature().getText(),
-							"' as though it were a static method of class `", objectType.name(), "'.");
+			if (null != mdecl) {
+				if (objectType.name().equals("Class")) {
+					// Is of the form ClassType.classMethod()
+					assert object instanceof IdentifierExpression;
+					if (false == mdecl.signature().isStatic()) {
+						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+								"Attempt to call instance method `" + mdecl.signature().getText(),
+								"' as though it were a static method of class `", objectType.name(), "'.");
+					}
 				}
 			}
 											
@@ -4467,14 +4487,28 @@ public class Pass1Listener extends Pass0Listener {
 		boolean isPolymorphic = true;
 		if (amInConstructor()) {
 			if (object instanceof IdentifierExpression) {
+				// Don't dynamically dispatch methods from within a constructor
 				if (((IdentifierExpression)object).name().equals("this")) {
 					isPolymorphic = false;
 				}
 			}
 		}
 		
-		return new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
+		if (null != type) {
+			// Should probably never be true - here...
+			final boolean isAConstructor = type.name().equals(message.selectorName());
+			if (false == isAConstructor) {
+				// Update the message type properly. Constructors are weird in
+				// that the message type is void whereas the expression type
+				// in terms of the thing being constructed.
+				message.setReturnType(type);
+			}
+		}
+		
+		final MessageExpression retval = new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
 				originMethodClass, targetMethodClass, isPolymorphic);
+
+		return retval;
 	}
 	protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 1 version. Pass 2 / 3 version ignores "this" in signature,
@@ -4974,7 +5008,7 @@ public class Pass1Listener extends Pass0Listener {
 			errorHook5p2(ErrorType.Noncompliant, lineNumber,
 					"You're on your own here.", "", "", "");
 		}
-
+		
 		if (lhs.name().equals("index") || lhs.name().equals("lastIndex")) {
 			errorHook5p2(ErrorType.Fatal, lineNumber,
 					"`index' is a reserved word which is a read-only property of a Role vector element,",

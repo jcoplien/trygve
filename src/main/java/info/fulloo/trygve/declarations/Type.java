@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
@@ -42,6 +43,7 @@ import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTExpression.RTNullExpression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope; 
 
 public abstract class Type implements ExpressionStackAPI
 {
@@ -97,7 +99,7 @@ public abstract class Type implements ExpressionStackAPI
 			retval = true;
 		} else if (operator.equals("!=") || operator.equals("==") || operator.equals("<") ||
 				operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
-			// Valid it compareTo(X) is defined on us. Probably needs some loosening up
+			// Valid if compareTo(X) is defined on us. Probably needs some loosening up
 			final FormalParameterList parameterList = new FormalParameterList();
 			ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
 			parameterList.addFormalParameter(self);
@@ -178,6 +180,7 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 		private ClassType baseClass_;
 	}
+
 	public static class ClassType extends ClassOrContextType {
 		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(name, enclosedScope, baseClass);
@@ -195,7 +198,31 @@ public abstract class Type implements ExpressionStackAPI
 				if (!retval) {
 					if (t.name().equals("Null")) {
 						retval = true;
+					} else if (null != isTemplate(this) && null != isTemplate(t)) {
+						// Messy, messy, messy
+						final String thisParameterName = isTemplate(this);
+						final String tParameterName = isTemplate(t);
+						Type thisType = enclosedScope().lookupTypeDeclarationRecursive(thisParameterName);
+						if (null == thisType) {
+							if (this.name().startsWith("List<")) {
+								final StaticScope enclosedScope = this.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+							}
+						}
+						Type tType = enclosedScope().lookupTypeDeclarationRecursive(tParameterName);
+						if (null == tType) {
+							if (t.name().startsWith("List<")) {
+								final StaticScope enclosedScope = t.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
+							}
+						}
+						assert null != tType;
+						assert null != thisType;
+						retval = thisType.canBeConvertedFrom(tType);
 					} else if (t instanceof ClassType || t instanceof ContextType) {
+						// Base class check
 						final ClassOrContextType classyT = (ClassOrContextType)t;
 						for (ClassType aBase = classyT.baseClass(); null != aBase; aBase = aBase.baseClass()) {
 							if (aBase.name().equals(name())) {
@@ -272,6 +299,22 @@ public abstract class Type implements ExpressionStackAPI
 					retval = true;
 				}
 			}
+			return retval;
+		}
+		private String isTemplate(final Type t) {
+			// Returns the template parameter or null
+			String retval = null;
+			final String typeName = t.name();
+			
+			// For now, just deal with Lists. We'll have to deal with Maps later
+			if (typeName.startsWith("List<")) {
+				if (typeName.matches("[a-zA-Z]<.*>") || typeName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+					final int indexOfDelimeter = typeName.indexOf('<');
+					final int l = typeName.length();
+					retval = typeName.substring(indexOfDelimeter + 1, l - 1);
+				}
+			}
+			
 			return retval;
 		}
 		
@@ -354,10 +397,24 @@ public abstract class Type implements ExpressionStackAPI
 				for (final String methodName : this.selectorSignatureMap().keySet()) {
 					final List<MethodSignature> signatures = this.selectorSignatureMap().get(methodName);
 					for (final MethodSignature interfaceSignature : signatures) {
-						final MethodDeclaration otherTypesMethod = t.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+						// Maybe there is a fight here to be had about whether the method
+						// has public access...
+						MethodDeclaration otherTypesMethod = t.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 								methodName, interfaceSignature.formalParameterList(), false, /*parameterToIgnore*/ "this");
 						if (null == otherTypesMethod) {
-							retval = false;
+							if (t instanceof RoleType || t instanceof StagePropType) {
+								// Then methods in the requires interface also apply. As long as
+								// the object respond to the method, we don't care if if it's
+								// part of the Role "public" interface or the Role / object
+								// interface. There is no "public" or "private" here, so we'll
+								// be generous
+								final RoleType roleType = (RoleType)t;
+								otherTypesMethod = ((StaticRoleScope)roleType.enclosedScope()).
+										lookupRequiredMethodSelectorAndParameterList(methodName, interfaceSignature.formalParameterList());
+								retval = (null != otherTypesMethod);
+							} else {
+								retval = false;
+							}
 							break;
 						}
 					}
@@ -396,12 +453,26 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		
 		public MethodSignature lookupMethodSignature(final String selectorName, final ActualOrFormalParameterList argumentList) {
+			return lookupMethodSignatureCommon(selectorName, argumentList, false, null);
+		}
+		public MethodSignature lookupMethodSignatureWithConversion(final String selectorName, final ActualOrFormalParameterList argumentList) {
+			return lookupMethodSignatureCommon(selectorName, argumentList, true, null);
+		}
+		public MethodSignature lookupMethodSignatureWithConversionIgnoringParameter(final String selectorName,
+				final ActualOrFormalParameterList argumentList, final String parameterToIgnore) {
+			return lookupMethodSignatureCommon(selectorName, argumentList, true, parameterToIgnore);
+		}
+
+		public MethodSignature lookupMethodSignatureCommon(final String selectorName,
+				final ActualOrFormalParameterList argumentList, final boolean conversionAllowed,
+				final String parameterToIgnore) {
 			MethodSignature retval = null;
 			List<MethodSignature> signatures = null;
 			if (selectorSignatureMap_.containsKey(selectorName)) {
 				signatures = selectorSignatureMap_.get(selectorName);
 				for (final MethodSignature signature : signatures) {
-					if (signature.formalParameterList().alignsWith(argumentList)) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(signature.formalParameterList(),
+							argumentList, parameterToIgnore, conversionAllowed)) {
 						retval = signature;
 						break;
 					}
@@ -427,6 +498,7 @@ public abstract class Type implements ExpressionStackAPI
 		public final Map<String, List<MethodSignature>> selectorSignatureMap() {
 			return selectorSignatureMap_;
 		}
+
 		
 		private final String name_;
 		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
@@ -610,6 +682,35 @@ public abstract class Type implements ExpressionStackAPI
 							}
 						}
 					}
+				} else if (t instanceof InterfaceType) {
+					// Then make sure that everything in the "requires" list of
+					// this is supported by the Interface type
+					
+					final InterfaceType interT = (InterfaceType) t;
+					if (this.pathName().equals("Null")) {
+						// Can always have a null object
+						retval = true;
+					} else {
+						retval = true;
+				
+						// Loop through all interface declarations. Make sure that
+						// I support them all
+						final Map<String, List<MethodSignature>> interfaceSignatures = interT.selectorSignatureMap();
+						final Set<String> methodNames = interfaceSignatures.keySet();
+						for (final String requiredMethodName : methodNames) {
+							final List<MethodSignature> signaturesForName = interfaceSignatures.get(requiredMethodName);
+							for (final MethodSignature requiredMethodSignature : signaturesForName) {
+								final MethodSignature msignature = interT.lookupMethodSignatureWithConversionIgnoringParameter(
+										requiredMethodName,
+										requiredMethodSignature.formalParameterList(),
+										/*parameterToIgnore*/ "this");
+								if (null == msignature) {
+									retval = false;
+									break;
+								}
+							}
+						}
+					}
 				}
 			}
 			
@@ -669,7 +770,7 @@ public abstract class Type implements ExpressionStackAPI
 			if (null != t && t.pathName().equals("Null")) {
 				// Anything can be associated with a null object
 				retval = true;
-			} else if (t instanceof RoleType && t.name().equals(name())) {
+			} else if (t instanceof RoleType && t.pathName().equals(pathName())) {
 				// it's just one of us...
 				retval = true;
 			} else if (null != associatedDeclaration_){
@@ -696,7 +797,7 @@ public abstract class Type implements ExpressionStackAPI
 								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
 									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
-									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList, true)) {
 										found = true;
 										break;
 									}
@@ -869,7 +970,7 @@ public abstract class Type implements ExpressionStackAPI
 								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
 									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
-									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList, true)) {
 										found = true;
 										break;
 									}
@@ -964,7 +1065,7 @@ public abstract class Type implements ExpressionStackAPI
 					final FormalParameterList myParameterList = lhsRoleSignature.formalParameterList();
 					if (null != appearanceOfThisSignatureInOther) {
 						final FormalParameterList otherArgumentList = appearanceOfThisSignatureInOther.formalParameterList();
-						if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList)) {
+						if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList, true)) {
 							if (appearanceOfThisSignatureInOther.hasConstModifier()) {
 								retval = true;
 								break;
@@ -1089,7 +1190,7 @@ public abstract class Type implements ExpressionStackAPI
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
 	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
-	
+
 	public boolean hasUnaryOperator(final String operator) {
 		return false;
 	}

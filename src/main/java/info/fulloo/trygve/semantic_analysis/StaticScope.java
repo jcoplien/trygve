@@ -1127,7 +1127,22 @@ public class StaticScope {
 				} else if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
 				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWith(mappedParameterList)) {
+					// Try without conversion first
 					retval = aDecl; break;
+				}
+			}
+			
+			if (null == retval) {
+				// Now try it with promotion
+				for (final MethodDeclaration aDecl : oldEntry) {
+					final FormalParameterList loggedSignature = aDecl.formalParameterList();
+					final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+						loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+					final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+						(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
+					if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWithUsingConversion(mappedParameterList)) {
+						retval = aDecl; break;
+					}
 				}
 			}
 		} else {
@@ -1166,6 +1181,10 @@ public class StaticScope {
 					retval = aDecl; break;
 				} else if (null != mappedLoggedSignature && ((FormalParameterList)mappedLoggedSignature).alignsWithUsingConversion(mappedParameterList)) {
 					// no exact match; try with conversion
+					retval = aDecl; break;
+				} else if (null != mappedLoggedSignature &&
+						FormalParameterList.alignsWithParameterListIgnoringRoleStuff(mappedLoggedSignature, mappedParameterList, true)) {
+					// no exact match; try invocation of Role method
 					retval = aDecl; break;
 				}
 			}
@@ -1209,7 +1228,9 @@ public class StaticScope {
 					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
 				if (null == mappedLoggedSignature && null == mappedParameterList) {
 					retval = aDecl; break;
-				} else if (null != mappedLoggedSignature && FormalParameterList.alignsWithParameterListIgnoringRoleStuff(mappedLoggedSignature, mappedParameterList)) {
+				} else if (null != mappedLoggedSignature &&
+						FormalParameterList.alignsWithParameterListIgnoringRoleStuff(
+								mappedLoggedSignature, mappedParameterList, true)) {
 					retval = aDecl; break;
 				}
 			}
@@ -1435,7 +1456,7 @@ public class StaticScope {
 			}
 			return retval;
 		}
-		private MethodDeclaration lookupRequiredMethodSelectorAndParameterList(final String methodSelector,
+		public MethodDeclaration lookupRequiredMethodSelectorAndParameterList(final String methodSelector,
 				final ActualOrFormalParameterList declParameterList) {
 			MethodDeclaration retval = null;
 			MethodSignature signatureForRetval = null;
@@ -1456,7 +1477,18 @@ public class StaticScope {
 						break;
 					}
 				}
+				
+				// It didn't like that; try with promotion
+				for (final MethodSignature aSignature : oldEntry) {
+					assert null != aSignature;
+					final FormalParameterList loggedSignature = aSignature.formalParameterList();
+					if (null != loggedSignature && loggedSignature.alignsWithUsingConversion(declParameterList)) {
+						signatureForRetval = aSignature;
+						break;
+					}
+				}
 			}
+			
 			if (null != signatureForRetval) {
 				// Return a dummy declaration
 				retval = new MethodDeclaration(signatureForRetval, this, 0);
@@ -1471,7 +1503,7 @@ public class StaticScope {
 			}
 			return retval;
 		}
-		public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(final String methodSelector,
+		@Override public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(final String methodSelector,
 				final ActualOrFormalParameterList parameterList,
 				final boolean ignoreSignature, final String parameterToIgnore) {
 			// First, try an ordinary method
@@ -1503,9 +1535,8 @@ public class StaticScope {
 			assert associatedDeclaration instanceof InterfaceDeclaration;
 			final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration)associatedDeclaration;
 			
-			if (null != interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector)) {
-				final List<MethodSignature> oldEntry = interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector);
-				
+			final List<MethodSignature> oldEntry = interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector);
+			if (null != oldEntry) {
 				for (final MethodSignature aSignature : oldEntry) {
 					// Create a dummy declaration to return
 					final MethodDeclaration mDecl = null == aSignature?

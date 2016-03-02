@@ -52,11 +52,11 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/money_transfer3.k";
+	private final static String defaultFile = "examples/bb10.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.16";
+    final String TrygveVersion = "1.5.17";
     
     public InputStream getIn() {
     	return console_.getIn();

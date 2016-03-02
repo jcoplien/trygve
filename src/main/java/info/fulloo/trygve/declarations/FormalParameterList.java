@@ -119,7 +119,8 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
-	public static boolean alignsWithParameterListIgnoringRoleStuff(final ActualOrFormalParameterList pl1, final ActualOrFormalParameterList pl2) {
+	public static boolean alignsWithParameterListIgnoringRoleStuff(final ActualOrFormalParameterList pl1,
+			final ActualOrFormalParameterList pl2, final boolean conversionIsAllowed) {
 		boolean retval = true;
 		int i = 0, j = 0;
 		final int pl1Count = pl1.count(),
@@ -170,9 +171,19 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					final Type plt = pl2.typeOfParameterAtPosition(j);
 					final Type myt = pl1.typeOfParameterAtPosition(i);
 					
-					if (plt.enclosedScope() == myt.enclosedScope()) {
-						i++; j++;
-					} else if (plt.isBaseClassOf(myt)) {
+					if (null != plt && null != myt) {
+						if (plt.enclosedScope() == myt.enclosedScope()) {
+							i++; j++;
+						} else if (plt.isBaseClassOf(myt)) {
+							i++; j++;
+						} else if (conversionIsAllowed && plt.canBeConvertedFrom(myt)) {
+							i++; j++;
+						} else {
+							retval = false;
+							break;
+						}
+					} else if (null == plt && null == myt) {
+						// don't know what this means, should probably be an error
 						i++; j++;
 					} else {
 						retval = false;

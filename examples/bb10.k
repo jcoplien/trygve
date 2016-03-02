@@ -1,10 +1,18 @@
 // bb10.k
 
 interface Time {
-   public int compareTo(int other);
+   public int compareTo(int other) const;
    public int +(int other);
    public int -(int other);
    public int toInteger() const;
+}
+
+interface ActivityAsPredecessor {
+   public String name() const
+}
+
+interface ActivityAsSuccessor {
+   public String name() const
 }
 
 class DBaseType {
@@ -16,11 +24,11 @@ class DBaseType {
       assert(false, "Unimplemented");
       return 0
    }
-   public List<ActivityClass> successorsOf(ActivityClass activity) {
+   public List<ActivityClass> successorsOf(ActivityAsPredecessor activity) {
       assert(false, "Unimplemented");
       return null
    }
-   public ActivityClass predecessorOf(ActivityClass activity) {
+   public ActivityClass predecessorOf(ActivityAsSuccessor activity) {
       assert(false, "Unimplemented");
       return null
    }
@@ -30,8 +38,8 @@ class DBaseType {
    }
 }
 
-class ActivityClass {
-   public int duration() const { return duration_ }
+class ActivityClass implements ActivityAsPredecessor, ActivityAsSuccessor {
+   public int duration() const { Time test; test = 1; return duration_ }
    public void setDuration(int duration) { duration_ = duration.clone }
    public Time earlyFinish() const {
       Time retval = null;
@@ -54,7 +62,8 @@ class ActivityClass {
          retval = lateFinish() - duration() + 1;
       return retval
    }
-   public String name() {
+   public String name() { return rawName() }
+   public String rawName() {
       return name_
    }
    public Time plannedFinish() const {
@@ -77,7 +86,7 @@ class ActivityClass {
    }
    public String text() {
       if (text_ == null)
-         text_ = "Further details about the activity named " + name();
+         text_ = "Further details about the activity named " + rawName();
       return text_
    }
    public void setText(String text) {
@@ -94,7 +103,7 @@ class ActivityClass {
    }
    public void printOn(PrintStream stream) {
       // super printOn(stream)
-      stream.print("[").print(name()).println("]")
+      stream.print("[").print(rawName()).println("]")
    }
 
    // ------------------------------------------
@@ -118,7 +127,7 @@ class ActivityClass {
 
    public ActivityClass(String name) {
       name_ = name.clone;
-      text_ = "Further details about the activity named " + name()
+      text_ = "Further details about the activity named " + name_
    }
 
    private void changed(String what) {
@@ -192,16 +201,12 @@ class Resource {
 }
 
 context BackloadCtx {
-   public DBaseType dBase() {
-      assert (false, "Unimplemented");
-      return null
-   }
    public Time projectFinish() {
      return this.projectFinish_
    }
    private boolean lateStartIsNilDetector(Activity act) {
       boolean retval = true;
-      for (Activity b : this.dBase().successorsOf(act)) {
+      for (Activity b : DBaseRole.dbaseSuccessorsOf(act)) {
          Activity predecessor = b.pred();
          if (predecessor.activityLateStart() == null) {
             retval = false;
@@ -209,6 +214,29 @@ context BackloadCtx {
          }
       }
       return retval
+   }
+   role DBaseRole {
+      public List<ActivityClass> dbaseAllActivities() {
+         return allActivities()
+      }
+      public int dbaseProjectFinish() {
+         return projectFinish()
+      }
+      public List<ActivityClass> dbaseSuccessorsOf(ActivityAsPredecessor activity) {
+         return successorsOf(activity)
+      }
+      public ActivityClass dbasePredecessorOf(ActivityAsPredecessor activity){
+         return predecessorOf(activity)
+      }
+   } requires {
+      int projectFinish();
+      List<ActivityClass> successorsOf(ActivityAsPredecessor activity);
+      List<ActivityClass> allActivities();
+      ActivityClass predecessorOf(ActivityAsSuccessor activity)
+   }
+   public List<ActivityClass> allActivities() {
+      assert (false, "Unimplemented")
+      return null
    }
    role Activity {
       public void backload() {
@@ -219,17 +247,25 @@ context BackloadCtx {
          }
       }
       public Activity pred() {
-         return dBase.predecessorOf(this)
+         return DBaseRole.dbasePredecessorOf(this)
       }
       public Time activityLateStart() {
          return lateStart()
       }
+      public Time activityLateFinish() {
+         return lateFinish()
+      }
       public void activitySetLateFinish(ProjectFinish act) {
          setLateFinish(act)
+      }
+      public String name() {
+         return rawName()
       }
    } requires {
       void setLateFinish(Time finish);
       Time lateStart() const;
+      Time lateFinish() const;
+      String rawName();
    }
    role AllActivities {
       public int count() { return size(); }
@@ -269,11 +305,11 @@ context BackloadCtx {
 
    role Successors {
       public Activity findMinLateStart() {
-         int min = 999999;
+         Time min = 999999;
          Activity minStartActivity = null;
          for (int i = 0; i < size(); i++) {
             Activity current = get(i);
-            if (current.activityLateStart() < min) {
+            if (current.activityLateStart() < min.toInteger()) {
                min = current.activityLateStart();
                minStartActivity = current
             }
@@ -286,19 +322,19 @@ context BackloadCtx {
    }
    public void remap() {	// have to make public to play the Role
       Activity = activity();
-      AllActivities = this.dBase().allActivities();
+      AllActivities = DBaseRole.dbaseAllActivities();
       Backloader = this;
-      ProjectFinish = this.dBase().projectFinish();
-      Successors = this.dBase().successorsOf(Activity)
+      ProjectFinish = DBaseRole.dbaseProjectFinish();
+      Successors = DBaseRole.dbaseSuccessorsOf(Activity)
    }
    public void backloadProject() {
       lateProjectStart_ = this.triggerInteractionFromWith(Backloader, "backload")
    }
    public Activity activity() {
       Activity retval = null;
-      List<Activity> acta = this.dBase().allActivities().clone();
+      List<Activity> acta = DBaseRole.dbaseAllActivities().clone();
       for (Activity act : acta) {
-         if (act.lateFinish() == null) {
+         if (act.activityLateFinish() == null) {
             if (lateStartIsNilDetector(act)) {
                retval = act; break
             }
