@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,7 @@ import info.fulloo.trygve.expressions.Expression.ArrayExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
 import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
+import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.BlockExpression;
 import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
@@ -2077,6 +2078,132 @@ public class Pass1Listener extends Pass0Listener {
 	
 	private Expression handleRelopCall(final Expression lhs,
 			final String operationAsString, final Expression rhs, int lineNumber) {
+
+		Expression expression = null;
+		ActualArgumentList argumentList = new ActualArgumentList();
+		argumentList.addActualArgument(rhs);
+		final Type lhsType = lhs.type();
+		assert null != lhsType;
+		final Expression self = new IdentifierExpression("t$his", lhsType, currentScope_,
+				lhs.lineNumber());
+		argumentList.addFirstActualParameter(self);
+
+		final MethodDeclaration methodDecl = lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", argumentList, false);
+		if (null != methodDecl) {
+			// O.K., it does. Generate code that will call
+			// compareTo on the users' behalf
+			
+			// Nice constants
+			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+			final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+			final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
+			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			
+			// The final result
+			ExpressionList expressionList = null;
+			
+			// Generate some temporaries
+			String variableNameForOperatorString, variableNameForCompareToResult;
+			variableNameForOperatorString = "parseTemp$" + Integer.toString(kantParserVariableGeneratorCounter_);
+			kantParserVariableGeneratorCounter_++;
+			variableNameForCompareToResult = "parseTemp$" + Integer.toString(kantParserVariableGeneratorCounter_);
+			kantParserVariableGeneratorCounter_++;
+			
+			final ObjectDeclaration variableForOperatorStringDecl = new ObjectDeclaration(variableNameForOperatorString, stringType, lineNumber);
+			currentScope_.declareObject(variableForOperatorStringDecl);
+			final ObjectDeclaration variableForCompareToResultDecl = new ObjectDeclaration(variableNameForCompareToResult, stringType, lineNumber);
+			currentScope_.declareObject(variableForCompareToResultDecl);
+			
+			final IdentifierExpression operatorString = new IdentifierExpression(variableNameForOperatorString, stringType,
+					currentScope_, lineNumber);
+			final IdentifierExpression compareToResult = new IdentifierExpression(variableNameForCompareToResult, intType,
+					currentScope_, lineNumber);
+			
+			// Get an expression for the operator string
+			final Expression operatorStringExpression = Constant.makeConstantExpressionFrom(
+					"\"" + operationAsString + "\"");
+			operatorStringExpression.setResultIsConsumed(true);
+			
+			// Assign the operator string into its expression
+			final AssignmentExpression assignOpString = new InternalAssignmentExpression(
+					operatorString, "=", operatorStringExpression, lineNumber, this);
+			assignOpString.setResultIsConsumed(false);
+			expressionList = new ExpressionList(assignOpString, enclosingMegaType);
+		
+			// Set up the argument list for the call to "compareTo".
+			// If we got here it should be in the "requires" section
+			// of the Role definition
+			argumentList = new ActualArgumentList();
+			argumentList.addActualArgument(rhs);
+			argumentList.addFirstActualParameter(lhs);
+			
+			final Message compareToMessage = new Message("compareTo", argumentList, lineNumber, enclosingMegaType);
+			compareToMessage.setReturnType(intType);
+			
+			IdentifierExpression qualifier = new IdentifierExpression("this", enclosingMegaType,
+						currentScope_, lineNumber);
+				
+			final QualifiedIdentifierExpression newLhs = new QualifiedIdentifierExpression(qualifier, lhs.name(), lhs.type());
+			newLhs.setResultIsConsumed(true);
+			
+			// The compareTo message is applied to its first own
+			// argument - in this case, lhs
+			MethodInvocationEnvironmentClass originMethodClass, targetMethodClass;
+			
+			originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+			targetMethodClass = lhs.type().enclosedScope().methodInvocationEnvironmentClass();
+		
+			expression = new MessageExpression(lhs, compareToMessage, intType, lineNumber, false,
+					originMethodClass, targetMethodClass, !amInConstructor());
+			expression.setResultIsConsumed(true);	// leave the compareTo return value on the stack
+			
+			// Assign result of compareTo
+			final AssignmentExpression assignCompareTo = new InternalAssignmentExpression(
+					compareToResult, "=", expression, lineNumber, this);
+			assignCompareTo.setResultIsConsumed(false);
+			expressionList.addExpression(assignCompareTo);
+			
+			final ActualArgumentList paramListToConverter = new ActualArgumentList();
+			
+			paramListToConverter.addActualArgument(compareToResult);
+			paramListToConverter.addActualArgument(operatorString);
+			
+			final Message convertMessage = new Message("compareTo$toBoolean", paramListToConverter, lineNumber, enclosingMegaType);
+			convertMessage.setReturnType(booleanType);
+			
+			final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+			final Expression classObjectExpression = new IdentifierExpression("Object", objectType,
+					StaticScope.globalScope(), lineNumber);
+			originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+			targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+			expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
+					lineNumber, true, originMethodClass, targetMethodClass, !amInConstructor());
+			expression.setResultIsConsumed(true);
+
+			// This sucks. Expression lists usually take the first seed
+			// argument as the type of the list. Override it.
+			expressionList.setType(booleanType);
+			expressionList.setResultIsConsumed(true);
+			expressionList.addExpression(expression);
+			
+			expression = expressionList;
+		} else {
+			// This was kind of the last chance. We've probably
+			// already given the user some diagnostics. Now let's
+			// give her some advice.
+			errorHook6p2(ErrorType.Fatal, lineNumber,
+					"To use `", operationAsString + "' on object `",
+					lhs.name(), "' you must declare a compareTo(",
+					rhs.type().name() + " argument",
+					") operation in the `requires' section of " +  lhs.name());
+			expression = new NullExpression();
+		}
+		
+		return expression;
+	}
+	
+	private Expression handleRelopCallWithRoleLHS(final Expression lhs,
+			final String operationAsString, final Expression rhs, int lineNumber) {
 		assert lhs.type() instanceof RoleType;
 
 		Expression expression = null;
@@ -2137,7 +2264,7 @@ public class Pass1Listener extends Pass0Listener {
 				operatorStringExpression.setResultIsConsumed(true);
 				
 				// Assign the operator string into its expression
-				final AssignmentExpression assignOpString = new AssignmentExpression(
+				final AssignmentExpression assignOpString = new InternalAssignmentExpression(
 						operatorString, "=", operatorStringExpression, lineNumber, this);
 				assignOpString.setResultIsConsumed(false);
 				expressionList = new ExpressionList(assignOpString, enclosingMegaType);
@@ -2181,7 +2308,7 @@ public class Pass1Listener extends Pass0Listener {
 				expression.setResultIsConsumed(true);
 				
 				// Assign result of compareTo
-				final AssignmentExpression assignCompareTo = new AssignmentExpression(
+				final AssignmentExpression assignCompareTo = new InternalAssignmentExpression(
 						compareToResult, "=", expression, lineNumber, this);
 				assignCompareTo.setResultIsConsumed(false);
 				expressionList.addExpression(assignCompareTo);
@@ -2207,7 +2334,7 @@ public class Pass1Listener extends Pass0Listener {
 				final Expression classObjectExpression = new IdentifierExpression("Object", objectType,
 						StaticScope.globalScope(), lineNumber);
 				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
-				targetMethodClass = convertMessage.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
+				targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 				expression = new MessageExpression(classObjectExpression, convertMessage, booleanType,
 						lineNumber, true, originMethodClass, targetMethodClass, !amInConstructor());
 				expression.setResultIsConsumed(true);
@@ -2225,7 +2352,7 @@ public class Pass1Listener extends Pass0Listener {
 				// give her some advice.
 				errorHook6p2(ErrorType.Fatal, lineNumber,
 						"To use `", operationAsString + "' on Role `",
-						lhs.name(), "' you must declare a comapareTo(",
+						lhs.name(), "' you must declare a compareTo(",
 						rhs.type().name() + " argument",
 						") operation in the `requires' section of " +  lhs.name());
 				expression = new NullExpression();
@@ -2245,6 +2372,7 @@ public class Pass1Listener extends Pass0Listener {
 		
 		Expression expression = null;
 		final int lineNumber = ctx.getStart().getLine();
+		boolean useCompareTo = false;
 		
 		if ((null != ctx.abelian_expr() && ctx.abelian_expr().size() == 1) && (null != ctx.boolean_expr()) &&
 				(null == ctx.boolean_expr() || ctx.boolean_expr().size() == 0) && null == ctx.ASSIGN()) {
@@ -2393,14 +2521,14 @@ public class Pass1Listener extends Pass0Listener {
 							operationAsString.equals("<=") || operationAsString.equals(">=") ||
 							operationAsString.equals("==") || operationAsString.equals("!=")) &&
 					null != lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
-				;	// then, yeah...
+				useCompareTo = true;	// then, yeah...
 			} else if (null != lhs && null != rhs && null != lhs.type() && lhs.type() instanceof InterfaceType &&
 					(operationAsString.equals("<") || operationAsString.equals(">") ||
 							operationAsString.equals("<=") || operationAsString.equals(">=") ||
 							operationAsString.equals("==") || operationAsString.equals("!=")) &&
 					null != ((StaticInterfaceScope)lhs.type().enclosedScope()).
 						lookupMethodDeclarationWithConversionIgnoringParameter("compareTo", parameterList, false, "this")) {
-				;	// then, yeah...
+				useCompareTo = true;	// then, yeah...
 			} else if (null != rhs && null != rhs.type() &&
 					rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
 				;	// O.K.
@@ -2423,10 +2551,15 @@ public class Pass1Listener extends Pass0Listener {
 					// Comparing to NULL is O.K...  for now....
 					expression = new RelopExpression(lhs, operationAsString, rhs);
 				} else {
-					expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
+					expression = handleRelopCallWithRoleLHS(lhs, operationAsString, rhs, lineNumber);
 				}
 			} else {
-				expression = new RelopExpression(lhs, operationAsString, rhs);
+				if (useCompareTo && lhs.type() instanceof BuiltInType == false) {
+					// We found above that things are all set up to use compareTo. Use it.
+					expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
+				} else {
+					expression = new RelopExpression(lhs, operationAsString, rhs);
+				}
 			}
 	
 			if (printProductionsDebug) {
@@ -2717,7 +2850,7 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final IdentifierExpression tempVariable = new IdentifierExpression(tempName, newExpr.type(), currentScope_, newExpr.lineNumber());
 			
-			retval = new AssignmentExpression(tempVariable, "=", newExpr, newExpr.lineNumber(), this);
+			retval = new InternalAssignmentExpression(tempVariable, "=", newExpr, newExpr.lineNumber(), this);
 		}
 		return retval;
 	}

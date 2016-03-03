@@ -1,7 +1,7 @@
 package info.fulloo.trygve.expressions;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -590,6 +590,15 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private Expression rhs_;
 		private final Expression lhs_;
 		private final int lineNumber_;
+	}
+	
+	public static class InternalAssignmentExpression extends AssignmentExpression {
+		public InternalAssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass0Listener parser) {
+			super(lhs, operator, rhs, lineNumber, parser);
+		}
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, StaticScope scope) {
+			return codeGenerator.compileInternalAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
 	}
 	
 	public static class NewExpression extends Expression

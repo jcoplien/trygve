@@ -1,7 +1,7 @@
 package info.fulloo.trygve.add_ons;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTPrintStreamInfo;
 import info.fulloo.trygve.run_time.RTCode;
@@ -213,6 +214,11 @@ public final class SystemClass {
 			
 			final RTObject theStream = myEnclosedScope.getObject("this");
 			final RTObject printStreamInfo = theStream.getObject("printStreamInfo");
+			if (printStreamInfo instanceof RTPrintStreamInfo == false) {
+				ErrorLogger.error(ErrorType.Internal, lineNumber(), "Print empire (", this.methodSelectorName(),
+						"): Internal Error with stack corruption so PrintStreamInfo is missing.", "");
+				return new RTHalt();
+			}
 			assert printStreamInfo instanceof RTPrintStreamInfo;
 			final PrintStream finalStream = ((RTPrintStreamInfo)printStreamInfo).printStream();
 			

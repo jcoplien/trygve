@@ -1,7 +1,7 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,7 @@ import info.fulloo.trygve.expressions.Expression.ArrayExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
 import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
+import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.BinopExpression;
 import info.fulloo.trygve.expressions.Expression.BlockExpression;
 import info.fulloo.trygve.expressions.Expression.BooleanExpression;
@@ -1264,7 +1265,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					rhs = new NullExpression();
 				}
 				final AssignmentExpression newAssignmentExpression =
-						new AssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
+						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
 				retval.add(newAssignmentExpression);
 			} else {
 				retval.add(initializer);
@@ -1582,6 +1583,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	public List<RTCode> compileAssignmentExpression(final AssignmentExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTAssignment(expr, rtTypeDeclaration));
+		return retval;
+	}
+	public List<RTCode> compileInternalAssignmentExpression(final InternalAssignmentExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTInternalAssignment(expr, rtTypeDeclaration));
 		return retval;
 	}
 	public List<RTCode> compileDoubleCasterExpression(final DoubleCasterExpression expr, final RTType rtTypeDeclaration) {

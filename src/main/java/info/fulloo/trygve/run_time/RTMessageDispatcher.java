@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,8 @@ import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
+import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTInternalAssignmentPart2;
+import info.fulloo.trygve.run_time.RTExpression.RTInternalAssignment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
@@ -243,8 +245,10 @@ public abstract class RTMessageDispatcher {
 			// a result which will be a parameter to the method
 			
 			// Make sure it doesn't get popped. Setting things in ActualParameters
-			// doesn't seem to be enough (setResultIsConsumed(true))
-			if (pc instanceof RTExpression) {
+			// doesn't seem to be enough (setResultIsConsumed(true)). This one line
+			// is the entire reason for the existence of InternalAssignmentExpression
+			// and RTInternalAssignment.
+			if (pc instanceof RTExpression && (pc instanceof RTInternalAssignment == false) && (pc instanceof RTInternalAssignmentPart2 == false)) {
 				((RTExpression)pc).setResultIsConsumed(true);
 			}
 			
@@ -544,9 +548,12 @@ public abstract class RTMessageDispatcher {
 					}
 				}
 				if (null == methodDecl) {
-					// One last try - look it up in Object
+					// One last try - look it up in Object.
 					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
-					assert null != methodDecl;
+					if (null == methodDecl) {
+						methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
+						assert null != methodDecl;
+					}
 				}
 			}
 			assert null != methodDecl;
@@ -709,7 +716,7 @@ public abstract class RTMessageDispatcher {
 			
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null - there
-			// is no link to subsequent code
+			// is no link to subsequent code.
 			final RTStackable tempSelf = this.pushArgumentLoop(start, expressionCounterForThisExtraction, indexForThisExtraction);
 			
 			if (tempSelf instanceof RTHalt) {

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ import java.util.regex.PatternSyntaxException;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
@@ -323,22 +324,31 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			@Override public RTCode run() {
 				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTIntegerObject theIntegerCodeObject = (RTIntegerObject)activationRecord.getObject("code");
-				final RTStringObject theOperatorStringObject = (RTStringObject)activationRecord.getObject("operator");
+				final RTObject theCodeObject = activationRecord.getObject("code");
+				if (theCodeObject instanceof RTIntegerObject == false) {
+					assert false;
+				}
+				final RTIntegerObject theIntegerCodeObject = (RTIntegerObject)theCodeObject;
+				
+				final RTObject theStringObject = activationRecord.getObject("operator");
+				if (theStringObject instanceof RTStringObject == false) {
+					assert false;
+				}
+				final RTStringObject theOperatorStringObject = (RTStringObject)theStringObject;
 
 				final long integerCode = theIntegerCodeObject.intValue();
 				final String operator = theOperatorStringObject.stringValue();
 				
 				boolean rawRetval = false;
 				
-				switch ((int)integerCode) {
-				case -1:
-					rawRetval = (operator.equals("<") || operator.equals("<=")); break;
-				case 0:
-					rawRetval = (operator.equals("<=") || operator.equals(">=") || operator.equals("==")); break;
-				case 1:
-					rawRetval = (operator.equals(">") || operator.equals(">=")); break;
-				default:
+				if ((int)integerCode < 0) {
+					rawRetval = (operator.equals("<") || operator.equals("<="));
+				} else if ((int)integerCode == 0) {
+					rawRetval = (operator.equals("<=") || operator.equals(">=") || operator.equals("=="));
+				} else if ((int)integerCode > 0) {
+					rawRetval = (operator.equals(">") || operator.equals(">="));
+				} else {
+					// cannot be
 					assert false;
 				}
 				
@@ -505,15 +515,23 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTIntegerObject;
 				final RTStackable other = dynamicScope.getObject("other");
-				assert other instanceof RTIntegerObject;
-				final RTIntegerObject selfObject = (RTIntegerObject)self;
-				final long selfValue = selfObject.intValue();
-				final RTIntegerObject otherObject = (RTIntegerObject)other;
-				final long otherValue = otherObject.intValue();
+				assert other instanceof RTIntegerObject || other instanceof RTNullObject;
 				
 				long iRetval = 0;
-				if (selfValue > otherValue) iRetval = 1;
-				else if (selfValue < otherValue) iRetval = -1;
+				if (other instanceof RTIntegerObject) {
+					final RTIntegerObject selfObject = (RTIntegerObject)self;
+					final long selfValue = selfObject.intValue();
+					final RTIntegerObject otherObject = (RTIntegerObject)other;
+					final long otherValue = otherObject.intValue();
+					
+					if (selfValue > otherValue) iRetval = 1;
+					else if (selfValue < otherValue) iRetval = -1;
+				} else {
+					// Must be false. We are an integer object and
+					// are being compared to null
+					assert other instanceof RTNullObject;
+					iRetval = -1;
+				}
 				
 				final RTIntegerObject retval = new RTIntegerObject(iRetval);
 
@@ -599,15 +617,20 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTIntegerObject;
 				final RTStackable other = dynamicScope.getObject("other");
-				assert other instanceof RTIntegerObject;
-				final RTIntegerObject selfObject = (RTIntegerObject)self;
-				final long selfValue = selfObject.intValue();
-				final RTIntegerObject otherObject = (RTIntegerObject)other;
-				final long otherValue = otherObject.intValue();
+				assert other instanceof RTIntegerObject || other instanceof RTNullObject;
 				
 				long iRetval = 0;
-				if (selfValue > otherValue) iRetval = 1;
-				else if (selfValue < otherValue) iRetval = -1;
+					if (other instanceof RTIntegerObject) {
+					final RTIntegerObject selfObject = (RTIntegerObject)self;
+					final long selfValue = selfObject.intValue();
+					final RTIntegerObject otherObject = (RTIntegerObject)other;
+					final long otherValue = otherObject.intValue();
+					
+					if (selfValue > otherValue) iRetval = 1;
+					else if (selfValue < otherValue) iRetval = -1;
+				} else {
+					iRetval = -1;
+				}
 				
 				final RTIntegerObject retval = new RTIntegerObject(iRetval);
 
@@ -733,27 +756,34 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable rhs = dynamicScope.getObject("other");
 				final RTDoubleObject selfObject = (RTDoubleObject)self;
 				final double selfValue = selfObject.doubleValue();
-				final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
-				if (null == otherObject) {
-					final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
-					ErrorLogger.error(ErrorType.Runtime, 0,
-							"Attempt to access uninitialized double in argument to `",
-							"compareTo'; calling context may be `",
-							parentScope.name(), "'.");
-					retval = new RTHalt();
-				} else {
-					final double otherValue = otherObject.doubleValue();
+				if (rhs instanceof RTNullObject) {
+					final RTIntegerObject result = new RTIntegerObject(-1);
 					
-					int iResult = 0;
-					if (selfValue > otherValue) iResult = 1;
-					else if (selfValue < otherValue) iResult = -1;
-					
-					final RTIntegerObject result = new RTIntegerObject(iResult);
-	
 					addRetvalTo(dynamicScope);
 					dynamicScope.setObject("ret$val", result);
-					
-					retval = super.nextCode();
+				} else {
+					final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
+					if (null == otherObject) {
+						final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
+						ErrorLogger.error(ErrorType.Runtime, 0,
+								"Attempt to access uninitialized double in argument to `",
+								"compareTo'; calling context may be `",
+								parentScope.name(), "'.");
+						retval = new RTHalt();
+					} else {
+						final double otherValue = otherObject.doubleValue();
+						
+						int iResult = 0;
+						if (selfValue > otherValue) iResult = 1;
+						else if (selfValue < otherValue) iResult = -1;
+						
+						final RTIntegerObject result = new RTIntegerObject(iResult);
+		
+						addRetvalTo(dynamicScope);
+						dynamicScope.setObject("ret$val", result);
+						
+						retval = super.nextCode();
+					}
 				}
 				
 				return retval;
@@ -1027,11 +1057,16 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable otherObject = dynamicScope.getObject("other");
 				final RTStringObject selfObject = (RTStringObject)self;
 				final String selfValue = selfObject.stringValue();
-				final String otherValue = ((RTStringObject)otherObject).stringValue();
 				
-				final int iResult = selfValue.compareTo(otherValue);
+				int iResult;
+				if (otherObject instanceof RTNullObject) {
+					iResult = -1;
+				} else {
+					final String otherValue = ((RTStringObject)otherObject).stringValue();
+					iResult = selfValue.compareTo(otherValue);
+				}
 				
-				final RTDoubleObject result = new RTDoubleObject(iResult);
+				final RTIntegerObject result = new RTIntegerObject(iResult);
 
 				addRetvalTo(dynamicScope);
 				dynamicScope.setObject("ret$val", result);
@@ -1218,17 +1253,21 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTStackable self = dynamicScope.getObject("this");
 				assert self instanceof RTBooleanObject;
 				final RTStackable other = dynamicScope.getObject("other");
-				assert other instanceof RTBooleanObject;
+				assert other instanceof RTBooleanObject || other instanceof RTNullObject;
 				final RTBooleanObject selfObject = (RTBooleanObject)self;
 				final boolean selfValue = selfObject.value();
-				final RTBooleanObject otherObject = (RTBooleanObject)other;
-				final boolean otherValue = otherObject.value();
 				
-				int iRetval = 0;
-				
-				if (selfValue == otherValue) iRetval = 0;
-				else if (selfValue == false) iRetval = -1;
-				else iRetval = 1;
+				int iRetval;
+				if (other instanceof RTBooleanObject) {
+					final RTBooleanObject otherObject = (RTBooleanObject)other;
+					final boolean otherValue = otherObject.value();
+					
+					if (selfValue == otherValue) iRetval = 0;
+					else if (selfValue == false) iRetval = -1;
+					else iRetval = 1;
+				} else {
+					iRetval = -1;
+				}
 				
 				final RTIntegerObject retval = new RTIntegerObject(iRetval);
 
@@ -1240,7 +1279,17 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		}
 		
 		@Override public RTType typeNamed(final String typeName) { return null; }
-		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) { return null; }
+		@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
+			RTMethod retval = null;
+			if (methodName.equals("compareTo")) {
+				final TypeDeclaration typeDeclaration = this.typeDeclaration();
+				final MethodDeclaration methodDecl = typeDeclaration.enclosedScope().lookupMethodDeclaration(methodName, pl, false);
+				if (null != methodDecl) {
+					retval = new RTMethod("compareTo", methodDecl);
+				}
+			}
+			return retval;
+		}
 		@Override public TypeDeclaration typeDeclaration() { return StaticScope.globalScope().lookupClassDeclaration("boolean"); }
 	}
 	

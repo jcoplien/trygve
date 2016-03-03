@@ -1,7 +1,7 @@
 package info.fulloo.trygve.editor;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -30,10 +30,14 @@ public class Main {
 		// to get platform independence in the output. Many thanks to
 		// Egon Elbre!
 		System.setProperty("line.separator", "\n");
-		java.awt.EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				new TextEditorGUI().setVisible(true);
-			}
-		});
+		if (args.length > 0) {
+			new BatchRunner().processBatch(args);
+		} else {
+			java.awt.EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					new TextEditorGUI().setVisible(true);
+				}
+			});
+		}
 	}
 }

@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -73,7 +73,11 @@ public class RunTimeEnvironment {
 		setRunTimeEnvironment(this);
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
-		redirectedInputStream_ = gui.getIn();
+		if (null != gui) {
+			redirectedInputStream_ = gui.getIn();
+		} else {
+			redirectedInputStream_ = System.in;
+		}
 	}
 	private static void setRunTimeEnvironment(final RunTimeEnvironment theThis) {
 		runTimeEnvironment_ = theThis;
@@ -82,8 +86,12 @@ public class RunTimeEnvironment {
 		RTExpression.reboot();	// reset lastExpression_, etc.
 		stack = new Stack<RTStackable>();
 		dynamicScopes = new Stack<RTDynamicScope>();
-		framePointers_ = new Stack<IntWrapper>();
-		redirectedInputStream_ = gui_.getIn();
+		framePointers_ = new Stack<Integer>();
+		if (null != gui_) {
+			redirectedInputStream_ = gui_.getIn();
+		} else {
+			redirectedInputStream_ = System.in;
+		}
 	}
 	private void preDeclareTypes() {
 		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
@@ -175,21 +183,13 @@ public class RunTimeEnvironment {
 	}
 	public void setFramePointer() {
 		final int stackSize = stack.size();
-		framePointers_.push(new IntWrapper(stackSize));
+		framePointers_.push(new Integer(stackSize));
 	}
-	private static class IntWrapper {
-		public IntWrapper(final int value) {
-			value_ = value;
-		}
-		public int value() {
-			return value_;
-		}
-		private int value_;
-	}
+	
 	public RTStackable popDownToFramePointer() {
 		RTStackable retval = null;
 		final int stackSize = stack.size();
-		final int framePointer = (framePointers_.pop()).value();
+		final int framePointer = (framePointers_.pop()).intValue();
 		if (framePointer > stackSize) {
 			ErrorLogger.error(ErrorType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
@@ -205,7 +205,7 @@ public class RunTimeEnvironment {
 	public RTStackable popDownToFramePointerMinus1() {
 		RTStackable retval = null;
 		final int stackSize = stack.size();
-		int framePointer = (framePointers_.pop()).value() + 1;
+		int framePointer = (framePointers_.pop()).intValue() + 1;
 		if (framePointer < stackSize) {
 			ErrorLogger.error(ErrorType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
@@ -367,6 +367,8 @@ public class RunTimeEnvironment {
 					stream.format(" for \"%s\"", ((RTPostReturnProcessing)code).name());
 				} else if (code instanceof RTConstant) {
 					stream.format(" for \"%s\"", ((RTConstant)code).getText());
+				} else if (code instanceof RTAssignment) {
+					stream.format(" (\"%s\")", ((RTAssignment)code).getText());
 				} else if (code instanceof RTAssignmentPart2) {
 					stream.format(" (\"%s\")", ((RTAssignmentPart2)code).getText());
 				}
@@ -391,7 +393,6 @@ public class RunTimeEnvironment {
 		final int stackSize = stack.size();
 		System.err.format("________________________________________________________ (%d)\n", stackSize);
 		final int endIndex = stackSize > 5? stackSize - 5: 0;
-		final int topFramePointer = framePointers_.size() > 0? framePointers_.peek().value(): -1;
 		for (int i = stackSize-1; i >= endIndex; i--) {
 			RTStackable element = stack.elementAt(i);
 			System.err.format(":  %s", element.getClass().getSimpleName());
@@ -410,7 +411,7 @@ public class RunTimeEnvironment {
 			} else if (element instanceof RTPostReturnProcessing) {
 				System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
 			}
-			if (topFramePointer == i-1) {
+			if (framePointers_.contains(new Integer(i-1))) {
 				System.err.format(" <== frame pointer (%d)", i+1);
 			}
 			System.err.format("\n");
@@ -426,7 +427,7 @@ public class RunTimeEnvironment {
 	private final Map<String, RTInterface> stringToRTInterfaceMap_;
 	private final Map<String, RTType> pathToTypeMap_;
 	private       Stack<RTStackable> stack;
-	private       Stack<IntWrapper> framePointers_;
+	private       Stack<Integer> framePointers_;
 	private       Stack<RTDynamicScope> dynamicScopes;
 	private final List<RTClass> allClassList_;
 	public        RTDynamicScope globalDynamicScope;

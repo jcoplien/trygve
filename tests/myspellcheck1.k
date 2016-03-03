@@ -121,9 +121,9 @@ context SpellCheck {
       Words[0].check()
    }
 
-   private int currentIndex() const { return currentIndex_ }
+   public int currentIndex() const { return currentIndex_ }
 
-   private void setBufferIndex(int i) { currentIndex_ = i.clone }
+   public void setBufferIndex(int i) { currentIndex_ = i.clone }
 
    private int currentIndex_ = 0
 }
@@ -136,9 +136,3 @@ context SpellCheck {
    )
    spellChecker.spellCheck()
 }
-
-/* GOLD:
-line 3: Roles in `CollectionRole' cannot be played by objects of type `AClass':
-line 3: 	`size' needed by Role `CollectionRole' does not appear in interface of `AClass'.
-___________________________________________________________
-*/

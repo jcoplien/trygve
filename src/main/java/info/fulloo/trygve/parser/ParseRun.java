@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,7 @@ import java.lang.reflect.Method;
 
 import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.editor.BatchRunner;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.run_time.RTExpression;
@@ -43,51 +44,48 @@ import info.fulloo.trygve.semantic_analysis.Program;
 public class ParseRun {
 	final static String grammarName = "Kant";
 	final static String startRuleName = "program";
-	public ParseRun(final String input, final TextEditorGUI gui)
+	final String input_;
+	Class<? extends Parser> parserClass_ = null;
+	final ParsingData parsingData_;
+	
+	public ParseRun(final String input)
 	{
-        final ParsingData parsingData = new ParsingData();
-        Class<? extends Parser> parserClass = null;
-        parserClass = KantParser.class;
+        parsingData_ = new ParsingData();
+        parserClass_ = KantParser.class;
         ErrorLogger.resetCounts();
-        
-        try {
-        	final ANTLRInputStream inputStream = new ANTLRInputStream(input);
-        	final KantLexer lexer = new KantLexer(inputStream);
-        	final CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
-        	final KantParser aParser = new KantParser(commonTokenStream);
-	    
-        	try {
-        		final Method startRule = parserClass.getMethod(startRuleName);
-        		final ParserRuleContext tree = (ParserRuleContext)startRule.invoke(aParser, (Object[])null);
-        		
-        		if (ConfigurationOptions.treewalkTraceEnabled()) {
-        			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);
-        		}
-        		this.pass0(parsingData, tree);
-        		this.pass1(parsingData, tree);
-        		this.pass2(parsingData, tree);
-        		this.pass3(parsingData, tree);
-        		
-        		// Pass 4 mainly does template instantiations
-        		this.pass4(parsingData, tree);
-        		
-        		this.generateCode(parsingData, gui);
-        	}
-        	catch (final NoSuchMethodException nsme) {
-        		System.err.println("No method for rule "+startRuleName+" or it has arguments");
-        	}
-        	catch (final InvocationTargetException ite) {
-        		System.err.println("InvocationTargetException");
-        	}
-        	catch (final IllegalAccessException iae) {
-        		System.err.println("IllegalAccessException");
-        	}
-        }
-	    finally {
-	    	gui.console().redirectErr(java.awt.Color.BLUE, null);
-	    	System.err.println("___________________________________________________________");
-	    	gui.console().redirectErr(java.awt.Color.RED, null);
-	    }
+        input_ = input;
+	}
+	
+	protected void commonInit() {
+    	final ANTLRInputStream inputStream = new ANTLRInputStream(input_);
+    	final KantLexer lexer = new KantLexer(inputStream);
+    	final CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
+    	final KantParser aParser = new KantParser(commonTokenStream);
+    
+    	try {
+    		final Method startRule = parserClass_.getMethod(startRuleName);
+    		final ParserRuleContext tree = (ParserRuleContext)startRule.invoke(aParser, (Object[])null);
+    		
+    		if (ConfigurationOptions.treewalkTraceEnabled()) {
+    			ParseTreeWalker.DEFAULT.walk(new DebugPassListener(), tree);
+    		}
+    		this.pass0(parsingData_, tree);
+    		this.pass1(parsingData_, tree);
+    		this.pass2(parsingData_, tree);
+    		this.pass3(parsingData_, tree);
+    		
+    		// Pass 4 mainly does template instantiations
+    		this.pass4(parsingData_, tree);
+    	}
+    	catch (final NoSuchMethodException nsme) {
+    		System.err.println("No method for rule "+startRuleName+" or it has arguments");
+    	}
+    	catch (final InvocationTargetException ite) {
+    		System.err.println("InvocationTargetException");
+    	}
+    	catch (final IllegalAccessException iae) {
+    		System.err.println("IllegalAccessException");
+    	}
 	}
 
 	private void pass0(final ParsingData parsingData, final ParserRuleContext tree) {
@@ -110,8 +108,10 @@ public class ParseRun {
         ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
-	private void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
+	protected void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
 		final Program program = Program.program();
+		
+		// WARNING: gui may be null in batch mode
 		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, gui);
 		codeGenerator.compile();
 		virtualMachine_ = codeGenerator.virtualMachine();
@@ -124,6 +124,34 @@ public class ParseRun {
 	
 	public RTExpression mainExpr() {
 		return mainExpr_;
+	}
+	
+	public static class GuiParseRun extends ParseRun {
+		public GuiParseRun(final String input, final TextEditorGUI gui) {
+			super(input);
+	        try {
+	        	commonInit();
+	    		this.generateCode(parsingData_, gui);
+	        }
+		    finally {
+		    	gui.console().redirectErr(java.awt.Color.BLUE, null);
+		    	System.err.println("___________________________________________________________");
+		    	gui.console().redirectErr(java.awt.Color.RED, null);
+		    }
+		}
+	}
+	
+	public static class BatchParseRun extends ParseRun {
+		public BatchParseRun(final String input, final BatchRunner batchRunner) {
+			super(input);
+	        try {
+	        	commonInit();
+	    		this.generateCode(parsingData_, null);
+	        }
+		    finally {
+		    	System.err.println("Compilation complete");
+		    }
+		}
 	}
 	
 	private RunTimeEnvironment virtualMachine_;

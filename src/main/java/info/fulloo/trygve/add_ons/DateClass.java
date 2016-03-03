@@ -18,6 +18,7 @@ import info.fulloo.trygve.run_time.RTDateObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -25,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -348,9 +349,16 @@ public final class DateClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTDateObject theDateObject = (RTDateObject)activationRecord.getObject("this");
 			final RTObject rawOther = activationRecord.getObject("other");
-			assert rawOther instanceof RTDateObject;
-			final RTDateObject other = (RTDateObject) rawOther;
-			final int rawResult = theDateObject.compareTo(other);
+			assert rawOther instanceof RTDateObject || rawOther instanceof RTNullObject;
+			
+			int rawResult;
+			if (rawOther instanceof RTDateObject) {
+				final RTDateObject other = (RTDateObject) rawOther;
+				rawResult = theDateObject.compareTo(other);
+			} else {
+				rawResult = -1;
+			}
+			
 			final RTIntegerObject result = new RTIntegerObject(rawResult);
 
 			this.addRetvalTo(activationRecord);

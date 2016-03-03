@@ -6,7 +6,7 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
+import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RTWindowRegistryEntry;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -52,11 +53,11 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "examples/bb10.k";
+	private final static String defaultFile = "tests/switch_test2.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.5.17";
+    final String TrygveVersion = "1.6.1";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -783,7 +784,7 @@ public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt)
 
 public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed
 	final String program = editPane.getText();
-    parseRun_  = new ParseRun(program, this);
+    parseRun_  = new GuiParseRun(program, this);
     assert parseRun_ != null;
 	virtualMachine_ = parseRun_.virtualMachine();
 	compiledWithoutError_ = ErrorLogger.numberOfFatalErrors() == 0;

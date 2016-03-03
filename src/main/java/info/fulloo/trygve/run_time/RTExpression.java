@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,7 @@ import info.fulloo.trygve.expressions.BreakableExpression;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
+import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
@@ -183,6 +184,8 @@ public abstract class RTExpression extends RTCode {
 			retval = new RTUnaryAbelianop((UnaryAbelianopExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof UnaryopExpressionWithSideEffect) {
 			retval = new RTUnaryopWithSideEffect((UnaryopExpressionWithSideEffect)expr, nearestEnclosingType);
+		} else if (expr instanceof InternalAssignmentExpression) {
+			retval = new RTInternalAssignment((InternalAssignmentExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof AssignmentExpression) {
 			retval = new RTAssignment((AssignmentExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof IfExpression) {
@@ -1651,12 +1654,19 @@ public abstract class RTExpression extends RTCode {
 		}
 		private void ctorCommon(final AssignmentExpression expr, final RTType nearestEnclosedType) {
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosedType);
-			part2_ = new RTAssignmentPart2(expr, rhs_, nearestEnclosedType);
+			part2_ = this instanceof RTInternalAssignment?
+						new RTInternalAssignmentPart2(expr, rhs_, nearestEnclosedType):
+						new RTAssignmentPart2(expr, rhs_, nearestEnclosedType);
 			rhs_.setNextCode(part2_);
 			rhs_.setResultIsConsumed(true);
-			setResultIsConsumed(expr.resultIsConsumed());
-			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			this.setResultIsConsumed(expr.resultIsConsumed());
 			lineNumber_ = expr.lineNumber();
+			gettableText_ = expr.getText();
+		}
+		
+		@Override public void setResultIsConsumed(final boolean tf) {
+			super.setResultIsConsumed(tf);
+			part2_.setResultIsConsumed(tf);
 		}
 		
 		@Override public RTCode run() {
@@ -1683,10 +1693,14 @@ public abstract class RTExpression extends RTCode {
 				lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 				if (lhs_ instanceof RTQualifiedIdentifier) {
 					part2b_ = new RTAssignmentPart2B(lhs_, lineNumber_);
-					part2b_.setResultIsConsumed(expr.resultIsConsumed());
 					lhs_.setNextCode(part2b_);
 				}
+				this.setResultIsConsumed(expr.resultIsConsumed());
 				gettableText_ = expr.getText();
+			}
+			@Override public void setResultIsConsumed(final boolean tf) {
+				super.setResultIsConsumed(tf);
+				if (null != part2b_) part2b_.setResultIsConsumed(tf);
 			}
 			@Override public RTCode run() {
 				// RHS processing takes place in RTAssignment, because it may take
@@ -1962,17 +1976,38 @@ public abstract class RTExpression extends RTCode {
 			private final String gettableText_;
 		}
 		
+		public static class RTInternalAssignmentPart2 extends RTAssignmentPart2 {
+			public RTInternalAssignmentPart2(final AssignmentExpression expr, final RTExpression rhs, final RTType nearestEnclosingType) {
+				super(expr, rhs, nearestEnclosingType);
+			}
+		}
+		
 		public void setTemplateInstantiationInfo(final TemplateInstantiationInfo templateInstantiationInfo) {
 			templateInstantiationInfo_ = templateInstantiationInfo;
 		}
 		public TemplateInstantiationInfo templateInstantiationInfo() {
 			return templateInstantiationInfo_;
 		}
+		public String getText() {
+			return gettableText_;
+		}
 		
 		private RTExpression rhs_;
 		private RTAssignmentPart2 part2_;
 		private TemplateInstantiationInfo templateInstantiationInfo_;
 		private int lineNumber_;
+		private String gettableText_;
+	}
+	
+	public static class RTInternalAssignment extends RTAssignment {
+		// We merely use the type to signal that certain facets
+		// of this expression should be ignored in normal processing.
+		// For example, when an assignment statement appears in a
+		// parameter list, it should be marked as being consumed.
+		// But internal assignments need to be cleaned off the stack
+		public RTInternalAssignment(final InternalAssignmentExpression expr, final RTType nearestEnclosedType) {
+			super(expr, nearestEnclosedType);
+		}
 	}
 	
 	public static class RTNew extends RTExpression {
@@ -3857,7 +3892,7 @@ public abstract class RTExpression extends RTCode {
 			
 			assert returnAddress instanceof RTCode || returnAddress == null;
 			
-			// Pop activation record
+			// Pop the last activation record for this call
 			final RTDynamicScope lastPoppedScope = RunTimeEnvironment.runTimeEnvironment_.popDynamicScope();
 			lastPoppedScope.decrementReferenceCount();
 			

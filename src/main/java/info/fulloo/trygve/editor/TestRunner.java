@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 1.5
+ * Trygve IDE 1.6
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -123,6 +123,7 @@ public class TestRunner {
 		"fractal0.k",
 		"fractal1.k",
 		"fractal.k",
+		"compareTo_test1.k",
 		"exprtest1.k",
 		"money_transfer2.k",
 		"money_transfer.k",

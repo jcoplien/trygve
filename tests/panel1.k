@@ -42,9 +42,4 @@ class PanelTest {
    }
 }
 
-//new PanelTest().test()
-
-{
-Set<int> set;
-for (int a : set) { }
-}
+new PanelTest().test()
