@@ -11,6 +11,12 @@ repositories {
 
 mainClassName = "info.fulloo.trygve.editor.Main"
 
+jar {
+  manifest {
+    attributes 'Main-Class': 'info.fulloo.trygve.editor.Main'
+  }
+}
+
 applicationDefaultJvmArgs = ["-ea"]
 compileJava {
     options.fork = true
@@ -21,6 +27,22 @@ sourceSets.main.java.srcDirs  = [
     'src/main/java',
     'src/main/generated'
 ]
+
+distZip {
+    into(project.name) {
+        from '.'
+        include 'examples/*'
+        include 'tests/*'
+    }
+}
+
+distTar {
+    into(project.name) {
+        from '.'
+        include 'examples/*'
+        include 'tests/*'
+    }
+}
 
 dependencies {
     compile files('lib/antlr-runtime-4.5.1.jar')
