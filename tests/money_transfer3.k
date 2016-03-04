@@ -81,4 +81,8 @@ class Account {
 /* GOLD:
 ___________________________________________________________
 Line 34: Assertion failed: Insufficient funds
+	In script `assert'
+	Called from script `withdraw'
+	Called from script `transfer'
+	Called from script `run'
 */

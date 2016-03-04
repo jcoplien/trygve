@@ -17,4 +17,7 @@ context Context {
 /* GOLD:
 ___________________________________________________________
 Line 4: Assertion failed: 1 == 2
+	In script `assert'
+	Called from script `role1Func'
+	Called from script `trigger'
 */

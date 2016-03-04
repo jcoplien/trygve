@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -96,9 +97,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.addObjectDeclaration("this", myType);
-			activationRecord.addObjectDeclaration("other", otherType);
+			
+			// What did the programmer name the argument? Canonically it's "other"
+			// but the programmer can choose anything...
+			final FormalParameterList userCompareToParameters = compareTo.formalParameters();
+			final String parameterName = userCompareToParameters.nameOfParameterAtPosition(1);
+			activationRecord.addObjectDeclaration(parameterName, otherType);
+			
 			activationRecord.setObject("this", this);
-			activationRecord.setObject("other", otherObject);
+			activationRecord.setObject(parameterName, otherObject);
 			
 			// return address
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(null);

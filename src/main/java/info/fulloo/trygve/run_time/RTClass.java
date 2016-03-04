@@ -283,6 +283,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					final String msg = stringObject.stringValue();
 					System.err.format("Line %d: Assertion failed: %s", lineNumber.intValue(), msg);
 					System.err.println();
+					RTMessage.printMiniStackStatus();
 				}
 				final RTCode retval = tf? super.nextCode(): new RTHalt();
 				return retval;

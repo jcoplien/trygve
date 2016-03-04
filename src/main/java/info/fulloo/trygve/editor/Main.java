@@ -30,14 +30,24 @@ public class Main {
 		// to get platform independence in the output. Many thanks to
 		// Egon Elbre!
 		System.setProperty("line.separator", "\n");
-		if (args.length > 0) {
+		if (args.length > 0 && args[0].startsWith("-g") == false) {
 			new BatchRunner().processBatch(args);
-		} else {
+		} else if (args.length > 0 && args[0].startsWith("-g")) {
 			java.awt.EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					new TextEditorGUI().setVisible(true);
 				}
 			});
+		} else if (args.length == 0 || args[0].startsWith("-?") || args[0].startsWith("-h")) {
+			printUsage();
+		} else {
+			printUsage();
 		}
+	}
+	private static void printUsage() {
+		System.out.format("Usage: trygve -gui\n");
+		System.out.format("       trygve -c filename.k\n");
+		System.out.format("       trygve -c filename.k -r\n");
+		System.out.format("       trygve -c filename1.k -c filename2.k ... -r\n");
 	}
 }
