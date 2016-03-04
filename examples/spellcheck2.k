@@ -223,7 +223,7 @@ context SpellCheck {
    } requires {
       int length() const;
       String substring(int start, int end) const;
-      String replaceFirst(String regex, String rep);
+      String replaceFirstInSitu(String regex, String rep);
       String replaceAll(String replacement)
    }
 

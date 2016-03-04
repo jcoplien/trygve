@@ -395,21 +395,25 @@ public class RunTimeEnvironment {
 		final int endIndex = stackSize > 5? stackSize - 5: 0;
 		for (int i = stackSize-1; i >= endIndex; i--) {
 			RTStackable element = stack.elementAt(i);
-			System.err.format(":  %s", element.getClass().getSimpleName());
-			if (element instanceof RTIntegerObject) {
-				System.err.format(" (\"%d\")", ((RTIntegerObject)element).intValue());
-			} else if (element instanceof RTDoubleObject) {
-				System.err.format(" (\"%f\")", ((RTDoubleObject)element).doubleValue());
-			} else if (element instanceof RTStringObject) {
-				System.err.format(" (\"%s\")", ((RTStringObject)element).stringValue());
-			} else if (element instanceof RTBooleanObject) {
-				System.err.format(" (\"%b\")", ((RTBooleanObject)element).value());
-			} else if (element instanceof RTContextObject) {
-				System.err.format(" (\"%s\")", ((RTContextObject)element).rTType().name());
-			} else if (element instanceof RTRole) {
-				System.err.format(" (\"%s\")", ((RTRole)element).name());
-			} else if (element instanceof RTPostReturnProcessing) {
-				System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
+			if (null == element) {
+				System.err.format(":  NULL");
+			} else {
+				System.err.format(":  %s", element.getClass().getSimpleName());
+				if (element instanceof RTIntegerObject) {
+					System.err.format(" (\"%d\")", ((RTIntegerObject)element).intValue());
+				} else if (element instanceof RTDoubleObject) {
+					System.err.format(" (\"%f\")", ((RTDoubleObject)element).doubleValue());
+				} else if (element instanceof RTStringObject) {
+					System.err.format(" (\"%s\")", ((RTStringObject)element).stringValue());
+				} else if (element instanceof RTBooleanObject) {
+					System.err.format(" (\"%b\")", ((RTBooleanObject)element).value());
+				} else if (element instanceof RTContextObject) {
+					System.err.format(" (\"%s\")", ((RTContextObject)element).rTType().name());
+				} else if (element instanceof RTRole) {
+					System.err.format(" (\"%s\")", ((RTRole)element).name());
+				} else if (element instanceof RTPostReturnProcessing) {
+					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
+				}
 			}
 			if (framePointers_.contains(new Integer(i-1))) {
 				System.err.format(" <== frame pointer (%d)", i+1);

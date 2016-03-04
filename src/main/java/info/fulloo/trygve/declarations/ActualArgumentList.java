@@ -191,4 +191,35 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		}
 		return retval;
 	}
+	
+	@Override public int hashCode() {
+		final int numberOfPositions = this.count();
+		final Expression middlePosition = numberOfPositions > 0? parameterAtPosition(numberOfPositions / 2): null;
+		return (int)numberOfPositions * 37 + (int)(middlePosition != null? middlePosition.getText().charAt(0): "Q");
+	}
+	
+	@Override public boolean equals(final Object o) {
+		boolean retval = true;
+		if (o instanceof ActualArgumentList) {
+			final ActualArgumentList other = (ActualArgumentList)o;
+			int myNumberOfParameters = count(), otherNumberOfParameters = other.count();
+			if (myNumberOfParameters == otherNumberOfParameters) {
+				Expression myParameter, otherParameter;
+				for (int i = 0; i < myNumberOfParameters; i++) {
+					myParameter = this.parameterAtPosition(i);
+					otherParameter = other.parameterAtPosition(i);
+					if (myParameter.getText().equals(otherParameter.getText())) {
+						if (myParameter.type().pathName().equals(otherParameter.type().pathName()) == false) { 
+							retval = false;
+							break;
+						}
+					} else {
+						retval = false;
+						break;
+					}
+				}
+			}
+		}
+		return retval;
+	}
 }

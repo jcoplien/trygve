@@ -273,4 +273,36 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return stringBuffer.toString();
 	}
+	
+	
+	@Override public int hashCode() {
+		final int numberOfPositions = this.count();
+		final String middlePosition = numberOfPositions > 0? nameOfParameterAtPosition(numberOfPositions / 2): "rumplestiltskin";
+		final int middlePositionLength = middlePosition.length();
+		return (int)numberOfPositions * 37 + (int)middlePosition.charAt(middlePositionLength / 2);
+	}
+	
+	public boolean equals(final Object o) {
+		boolean retval = true;
+		if (o instanceof FormalParameterList) {
+			final FormalParameterList other = (FormalParameterList)o;
+			int myNumberOfParameters = count(), otherNumberOfParameters = other.count();
+			if (myNumberOfParameters == otherNumberOfParameters) {
+				for (int i = 0; i < myNumberOfParameters; i++) {
+					final String myName = this.nameOfParameterAtPosition(i), otherName = other.nameOfParameterAtPosition(i);
+					if (myName.equals(otherName)) {
+						final Type myType = this.typeOfParameterAtPosition(i), otherType = other.typeOfParameterAtPosition(i);
+						if (myType.pathName().equals(otherType.pathName()) == false) {
+							retval = false;
+							break;
+						}
+					} else {
+						retval = false;
+						break;
+					}
+				}
+			}
+		}
+		return retval;
+	}
 }

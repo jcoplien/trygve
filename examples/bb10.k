@@ -5,6 +5,7 @@ interface Time {
    public int +(int other);
    public int -(int other);
    public int toInteger() const;
+   public int compareTo(int other) const
 }
 
 interface ActivityAsPredecessor {
@@ -309,7 +310,7 @@ context BackloadCtx {
          Activity minStartActivity = null;
          for (int i = 0; i < size(); i++) {
             Activity current = get(i);
-            if (current.activityLateStart() < min.toInteger()) {
+            if (current.activityLateStart().toInteger() < min.toInteger()) {
                min = current.activityLateStart();
                minStartActivity = current
             }

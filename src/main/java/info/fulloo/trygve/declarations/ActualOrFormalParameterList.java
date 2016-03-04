@@ -29,4 +29,5 @@ public interface ActualOrFormalParameterList {
 	public String nameOfParameterAtPosition(final int i);
 	public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo lt);
 	public String getText();
+	public boolean equals(Object o);
 }

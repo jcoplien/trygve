@@ -462,15 +462,33 @@ public abstract class Type implements ExpressionStackAPI
 				final ActualOrFormalParameterList argumentList, final String parameterToIgnore) {
 			return lookupMethodSignatureCommon(selectorName, argumentList, true, parameterToIgnore);
 		}
+		
+		int recurDepth = 0;
+		boolean recurRecovery = false;
 
 		public MethodSignature lookupMethodSignatureCommon(final String selectorName,
 				final ActualOrFormalParameterList argumentList, final boolean conversionAllowed,
 				final String parameterToIgnore) {
+			if (recurDepth > 5) {
+				if (recurRecovery == false) {
+						ErrorLogger.error(ErrorType.Fatal, lineNumber(),
+								"Type reference recursion involving argument of `", selectorName, "'.", "");
+				}
+				recurRecovery = true;
+				return null;
+			} else if (recurRecovery) {
+				--recurDepth;
+				if (0 == recurDepth) recurRecovery = false;
+				return null;
+			}
+			recurDepth++;
+			
 			MethodSignature retval = null;
 			List<MethodSignature> signatures = null;
 			if (selectorSignatureMap_.containsKey(selectorName)) {
 				signatures = selectorSignatureMap_.get(selectorName);
 				for (final MethodSignature signature : signatures) {
+					if (recurRecovery) break;
 					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(signature.formalParameterList(),
 							argumentList, parameterToIgnore, conversionAllowed)) {
 						retval = signature;
@@ -481,6 +499,7 @@ public abstract class Type implements ExpressionStackAPI
 				retval = null;
 			}
 			
+			--recurDepth;
 			return retval;
 		}
 		

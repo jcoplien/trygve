@@ -28,8 +28,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
@@ -64,6 +67,59 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	@Override public boolean isEqualTo(final Object other) {
 		return this == other;
+	}
+	public boolean equals(final Object other) {
+		boolean retval = false;
+		final ActualArgumentList pl = new ActualArgumentList();
+		
+		final RTType myType = this.rTType();
+		assert myType instanceof RTClassAndContextCommon;
+		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
+		final Type myTypeAsType = myClass.typeDeclaration().type();
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		pl.addFirstActualParameter(self);
+		
+		assert other instanceof RTObject;
+		RTObject otherObject = (RTObject) other;
+		final RTType otherType = otherObject.rTType();
+		assert otherType instanceof RTClassAndContextCommon;
+		final RTClassAndContextCommon otherClass = (RTClassAndContextCommon)otherType;
+		final Type otherTypeAsType = otherClass.typeDeclaration().type();
+		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, 0);
+		pl.addActualArgument(otherVar);
+		
+		final RTMethod compareTo = myType.lookupMethod("compareTo", pl);
+		if (null != compareTo) {
+			// The user has provided a compareTo function. Call it.
+			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope);
+			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			activationRecord.addObjectDeclaration("this", myType);
+			activationRecord.addObjectDeclaration("other", otherType);
+			activationRecord.setObject("this", this);
+			activationRecord.setObject("other", otherObject);
+			
+			// return address
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(null);
+			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+
+			RTCode pc = compareTo;
+			do {
+				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+			} while (null != pc && pc instanceof RTHalt == false);
+			
+			final RTObject result = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert result instanceof RTIntegerObject;
+			retval = ((RTIntegerObject)result).intValue() == 0;
+			
+			final int currentStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			if (startingStackSize != currentStackSize) {
+				assert startingStackSize == currentStackSize;
+			}
+		}
+
+		return retval;
 	}
 	@Override public void setObject(final String name, final RTObject object) {
 		assert null != object;

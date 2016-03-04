@@ -1590,7 +1590,7 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void exitBuiltin_type_name(KantParser.Builtin_type_nameContext ctx)
 	{
 		if (printProductionsDebug) {
-			System.err.print("builtin_type_name : '");
+			System.err.print("builtin_type_name : ('");
 			System.err.print(ctx.getText());
 			System.err.println("')");
 		}
@@ -2195,7 +2195,7 @@ public class Pass1Listener extends Pass0Listener {
 					"To use `", operationAsString + "' on object `",
 					lhs.name(), "' you must declare a compareTo(",
 					rhs.type().name() + " argument",
-					") operation in the `requires' section of " +  lhs.name());
+					") operation in the `requires' section of " +  lhs.type().name());
 			expression = new NullExpression();
 		}
 		
@@ -2554,7 +2554,7 @@ public class Pass1Listener extends Pass0Listener {
 					expression = handleRelopCallWithRoleLHS(lhs, operationAsString, rhs, lineNumber);
 				}
 			} else {
-				if (useCompareTo && lhs.type() instanceof BuiltInType == false) {
+				if (useCompareTo && lhs.type() instanceof BuiltInType == false && rhs.type().pathName().equals("Null") == false) {
 					// We found above that things are all set up to use compareTo. Use it.
 					expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
 				} else {
