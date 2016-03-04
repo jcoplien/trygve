@@ -13,3 +13,5 @@ bin
 .buildpath
 .target
 target
+
+.swp
