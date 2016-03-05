@@ -62,6 +62,7 @@ import info.fulloo.trygve.expressions.BreakableExpression;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.DummyReturnExpression;
+import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
 import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.TopOfStackExpression;
@@ -176,6 +177,8 @@ public abstract class RTExpression extends RTCode {
 			retval = RTIdentifier.makeIdentifier(expr.name(), (IdentifierExpression)expr);
 		} else if (expr instanceof RelopExpression) {
 			retval = new RTRelop((RelopExpression)expr, nearestEnclosingType);
+		} else if (expr instanceof IdentityBooleanExpression) {
+			retval = new RTIdentityBooleanExpression((IdentityBooleanExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof BooleanExpression) {
 			retval = new RTBoolean((BooleanExpression)expr, nearestEnclosingType);
 		} else if (expr instanceof BinopExpression) {
@@ -1367,6 +1370,81 @@ public abstract class RTExpression extends RTCode {
 		
 		private final RTExpression lhs_, rhs_;
 		private final RTRelopPart2 part2_;
+	}
+	
+	
+	public static class RTIdentityBooleanExpression extends RTExpression {
+		public RTIdentityBooleanExpression(final IdentityBooleanExpression expr, final RTType nearestEnclosingType) {
+			super();
+			final RTExpression lhs = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType),
+					           rhs = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
+			if (null == lhs || null == rhs) {
+				// error stumbling check
+				lhs_ = new RTNullExpression();
+				rhs_ = new RTNullExpression();
+			} else {
+				lhs_ = lhs;
+				rhs_ = rhs;
+			}
+			part2_ = new RTIdentityBooleanExpressionPart2(expr);
+			
+			setResultIsConsumed(expr.resultIsConsumed());
+			// part2_ takes care of itself...
+			
+			// But in fact everything is consumed
+			// Just guarantee it here.
+			lhs_.setResultIsConsumed(true);
+			rhs_.setResultIsConsumed(true);
+			
+			lhs_.setNextCode(rhs_);
+			rhs_.setNextCode(part2_);
+		}
+		@Override public RTCode run() {
+			return RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
+		}
+		@Override public void setNextCode(final RTCode code) {
+			part2_.setNextCode(code);
+		}
+		
+		public static class RTIdentityBooleanExpressionPart2 extends RTExpression {
+			public RTIdentityBooleanExpressionPart2(final IdentityBooleanExpression expr) {
+				super();
+				lineNumber_ = expr.lineNumber();
+				operator_ = expr.operator();
+				setResultIsConsumed(expr.resultIsConsumed());
+			}
+			@Override public RTCode run() {
+				// They should be on the stack
+				final RTObject rhs = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				final RTObject lhs = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+
+				boolean value = false;
+				if (operator_.equals("is") || operator_.equals("Is")) {
+					value = lhs == rhs;
+				} else if (operator_.equals("isnot") || operator_.equals("IsNot") ||
+						operator_.equals("is not") || operator_.equals("Is Not")) {
+					value = lhs == rhs == false == true;
+				} else {
+					assert false;
+				}
+				
+				final RTBooleanObject newBoolean = new RTBooleanObject(value);
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(newBoolean);
+				setLastExpressionResult(newBoolean, lineNumber_);
+				
+				rhs.decrementReferenceCount();
+				lhs.decrementReferenceCount();
+				newBoolean.decrementReferenceCount();
+				
+				return nextCode_;
+			}
+			
+			private final String operator_;
+			private final int lineNumber_;
+		}
+		
+		private final RTExpression lhs_, rhs_;
+		private final RTIdentityBooleanExpressionPart2 part2_;
 	}
 	
 	public static class RTBoolean extends RTExpression {

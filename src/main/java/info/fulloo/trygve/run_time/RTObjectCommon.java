@@ -70,7 +70,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		return this == other;
 	}
 	public boolean equals(final Object other) {
-		boolean retval = false;
+		boolean retval = this == other;	// nice default - use identity as equality
 		final ActualArgumentList pl = new ActualArgumentList();
 		
 		final RTType myType = this.rTType();

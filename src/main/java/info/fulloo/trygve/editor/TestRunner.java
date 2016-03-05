@@ -158,6 +158,7 @@ public class TestRunner {
 		"runeInitialization2.k",
 		"runeInitialization3.k",
 		"listrole2.k",
+		"isexpression_test.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

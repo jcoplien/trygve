@@ -298,7 +298,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class RelopExpression extends Expression
 	{
-		public RelopExpression(Expression lhs, String operator, Expression rhs) {
+		public RelopExpression(final Expression lhs, final String operator, final Expression rhs) {
 			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
 			
 			if ( operator.equals("==") || operator.equals("!=") || operator.equals(">")
@@ -331,6 +331,48 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileRelopExpression(this, methodDeclaration, rtTypeDeclaration, scope);
+		}
+		@Override public int lineNumber() {
+			return lhs_.lineNumber();
+		}
+		
+		private final Expression lhs_, rhs_;
+		private final String operator_;
+	}
+	
+	public static class IdentityBooleanExpression extends Expression
+	{
+		public IdentityBooleanExpression(final Expression lhs, final String operator, final Expression rhs) {
+			super(operator, StaticScope.globalScope().lookupTypeDeclaration("boolean"), lhs.enclosingMegaType());
+			
+			if ( operator.equals("is") || operator.equals("Is") || operator.equals("isnot")
+					|| operator.equals("IsNot") || operator.equals("is not") || operator.equals("Is Not") ) {
+				;
+			} else {
+				assert operator.equals("is") || operator.equals("Is") || operator.equals("isnot")
+				|| operator.equals("IsNot") || operator.equals("is not") || operator.equals("Is Not");
+			}
+			lhs_ = lhs;
+			rhs_ = rhs;
+			lhs_.setResultIsConsumed(true);
+			rhs_.setResultIsConsumed(true);
+			operator_ = operator;
+		}
+		public String operator() {
+			return operator_;
+		}
+		public Expression lhs() {
+			return lhs_;
+		}
+		public Expression rhs() {
+			return rhs_;
+		}
+		@Override public String getText() {
+			String retval = "[" + lhs_.getText() + " " + operator_ + " " + rhs_.getText() + "]";
+			return retval;
+		}
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
+			return codeGenerator.compileIdentityBooleanExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();

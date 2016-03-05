@@ -312,7 +312,8 @@ boolean_expr
 		: boolean_product (BOOLEAN_SUMOP boolean_product)*
 		| if_expr
 		| boolean_expr op=('&&' | '||' | '^' ) boolean_expr
-		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
+		| abelian_expr op1=('is' | 'Is') op2 =('not' | 'Not') abelian_expr
+		| abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=' | 'is' | 'isnot' | 'Is' | 'IsNot') abelian_expr
 		| <assoc=right> boolean_expr ASSIGN expr
 		| abelian_expr
 		;

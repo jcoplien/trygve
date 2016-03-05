@@ -67,6 +67,7 @@ import info.fulloo.trygve.expressions.Expression.ArrayExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
 import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
+import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
 import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.BinopExpression;
 import info.fulloo.trygve.expressions.Expression.BlockExpression;
@@ -1551,6 +1552,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		return retval;
 	}
 	public List<RTCode> compileIdentifierExpression(final IdentifierExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
+		assert true;	// are these ever called? yup.
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTIdentifier(expr.name(), expr));
 		return retval;
@@ -1558,6 +1560,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	public List<RTCode> compileRelopExpression(final RelopExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
 		retval.add(new RTRelop(expr, rtTypeDeclaration));
+		return retval;
+	}
+	public List<RTCode> compileIdentityBooleanExpression(final IdentityBooleanExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
+		final List<RTCode> retval = new ArrayList<RTCode>();
+		retval.add(new RTIdentityBooleanExpression(expr, rtTypeDeclaration));
 		return retval;
 	}
 	public List<RTCode> compileBooleanExpression(final BooleanExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {

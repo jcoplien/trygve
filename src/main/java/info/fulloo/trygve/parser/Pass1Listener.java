@@ -89,6 +89,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
+import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
 import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
@@ -2367,14 +2368,32 @@ public class Pass1Listener extends Pass0Listener {
 		// : boolean_product (ABELIAN_SUMOP abelian_product)*
 		// | boolean_expr op=('&&' | '||' | '^' ) boolean_expr
 		// | if_expr
-		// | abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=') abelian_expr
+		// | abelian_expr op1=('is' | 'Is') op2 =('not' | 'Not') abelian_expr
+		// | abelian_expr op=('!=' | '==' | GT | LT | '>=' | '<=' | (is/isnot variants)) abelian_expr
 		// | <assoc=right> boolean_expr ASSIGN expr
 		
 		Expression expression = null;
 		final int lineNumber = ctx.getStart().getLine();
 		boolean useCompareTo = false;
 		
-		if ((null != ctx.abelian_expr() && ctx.abelian_expr().size() == 1) && (null != ctx.boolean_expr()) &&
+		if (null != ctx.op1 && null != ctx.op2) {
+			// 'is' 'not'
+			Expression rhs = null, lhs = null;
+			if (parsingData_.currentExpressionExists()) {
+				rhs = parsingData_.popExpression();
+			} else {
+				rhs = new NullExpression();
+			}
+			if (parsingData_.currentExpressionExists()) {
+				lhs = parsingData_.popExpression();
+			} else {
+				lhs = new NullExpression();
+			}
+			lhs.setResultIsConsumed(true);
+			rhs.setResultIsConsumed(true);
+			
+			expression = new IdentityBooleanExpression(lhs, "is not", rhs);
+		} else if ((null != ctx.abelian_expr() && ctx.abelian_expr().size() == 1) && (null != ctx.boolean_expr()) &&
 				(null == ctx.boolean_expr() || ctx.boolean_expr().size() == 0) && null == ctx.ASSIGN()) {
 			// : abelian_expr
 			Expression rhs = null;
@@ -2478,7 +2497,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (printProductionsDebug) { System.err.println("boolean_expr : boolean_expr ASSIGN boolean_expr"); }
 		} else if (null != ctx.abelian_expr() && ctx.abelian_expr().size() > 1 &&
 				null != ctx.op && ctx.op.getText().length() > 0) {
-			//	| abelian_expr op=('<=' | '>=' | '<' | '>' | '==' | '!=') abelian_expr
+			//	| abelian_expr op=('<=' | '>=' | '<' | '>' | '==' | '!=' | (is /isnot variants)) abelian_expr
 			final Token relationalOperator = ctx.op;
 	
 			Expression rhs = null, lhs = null;
@@ -2495,70 +2514,76 @@ public class Pass1Listener extends Pass0Listener {
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
 			
-			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"Expression `" + rhs.getText(), "' is not of the right type (",
-						lhs.type().getText(), ").");
-			}
-			
 			assert null != relationalOperator;
 			final String operationAsString = relationalOperator.getText();
 			
-			final Type lhsType = lhs.type(), rhsType = rhs.type();
-			if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
-				;	// O.K.
+			if (operationAsString.equals("is") || operationAsString.equals("Is") ||
+					operationAsString.equals("isnot") || operationAsString.equals("IsNot")) {
+				expression = new IdentityBooleanExpression(lhs, operationAsString, rhs);
 			} else {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"You may not apply '" + operationAsString, "' to objects of type `",
-						lhs.type().getText(), "'.");
-			}
-
-			final ActualArgumentList parameterList = new ActualArgumentList();
-			parameterList.addActualArgument(lhs);
-			parameterList.addActualArgument(rhs);
-			if (null != lhs && null != rhs && null != lhs.type() && (lhs.type() instanceof InterfaceType) == false &&
-					(operationAsString.equals("<") || operationAsString.equals(">") ||
-							operationAsString.equals("<=") || operationAsString.equals(">=") ||
-							operationAsString.equals("==") || operationAsString.equals("!=")) &&
-					null != lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
-				useCompareTo = true;	// then, yeah...
-			} else if (null != lhs && null != rhs && null != lhs.type() && lhs.type() instanceof InterfaceType &&
-					(operationAsString.equals("<") || operationAsString.equals(">") ||
-							operationAsString.equals("<=") || operationAsString.equals(">=") ||
-							operationAsString.equals("==") || operationAsString.equals("!=")) &&
-					null != ((StaticInterfaceScope)lhs.type().enclosedScope()).
-						lookupMethodDeclarationWithConversionIgnoringParameter("compareTo", parameterList, false, "this")) {
-				useCompareTo = true;	// then, yeah...
-			} else if (null != rhs && null != rhs.type() &&
-					rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
-				;	// O.K.
-			} else if (rhs instanceof NullExpression) {
-				;	// can always compare with NULL
-			} else {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
-						"You may not use an object of type '" +
-								(null == rhs || null == rhs.type()?
-										"<unknown>": rhs.type().getText()),
-								"' as an argument to `",
-								operationAsString, "'.");
-			}
-			
-			if (lhs.type() instanceof RoleType) {
-				// We may need to convert the operator
-				// to a call of compareTo
-				if ((operationAsString.equals("==") || operationAsString.equals("!="))
-						&& rhs.type().pathName().equals("Null")) {
-					// Comparing to NULL is O.K...  for now....
-					expression = new RelopExpression(lhs, operationAsString, rhs);
-				} else {
-					expression = handleRelopCallWithRoleLHS(lhs, operationAsString, rhs, lineNumber);
+				// Refactor into method
+				if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
+					errorHook5p2(ErrorType.Fatal, lineNumber,
+							"Expression `" + rhs.getText(), "' is not of the right type (",
+							lhs.type().getText(), ").");
 				}
-			} else {
-				if (useCompareTo && lhs.type() instanceof BuiltInType == false && rhs.type().pathName().equals("Null") == false) {
-					// We found above that things are all set up to use compareTo. Use it.
-					expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
+				
+				final Type lhsType = lhs.type(), rhsType = rhs.type();
+				if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
+					;	// O.K.
 				} else {
-					expression = new RelopExpression(lhs, operationAsString, rhs);
+					errorHook5p2(ErrorType.Fatal, lineNumber,
+							"You may not apply '" + operationAsString, "' to objects of type `",
+							lhs.type().getText(), "'.");
+				}
+	
+				final ActualArgumentList parameterList = new ActualArgumentList();
+				parameterList.addActualArgument(lhs);
+				parameterList.addActualArgument(rhs);
+				if (null != lhs && null != rhs && null != lhs.type() && (lhs.type() instanceof InterfaceType) == false &&
+						(operationAsString.equals("<") || operationAsString.equals(">") ||
+								operationAsString.equals("<=") || operationAsString.equals(">=") ||
+								operationAsString.equals("==") || operationAsString.equals("!=")) &&
+						null != lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
+					useCompareTo = true;	// then, yeah...
+				} else if (null != lhs && null != rhs && null != lhs.type() && lhs.type() instanceof InterfaceType &&
+						(operationAsString.equals("<") || operationAsString.equals(">") ||
+								operationAsString.equals("<=") || operationAsString.equals(">=") ||
+								operationAsString.equals("==") || operationAsString.equals("!=")) &&
+						null != ((StaticInterfaceScope)lhs.type().enclosedScope()).
+							lookupMethodDeclarationWithConversionIgnoringParameter("compareTo", parameterList, false, "this")) {
+					useCompareTo = true;	// then, yeah...
+				} else if (null != rhs && null != rhs.type() &&
+						rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
+					;	// O.K.
+				} else if (rhs instanceof NullExpression) {
+					;	// can always compare with NULL
+				} else {
+					errorHook5p2(ErrorType.Fatal, lineNumber,
+							"You may not use an object of type '" +
+									(null == rhs || null == rhs.type()?
+											"<unknown>": rhs.type().getText()),
+									"' as an argument to `",
+									operationAsString, "'.");
+				}
+				
+				if (lhs.type() instanceof RoleType) {
+					// We may need to convert the operator
+					// to a call of compareTo
+					if ((operationAsString.equals("==") || operationAsString.equals("!="))
+							&& rhs.type().pathName().equals("Null")) {
+						// Comparing to NULL is O.K...  for now....
+						expression = new RelopExpression(lhs, operationAsString, rhs);
+					} else {
+						expression = handleRelopCallWithRoleLHS(lhs, operationAsString, rhs, lineNumber);
+					}
+				} else {
+					if (useCompareTo && lhs.type() instanceof BuiltInType == false && rhs.type().pathName().equals("Null") == false) {
+						// We found above that things are all set up to use compareTo. Use it.
+						expression = handleRelopCall(lhs, operationAsString, rhs, lineNumber);
+					} else {
+						expression = new RelopExpression(lhs, operationAsString, rhs);
+					}
 				}
 			}
 	
