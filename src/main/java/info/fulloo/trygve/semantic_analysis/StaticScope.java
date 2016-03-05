@@ -1156,7 +1156,7 @@ public class StaticScope {
 			final boolean ignoreSignature, final String parameterToIgnore) {
 		MethodDeclaration retval = null;
 		
-		if (methodSelector == previousMethodSelector_ && previousArgumentList_ == parameterList) {	// yes, I really mean ==
+		if (methodSelector.equals(previousMethodSelector_) && previousArgumentList_.equals(parameterList)) {	// yes, I really mean ==
 			ErrorLogger.error(ErrorType.Fatal, "Method lookup argument type recursion for method `", methodSelector, "':", "");
 			return null;
 		} else {

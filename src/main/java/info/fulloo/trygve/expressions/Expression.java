@@ -962,9 +962,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 					    body_.getText();
 			}
 		}
-		public List<ObjectDeclaration> initDecl() {
-			return initDecl_;
-		}
 		public Expression initializationExpression() {
 			return initializationExpression_;
 		}
@@ -1644,9 +1641,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		public void addObjectDeclForBlock(final List<ObjectDeclaration> declarations) {
 			initDecl_.addAll(declarations);
-		}
-		public List<ObjectDeclaration> initDecl() {
-			return initDecl_;
 		}
 		
 		public List<BodyPart> linearize(final BodyPart bodyPart) {

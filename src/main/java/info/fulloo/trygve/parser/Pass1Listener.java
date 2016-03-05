@@ -1238,16 +1238,27 @@ public class Pass1Listener extends Pass0Listener {
 	}
 	
 	private void addInitializationsForObjectDecls(final DeclarationList object_decls) {
+		// "Tail-recursive parsing" causes this loop to visit the
+		// initializations in right-to-left order. Cachec them
+		// away in a list and then add them backwards. The result
+		// is that multiple initializations within a declaration will
+		// be evaluated left-to-right.
 		final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
+		Stack<Expression> initializationExprs = new Stack<Expression>();
+		Expression initializationExpression = null;
 		for (final BodyPart bp : object_decls.declarations()) {
 			if (bp instanceof ObjectDeclaration) {
 				final ObjectDeclaration odecl = (ObjectDeclaration)bp;
-				final Expression initializationExpression = odecl.initializationExpression();
+				initializationExpression = odecl.initializationExpression();
 				if (null != initializationExpression) {
 					assert initializationExpression instanceof AssignmentExpression;
-					currentExprAndDecl.addBodyPart(initializationExpression);
+					initializationExprs.push(initializationExpression);
 				}
 			}
+		}
+		while (initializationExprs.size() > 0) {
+			initializationExpression = initializationExprs.pop();
+			currentExprAndDecl.addBodyPart(initializationExpression);
 		}
 	}
 	
@@ -1476,7 +1487,7 @@ public class Pass1Listener extends Pass0Listener {
 				// There may not even be a currentExprAndDecl... We used to presume that initializations
 				// occurred where there were ExprAndDecl blocks in play. We changed this because we now
 				// allow inline initialization of object members in the class syntax. Now we must handle
-				// the intialisations in the constructor. Queue them up to the declaration if so.
+				// the initialisations in the constructor. Queue them up to the declaration if so.
 				
 				// In any case, errors can cause currentExprAndDecl() to be empty, so we
 				// need to bail out accordingly
