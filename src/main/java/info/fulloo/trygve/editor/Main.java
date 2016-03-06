@@ -38,6 +38,13 @@ public class Main {
 					new TextEditorGUI().setVisible(true);
 				}
 			});
+		} else if (args.length == 0) {
+			printUsage();
+			java.awt.EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					new TextEditorGUI().setVisible(true);
+				}
+			});
 		} else if (args.length == 0 || args[0].startsWith("-?") || args[0].startsWith("-h")) {
 			printUsage();
 		} else {
@@ -48,6 +55,5 @@ public class Main {
 		System.out.format("Usage: trygve -gui\n");
 		System.out.format("       trygve -c filename.k\n");
 		System.out.format("       trygve -c filename.k -r\n");
-		System.out.format("       trygve -c filename1.k -c filename2.k ... -r\n");
 	}
 }

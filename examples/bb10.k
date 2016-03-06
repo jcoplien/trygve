@@ -368,6 +368,22 @@ context FrontloadCtx {
       ActivityClass predecessorOf(ActivityAsSuccessor activity)
    }
 
+   role Frontloader {
+      public Time frontload() {
+      for (Activity act : AllActivities) {
+        act.setEarlyStart(null)
+      }
+      Time projectFinish = ProjectStart;
+      this.remap()
+      while (Activity != null) {
+         Activity.frontLoad();
+         projectFinish = Math.max(projectFinish, Activity.earlyFinish())
+      }
+      return projectFinish
+      }
+   } requires {
+   }
+
    role Activity {
       public Time frontload() {
          this.setEarlyStart(ProjectStart);
