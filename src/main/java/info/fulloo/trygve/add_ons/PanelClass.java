@@ -345,6 +345,7 @@ public final class PanelClass {
 	}
 	
 	public static class EventClass {
+		// Never instantiated? FIXME
 		private static void declareEventMethod(final String methodSelector,
 				final Type returnType,
 				final List<String> paramNames,

@@ -105,6 +105,7 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 	}
 	
 	public void ctor1() {
+		assert false;
 		// Unused?
 		// thePanel_ = new GraphicsPanel(this);
 		// this.setObject("panelObject", thePanel_);

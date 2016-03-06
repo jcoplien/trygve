@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
@@ -18,10 +19,12 @@ import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObject;
+import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
@@ -49,6 +52,7 @@ import static java.util.Arrays.asList;
  */
 
 public final class ColorClass {
+	// Never instantiated! FIXME!
 	private static void declareColorMethod(final String methodSelector,
 			final Type returnType,
 			final List<String> paramNames,
@@ -76,9 +80,11 @@ public final class ColorClass {
 		methodDecl.setHasConstModifier(isConst);
 		colorType_.enclosedScope().declareMethod(methodDecl);
 	}
+	
 	public static void setup() {
 		final StaticScope globalScope = StaticScope.globalScope();
-		if (null == globalScope.lookupTypeDeclaration("Color")) {
+		colorType_ = (ClassType)globalScope.lookupTypeDeclaration("Color");
+		if (null == colorType_) {
 			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
@@ -93,22 +99,34 @@ public final class ColorClass {
 			classDecl.setType(colorType_);
 			typeDeclarationList_.add(classDecl);
 
-			declareColorMethod("Color", null, asList("red", "green", "blue"), asList(intType, intType, intType), false);
-			declareColorMethod("Color", null, asList("red", "green", "blue"), asList(doubleType, doubleType, doubleType), false);
+			declareColorMethod("Color", null, asList("blue", "green", "red"), asList(intType, intType, intType), false);
+			declareColorMethod("Color", null, asList("blue", "green", "red"), asList(doubleType, doubleType, doubleType), false);
 			declareColorMethod("getRed", intType, null, null, false);
 			declareColorMethod("getBlue", intType, null, null, false);
 			declareColorMethod("getGreen", intType, null, null, false);
 			
+			// These need to be coordinated only with what is in the postSetupInitialization
+			// method below.
+			for (final String attributeName : asList("black", "blue", "cyan", "darkGray", "gray",
+					"lightGray", "magenta", "orange", "pink", "red", "white", "green", "yellow")) {
+				final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, colorType_, 0);
+				attributeDeclaration.setAccess(AccessQualifier.PublicAccess, colorType_.enclosedScope(), 0);
+				colorType_.enclosedScope().declareStaticObject(attributeDeclaration);
+				colorType_.declareStaticObject(attributeDeclaration);
+			}
+			
 			globalScope.declareType(colorType_);
 			globalScope.declareClass(classDecl);
+			classDecl.setType(colorType_);
 		}
 	}
 	
+	
 	public static class RTColorCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTColorCommon(final String className, final String methodName, final List<String> parameterNames,
-				final List<String> parameterTypeNames,
-				final StaticScope enclosingMethodScope, final Type returnType) {
-			super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
+				final List<String> parameterTypeNames, final StaticScope enclosingMethodScope, final Type returnType) {
+			super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, false),
+					returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 		}
 		@Override public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
@@ -142,8 +160,8 @@ public final class ColorClass {
 		public RTGetRedCode(final StaticScope enclosingMethodScope) {
 			super("Color", "getRed", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject thePanel) {
-			assert null != thePanel;
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject theColorObject) {
+			assert null != theColorObject;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject theColor = activationRecord.getObject("this");
 			assert theColor instanceof RTColorObject;
@@ -234,6 +252,45 @@ public final class ColorClass {
 			((RTColorObject)theColorObject).ctor2(red, green, blue);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
 			return super.nextCode();
+		}
+	}
+	
+	public static class RTColorClass extends RTObjectClass {
+		public RTColorClass(final TypeDeclaration decl) {
+			super(decl);
+		}
+		
+		@Override public void postSetupInitialization() {
+			
+			// These need to be coordinated only with what is in the setup
+			// method above
+			RTType rTColorType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType_.enclosedScope());
+			final RTColorObject blackValue = new RTColorObject(0, 0, 0, rTColorType);
+			nameToStaticObjectMap_.put("black", blackValue);
+			final RTColorObject blueValue = new RTColorObject(0, 0, 255, rTColorType);
+			nameToStaticObjectMap_.put("blue", blueValue);
+			final RTColorObject cyanValue = new RTColorObject(0, 255, 255, rTColorType);
+			nameToStaticObjectMap_.put("cyan", cyanValue);
+			final RTColorObject darkGrayValue = new RTColorObject(64, 64, 64, rTColorType);
+			nameToStaticObjectMap_.put("darkGray", darkGrayValue);
+			final RTColorObject grayValue = new RTColorObject(128, 128, 128, rTColorType);
+			nameToStaticObjectMap_.put("gray", grayValue);
+			final RTColorObject lightGrayValue = new RTColorObject(192, 192, 192, rTColorType);
+			nameToStaticObjectMap_.put("lightGray", lightGrayValue);
+			final RTColorObject magentaValue = new RTColorObject(255, 0, 255, rTColorType);
+			nameToStaticObjectMap_.put("magenta", magentaValue);
+			final RTColorObject orangeValue = new RTColorObject(255, 200, 0, rTColorType);
+			nameToStaticObjectMap_.put("orange", orangeValue);
+			final RTColorObject redValue = new RTColorObject(255, 0, 0, rTColorType);
+			nameToStaticObjectMap_.put("red", redValue);
+			final RTColorObject pinkValue = new RTColorObject(255, 175, 175, rTColorType);
+			nameToStaticObjectMap_.put("pink", pinkValue);
+			final RTColorObject whiteValue = new RTColorObject(255, 255, 255, rTColorType);
+			nameToStaticObjectMap_.put("white", whiteValue);
+			final RTColorObject greenValue = new RTColorObject(0, 255, 0, rTColorType);
+			nameToStaticObjectMap_.put("green", greenValue);
+			final RTColorObject yellowValue = new RTColorObject(255, 255, 0, rTColorType);
+			nameToStaticObjectMap_.put("yellow", yellowValue);
 		}
 	}
 	

@@ -347,4 +347,91 @@ context BackloadCtx {
    Time projectStart_, projectFinish_, lateProjectStart_
 }
 
+context FrontloadCtx {
+   role DBaseRole {
+      public List<ActivityClass> dbaseAllActivities() {
+         return allActivities()
+      }
+      public int dbaseProjectFinish() {
+         return projectFinish()
+      }
+      public List<ActivityClass> dbaseSuccessorsOf(ActivityAsPredecessor activity) {
+         return successorsOf(activity)
+      }
+      public ActivityClass dbasePredecessorOf(ActivityAsPredecessor activity){
+         return predecessorOf(activity)
+      }
+   } requires {
+      int projectFinish();
+      List<ActivityClass> successorsOf(ActivityAsPredecessor activity);
+      List<ActivityClass> allActivities();
+      ActivityClass predecessorOf(ActivityAsSuccessor activity)
+   }
 
+   role Activity {
+      public Time frontload() {
+         this.setEarlyStart(ProjectStart);
+         Time maxEarlyFinish = 0;
+         Activity maxPred = null;
+         List<Activity> predecessors = Predecessors;
+         for (Activity pred : predecessors) {
+            if (pred.earlyFinish() > maxEarlyFinish) {
+               maxPred = pred;
+               maxEarlyFinish = pred.earlyFinish()
+            }
+         }
+         if (maxPred != null) {
+            this.setEarlyStart(maxPred.earlyFinish() + 1)
+         }
+         return this.earlyFinish()
+      }
+   } requires {
+      Time earlyFinish();
+      void setEarlyStart(Time t);
+   }
+
+   public Activity activity() {
+      Activity retval = null;
+      List<Activity> acta = DBaseRole.dbaseAllActivities().clone();
+      for (Activity act : acta) {
+         if (act.activityEarlyStart() == null) {
+            if (earlyFinishIsNilDetector(act)) {
+               retval = act; break
+            }
+         }
+      }
+      return retval
+   }
+
+   private boolean earlyFinishIsNilDetector(Activity act) {
+      boolean retval = true;
+      for (Activity b : DBaseRole.dbaseSuccessorsOf(act)) {
+         Activity predecessor = b.pred();
+         if (predecessor.activityEarlyFinish() == null) {
+            retval = false;
+            break
+         }
+      }
+      return retval
+   }
+
+   public void remap() {
+      Activity = activity();
+      AllActivities = DBaseRole.dbaseAllActivities();
+      Frontloader = this;
+      ProjectStart = projectStart;
+      Predecessors = DBaseRole.dbasePredessorsOf(Activity)
+   }
+
+   public frontloadProjectFrom(Time startWeek) {
+      Time projectFinish;
+      projectStart = startWeek.;
+      dBase.setProjectStart(startWeek);
+      projectFinish = this.triggerIneractionFromWith(Frontloader,
+          "frontload");
+      dBase.setProjectFinish(projectFinish)
+   }
+   
+
+   Time projectStart_, projectEnd_;
+}

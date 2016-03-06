@@ -246,6 +246,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					rTClassDeclaration = new RTSystemClass(classDeclaration);
 				} else if (classDeclaration.type().pathName().equals("Event.")) {
 					rTClassDeclaration = new PanelClass.RTEventClass(classDeclaration);
+				} else if (classDeclaration.type().pathName().equals("Color.")) {
+					rTClassDeclaration = new ColorClass.RTColorClass(classDeclaration);
 				} else {
 					// Kludge. But it's direct, and effective.
 					rTClassDeclaration = new RTClass(classDeclaration);
@@ -768,23 +770,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void processColorMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
-		final List<RTCode> readCode = new ArrayList<RTCode>();
+		final List<RTCode> colorMethodCode = new ArrayList<RTCode>();
 		RetvalTypes retvalType = RetvalTypes.none;
 		RTMethod rtMethod = null;
 		
 		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtTypeDeclaration;
 		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		
 		if (formalParameterList.count() == 4) {
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-		
 			if (methodDeclaration.name().equals("Color")) {
 				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
 				if (elementsParamType.pathName().equals("int.") || elementsParamType.pathName().equals("Integer.")) {
-					readCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
+					colorMethodCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
 				} else {
-					readCode.add(new ColorClass.RTColorCtor2Code(methodDeclaration.enclosedScope()));
+					colorMethodCode.add(new ColorClass.RTColorCtor2Code(methodDeclaration.enclosedScope()));
 				}
 			} else {
 				assert false;
@@ -792,13 +793,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (formalParameterList.count() == 1) {
 			if (methodDeclaration.name().equals("getRed")) {
 				retvalType = RetvalTypes.usingInt;
-				readCode.add(new ColorClass.RTGetRedCode(methodDeclaration.enclosedScope()));
+				colorMethodCode.add(new ColorClass.RTGetRedCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("getGreen")) {
 				retvalType = RetvalTypes.usingInt;
-				readCode.add(new ColorClass.RTGetGreenCode(methodDeclaration.enclosedScope()));
+				colorMethodCode.add(new ColorClass.RTGetGreenCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("getBlue")) {
 				retvalType = RetvalTypes.usingInt;
-				readCode.add(new ColorClass.RTGetBlueCode(methodDeclaration.enclosedScope()));
+				colorMethodCode.add(new ColorClass.RTGetBlueCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -806,9 +807,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 		
-		addReturn(methodDeclaration, retvalType, readCode);
+		addReturn(methodDeclaration, retvalType, colorMethodCode);
 		
-		rtMethod.addCode(readCode);
+		rtMethod.addCode(colorMethodCode);
 	}
 	private void processDateMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();

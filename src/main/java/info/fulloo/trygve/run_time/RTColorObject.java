@@ -95,6 +95,13 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 		colorType_ = colorType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
+	public RTColorObject(int i, int j, int k, final RTType colorType) {
+		super(colorType);
+		colorType_ = colorType;
+		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		theColor_ = new Color(i, j, k);
+	}
+
 	@Override public RTObject dup() {
 		final RTColorObject retval = new RTColorObject(theColor_, colorType_);
 		return retval;
