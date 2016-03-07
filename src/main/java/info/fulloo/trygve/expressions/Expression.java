@@ -1430,7 +1430,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		private void promoteTypesAsNecessary() {
 			final Type lhsType = lhs_.type(), rhsType = rhs_.type();
-			if (null != operator_ && operator_.equals("**")) {
+			if (null == rhsType || null == lhsType) {
+				;	// best to ignore it — probably a stumble
+			} else if (null != operator_ && operator_.equals("**")) {
 				return;
 			} else if (lhsType == rhsType) {
 				return;

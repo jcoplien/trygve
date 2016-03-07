@@ -16,6 +16,7 @@ class Test {
       System.out.println(s1 is s3);	// true
       System.out.println(s4 isnot s2);	// false
       System.out.println(s5 isnot s1);	// true
+      System.out.format("%s %d\n", s1, 1)
    }
 }
 
@@ -34,4 +35,5 @@ false
 true
 false
 true
+tweedledee 1
 */

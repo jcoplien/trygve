@@ -72,6 +72,7 @@ import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Constant;
@@ -4280,48 +4281,65 @@ public class Pass1Listener extends Pass0Listener {
 		if (ctx.param_decl() != null) {
 			// : param_decl
 	        // | param_list ',' param_decl
+			// | param_list ELLIPSIS
+	        // | param_list ',' ELLIPSIS
 	        // | /* null */
 			
 			// Do most of this parameter stuff here on the second pass, because
 			// we should have most of the type information by then
-			String formalParameterName = ctx.param_decl().JAVA_ID().getText();
-			final String paramTypeName = ctx.param_decl().compound_type_name().getText();
-			String paramTypeBaseName = null;
-			
-			// Handle vector arguments
-			final List<ParseTree> children = ctx.param_decl().compound_type_name().children;
-			final int numberOfChildren = children.size();
-			paramTypeBaseName = children.get(0).getText();
-			boolean isArray = false;
-			if (numberOfChildren == 3) {
-				final String firstModifier = children.get(1).getText();
-				final String secondModifier = children.get(2).getText();
-				if (firstModifier.equals("[") && secondModifier.equals("]")) {
-					// Is an array declaration
-					isArray = true;
+			if (null == ctx.ELLIPSIS()) {
+				String formalParameterName = ctx.param_decl().JAVA_ID().getText();
+				final String paramTypeName = ctx.param_decl().compound_type_name().getText();
+				String paramTypeBaseName = null;
+				
+				// Handle vector arguments
+				final List<ParseTree> children = ctx.param_decl().compound_type_name().children;
+				final int numberOfChildren = children.size();
+				paramTypeBaseName = children.get(0).getText();
+				boolean isArray = false;
+				if (numberOfChildren == 3) {
+					final String firstModifier = children.get(1).getText();
+					final String secondModifier = children.get(2).getText();
+					if (firstModifier.equals("[") && secondModifier.equals("]")) {
+						// Is an array declaration
+						isArray = true;
+					}
 				}
+				
+				Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
+				if (null == paramType) {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
+					paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
+				} else if (isArray) {
+					// A derived type
+					final String aName = paramType.getText() + "_$array";
+					paramType = new ArrayType(aName, paramType);
+				}
+				
+				ObjectDeclaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
+				
+				// They go in reverse order...
+				if (newFormalParameter.name().equals("this")) {
+					formalParameterName = "_error" + String.valueOf(parsingData_.variableGeneratorCounter_);
+					parsingData_.variableGeneratorCounter_++;
+					newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
+				}
+				if (parsingData_.currentFormalParameterList().containsVarargs()) {
+					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+							"Formal parameter `", newFormalParameter.name(),
+							"' comes after `...', which must be the last element in a parameter list.",
+							"");
+				}
+				parsingData_.currentFormalParameterList().addFormalParameter(newFormalParameter);
+			} else {
+				// ...
+				final MethodSignature currentMethod = parsingData_.currentMethodSignature();
+				final Type paramType = new VarargsType(currentMethod.name());
+				final String formalParameterName = "...";
+				final ObjectDeclaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
+				parsingData_.currentFormalParameterList().addFormalParameter(newFormalParameter);
 			}
-			
-			Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
-			if (null == paramType) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
-				paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
-			} else if (isArray) {
-				// A derived type
-				final String aName = paramType.getText() + "_$array";
-				paramType = new ArrayType(aName, paramType);
-			}
-			
-			ObjectDeclaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
-			
-			// They go in reverse order...
-			if (newFormalParameter.name().equals("this")) {
-				formalParameterName = "_error" + String.valueOf(parsingData_.variableGeneratorCounter_);
-				parsingData_.variableGeneratorCounter_++;
-				newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
-			}
-			parsingData_.currentFormalParameterList().addFormalParameter(newFormalParameter);
 		} else {
 			// empty parameter list - it's OK. For now.
 		}

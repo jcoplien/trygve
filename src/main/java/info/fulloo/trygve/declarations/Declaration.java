@@ -37,6 +37,7 @@ import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
@@ -993,6 +994,30 @@ public abstract class Declaration implements BodyPart {
 		private final int lineNumber_;
 		private final Type baseType_;
 		private final Type type_;
+	}
+	
+	public static class VarargsDecl extends Declaration
+	{
+		public VarargsDecl(final String name, final int lineNumber) {
+			super(name + " varargs");
+			
+			// name is kind of silly here, but it may help with
+			// debugging things
+			type_ = new VarargsType(name);
+			lineNumber_ = lineNumber;
+		}
+		@Override public String getText() {
+			return name();
+		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public Type type() {
+			return type_;
+		}
+		
+		private final Type type_;
+		private final int lineNumber_;
 	}
 
 	

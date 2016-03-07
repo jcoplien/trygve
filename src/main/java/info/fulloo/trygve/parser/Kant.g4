@@ -245,6 +245,8 @@ identifier_list
 param_list
         : param_decl
         | param_list ',' param_decl
+        | param_list ELLIPSIS
+        | param_list ',' ELLIPSIS
         | /* null */
         ;
 
@@ -478,6 +480,8 @@ NULL : 'null' ;
 CONST : 'const' ;
 
 POW : '**' ;
+
+ELLIPSIS : '...' ;
 
 BOOLEAN_SUMOP : '||' | '^' ;
 

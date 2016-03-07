@@ -26,6 +26,7 @@ package info.fulloo.trygve.declarations;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 
@@ -74,7 +75,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			}
 		} else {
 			final int actualsCount = actuals.count();
-			if (actualsCount != formalsCount) {
+			if (actualsCount != formalsCount && formals.containsVarargs() == false) {
 				retval = false;
 			} else {
 				for (int i = 0; i < actualsCount; i++) {
@@ -84,7 +85,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 						continue;
 					}
 					
-					// We really should be a bit more dutiful about knowing whether it's l1 or
+					// We really should be a bit more dutiful about knowing whether it's pl1 or
 					// pl2 we're checking. But it's almost always "this" and since it's a
 					// reserved word, it won't be aliased with a user variable
 					if (null != pl1Name && null != paramToIgnore && pl1Name.equals(paramToIgnore)) {
@@ -100,6 +101,10 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					final String formalsTypePathname = null == formalsType? "!Wrong!": formalsType.pathName();	//	for debugging
 					if (null == actualsType || null == formalsType) {
 						retval = false;
+						break;
+					} else if (formalsType instanceof VarargsType) {
+						retval = true;
+						break;
 					} else if (actualsTypePathname.equals(formalsTypePathname)) {
 						// This is a big of a kludge but was necessary to get things
 						// to work comparing two different String instantiations. FIXME?

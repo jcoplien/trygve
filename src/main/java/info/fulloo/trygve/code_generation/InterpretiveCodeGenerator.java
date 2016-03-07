@@ -570,6 +570,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
+		} else if (formalParameterList.count() == 3) {
+			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+			assert null != rtTypeDeclaration;
+			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			if (methodDeclaration.name().equals("format")) {
+				printlnCode.add(new SystemClass.RTFormatCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
 		} else {
 			assert false;
 		}

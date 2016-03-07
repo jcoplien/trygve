@@ -47,6 +47,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTInternalAssignmen
 import info.fulloo.trygve.run_time.RTExpression.RTInternalAssignment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
+import info.fulloo.trygve.run_time.RTListObject; 
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
@@ -66,7 +67,6 @@ public abstract class RTMessageDispatcher {
 			final MethodInvocationEnvironmentClass targetMessageClass
 			) {
 		RTMessageDispatcher retval = null;
-// System.out.format("from %s to %s; message \"%s\"\n", originMessageClass.toString(), targetMessageClass.toString(), methodSelectorName);
 
 		switch (originMessageClass) {
 		case ClassEnvironment:
@@ -218,6 +218,19 @@ public abstract class RTMessageDispatcher {
 		hasError_ = null;
 		methodDecl_ = null;
 		nearestEnclosingType_ = nearestEnclosingType;
+		
+		Type objectListType = StaticScope.globalScope().lookupTypeDeclaration("List<Object>");
+		if (null == objectListType) {
+			ErrorLogger.error(ErrorType.Internal, "List<Object> lookup failure.", "", "", "");
+			assert false;
+		}
+		Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		if (null == objectType) {
+			assert false;
+		}
+		
+		rTListOfObjectType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(objectListType.enclosedScope());
+		rTObjectType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(objectType.enclosedScope());
 	}
 	
 	protected abstract RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self);
@@ -237,7 +250,7 @@ public abstract class RTMessageDispatcher {
 	protected RTStackable pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
 			final int indexForThisExtraction) {
 		RTCode pc = start;
-		final int startingStackIndex = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
+		startingStackIndex_ = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 		RTObject self = null;
 		RTStackable retval = null;
 		while (null != pc) {
@@ -269,12 +282,12 @@ public abstract class RTMessageDispatcher {
 			oldPc.decrementReferenceCount();
 		}
 		
-		if (false == isStatic_ && RunTimeEnvironment.runTimeEnvironment_.stackIndex() <= startingStackIndex + indexForThisExtraction) {
-			assert RunTimeEnvironment.runTimeEnvironment_.stackIndex() > startingStackIndex + indexForThisExtraction;
+		if (false == isStatic_ && RunTimeEnvironment.runTimeEnvironment_.stackIndex() <= startingStackIndex_ + indexForThisExtraction) {
+			assert RunTimeEnvironment.runTimeEnvironment_.stackIndex() > startingStackIndex_ + indexForThisExtraction;
 		}
 		
 		self = isStatic_? null:
-			(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex + indexForThisExtraction);
+			(RTObject)RunTimeEnvironment.runTimeEnvironment_.stackValueAtIndex(startingStackIndex_ + indexForThisExtraction);
 		if (self == null && !isStatic_) {
 			// Some kind of error. Assume we're in the stumbling business
 			retval = (RTStackable)new RTHalt();
@@ -285,6 +298,63 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	protected void populateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
+		final FormalParameterList formalParameters = methodDecl.formalParameters();
+		if (formalParameters.containsVarargs()) {
+			varargsPopulateActivationRecord(methodDecl, activationRecord);
+		} else {
+			nonVarargsPopulateActivationRecord(methodDecl, activationRecord);
+		}
+	}
+	
+	private void varargsPopulateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
+		final int numberOfArgumentsPushed = RunTimeEnvironment.runTimeEnvironment_.stackIndex() - startingStackIndex_;
+		final FormalParameterList formalParameters = methodDecl.formalParameters();
+		
+		// The number of varargs parameters should be the difference of the
+		// number of args pushed and the number expected
+		final int numberOfFormalParameters = formalParameters.count();
+		final int numberOfVarargsParameters = numberOfArgumentsPushed - numberOfFormalParameters + 1;
+		
+		// Start with the varargs parameters - they're on top of the stack
+		final RTListObject varargs = new RTListObject(rTObjectType_);
+		for (int i = 0; i < numberOfVarargsParameters; i++) {
+			final RTObject rawArgument = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			varargs.add(rawArgument);
+		}
+		
+		activationRecord.addObjectDeclaration("arguments", null);
+		activationRecord.setObject("arguments", varargs);
+		
+		// Continue with the named formal parameters, and self
+		// Second -1 is for the varargs
+		// This indexing causes "i" to traverse the arguments lexically right-to-left
+		for (int i = formalParameters.count() - 1 - 1; i >= 0; --i) {
+			final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
+			final String ithParameterName = ithParameter.name();
+			final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
+			activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
+			final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			if (rawArgument instanceof RTObject == false) {
+				assert rawArgument instanceof RTObject;
+			}
+			if (ithParameterName.equals("current$context") && rawArgument instanceof RTContextObject == false) {
+				assert rawArgument instanceof RTContextObject;
+				// probably didn't push it when we should have
+			}
+			final RTObject anArgument = (RTObject)rawArgument;
+			assert null != anArgument;
+			activationRecord.setObject(ithParameterName, anArgument);
+			anArgument.decrementReferenceCount();	// not on the stack any more
+		}
+		if (this.isBuiltInAssert_) {
+			// Put the line number in the activation record
+			final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+			activationRecord.addObjectDeclaration("lineNumber", null);
+			activationRecord.setObject("lineNumber", lineNumberToPush);
+		}
+	}
+	
+	private void nonVarargsPopulateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
 		final FormalParameterList formalParameters = methodDecl.formalParameters();
 		for (int i = formalParameters.count() - 1; 0 <= i; --i) {
 			final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
@@ -749,6 +819,7 @@ public abstract class RTMessageDispatcher {
 			return methodDecl;
 		}
 	}
+	
 	private static class RTNonContextToContext extends RTMessageDispatcher {
 		public RTNonContextToContext(final MessageExpression messageExpr,
 				final String methodSelectorName,
@@ -868,6 +939,7 @@ public abstract class RTMessageDispatcher {
 			return methodDecl;
 		}
 	}
+	
 	private static class RTContextToContext extends RTMessageDispatcher {
 		public RTContextToContext(final MessageExpression messageExpr,
 				final String methodSelectorName,
@@ -929,6 +1001,7 @@ public abstract class RTMessageDispatcher {
 			return methodDecl;
 		}
 	}
+	
 	private static class RTContextToClass extends RTMessageDispatcher {
 		public RTContextToClass(final MessageExpression messageExpr,
 				final String methodSelectorName,
@@ -972,6 +1045,7 @@ public abstract class RTMessageDispatcher {
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
+		
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			// Should look up method in the receiver's scope. Get the
 			// current scope so we can get all the magic identifiers
@@ -1020,6 +1094,7 @@ public abstract class RTMessageDispatcher {
 			return methodDecl;
 		}
 	}
+	
 	private static class RTContextToRole extends RTMessageDispatcher {
 		public RTContextToRole(final MessageExpression messageExpr,
 				final String methodSelectorName,
@@ -1131,6 +1206,7 @@ public abstract class RTMessageDispatcher {
 			return methodDecl;
 		}
 	}
+	
 	private static class RTRoleToRole extends RTMessageDispatcher {
 		public RTRoleToRole(final MessageExpression messageExpr,
 				final String methodSelectorName,
@@ -1178,6 +1254,7 @@ public abstract class RTMessageDispatcher {
 				commonWrapup(typeOfThisParameterToCalledMethod, indexForThisExtraction, self, messageExpr.isPolymorphic());
 			}
 		}
+		
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			// Should look up method in the receiver's scope. Get the
 			// current scope so we can get all the magic identifiers
@@ -1244,6 +1321,7 @@ public abstract class RTMessageDispatcher {
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
 		}
+		
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			// Should look up method in the receiver's scope. Get the
 			// current scope so we can get all the magic identifiers
@@ -1308,6 +1386,7 @@ public abstract class RTMessageDispatcher {
 				commonWrapup(typeOfThisParameterToCalledMethod, newIndexForThisExtraction, self, messageExpr.isPolymorphic());
 			}
 		}
+		
 		protected RTMethod getMethodDecl(final Type typeOfThisParameterToMethod, final int indexForThisExtraction, final RTObject self) {
 			// Should look up method in the receiver's scope. Get the
 			// current scope so we can get all the magic identifiers
@@ -1343,4 +1422,7 @@ public abstract class RTMessageDispatcher {
 	protected       boolean isBuiltInAssert_;
 	protected       RTCode hasError_;
 	protected final RTType nearestEnclosingType_;
+	protected       int startingStackIndex_;
+	protected final RTType rTListOfObjectType_;
+	protected final RTType rTObjectType_;
 }

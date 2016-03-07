@@ -75,7 +75,7 @@ public final class ListClass {
 		listType_.enclosedScope().declareMethod(methodDecl);
 	}
 	
-	private static Type addListOfStringType(final Type stringType) {
+	private static Type addListOfXTypeNamedY(final Type type, final String typeName) {
 		Type retval = null;
 		final TemplateDeclaration listDecl = (TemplateDeclaration)listType_.enclosedScope().associatedDeclaration();
 			
@@ -86,15 +86,15 @@ public final class ListClass {
 		final ClassDeclaration baseClassDecl = null == baseClass? null:
 							templateScope.lookupClassDeclarationRecursive(baseClassName);
 		
-		ClassDeclaration classDeclaration = StaticScope.globalScope().lookupClassDeclarationRecursive("List<String>");
+		ClassDeclaration classDeclaration = StaticScope.globalScope().lookupClassDeclarationRecursive(typeName);
 		if (null == classDeclaration) {
 			// Create a new type vector from the type parameters
-			final TemplateInstantiationInfo templateInstantiationInfo = new TemplateInstantiationInfo(listDecl, "List<String>");
-			templateInstantiationInfo.add(stringType);
+			final TemplateInstantiationInfo templateInstantiationInfo = new TemplateInstantiationInfo(listDecl, typeName);
+			templateInstantiationInfo.add(type);
 			
 			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
 			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
-			classDeclaration = new ClassDeclaration("List<String>", templateEnclosedScope,
+			classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
 					baseClassDecl, 0);
 			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo);
 			final Type rawNewType = classDeclaration.type();
@@ -116,6 +116,7 @@ public final class ListClass {
 		return retval;
 	}
 	
+	
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -127,6 +128,8 @@ public final class ListClass {
 		assert null != booleanType;
 		final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
 		assert null != stringType;
+		final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert null != objectType;
 		
 		if (null == globalScope.lookupTypeDeclaration("List")) {
 			final StaticScope newScope = new StaticScope(globalScope);
@@ -164,7 +167,8 @@ public final class ListClass {
 			// kludge.
 			assert null != stringType;
 			
-			final Type listOfStringType = addListOfStringType(stringType);
+			final Type listOfStringType = addListOfXTypeNamedY(stringType, "List<String>");
+			                              addListOfXTypeNamedY(objectType, "List<Object>");
 			
 			// Yeah, parameters are backwards in order for addStringMethod.
 			StaticScope.addStringMethod(stringType, "join", stringType, asList("elements", "delimiter"), asList(listOfStringType, stringType), true);

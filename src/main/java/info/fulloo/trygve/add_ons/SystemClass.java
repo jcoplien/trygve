@@ -36,6 +36,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
@@ -44,6 +45,7 @@ import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTPrintStreamInfo;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
+import info.fulloo.trygve.run_time.RTListObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -63,6 +65,25 @@ public final class SystemClass {
 		if (null != argumentType) {
 			 formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
 			 formals.addFormalParameter(formalParameter);
+		}
+		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
+		formals.addFormalParameter(formalParameter);
+		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
+		printStreamType_.enclosedScope().declareMethod(methodDecl);
+		methodDecl.setReturnType(printStreamType_);
+	}
+	private static void addGeneralPrintStreamDeclaration(final String methodName, List<String> parameterNames, final List<Type> argumentTypes) {
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		ObjectDeclaration formalParameter = null;
+		final FormalParameterList formals = new FormalParameterList();
+		for (int i = 0; i < parameterNames.size(); i++) {
+			final Type argumentType = argumentTypes.get(i);
+			final String argumentName = parameterNames.get(i);
+			formalParameter = new ObjectDeclaration(argumentName, argumentType, 0);
+			formals.addFormalParameter(formalParameter);
 		}
 		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
 		formals.addFormalParameter(formalParameter);
@@ -140,6 +161,12 @@ public final class SystemClass {
 			
 			// method println()
 			addTypedPrintStreamPrintDeclaration("println", null);
+			
+			// method (format)
+			Type varargsType = new VarargsType("format");
+			
+			// Arguments are, alas, backwards
+			addGeneralPrintStreamDeclaration("format", asList("arguments", "format"), asList(varargsType, stringType));
 			
 			// Declare the type
 			globalScope.declareType(printStreamType_);
@@ -422,9 +449,9 @@ public final class SystemClass {
 			RTObject rawToPrint = myEnclosedScope.getObject(parameterName_);
 
 			if (rawToPrint instanceof RTNullExpression) {
-				finalStream.print("<null>");
+				finalStream.println("<null>");
 			} else if (rawToPrint instanceof RTNullObject) {
-				finalStream.print("<null>");
+				finalStream.println("<null>");
 			} else {
 				if (rawToPrint instanceof RTIntegerObject) {
 					// Yeah, it can happen. chord_identifier3.k
@@ -436,6 +463,67 @@ public final class SystemClass {
 				finalStream.print(foobar);
 			}
 			return super.nextCode();
+		}
+	}
+
+	
+	public static class RTFormatCode extends RTPrintCommon {
+		public RTFormatCode(final StaticScope enclosingMethodScope) {
+			super("PrintStream", "format", "format", "arguments", enclosingMethodScope);
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final PrintStream finalStream) {
+			RTObject rawFormat = myEnclosedScope.getObject("format");
+			RTObject rawArguments = myEnclosedScope.getObject("arguments");
+			assert rawArguments instanceof RTListObject;
+			RTListObject arguments = (RTListObject) rawArguments;
+
+			if (rawFormat instanceof RTNullExpression) {
+				finalStream.println("<null>");
+			} else if (rawFormat instanceof RTNullObject) {
+				finalStream.println("<null>");
+			} else {
+				assert rawFormat instanceof RTStringObject;
+				final RTStringObject format = (RTStringObject) rawFormat;
+				final String formatString = format.stringValue();
+				final String [] formats = formatString.split("%");
+				int j = arguments.size() - 1;
+				for (int i = 0; i < formats.length; i++) {
+					if (formats[i].length() == 0) {
+						;
+					} else if (formats[i].startsWith("n")) {
+						// takes no argument
+						finalStream.format(formats[i]);
+					} else {
+						this.printObjectInFormatOn((RTObject)arguments.get(j), formats[i], finalStream);
+						j--;
+					}
+				}
+			}
+			return super.nextCode();
+		}
+		void printObjectInFormatOn(final RTObject object, final String formatString, final PrintStream str) {
+			String formatSpec = formatString;
+			
+			// Strip off field length modifier
+			while (formatSpec.length() > 0 &&
+						(Character.isDigit((char)formatSpec.charAt(0)) ||
+								formatSpec.startsWith("+") ||
+								formatSpec.startsWith("-") ||
+								formatSpec.startsWith(".")
+						)
+					) {
+				formatSpec = formatSpec.substring(1);
+			};
+
+			if (formatSpec.startsWith("s")) {
+				str.format("%" + formatString, ((RTStringObject)object).stringValue());
+			} else if (formatSpec.startsWith("d") || formatString.startsWith("ld")) {
+				str.format("%" + formatString, ((RTIntegerObject)object).intValue());
+			} else if (formatSpec.startsWith("f") || formatString.startsWith("lf")) {
+				str.format("%" + formatString, ((RTIntegerObject)object).intValue());
+			} else if (formatSpec.startsWith("b")) {
+				str.format("%" + formatString, ((RTBooleanObject)object).value());
+			}
 		}
 	}
 	public static class RTReadCommon extends RTMessage {

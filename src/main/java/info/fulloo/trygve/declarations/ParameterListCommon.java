@@ -23,11 +23,14 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.mylibrary.SimpleList;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 
 public abstract class ParameterListCommon implements ActualOrFormalParameterList  {
 	public ParameterListCommon(final SimpleList formalParameters) {
 		parameters_ = formalParameters;
+		containsVarargs_ = false;
 	}
 	public int count() {
 		return parameters_.count();
@@ -42,10 +45,24 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 		}
 		return retval;
 	}
+	private Type typeOf(final Object parameter) {
+		Type type = null;
+		if (parameter instanceof Expression) {
+			final Expression parameterAsExpression = (Expression) parameter;
+			type = parameterAsExpression.type();
+		} else if (parameter instanceof Declaration) {
+			final Declaration parameterAsDeclaration = (Declaration) parameter;
+			type = parameterAsDeclaration.type();
+		}
+		return type;
+	}
 	public void insertAtStart(final Object parameter) {
+		containsVarargs_ |= typeOf(parameter) instanceof VarargsType;
 		parameters_.insertAtStart(parameter);
 	}
 	public void addArgument(final Object parameter) {
+		final Type type = typeOf(parameter);
+		containsVarargs_ |= type instanceof VarargsType;
 		parameters_.add(parameter);
 	}
 	public Object argumentAtPosition(final int i) {
@@ -58,6 +75,10 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
 		return this;
 	}
+	@Override public boolean containsVarargs() {
+		return containsVarargs_;
+	}
 	
 	private final SimpleList parameters_;
+	protected boolean containsVarargs_;
 }

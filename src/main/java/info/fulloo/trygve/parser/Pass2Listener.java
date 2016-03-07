@@ -43,6 +43,7 @@ import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
+import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -1176,15 +1177,24 @@ public class Pass2Listener extends Pass1Listener {
 		final long numberOfFormalParameters = formals.count();
 
 		if (numberOfFormalParameters != numberOfActualParameters) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
-					"' does not match declaration of `", mdecl.name() + "'.");
-			int lineNumber = mdecl.lineNumber();
-			if (0 == lineNumber) {
-				// e.g., for a built-in type
-				lineNumber = ctxGetStart.getLine();
-			}
-			if (null != classdecl) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+			if (formals.containsVarargs()) {
+				if (numberOfActualParameters < numberOfFormalParameters) {
+					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+							"' must be at least as many as in declaration of the script (", String.format("%d", numberOfFormalParameters-1) + ").");
+				} else {
+					;	// O.K.
+				}
+			} else {
+				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+						"' does not match declaration of `", mdecl.name() + "'.");
+				int lineNumber = mdecl.lineNumber();
+				if (0 == lineNumber) {
+					// e.g., for a built-in type
+					lineNumber = ctxGetStart.getLine();
+				}
+				if (null != classdecl) {
+					errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+				}
 			}
 		} else {
 
@@ -1197,7 +1207,9 @@ public class Pass2Listener extends Pass1Listener {
 				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
 				final Type formalParameterType = formalParameter.type();
 
-				if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
+				if (formalParameterType instanceof VarargsType) {
+					break;
+				} else if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
 					continue;
 				} else if (formalParameter.name().equals(parameterToIgnore)) {
 					continue;

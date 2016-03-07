@@ -1206,6 +1206,27 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 	}
 	
+	public static class VarargsType extends Type {
+		public VarargsType(final String name) {
+			super(null);
+			name_ = name;
+		}
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+			return true;
+		}
+		@Override public boolean canBeConvertedFrom(final Type t) {
+			return true;
+		}
+		@Override public String name() {
+			return name_;
+		}
+		@Override public Type type() {
+			return this;
+		}
+
+		private final String name_;
+	}
+	
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
 	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);

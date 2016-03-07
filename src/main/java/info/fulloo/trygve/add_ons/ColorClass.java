@@ -52,7 +52,6 @@ import static java.util.Arrays.asList;
  */
 
 public final class ColorClass {
-	// Never instantiated! FIXME!
 	private static void declareColorMethod(final String methodSelector,
 			final Type returnType,
 			final List<String> paramNames,
@@ -83,8 +82,7 @@ public final class ColorClass {
 	
 	public static void setup() {
 		final StaticScope globalScope = StaticScope.globalScope();
-		colorType_ = (ClassType)globalScope.lookupTypeDeclaration("Color");
-		if (null == colorType_) {
+		if (null == (colorType_ = (ClassType)globalScope.lookupTypeDeclaration("Color"))) {
 			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
@@ -300,5 +298,5 @@ public final class ColorClass {
 	}
 	
 	private static List<TypeDeclaration> typeDeclarationList_;
-	private static ClassType colorType_;
+	private static ClassType colorType_ = null;
 }
