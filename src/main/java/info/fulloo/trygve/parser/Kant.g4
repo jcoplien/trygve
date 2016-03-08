@@ -24,7 +24,7 @@ grammar Kant;
  */
 
 @header {
-    package info.fulloo.trygve.parser;
+    // package info.fulloo.trygve.parser;
 }
 
 program
