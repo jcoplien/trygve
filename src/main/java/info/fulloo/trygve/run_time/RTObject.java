@@ -40,6 +40,7 @@ public interface RTObject extends RTStackable {
 	public boolean isEqualTo(final Object another);
 	public boolean gt(final RTObject another);
 	public int compareTo(final Object other);
+	public String toString();
 	public boolean equals(final RTObject other);
 	public RTObject plus(final RTObject other);
 	public RTObject minus(final RTObject other);

@@ -57,7 +57,7 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 	public Type valueType() {
 		return valueType_;
 	}
-	public int size() {
+	@Override public int size() {
 		return theMap_.size();
 	}
 	@Override public int hashCode() {
@@ -71,6 +71,9 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 			retval = false;
 		}
 		return retval;
+	}
+	@Override public String toString() {
+		return "<Map>";
 	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.

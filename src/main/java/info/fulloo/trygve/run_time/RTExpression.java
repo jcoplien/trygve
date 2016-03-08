@@ -2251,7 +2251,7 @@ public abstract class RTExpression extends RTCode {
 			} else if (classType_.name().equals("Scanner")) {
 				newlyCreatedObject = new RTScannerObject(rTType_);
 			} else if (classType_.name().equals("Color")) {
-				newlyCreatedObject = new RTColorObject(rTType_);
+				newlyCreatedObject = new RTColorObject(rTType_, null);
 			} else if (classType_.name().equals("Panel")) {
 				newlyCreatedObject = new RTPanelObject(rTType_);
 			} else if (classType_.name().equals("Frame")) {
@@ -3581,8 +3581,11 @@ public abstract class RTExpression extends RTCode {
 		@Override public void unenlistAsStagePropPlayerForContext(final String stagePropName, final RTContextObject contextInstance) {  assert false; }
 		@Override public boolean equals(final RTObject other) { assert false; return false; }
 		
-		public String getText() {
+		@Override public String getText() {
 			return rTExpr_.getText();
+		}
+		@Override public String toString() {
+			return this.getText();
 		}
 		public int lineNumber() {
 			return lineNumber_;

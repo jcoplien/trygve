@@ -49,11 +49,11 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 	public Type baseType() {
 		return baseType_;
 	}
-	public RTObject getObject(final RTObject theIndexObject) {
+	@Override public RTObject getObject(final RTObject theIndexObject) {
 		assert false;
 		return null;
 	}
-	public int size() {
+	@Override public int size() {
 		return theSet_.size();
 	}
 	@Override public int hashCode() {
@@ -67,6 +67,9 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 			retval = false;
 		}
 		return retval;
+	}
+	@Override public String toString() {
+		return "<Set>";
 	}
 	
 	// I'm more than a little unhappy that these are copy-pasted. FIXME.

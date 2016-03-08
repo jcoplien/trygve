@@ -80,6 +80,9 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		}
 		return retval;
 	}
+	@Override public String toString() {
+		return "<List>";
+	}
 	public void setObject(final RTObject theIndexObject, final RTObject rhs) {			
 		final int theIndex = calculateIndexFrom(theIndexObject);
 		

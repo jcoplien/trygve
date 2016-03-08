@@ -45,16 +45,15 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
-	public int size() {
-		assert false;
-		return 0;
-	}
 	@Override public int hashCode() {
 		return theFrame_.hashCode();
 	}
 	@Override public boolean equals(final Object other) {
 		assert false;
 		return false;
+	}
+	@Override public String toString() {
+		return "<frame " + frameType_.name() + ">";
 	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.

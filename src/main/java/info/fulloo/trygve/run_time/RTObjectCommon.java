@@ -69,7 +69,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	@Override public boolean isEqualTo(final Object other) {
 		return this == other;
 	}
-	public boolean equals(final Object other) {
+	@Override public boolean equals(final Object other) {
 		boolean retval = this == other;	// nice default - use identity as equality
 		final ActualArgumentList pl = new ActualArgumentList();
 		
@@ -124,6 +124,51 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			if (startingStackSize != currentStackSize) {
 				assert startingStackSize == currentStackSize;
 			}
+		}
+
+		return retval;
+	}
+	@Override public String toString() {
+		String retval = null;
+		final ActualArgumentList pl = new ActualArgumentList();
+		
+		final RTType myType = this.rTType();
+		assert myType instanceof RTClassAndContextCommon;
+		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
+		final Type myTypeAsType = myClass.typeDeclaration().type();
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		pl.addFirstActualParameter(self);
+		
+		final RTMethod toString = myType.lookupMethod("toString", pl);
+		if (null != toString) {
+			// The user has provided a toString function. Call it.
+			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope);
+			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			activationRecord.addObjectDeclaration("this", myType);
+						
+			activationRecord.setObject("this", this);
+			
+			// return address
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(null);
+			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+
+			RTCode pc = toString;
+			do {
+				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+			} while (null != pc && pc instanceof RTHalt == false);
+			
+			final RTObject result = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert result instanceof RTStringObject;
+			retval = ((RTStringObject)result).toString();
+			
+			final int currentStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			if (startingStackSize != currentStackSize) {
+				assert startingStackSize == currentStackSize;
+			}
+		} else {
+			ErrorLogger.error(ErrorType.Runtime, "No toString() operation on `", this.getText(), "'.", "");
 		}
 
 		return retval;
@@ -699,6 +744,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public int hashCode() {
 			return (int)foobar_;
 		}
+		@Override public String toString() {
+			return this.getText();
+		}
 		@Override public boolean equals(final Object other) {
 			boolean retval = true;
 			if (other instanceof RTIntegerObject) {
@@ -859,6 +907,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			foobar_ = foobar;
 		}
 		public String stringValue() { return foobar_; }
+		@Override public String toString() { return this.stringValue(); }
 		@Override public boolean isEqualTo(Object another) {
 			if ((another instanceof RTStringObject) == false) return false;
 			else return foobar_.equals(((RTStringObject)another).stringValue());
@@ -922,10 +971,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			assert false;
 			return null;
 		}
-		public int hashCode() {
+		@Override public int hashCode() {
 			return foobar_.hashCode();
 		}
-		public boolean equals(final Object other) {
+		@Override public boolean equals(final Object other) {
 			boolean retval = true;
 			if (other instanceof RTStringObject) {
 				retval = foobar_.equals(((RTStringObject)other).foobar_);
@@ -996,6 +1045,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public String getText() {
 			return foobar_? "true": "false";
 		}
+		@Override public String toString() {
+			return this.getText();
+		}
 		
 		private boolean foobar_;
 	}
@@ -1015,13 +1067,16 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public boolean equals(final Object other) {
 			return other instanceof RTNullObject;
 		}
+		@Override public String toString() {
+			return "<null>";
+		}
 		@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
 			// Not sure if no-op is the right thing to do, but
 			// it avoids silly work.
 		}
 	}
 	
-	public RTObject performUnaryOpOnObjectNamed(final String idName, final String operator, final PreOrPost preOrPost) {
+	@Override public RTObject performUnaryOpOnObjectNamed(final String idName, final String operator, final PreOrPost preOrPost) {
 		RTObject retval = null;
 		if (objectMembers_.containsKey(idName)) {
 			retval = objectMembers_.get(idName);
@@ -1052,13 +1107,13 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		return retval;
 	}
 	
-	public void incrementReferenceCount() {
+	@Override public void incrementReferenceCount() {
 		referenceCount_++;
 	}
-	public void decrementReferenceCount() {
+	@Override public void decrementReferenceCount() {
 		--referenceCount_;
 	}
-	public long referenceCount() {
+	@Override public long referenceCount() {
 		return referenceCount_;
 	}
 	
@@ -1079,11 +1134,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			objectMembers_.put(key, clonedValue);
 		}
 	}
-	public RTObject dup() {
+	@Override public RTObject dup() {
 		RTObject retval = new RTObjectCommon(classOrContext_, objectMembers_, rTTypeMap_);
 		return retval;
 	}
-	public boolean equals(final RTObject other) {
+	@Override public boolean equals(final RTObject other) {
 		boolean retval = true;
 		if (other.hashCode() != this.hashCode()) {
 			retval = false;
@@ -1108,7 +1163,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		return retval;
 	}
-	public int hashCode() {
+	@Override public int hashCode() {
 		int retval = 0;
 		for (final RTObject aMember : objectMembers_.values()) {
 			retval ^= aMember.hashCode();

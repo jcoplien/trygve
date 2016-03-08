@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.IllegalFormatException;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
@@ -476,6 +477,7 @@ public final class SystemClass {
 			RTObject rawArguments = myEnclosedScope.getObject("arguments");
 			assert rawArguments instanceof RTListObject;
 			RTListObject arguments = (RTListObject) rawArguments;
+			boolean printedOK = true;
 
 			if (rawFormat instanceof RTNullExpression) {
 				finalStream.println("<null>");
@@ -492,38 +494,80 @@ public final class SystemClass {
 						;
 					} else if (formats[i].startsWith("n")) {
 						// takes no argument
-						finalStream.format(formats[i]);
+						finalStream.format("%" + formats[i]);
+					} else if (formats[i].startsWith("\n")) {
+						// takes no argument
+						finalStream.format("%" + formats[i]);
 					} else {
-						this.printObjectInFormatOn((RTObject)arguments.get(j), formats[i], finalStream);
+						printedOK = this.printObjectInFormatOn((RTObject)arguments.get(j), formats[i], finalStream);
 						j--;
 					}
 				}
 			}
-			return super.nextCode();
+			if (printedOK) {
+				return super.nextCode();
+			} else {
+				return new RTHalt();
+			}
 		}
-		void printObjectInFormatOn(final RTObject object, final String formatString, final PrintStream str) {
+		private boolean formatSuitsType(final String formatSpec, final RTObject object, final boolean isOk) {
+			if (false == isOk) {
+				System.err.format("format: format %%%s is not compatible with object type %s%n",
+						formatSpec, object.rTType().name());
+			}
+			return isOk;
+		}
+		private boolean printObjectInFormatOn(final RTObject object, final String formatString, final PrintStream str) {
 			String formatSpec = formatString;
+			boolean retval = true;
 			
 			// Strip off field length modifier
 			while (formatSpec.length() > 0 &&
 						(Character.isDigit((char)formatSpec.charAt(0)) ||
 								formatSpec.startsWith("+") ||
 								formatSpec.startsWith("-") ||
-								formatSpec.startsWith(".")
+								formatSpec.startsWith(".") ||
+								formatSpec.startsWith("^") ||
+								formatSpec.startsWith("#")
 						)
 					) {
 				formatSpec = formatSpec.substring(1);
 			};
 
-			if (formatSpec.startsWith("s")) {
-				str.format("%" + formatString, ((RTStringObject)object).stringValue());
-			} else if (formatSpec.startsWith("d") || formatString.startsWith("ld")) {
-				str.format("%" + formatString, ((RTIntegerObject)object).intValue());
-			} else if (formatSpec.startsWith("f") || formatString.startsWith("lf")) {
-				str.format("%" + formatString, ((RTIntegerObject)object).intValue());
-			} else if (formatSpec.startsWith("b")) {
-				str.format("%" + formatString, ((RTBooleanObject)object).value());
+			try {
+				if (object instanceof RTNullObject) {
+					str.format("<null>");
+				} else if (formatSpec.startsWith("s") || formatSpec.startsWith("S")) {
+					if (object instanceof RTStringObject) {
+						str.format("%" + formatString, ((RTStringObject)object).stringValue());
+					} else {
+						str.format("%" + formatString, object.toString());
+					}
+				} else if (formatSpec.startsWith("d") || formatString.startsWith("ld") ||
+						   formatSpec.startsWith("x") || formatString.startsWith("X") ||
+						   formatSpec.startsWith("o") || formatString.startsWith("u") ||
+						   formatSpec.startsWith("z") || formatString.startsWith("Z") ) {
+					if (formatSuitsType(formatSpec, object, object instanceof RTIntegerObject)) {
+						str.format("%" + formatString, ((RTIntegerObject)object).intValue());
+					}
+				} else if (formatSpec.startsWith("f") || formatString.startsWith("lf") ||
+						formatSpec.startsWith("e") || formatString.startsWith("E") ||
+						formatSpec.startsWith("g") || formatString.startsWith("G")) {
+					if (formatSuitsType(formatSpec, object, object instanceof RTDoubleObject)) {
+						str.format("%" + formatString, ((RTDoubleObject)object).doubleValue());
+					}
+				} else if (formatSpec.startsWith("p")) {
+					str.format("%" + formatString, object);
+				} else if (formatSpec.startsWith("b")) {
+					if (formatSuitsType(formatSpec, object, object instanceof RTBooleanObject)) {
+						str.format("%" + formatString, ((RTBooleanObject)object).value());
+					}
+				}
+			} catch (final IllegalFormatException e) {
+				ErrorLogger.error(ErrorType.Runtime, "Invalid format specification: ", "`%", formatString, "'.");
+				retval = false;
 			}
+			return retval;
 		}
 	}
 	public static class RTReadCommon extends RTMessage {

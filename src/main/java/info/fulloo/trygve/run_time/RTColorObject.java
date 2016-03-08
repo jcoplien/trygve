@@ -34,11 +34,12 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
 public class RTColorObject extends RTObjectCommon implements RTObject {
-	public RTColorObject(final RTType colorType) {
+	public RTColorObject(final RTType colorType, final String colorName) {
 		super(colorType);
 		colorType_ = colorType;	// e.g. an instance of RTClass
 		theColor_ = null;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
+		colorName_ = colorName;
 	}
 	
 	public int size() {
@@ -84,7 +85,6 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 		}
 	}
 	
-	
 	public RTObject performUnaryOpOnObject(final RTObject theIndex, final String operation, final PreOrPost preOrPost) {
 		assert false;
 		return null;
@@ -129,9 +129,17 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 	public Color color() {
 		return theColor_;
 	}
+	@Override public String toString() {
+		String retval = colorName_;
+		if (null == retval) {
+			retval = String.format("(red=%d, green=%d, blue=%d)", getRed(), getGreen(), getBlue());
+		}
+		return retval;
+	}
 	
 	
 	private       Color theColor_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
 	private final RTType colorType_;
+	private       String colorName_;
 }

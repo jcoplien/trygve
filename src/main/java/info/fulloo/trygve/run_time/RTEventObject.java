@@ -74,6 +74,9 @@ public class RTEventObject extends RTObjectCommon implements RTObject {
 		assert false;
 		return false;
 	}
+	@Override public String toString() {
+		return "<event>";
+	}
 	
 	// I'm a little unhappy that these are copy-pasted. FIXME.
 	@Override public void enlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {
