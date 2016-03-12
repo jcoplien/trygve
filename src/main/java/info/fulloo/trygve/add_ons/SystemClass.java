@@ -22,8 +22,6 @@ package info.fulloo.trygve.add_ons;
  * Jim Coplien at jcoplien@gmail.com
  */
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
@@ -42,10 +40,8 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
-import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTPrintStreamInfo;
 import info.fulloo.trygve.run_time.RTCode;
-import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTListObject;
 import info.fulloo.trygve.run_time.RTObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
@@ -95,21 +91,7 @@ public final class SystemClass {
 		printStreamType_.enclosedScope().declareMethod(methodDecl);
 		methodDecl.setReturnType(printStreamType_);
 	}
-	private static void addTypedInputStreamDeclaration(final String methodName, final Type argumentType) {
-		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		ObjectDeclaration formalParameter = null;
-		final FormalParameterList formals = new FormalParameterList();
-		formalParameter = new ObjectDeclaration("this", inputStreamType_, 0);
-		formals.addFormalParameter(formalParameter);
-		final StaticScope methodScope = new StaticScope(inputStreamType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, inputStreamType_, Public, 0, false);
-		methodDecl.addParameterList(formals);
-		methodDecl.setHasConstModifier(true);
-		inputStreamType_.enclosedScope().declareMethod(methodDecl);
-		final StaticScope globalScope = StaticScope.globalScope();
-		final Type integerType = globalScope.lookupTypeDeclaration("int");
-		methodDecl.setReturnType(integerType);
-	}
+	
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		
@@ -174,20 +156,6 @@ public final class SystemClass {
 			globalScope.declareClass(classDecl);
 			
 			newScope = new StaticScope(globalScope);
-			classDecl = new ClassDeclaration("InputStream", newScope, objectBaseClass, 0);
-			newScope.setDeclaration(classDecl);
-			inputStreamType_ = new ClassType("InputStream", newScope, null);
-			classDecl.setType(inputStreamType_);
-			typeDeclarationList_.add(classDecl);
-			
-			// method read()
-			addTypedInputStreamDeclaration("read", null);
-			
-			// Declare the type
-			globalScope.declareType(inputStreamType_);
-			globalScope.declareClass(classDecl);
-			
-			newScope = new StaticScope(globalScope);
 			classDecl = new ClassDeclaration("System", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(classDecl);
 			final Type systemClassType = new ClassType("System", newScope, null);
@@ -198,13 +166,18 @@ public final class SystemClass {
 			systemClassType.enclosedScope().declareStaticObject(outDeclaration);
 			systemClassType.declareStaticObject(outDeclaration);
 			
+			assert null != printStreamType_;
 			final ObjectDeclaration errDeclaration = new ObjectDeclaration("err", printStreamType_, 0);
 			systemClassType.enclosedScope().declareStaticObject(errDeclaration);
 			systemClassType.declareStaticObject(errDeclaration);
 			
-			final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, 0);
-			systemClassType.enclosedScope().declareStaticObject(inputDeclaration);
-			systemClassType.declareStaticObject(inputDeclaration);
+			// This code belongs here, but reciprocal precedence means that
+			// we're stuck because System depends on InputStream and InputStream
+			// depends on System. So we moved this into the InputStream initialization.
+			// assert null != inputStreamType_;
+			// final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, 0);
+			// systemClassType.enclosedScope().declareStaticObject(inputDeclaration);
+			// systemClassType.declareStaticObject(inputDeclaration);
 			
 			// Declare the type
 			globalScope.declareType(systemClassType);
@@ -570,84 +543,6 @@ public final class SystemClass {
 			return retval;
 		}
 	}
-	public static class RTReadCommon extends RTMessage {
-		public RTReadCommon(final String className, final String methodName, final String parameterName, final String parameterTypeName, final StaticScope enclosingMethodScope) {
-			super(methodName,
-					RTMessage.buildArguments(className, methodName,
-							null == parameterName?     null: asList(parameterName),
-							null == parameterTypeName? null: asList(parameterTypeName),
-							enclosingMethodScope, false),
-					inputStreamType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
-			parameterName_ = parameterName;
-		}
-		public RTCode run() {
-			// Don't need to push or pop anything. The return code stays
-			// until the RTReturn statement processes it, and everything
-			// else has been popped into the activation record by
-			// RTMessage
-			// 		NO: returnCode = (RTCode)RunTimeEnvironment.runTimeEnvironment_.popStack();
-			// 		Yes, but...: assert returnCode instanceof RTCode;
-			
-			// Parameters have all been packaged into the
-			// activation record
-			final RTObject myEnclosedScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			
-			final RTObject theStream = myEnclosedScope.getObject("this");
-			final RTObject inputStreamInfo = theStream.getObject("inputStreamInfo");
-			assert inputStreamInfo instanceof RTInputStreamInfo;
-			final InputStream finalStream = ((RTInputStreamInfo)inputStreamInfo).inputStream();
-			
-			final RTCode nextPC = this.runDetails(myEnclosedScope, finalStream);
-			
-			// We DO push a return value, which is just "this"
-			// It is always returned. It is up to the RTReturn / RTMessage /
-			// RTPostReturnProcessing logic to deal with consumption.
-			
-			final RTObject self = myEnclosedScope.getObject("this");
-			assert null != self;
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(self);
-			
-			// All dogs go to heaven, and all return statements that
-			// have something to return do it. We deal with consumption
-			// in the message. This function's return statement will be
-			// set for a consumed result in higher-level logic.
-			
-			return nextPC;
-		}
-		public RTCode runDetails(final RTObject scope, final InputStream finalStream) {
-			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails (System domain)", "", "", "");
-			return null;	// halt the machine
-		}
-		protected void addRetvalTo(final RTDynamicScope activationRecord) {
-			if (null == activationRecord.getObject("ret$val")) {
-				activationRecord.addObjectDeclaration("ret$val", null);
-			}
-		}
-		
-		protected String parameterName_;	// used? FIXME
-	}
-	public static class RTReadCode extends RTReadCommon {
-		public RTReadCode(final StaticScope enclosingMethodScope) {
-			super("InputStream", "read", null, null, enclosingMethodScope);
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final InputStream finalStream) {
-			RTObject retval = null;
-			try {
-				final int theInput = finalStream.read();
-				retval = new RTIntegerObject(theInput);
-			} catch (IOException expection) {
-				retval = new RTIntegerObject(-1);
-			}
-
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			this.addRetvalTo(activationRecord);
-			activationRecord.setObject("ret$val", retval);
-			
-			return super.nextCode();
-		}
-	}
 	
 	private static Type printStreamType_ = null;
-	private static Type inputStreamType_ = null;
 }

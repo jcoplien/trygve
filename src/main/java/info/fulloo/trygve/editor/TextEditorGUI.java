@@ -53,11 +53,11 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/isexpression_test.k";
+	private final static String defaultFile = "examples/borrow_library_panel2.k";
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.6.8";
+    final String TrygveVersion = "1.6.9";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -747,6 +747,7 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    	testButton.setEnabled(true);
 	    	setRunButtonState(RunButtonState.Idle);
 	    	setInterruptButtonState(RunButtonState.Idle);
+	    	parseButton.setEnabled(true);
 	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
 	    }
 
@@ -819,6 +820,7 @@ public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) 
         this.editPane.setText(stringBuilder.toString());
         this.fileName = new File(pathName);
         saveFileButton.setEnabled(true);
+        parseButton.setEnabled(true);
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
@@ -973,9 +975,11 @@ private void resetButtonsBasedOnWindowQueue() {
 	if (appWindowsExtantMap_.size() > 0) {
 		setRunButtonState(RunButtonState.Running);
 		setInterruptButtonState(RunButtonState.Running);
+		parseButton.setEnabled(false);
 	} else {
 		setRunButtonState(RunButtonState.Idle);
 		setInterruptButtonState(RunButtonState.Idle);
+		parseButton.setEnabled(true);
 	}
 	this.update(getGraphics());
 }

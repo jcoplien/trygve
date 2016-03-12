@@ -67,7 +67,6 @@ public abstract class RTMessageDispatcher {
 			final MethodInvocationEnvironmentClass targetMessageClass
 			) {
 		RTMessageDispatcher retval = null;
-
 		switch (originMessageClass) {
 		case ClassEnvironment:
 			switch(targetMessageClass) {
@@ -219,12 +218,12 @@ public abstract class RTMessageDispatcher {
 		methodDecl_ = null;
 		nearestEnclosingType_ = nearestEnclosingType;
 		
-		Type objectListType = StaticScope.globalScope().lookupTypeDeclaration("List<Object>");
+		final Type objectListType = StaticScope.globalScope().lookupTypeDeclaration("List<Object>");
 		if (null == objectListType) {
 			ErrorLogger.error(ErrorType.Internal, "List<Object> lookup failure.", "", "", "");
 			assert false;
 		}
-		Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
 		if (null == objectType) {
 			assert false;
 		}

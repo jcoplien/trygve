@@ -86,6 +86,7 @@ public final class FrameClass {
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
 			final Type panelType = globalScope.lookupTypeDeclaration("Panel");
+			assert null != panelType;
 			final Type booleanType = globalScope.lookupTypeDeclaration("boolean");
 			assert null != panelType;
 			

@@ -35,18 +35,7 @@ import java.util.Vector;
 public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public GraphicsPanel(final RTObjectCommon rTPanel) {
 		rTPanel_ = rTPanel;
-		
-		rectangles_ = new Vector<Rectangle>();
-		rectColors_ = new Vector<Color>();
-		
-		// A line is a funny kind of Rectangle (Javathink)
-		lines_ = new Vector<Rectangle>();
-		lineColors_ = new Vector<Color>();
-		
-		ellipses_ = new Vector<Ellipse2D>();
-		ellipseColors_ = new Vector<Color>();
-		
-		strings_ = new Vector<StringRecord>();
+		makeVectors();
 	}
 	
 	public void setBackground(final RTObject colorArg) {
@@ -57,7 +46,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public void setForeground(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
-		this.setBackground(color);
+		this.setForeground(color);
 	}
 	public void drawLine(final RTObject fromXArg, final RTObject fromYArg, final RTObject toXArg, final RTObject toYArg) {
 		assert fromXArg instanceof RTIntegerObject;
@@ -69,7 +58,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int toX = (int)((RTIntegerObject)toXArg).intValue();
 		final int toY = (int)((RTIntegerObject)toYArg).intValue();
 		final Rectangle newRect = new Rectangle(fromX, fromY, Math.abs(toX-fromX), Math.abs(toY-fromY));
-		this.addLine(newRect, null);
+		final Color currentColor = getForeground();
+		this.addLine(newRect, currentColor);
 	}
 	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject widthArg, final RTObject heightArg) {
 		assert fromXArg instanceof RTIntegerObject;
@@ -81,7 +71,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 		final Rectangle newRect = new Rectangle(fromX, fromY, width, height);
-		this.addRectangle(newRect, null);
+		final Color currentColor = getForeground();
+		this.addRectangle(newRect, currentColor);
 	}
 	public void drawOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -92,7 +83,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		this.addOval(x, y, width, height, null);
+		final Color currentColor = getForeground();
+		this.addOval(x, y, width, height, currentColor);
 	}
 	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -101,7 +93,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int x = (int)((RTIntegerObject)xArg).intValue();
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final String string = ((RTStringObject)stringArg).stringValue();
-		this.addString(x, y, string, null);
+		final Color currentColor = getForeground();
+		this.addString(x, y, string, currentColor);
 	}
 	
 	public void handleEventProgrammatically(final Event e) {
@@ -119,11 +112,21 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final RTMethod hE = rTType.lookupMethod("handleEvent", pl);
 		if (null != hE) {
 			this.dispatchInterrupt(hE, e);
+		} else {
+			if (e.key != 0 && e.id == Event.KEY_RELEASE) {
+				checkIOIntegration(e);
+			}
+		}
+	}
+	
+	protected void checkIOIntegration(final Event e) {
+		if (null != eventsAreBeingHijacked_) {
+			eventsAreBeingHijacked_.checkIOIntegration(e);
 		}
 	}
 	
 	private void dispatchInterrupt(final RTMethod method, final Event e) {
-		// Just do a procedure call
+		// Just do a method call into the user space
 		final RTCode halt = null;
 		final ClassType eventType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Event");
 		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
@@ -159,6 +162,20 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	// ------------------ Internal stuff ------------------------------
 	
+	private void makeVectors() {
+		rectangles_ = new Vector<Rectangle>();
+		rectColors_ = new Vector<Color>();
+		
+		// A line is a funny kind of Rectangle (Javathink)
+		lines_ = new Vector<Rectangle>();
+		lineColors_ = new Vector<Color>();
+		
+		ellipses_ = new Vector<Ellipse2D>();
+		ellipseColors_ = new Vector<Color>();
+		
+		strings_ = new Vector<StringRecord>();
+	}
+	
 	private static class StringRecord {
 		public StringRecord(final int x, final int y, final String string, final Color color) {
 			x_ = x;
@@ -188,7 +205,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	
 	@Override public boolean handleEvent(final Event e) {
-		// These need to be coordinated only with stuff in the
+		// These constants need to be coordinated only with stuff in the
 		// setup and postSetupInitialization methods in PanelClass.java
 		
 		switch (e.id) {
@@ -249,11 +266,15 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		/* draw the current texts */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i=0; i < strings_.size(); i++) {
+		for (int i = 0; i < strings_.size(); i++) {
 		    final StringRecord p = strings_.elementAt(i);
-		    g.setColor((Color)strings_.elementAt(i).color());
+		    g.setColor(p.color());
 		    g.drawString(p.toString(), p.x(), p.y());
 		}
+	}
+	
+	@Override public void removeAll() {
+		makeVectors();
 	}
 	
 	public void addRectangle(final Rectangle rect, final Color color) {
@@ -261,33 +282,48 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rectColors_.addElement(color);
 	}
 	
+	public void fillRectangle(final RTObject xObject, final RTObject yObject, 
+			final RTObject widthObject, final RTObject heightObject) {
+		final int x = (int)((RTIntegerObject)yObject).intValue();
+		final int y = (int)((RTIntegerObject)widthObject).intValue();
+		final int width = (int)((RTIntegerObject)xObject).intValue();
+		final int height = (int)((RTIntegerObject)heightObject).intValue();
+		final Graphics g = this.getGraphics();
+		if (null != g) {
+			g.fillRect(x, y, width, height);
+		}
+	}
+	
 	public void addLine(final Rectangle line, final Color color) {
 		lines_.addElement(line);
 		lineColors_.addElement(color);
 	}
 	
-	public void addOval(int x, int y, int width, int height, final Color color) {
+	public void addOval(final int x, final int y, final int width, final int height, final Color color) {
 		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
-System.err.format("addOval called x=%d y=%d width=%d height=%d\n", x, y, width, height);
 		ellipses_.addElement(ellipse);
 		ellipseColors_.addElement(color);
 	}
 	
-	public void addString(int x, int y, final String string, final Color color) {
+	public void addString(final int x, final int y, final String string, final Color color) {
 		final StringRecord stringRecord = new StringRecord(x, y, string, color);
 		strings_.addElement(stringRecord);
 	}
 	
-	private final Vector<Rectangle> rectangles_;
-	private final Vector<Color> rectColors_;
+	public void setGraphicsEventHandler(final GraphicsEventHandler eventsAreBeingHijacked) {
+		eventsAreBeingHijacked_ = eventsAreBeingHijacked;
+	}
 	
-	private final Vector<Rectangle> lines_;
-	private final Vector<Color> lineColors_;
+	private       Vector<Rectangle> rectangles_;
+	private       Vector<Color> rectColors_;
 	
-	private final Vector<Ellipse2D> ellipses_;
-	private final Vector<Color> ellipseColors_;
+	private       Vector<Rectangle> lines_;
+	private       Vector<Color> lineColors_;
 	
-	private final Vector<StringRecord> strings_;
+	private       Vector<Ellipse2D> ellipses_;
+	private       Vector<Color> ellipseColors_;
+	
+	private       Vector<StringRecord> strings_;
 	private RTObjectCommon rTPanel_;
 	
 	private static final long serialVersionUID = 238269472;
@@ -334,4 +370,6 @@ System.err.format("addOval called x=%d y=%d width=%d height=%d\n", x, y, width, 
 	@Override public void unenlistAsStagePropPlayerForContext(String stagePropName,
 			RTContextObject contextInstance) { assert false; }
 	@Override public String getText() { assert false; return null; }
+	
+	private GraphicsEventHandler eventsAreBeingHijacked_;
 }

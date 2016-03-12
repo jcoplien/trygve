@@ -46,6 +46,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBigIntegerObject;
@@ -225,13 +226,13 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 		public RTObjectClass(final TypeDeclaration associatedType) {
 			super(associatedType);
 		}
-		public static class RTObjectCommon extends RTMessage {
-			public RTObjectCommon(final String className, final String methodName, final List<String> parameterNames, final List<String> parameterTypeNames,
+		public static class RTObjectCommonLogic extends RTMessage {
+			public RTObjectCommonLogic(final String className, final String methodName, final List<String> parameterNames, final List<String> parameterTypeNames,
 					 final StaticScope enclosingMethodScope, final Type returnType, final boolean isStatic) {
 				super(methodName, RTMessage.buildArguments(className, methodName, parameterNames, parameterTypeNames, enclosingMethodScope, isStatic), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), 
 						isStatic);
 			}
-			protected RTObjectCommon(final String objectName, final String halt) {
+			protected RTObjectCommonLogic(final String objectName, final String halt) {
 				// Just for RTHalt
 				super(objectName, RTMessage.buildArguments("Object", "halt", asList("x"), asList("int"), StaticScope.globalScope(), true),
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
@@ -260,7 +261,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				}
 			}
 		}
-		public static class RTAssertCode extends RTObjectCommon {
+		public static class RTAssertCode extends RTObjectCommonLogic {
 			public RTAssertCode(final StaticScope methodEnclosedScope) {
 				super("Object", "assert",
 						asList("tf", "msg"), asList("boolean", "String"),
@@ -289,7 +290,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return retval;
 			}
 		}
-		public static class RTAssertCodeMinimal extends RTObjectCommon {
+		public static class RTAssertCodeMinimal extends RTObjectCommonLogic {
 			public RTAssertCodeMinimal(final StaticScope methodEnclosedScope) {
 				super("Object", "assert",
 						asList("tf"), asList("boolean"),
@@ -361,7 +362,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
-		public static class RTHalt extends RTObjectCommon {
+		public static class RTHalt extends RTObjectCommonLogic {
 			public RTHalt() {
 				super("Object", "halt");
 			}
@@ -442,6 +443,24 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTIntegerObject intObject = (RTIntegerObject)self;
 				final long iRetval = intObject.intValue();
 				final RTIntegerObject retval = new RTIntegerObject(iRetval);
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
+		public static class RTToChar1StringCode extends RTIntegerCommon {
+			public RTToChar1StringCode(final StaticScope methodEnclosedScope) {
+				super("int", "to1CharString", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTIntegerObject;
+				final RTIntegerObject intObject = (RTIntegerObject)self;
+				final RTObject retval = intObject.to1CharString();
 
 				addRetvalTo(dynamicScope);
 				dynamicScope.setObject("ret$val", retval);
@@ -1310,15 +1329,23 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			private final PrintStream printStream_;
 		}
 		public static class RTInputStreamInfo extends RTObjectCommon {
-			public RTInputStreamInfo(final InputStream inputStream) {
+			public RTInputStreamInfo(final InputStream inputStream, final GraphicsPanel panel) {
 				super((RTType)null);
 				inputStream_ = inputStream;
+				panel_ = panel;
+			}
+			public RTInputStreamInfo(final InputStream inputStream) {
+				this(inputStream, null);
 			}
 			public InputStream inputStream() {
 				return inputStream_;
 			}
+			public GraphicsPanel panel() {
+				return panel_;
+			}
 			
 			private final InputStream inputStream_;
+			private       GraphicsPanel panel_;
 		}
 		@Override public void postSetupInitialization() {
 			// Lookup "out" and "err" and set them up

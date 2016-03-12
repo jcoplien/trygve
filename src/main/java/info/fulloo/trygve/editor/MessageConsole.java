@@ -23,16 +23,10 @@ package info.fulloo.trygve.editor;
  * 
  */
 
-import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 
 import java.io.*;
 import java.util.EventListener;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 import javax.swing.event.*;
@@ -62,10 +56,10 @@ public class MessageConsole
 	private Document document;
 	private boolean isAppend;
 	private DocumentListener limitLinesListener;
-	private DocInputStream in_;
+	private InputStreamClass.DocInputStream in_;
 	private ConsoleOutputStream out_;
 	
-    public DocInputStream getIn(){
+    public InputStreamClass.DocInputStream getIn(){
         return in_;
     }
 
@@ -107,7 +101,7 @@ public class MessageConsole
 			in_ =  null;
 		}
 
-		in_ = new DocInputStream(textComponent, this);
+		in_ = new InputStreamClass.DocInputStream(textComponent, this);
 		
 		// We want input to come here. See also setFocusable.
 		// This ends binding to the errorPanel:
@@ -348,162 +342,4 @@ public class MessageConsole
 			buffer.setLength(0);
 		}
 	}
-	
-	private static class DocInputStream extends InputStream implements KeyListener {
-	    public final int BACKSPACE = 010;  // DEL
-	    public final int LINEKILL = 025;   // CTRL_U  21
-	    public final int CR = 012;
-	    public final int LF = 015;
-	    
-        volatile ArrayBlockingQueue<Integer> queue;
-        volatile int available_;
-        final JTextComponent myComponent_;
-        final MessageConsole console_;
-
-        public DocInputStream(final JTextComponent associatedTextComponent, final MessageConsole console){
-            queue = new ArrayBlockingQueue<Integer>(1024);
-            myComponent_ = associatedTextComponent;
-            console_ = console;
-            available_ = 0;
-        }
-        
-        private void requestFocus() {
-        	 myComponent_.requestFocusInWindow();
-        }
-        
-        private void echo(final Integer i) {
-        	System.out.print((char)i.intValue());
-        	System.out.flush();
-        }
-
-        @Override public int read() throws IOException {
-        	requestFocus();
-            Integer i = null;
-            
-            try {
-                i = queue.take();
-            } catch (InterruptedException ex) {
-                // Logger.getLogger(Console.class.getName()).
-                //        log(Level.SEVERE, null, ex);
-            	//
-            	// Do less noisy logging
-            	ErrorLogger.error(ErrorType.Runtime, "\n! ! ! Enactment interrupted.\n",
-            			"", "", "");
-            }
-            if (i != null) {
-            	if (i != BACKSPACE && i != LINEKILL) {
-            		echo(i);
-            	}
-                return i;
-            }
-            return -1;
-        }
-
-        @Override public int read(byte[] b, int off, int len) throws IOException {        	requestFocus();
-        	available_ = 0;
-            if (b == null) {
-                throw new NullPointerException();
-            } else if (off < 0 || len < 0 || len > b.length - off) {
-                throw new IndexOutOfBoundsException();
-            } else if (len == 0) {
-                return 0;
-            }
-            
-            int c = read();
-            int i = 0;
-            
-            // First character after read
-            switch (c) {
-            case -1:
-            	return -1;
-            case BACKSPACE:
-            	i = 0;
-            	break;
-            case LINEKILL:
-            	i = 0;
-            	break;
-            case CR:
-            case LF:
-            	b[off+0] = '\r';
-            	b[off+1] = '\n';
-            	available_ = 2;
-            	return 2;
-            default:
-            	b[off] = (byte)c;
-            	i = 1;
-            	break;
-            }
-
-            try {
-                for (; i < len;) {
-                    c = read();	// blocking read
-                    
-                    if (c < 010 || (c >= 016 && c <= 031) || (c == 013)) {
-                    	// Ignore control characters
-                    	continue;
-                    } else switch (c) {
-                    case -1:
-                    	return -1;
-                    case BACKSPACE:
-                    	i--;
-                    	if (i >= 0) {
-                    		b[off + i] = '\0';
-                    		
-                    		// Remove one character from the end
-                    		// of the console display, buffer, etc.
-                    		console_.processBackspace();
-                    	} else {
-                    		i = 0;
-                    	}
-                    	break;
-                    case LINEKILL:
-                    	// Tidy up the console by removing the characters
-                    	// we added in.
-                    	console_.processLinekill(i);
-                    	i = 0;
-                    	break;
-                    case CR:
-                    case LF:
-                    	// We stuff in a \r and \n to meet Scanner requirements; without
-                    	// these, we get a "No line found" message on a nextLine() call.
-                    	// See Scanner.findWithinHorizon(Pattern pattern, int horizon),
-                    	// which elicits the exception thrown within Scanner.nextLine
-                    	if (i + 1 < len) {
-                    		b[off + i++] = '\r';
-                    		b[off + i++] = '\n';
-                    	}
-                    	return i;
-                    default:
-                        b[off + i] = (byte)c;
-                        i++;
-                        break;
-                    }
-                }
-            } catch (IOException ee) {
-            }
-            
-            return i;
-
-        }
-
-        @Override public int available(){
-            return available_;
-        }
-        
-        @Override public void keyReleased(KeyEvent e) {
-        }
-
-        @Override public void keyPressed(KeyEvent e) {
-        }
-
-        @Override public void keyTyped(KeyEvent e) {
-            final int c = e.getKeyChar();
-            try {
-                queue.put(c);
-            } catch (InterruptedException ex) {
-                Logger.getLogger(Console.class.getName()).
-                        log(Level.SEVERE, null, ex);
-            }
-        }
-    }
 }

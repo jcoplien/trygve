@@ -48,7 +48,7 @@ import static java.util.Arrays.asList;
  */
 
 public final class ScannerClass {
-	private static void declareScannerMethod(final String methodSelector, final Type returnType,
+	public static void declareScannerMethod(final String methodSelector, final Type returnType,
 			final String paramName,
 			final Type paramType, final boolean isConst) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
@@ -72,7 +72,7 @@ public final class ScannerClass {
 		if (null == globalScope.lookupTypeDeclaration("Scanner")) {
 			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
-			final Type inputStreamType = globalScope.lookupTypeDeclaration("InputStream");
+			assert null != stringType;
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
 
@@ -85,7 +85,10 @@ public final class ScannerClass {
 			
 			// method print(String)
 			declareScannerMethod("nextLine", stringType, null, null, false);
-			declareScannerMethod("Scanner", null, "stream", inputStreamType, false);
+			
+			final Type inputStreamType = StaticScope.globalScope().lookupTypeDeclaration("InputStream");
+			assert null != inputStreamType;
+			ScannerClass.declareScannerMethod("Scanner", null, "stream", inputStreamType, false);
 			
 			globalScope.declareType(scannerType_);
 			globalScope.declareClass(classDecl);
@@ -149,20 +152,19 @@ public final class ScannerClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTScannerCtorCode extends RTScannerCommon {
-		public RTScannerCtorCode(final StaticScope enclosingMethodScope) {
-			super("Scanner", "Scanner", "stream", "InputStreqm", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTScannerCtor1Code extends RTScannerCommon {
+		public RTScannerCtor1Code(final StaticScope enclosingMethodScope) {
+			super("Scanner", "Scanner", "stream", "InputStream", enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final Scanner theScanner) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTScannerObject theScannerObject = (RTScannerObject)activationRecord.getObject("this");
 			final RTObject streamArg = (RTObject)activationRecord.getObject("stream");
-			theScannerObject.ctor(streamArg);
+			theScannerObject.ctor1(streamArg);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theScannerObject);
 			return super.nextCode();
 		}
 	}
-	
 
 	public static List<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;

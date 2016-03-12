@@ -166,6 +166,7 @@ public class TestRunner {
 		"borrow_library_items.k",
 		"spellcheck.k",
 		"spellcheck2.k",
+		"panel1.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

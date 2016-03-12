@@ -58,6 +58,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
+import info.fulloo.trygve.editor.InputStreamClass;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -122,7 +123,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class InterpretiveCodeGenerator implements CodeGenerator {
 	private enum RetvalTypes { usingInt, usingBool, usingDouble, usingTemplate,
-							   usingString, none, undefined };
+							   usingString, usingColor, none, undefined };
 	
 	public static InterpretiveCodeGenerator interpretiveCodeGenerator = null;
 	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
@@ -144,7 +145,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	@Override public void compile() {
 		// WARNING: Order of compilations may be important!
 		
-		List<TypeDeclaration> typeDeclarationList = SystemClass.typeDeclarationList();
+		List<TypeDeclaration> typeDeclarationList = InputStreamClass.typeDeclarationList();	// "InputStream". Must come before System
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = SystemClass.typeDeclarationList();
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = StaticScope.typeDeclarationList();	// "String", others
@@ -299,6 +303,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingInt:
 		case usingTemplate:
 		case usingString:
+		case usingColor:
 			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.lineNumber(),
@@ -612,14 +617,24 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		final List<RTCode> readCode = new ArrayList<RTCode>();
 		RTMethod rtMethod = null;
-		if (formalParameterList.count() == 1) {
-			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			assert null != rtTypeDeclaration;
-			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
-			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		RetvalTypes retvalType = RetvalTypes.undefined;
 		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 1) {
 			if (methodDeclaration.name().equals("read")) {
-				readCode.add(new SystemClass.RTReadCode(methodDeclaration.enclosedScope()));
+				readCode.add(new InputStreamClass.RTReadCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 2) {
+			if (methodDeclaration.name().equals("InputStream")) {
+				readCode.add(new InputStreamClass.RTInputStreamCtor1Code(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
 			} else {
 				assert false;
 			}
@@ -627,26 +642,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 		
-		addReturn(methodDeclaration, RetvalTypes.usingInt, readCode);
-		
-		/*
-		final int sizeOfCodeArray = readCode.size();
-		assert (sizeOfCodeArray > 0);
-		RTCode last = readCode.get(sizeOfCodeArray - 1);
-		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
-				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-		final ReturnExpression returnExpression = new ReturnExpression(methodDeclaration.name(), self, methodDeclaration.lineNumber(),
-				self.type(), StaticScope.globalScope());xxx
-		final StaticScope myScope = methodDeclaration.enclosedScope();
-		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
-		final RTType rTEnclosingMegaType = scopeToRTTypeDeclaration(enclosingMegaType.enclosedScope());
-		final RTCode returnStatement = new RTReturn(methodDeclaration.name(), returnExpression, rTEnclosingMegaType);
-		returnStatement.setNextCode(last.nextCode());
-		last.setNextCode(returnStatement);
-		readCode.add(returnStatement);
-		
-		assert readCode.size() > 0;
-		*/
+		addReturn(methodDeclaration, retvalType, readCode);
 		
 		rtMethod.addCode(readCode);
 	}
@@ -654,6 +650,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		final List<RTCode> readCode = new ArrayList<RTCode>();
 		RTMethod rtMethod = null;
+		RetvalTypes retvalType = RetvalTypes.none;
 		
 		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 		assert null != rtTypeDeclaration;
@@ -664,6 +661,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			if (methodDeclaration.name().equals("Panel")) {
 				readCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else if (methodDeclaration.name().equals("removeAll")) {
+				readCode.add(new PanelClass.RTRemoveAllCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else if (methodDeclaration.name().equals("repaint")) {
+				readCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else if (methodDeclaration.name().equals("clear")) {
+				readCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.none;
+			} else if (methodDeclaration.name().equals("getBackground")) {
+				readCode.add(new PanelClass.RTGetBackgroundCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingColor;
+			} else if (methodDeclaration.name().equals("getForeground")) {
+				readCode.add(new PanelClass.RTGetForegroundCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingColor;
 			} else {
 				assert false;
 			}
@@ -677,6 +690,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
+			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 4) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
@@ -685,6 +699,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
+			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 5) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
@@ -692,16 +707,19 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				readCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawRect")) {
 				readCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("fillRect")) {
+				readCode.add(new PanelClass.RTFillRectCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawOval")) {
 				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
+			retvalType = RetvalTypes.none;
 		} else {
 			assert false;
 		}
 		
-		addReturn(methodDeclaration, RetvalTypes.none, readCode);
+		addReturn(methodDeclaration, retvalType, readCode);
 		
 		rtMethod.addCode(readCode);
 	}
@@ -930,7 +948,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			}
 		} else if (formalParameterList.count() == 2) {
 			if (methodDeclaration.name().equals("Scanner")) {
-				code.add(new ScannerClass.RTScannerCtorCode(methodDeclaration.enclosedScope()));
+				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
+				if (elementsParamType.name().equals("InputStream")) {
+					code.add(new ScannerClass.RTScannerCtor1Code(methodDeclaration.enclosedScope()));
+				} else {
+					assert false;
+				}
 				retvalType = RetvalTypes.none;
 			} else {
 				retvalType = RetvalTypes.undefined;
@@ -1076,6 +1099,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
 			RetvalTypes retvalType;
+			final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
 			
 			// Odd that these built-ins have survived this long without designating a
 			// return expression... The primitives just put it on top the stack.
@@ -1094,9 +1118,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
 						expressionToReturn, 0,
-						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						intType,
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingInt;
+			} else if (methodDeclaration.name().equals("to1CharString")) {
+				final Expression expressionToReturn = new IdentifierExpression("ret$val", intType, methodDeclaration.enclosedScope(), 0);
+				returnExpr = new ReturnExpression(
+						methodDeclaration.name(),
+						expressionToReturn, 0,
+						StaticScope.globalScope().lookupTypeDeclaration("String"),
+						methodDeclaration.enclosedScope());
+				retvalType = RetvalTypes.usingString;
 			} else {
 				retvalType = RetvalTypes.none;
 				assert false;
@@ -1109,6 +1141,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				code.add(new RTIntegerClass.RTToStringCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("toInteger")) {
 				code.add(new RTIntegerClass.RTToIntegerCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("to1CharString")) {
+				code.add(new RTIntegerClass.RTToChar1StringCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}

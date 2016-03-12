@@ -109,6 +109,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		for (final Map.Entry<String, RTObject> iter : nameToStaticObjectMap_.entrySet()) {
 			// Get a default value. TODO: Check for static initializer and use that instead
 			final Type typeOfStatic = nameToStaticObjectTypeMap_.get(iter.getKey());
+			assert null != typeOfStatic;
 			final Declaration rawDecl = typeOfStatic.enclosedScope().associatedDeclaration();
 			assert rawDecl instanceof TypeDeclaration;
 			final TypeDeclaration typeDeclaration = (TypeDeclaration)rawDecl;

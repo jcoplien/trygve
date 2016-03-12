@@ -131,7 +131,9 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			return false;
 		}
 		public void shutDown() {
-			frameObject_.windowIsClosing();
+			if (null != frameObject_) {
+				frameObject_.windowIsClosing();
+			}
 			RunTimeEnvironment.runTimeEnvironment_.gui().windowCloseDown(this);
 			frameObject_ = null;
 		}

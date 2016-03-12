@@ -63,6 +63,7 @@ import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
+import info.fulloo.trygve.editor.InputStreamClass;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression;
@@ -186,20 +187,22 @@ public class StaticScope {
 			
 			final Type nullType = new BuiltInType("Null");
 			globalScope_.declareType(nullType);
-			
+
 			reinitializeCombos(voidType, intType);
 			
-			SystemClass.setup();
+			// Order may be important
+			SystemClass.setup();		// should follow InputStream....
 			ListClass.setup();
 			SetClass.setup();
 			MathClass.setup();
 			DateClass.setup();
-			ScannerClass.setup();
 			MapClass.setup();
 			ColorClass.setup();
-			PanelClass.setup();
-			FrameClass.setup();
+			PanelClass.setup();			// must follow Color, System
+			FrameClass.setup();			// must follow Panel
 			PanelClass.EventClass.setup();
+			InputStreamClass.setup();	// must follow Panel
+			ScannerClass.setup();		// must follow InputStream
 		}
 	}
 	
@@ -247,7 +250,7 @@ public class StaticScope {
 		StaticScope methodScope = null;
 		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 		assert null != objectBaseClass;
-		
+
 		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intScope, objectBaseClass, 0);
 		
 		ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, 0);
@@ -623,6 +626,26 @@ public class StaticScope {
 		final Type arrayOfStringType = StaticScope.globalScope().lookupTypeDeclaration("String_$array");
 		assert null != arrayOfStringType;
 		addStringMethod(stringType, "split", arrayOfStringType, asList("regex"), asList(stringType), false);
+		
+		newScope = new StaticScope(intType.enclosedScope());
+		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, 0, false);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("this", intType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
+		newScope.setDeclaration(methodDecl);
+		intType.enclosedScope().declareMethod(methodDecl);
+		
+		newScope = new StaticScope(bigIntegerType.enclosedScope());
+		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, 0, false);
+		formals = new FormalParameterList();
+		self = new ObjectDeclaration("this", bigIntegerType, 0);
+		formals.addFormalParameter(self);
+		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
+		newScope.setDeclaration(methodDecl);
+		bigIntegerType.enclosedScope().declareMethod(methodDecl);
 	}
 	
 	public static StaticScope globalScope() { return globalScope_; }

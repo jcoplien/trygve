@@ -254,57 +254,6 @@ public class Pass1Listener extends Pass0Listener {
 		}
 	}
 	
-	@Override public void enterClass_declaration(KantParser.Class_declarationContext ctx)
-	{
-		// class_declaration : 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
-		//                   | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		//                   | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
-		//                   | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
-		
-		final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
-		assert null != objectBaseClass;
-		assert objectBaseClass instanceof ClassType;
-		ClassType baseType = (ClassType)objectBaseClass;
-		
-		final String name = ctx.JAVA_ID(0).getText();
-		ClassDeclaration rawBaseClass = null;
-		
-		 if (null != ctx.class_body()) {
-			final TerminalNode baseClassNode = ctx.JAVA_ID(1);
-			
-			if (null != baseClassNode) {
-				final String baseTypeName = baseClassNode.getText();
-				final Type rawBaseType = currentScope_.lookupTypeDeclarationRecursive(baseTypeName);
-				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
-				if ((rawBaseType instanceof ClassType) == false) {
-					// Leave to pass 2
-					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
-							"' is not a declared class type as base of `", name, "'.", "");
-				} else {
-					baseType = (ClassType)rawBaseType;
-					if (baseType.name().equals(name)) {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
-					}
-				}
-			} else {
-				// Redundant: for readability...
-				rawBaseClass = (ClassDeclaration)objectBaseClass.enclosedScope().associatedDeclaration();
-			}
-			
-			if (null != ctx.type_parameters()) {
-				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
-				currentScope_ = newTemplate.enclosedScope();
-				parsingData_.pushTemplateDeclaration(newTemplate);
-			} else {
-				final ClassDeclaration newClass = this.lookupOrCreateClassDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
-				currentScope_ = newClass.enclosedScope();
-				parsingData_.pushClassDeclaration(newClass);
-			}
-		} else {
-			assert false;
-		}
-	}
-	
 	@Override public void enterInterface_declaration(KantParser.Interface_declarationContext ctx)
 	{
 		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
@@ -344,7 +293,7 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
 		assert null != currentScope_;
-		ClassDeclaration newClass = StaticScope.globalScope().lookupClassDeclaration(name);
+		ClassDeclaration newClass = currentScope_.lookupClassDeclaration(name);
 		StaticScope classScope = null;
 		if (null == newClass) {
 			assert false;	// shouldn't be finding new classes in Pass 1...
@@ -426,11 +375,12 @@ public class Pass1Listener extends Pass0Listener {
 		if (newDeclaration instanceof ClassDeclaration) {
 			if (null != ((ClassDeclaration)newDeclaration).generatingTemplate()) {
 				parsingData_.popTemplateDeclaration();
+				assert false;	// this never seems to get invoked
+			} else {
+				parsingData_.popClassDeclaration();
+				// implements_list is taken care of along the way
+				assert true;
 			}
-		} else if (newDeclaration instanceof ClassDeclaration) {
-			// Something terribly wrong here — FIXME— two checks on the same ClassDeclaration type...
-			parsingData_.popClassDeclaration();
-			// implements_list is taken care of along the way
 		} else if (newDeclaration instanceof TemplateDeclaration) {
 			parsingData_.popTemplateDeclaration();
 		}
@@ -472,6 +422,57 @@ public class Pass1Listener extends Pass0Listener {
 			System.err.println("context_declaration : 'context' JAVA_ID '{' context_body '}'");
 		}
 		if (stackSnapshotDebug) stackSnapshotDebug();
+	}
+	
+	@Override public void enterClass_declaration(KantParser.Class_declarationContext ctx)
+	{
+		// class_declaration : 'class'   JAVA_ID type_parameters (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID type_parameters 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID (implements_list)* '{' class_body '}'
+		//                   | 'class'   JAVA_ID 'extends' JAVA_ID (implements_list)* '{' class_body '}'
+		
+		final Type objectBaseClass = StaticScope.globalScope().lookupTypeDeclaration("Object");
+		assert null != objectBaseClass;
+		assert objectBaseClass instanceof ClassType;
+		ClassType baseType = (ClassType)objectBaseClass;
+		
+		final String name = ctx.JAVA_ID(0).getText();
+		ClassDeclaration rawBaseClass = null;
+		
+		 if (null != ctx.class_body()) {
+			final TerminalNode baseClassNode = ctx.JAVA_ID(1);
+			
+			if (null != baseClassNode) {
+				final String baseTypeName = baseClassNode.getText();
+				final Type rawBaseType = currentScope_.lookupTypeDeclarationRecursive(baseTypeName);
+				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
+				if ((rawBaseType instanceof ClassType) == false) {
+					// Leave to pass 2
+					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
+							"' is not a declared class type as base of `", name, "'.", "");
+				} else {
+					baseType = (ClassType)rawBaseType;
+					if (baseType.name().equals(name)) {
+						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
+					}
+				}
+			} else {
+				// Redundant: for readability...
+				rawBaseClass = (ClassDeclaration)objectBaseClass.enclosedScope().associatedDeclaration();
+			}
+			
+			if (null != ctx.type_parameters()) {
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
+				currentScope_ = newTemplate.enclosedScope();
+				parsingData_.pushTemplateDeclaration(newTemplate);
+			} else {
+				final ClassDeclaration newClass = this.lookupOrCreateClassDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
+				currentScope_ = newClass.enclosedScope();
+				parsingData_.pushClassDeclaration(newClass);
+			}
+		} else {
+			assert false;
+		}
 	}
 	
 	@Override public void exitClass_declaration(KantParser.Class_declarationContext ctx)
@@ -4255,10 +4256,12 @@ public class Pass1Listener extends Pass0Listener {
 				// System.err.print("Alert: ");
 				// System.err.println(pt.getText());
 			} else if (pt instanceof ExprContext) {
-				final Expression initializationExpr = parsingData_.popExpression();
-				assert initializationExpr != null;
-				assert objDecl != null;
-				updateInitializationLists(initializationExpr, objDecl);
+				if (parsingData_.currentExpressionExists()) {
+					final Expression initializationExpr = parsingData_.popExpression();
+					assert initializationExpr != null;
+					assert objDecl != null;
+					updateInitializationLists(initializationExpr, objDecl);
+				}
 			} else {
 				assert false;
 			}
@@ -4798,7 +4801,7 @@ public class Pass1Listener extends Pass0Listener {
 						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
 								"Base class constructor `",
 								baseClassName,
-								"' can be explicitælly invoked only from a derived class constructor.",
+								"' can be explicitly invoked only from a derived class constructor.",
 								"");
 						noerrors = false;
 					}

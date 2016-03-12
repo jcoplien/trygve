@@ -741,6 +741,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		public RTObject to1CharString() {
+			final char c = (char)foobar_;
+			final String rawRetval = "" + c;
+			final RTObject retval = new RTStringObject(rawRetval);
+			return retval;
+		}
 		@Override public int hashCode() {
 			return (int)foobar_;
 		}

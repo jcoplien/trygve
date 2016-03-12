@@ -103,7 +103,8 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 	}
 
 	@Override public RTObject dup() {
-		final RTColorObject retval = new RTColorObject(theColor_, colorType_);
+		final Color dupedColor = new Color(theColor_.getRed(), theColor_.getGreen(), theColor_.getBlue());
+		final RTColorObject retval = new RTColorObject(dupedColor, colorType_);
 		return retval;
 	}
 	@Override public RTType rTType() {

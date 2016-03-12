@@ -86,7 +86,6 @@ public class RTScannerObject extends RTObjectCommon implements RTObject {
 		}
 	}
 	
-	
 	public RTObject performUnaryOpOnObject(final RTObject theIndex, final String operation, final PreOrPost preOrPost) {
 		assert false;
 		return null;
@@ -110,11 +109,14 @@ public class RTScannerObject extends RTObjectCommon implements RTObject {
 	@Override public RTType rTType() {
 		return scannerType_;
 	}
-	public void ctor(final RTObject streamArg) {
+	public void ctor1(final RTObject streamArg) {
+		assert true;
 		final RTInputStreamInfo inputStreamInfo = (RTInputStreamInfo)streamArg.getObject("inputStreamInfo");
+		assert null != inputStreamInfo;
 		final InputStream inputStream = inputStreamInfo.inputStream();
 		theScanner_ = new Scanner(inputStream);
 	}
+
 	public RTObject nextLine() {
 		final String nextLine = theScanner_.nextLine();
 		final RTStringObject retval = new RTStringObject(nextLine);
