@@ -89,7 +89,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, 0);
 		pl.addActualArgument(otherVar);
 		
-		final RTMethod compareTo = myType.lookupMethod("compareTo", pl);
+		// final RTMethod compareTo = myType.lookupMethod("compareTo", pl);
+		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo", pl, null);
 		if (null != compareTo) {
 			// The user has provided a compareTo function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();

@@ -95,11 +95,11 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 		colorType_ = colorType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
-	public RTColorObject(int i, int j, int k, final RTType colorType) {
+	public RTColorObject(int r, int g, int b, final RTType colorType) {
 		super(colorType);
 		colorType_ = colorType;
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
-		theColor_ = new Color(i, j, k);
+		theColor_ = new Color(r, g, b);
 	}
 
 	@Override public RTObject dup() {
@@ -111,11 +111,11 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 		return colorType_;
 	}
 	
-	public void ctor1(final int i, final int j, final int k) {
-		theColor_ = new Color(i, j, k);
+	public void ctor1(final int r, final int g, final int b) {
+		theColor_ = new Color(r, g, b);
 	}
-	public void ctor2(final double a, final double b, final double c) {
-		theColor_ = new Color((int)(255*a), (int)(255*b), (int)(255*c));
+	public void ctor2(final double r, final double g, final double b) {
+		theColor_ = new Color((int)(255*r), (int)(255*g), (int)(255*b));
 	}
 	
 	public int getRed() {

@@ -95,6 +95,7 @@ public final class PanelClass {
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type colorType = globalScope.lookupTypeDeclaration("Color");
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
+			final Type objectType = globalScope.lookupTypeDeclaration("Object");
 			
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
@@ -116,14 +117,14 @@ public final class PanelClass {
 			declarePanelMethod("drawRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("fillRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
+			declarePanelMethod("drawString", objectType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
 			declarePanelMethod("removeAll", voidType, null, null, false);
+			declarePanelMethod("remove", voidType, asList("component"), asList(objectType), false);
 			declarePanelMethod("repaint", voidType, null, null, false);
 			declarePanelMethod("clear", voidType, null, null, false);
 			
 			// add the pointer to the GraphicsPanel object
 			// that contains all the goodies
-			final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
 			final ObjectDeclaration objectDecl = new ObjectDeclaration("panelObject", objectType, 0);
 			newScope.declareObject(objectDecl);
 			
@@ -382,7 +383,7 @@ public final class PanelClass {
 	}
 	public static class RTDrawStringCode extends RTPanelCommon {
 		public RTDrawStringCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Object"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
@@ -390,13 +391,19 @@ public final class PanelClass {
 			final RTObject x = (RTObject)activationRecord.getObject("x");
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject text = (RTObject)activationRecord.getObject("text");
-			try{
-				thePanel.drawString(x, y, text);
+			RTObject value = null;
+			try {
+				// Returns a magic cookie that later can be used to
+				// remove the String from the container
+				value = thePanel.drawString(x, y, text);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setNamedSlotToValue("ret$val", value);
 			
 			return super.nextCode();
 		}
@@ -412,6 +419,26 @@ public final class PanelClass {
 				thePanel.revalidate();
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.removeAll()", ".", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTRemoveCode extends RTPanelCommon {
+		public RTRemoveCode(final StaticScope enclosingMethodScope) {
+			super("Panel", "remove", asList("component"), asList("Object"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
+			assert null != thePanel;
+			try {
+				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final RTObject component = (RTObject)activationRecord.getObject("component");
+				thePanel.remove(component);
+				thePanel.revalidate();
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.remove(Object)", ".", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}

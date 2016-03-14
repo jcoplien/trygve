@@ -648,7 +648,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void processPanelMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
-		final List<RTCode> readCode = new ArrayList<RTCode>();
+		final List<RTCode> panelCode = new ArrayList<RTCode>();
 		RTMethod rtMethod = null;
 		RetvalTypes retvalType = RetvalTypes.none;
 		
@@ -660,22 +660,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
 			if (methodDeclaration.name().equals("Panel")) {
-				readCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("removeAll")) {
-				readCode.add(new PanelClass.RTRemoveAllCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTRemoveAllCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("repaint")) {
-				readCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("clear")) {
-				readCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("getBackground")) {
-				readCode.add(new PanelClass.RTGetBackgroundCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTGetBackgroundCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingColor;
 			} else if (methodDeclaration.name().equals("getForeground")) {
-				readCode.add(new PanelClass.RTGetForegroundCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTGetForegroundCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingColor;
 			} else {
 				assert false;
@@ -684,33 +684,36 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		
 			if (methodDeclaration.name().equals("setBackground")) {
-				readCode.add(new PanelClass.RTSetBackgroundCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTSetBackgroundCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("setForeground")) {
-				readCode.add(new PanelClass.RTSetForegroundCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTSetForegroundCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("remove")) {
+				panelCode.add(new PanelClass.RTRemoveCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
 			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 4) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("drawString")) {
-				readCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else {
 				assert false;
 			}
-			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 5) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
 			if (methodDeclaration.name().equals("drawLine")) {
-				readCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawRect")) {
-				readCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTDrawRectCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("fillRect")) {
-				readCode.add(new PanelClass.RTFillRectCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTFillRectCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawOval")) {
-				readCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
+				panelCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -719,9 +722,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 		
-		addReturn(methodDeclaration, retvalType, readCode);
+		addReturn(methodDeclaration, retvalType, panelCode);
 		
-		rtMethod.addCode(readCode);
+		rtMethod.addCode(panelCode);
 	}
 	private void processFrameMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
@@ -773,7 +776,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	private void processEventMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
-		final List<RTCode> readCode = new ArrayList<RTCode>();
+		final List<RTCode> eventCode = new ArrayList<RTCode>();
 		RTMethod rtMethod = null;
 		
 		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
@@ -784,7 +787,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
 			if (methodDeclaration.name().equals("Event")) {
-				readCode.add(new PanelClass.EventClass.RTEventCtorCode(methodDeclaration.enclosedScope()));
+				eventCode.add(new PanelClass.EventClass.RTEventCtorCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -792,9 +795,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			assert false;
 		}
 		
-		addReturn(methodDeclaration, RetvalTypes.none, readCode);
+		addReturn(methodDeclaration, RetvalTypes.none, eventCode);
 		
-		rtMethod.addCode(readCode);
+		rtMethod.addCode(eventCode);
 	}
 	private void processColorMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();

@@ -10,6 +10,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
+import info.fulloo.trygve.run_time.RTCookieObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -86,7 +87,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Color currentColor = getForeground();
 		this.addOval(x, y, width, height, currentColor);
 	}
-	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
+	public RTObject drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
 		assert stringArg instanceof RTStringObject;
@@ -94,7 +95,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final String string = ((RTStringObject)stringArg).stringValue();
 		final Color currentColor = getForeground();
-		this.addString(x, y, string, currentColor);
+		final RTObject retval = this.addString(x, y, string, currentColor);
+		return retval;
 	}
 	
 	public void handleEventProgrammatically(final Event e) {
@@ -235,7 +237,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		/* draw the current rectangles */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i=0; i < rectangles_.size(); i++) {
+		for (int i = 0; i < rectangles_.size(); i++) {
 		    final Rectangle p = rectangles_.elementAt(i);
 		    g.setColor((Color)rectColors_.elementAt(i));
 		    if (p.width != -1) {
@@ -248,7 +250,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		/* draw the current lines */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i=0; i < lines_.size(); i++) {
+		for (int i = 0; i < lines_.size(); i++) {
 		    final Rectangle p = lines_.elementAt(i);
 		    g.setColor((Color)lineColors_.elementAt(i));
 		    g.drawLine(p.x, p.y, p.x+p.width, p.y+p.height);
@@ -257,7 +259,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		/* draw the current ellipses */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i=0; i < ellipses_.size(); i++) {
+		for (int i = 0; i < ellipses_.size(); i++) {
 		    final Ellipse2D p = ellipses_.elementAt(i);
 		    g.setColor((Color)ellipseColors_.elementAt(i));
 		    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
@@ -275,6 +277,55 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	@Override public void removeAll() {
 		makeVectors();
+		super.removeAll();
+	}
+	
+	public void remove(final RTObject thingToRemoveRTObject) {
+		assert thingToRemoveRTObject instanceof RTCookieObject;
+		final Object thingToRemove = ((RTCookieObject)thingToRemoveRTObject).cookie();
+		final int count = super.getComponentCount();
+		for (int i = 0; i < count; i++) {
+			final Component component = super.getComponent(i);
+		}
+
+		boolean removed = false;
+		for (int i = 0; i < strings_.size(); i++) {
+			if (strings_.get(i) == thingToRemove) {
+				strings_.remove(i);
+				removed = true;
+				break;
+			}
+		}
+		if (removed == false) {
+			for (int i = 0; i < ellipses_.size(); i++) {
+				if (ellipses_.get(i) == thingToRemove) {
+					ellipses_.remove(i);
+					ellipseColors_.remove(i);
+					removed = true;
+					break;
+				}
+			}
+			if (removed == false) {
+				for (int i = 0; i < rectangles_.size(); i++) {
+					if (rectangles_.get(i) == thingToRemove) {
+						rectangles_.remove(i);
+						rectColors_.remove(i);
+						removed = true;
+						break;
+					}
+				}
+				if (removed == false) {
+					for (int i = 0; i < lines_.size(); i++) {
+						if (lines_.get(i) == thingToRemove) {
+							lines_.remove(i);
+							lineColors_.remove(i);
+							removed = true;
+							break;
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	public void addRectangle(final Rectangle rect, final Color color) {
@@ -305,9 +356,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		ellipseColors_.addElement(color);
 	}
 	
-	public void addString(final int x, final int y, final String string, final Color color) {
+	public RTObject addString(final int x, final int y, final String string, final Color color) {
 		final StringRecord stringRecord = new StringRecord(x, y, string, color);
 		strings_.addElement(stringRecord);
+		final RTObject retval = new RTCookieObject(stringRecord);
+		return retval;
 	}
 	
 	public void setGraphicsEventHandler(final GraphicsEventHandler eventsAreBeingHijacked) {

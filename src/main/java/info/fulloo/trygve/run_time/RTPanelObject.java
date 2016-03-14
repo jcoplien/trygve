@@ -106,14 +106,7 @@ public class RTPanelObject extends RTObjectCommon implements RTObject {
 	@Override public RTType rTType() {
 		return panelType_;
 	}
-	
-	public void ctor1() {
-		assert false;
-		// Unused?
-		// thePanel_ = new GraphicsPanel(this);
-		// this.setObject("panelObject", thePanel_);
-	}
-	
+
 	
 	public Panel panel() {
 		return thePanel_;

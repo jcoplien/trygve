@@ -46,41 +46,48 @@ class TextListView implements View {
    int TopMargin = 15;
    int FrameWidth = 400;
    int FrameHeight = 75;
+   int LineHeight = 14;
+   int TitleHeight = 20;
 
-   public TextListView(MyPanel panel, int xOffset, int yOffset) {
+   public TextListView(String title, MyPanel panel, int xOffset, int yOffset) {
       items_ = new List<String>();
       panel_ = panel;
       xOffset_ = xOffset.clone;
       yOffset_ = yOffset.clone;
       frame_ = panel.frame();
+      title_ = title.clone;
       reframe()
    }
    public void notifyChanged() {
       int x = xOffset_ + TextIndent;
-      int y = yOffset_ + TopMargin;
-      //reframe();
+      int y = yOffset_ + TopMargin + TitleHeight;
+      reframe();
       int listCounter = 1;
       for (String item : items_) {
          String toPrint = listCounter.toString() + ". " + item;
-         //panel_.drawString(x, y, toPrint);
-         y = y + 14;
+         panel_.setForeground(Color.black);
+         panel_.drawString(x, y, toPrint);
+         y = y + LineHeight;
          listCounter++
       }
-      //panel_.repaint();
-      //frame_.setVisible(true)
+      panel_.setForeground(Color.blue);
    }
    public void removeAll() { items_ = new List<String>() }
    public void addItem(String item) { items_.add(item) }
    private void reframe() {
       // Text outline
-      panel_.fillRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
-      panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
+      panel_.drawString(xOffset_, yOffset_ + LineHeight, title_);
+      panel_.fillRect(xOffset_, yOffset_ + TitleHeight,
+                      FrameWidth, FrameHeight);
+      panel_.drawRect(xOffset_, yOffset_ + TitleHeight,
+                      FrameWidth, FrameHeight);
    }
 
    private List<String> items_;
    private MyPanel panel_;
    private int xOffset_, yOffset_;
-   private Frame frame_
+   private Frame frame_;
+   private String title_
 }
 
 class TextLogView implements View {
@@ -89,9 +96,11 @@ class TextLogView implements View {
    int CharacterPixelWidth = 6;
    int FrameWidth = 550, FrameHeight = 150;
    int numberOfLinesInFrame = 9;
+   int LineHeight = 14;
 
    public TextLogView(MyPanel panel, int xOffset, int yOffset) {
       text_ = new List<ALine>();
+      dynamicStringCookies_ = new List<Object>();
       panel_ = panel;
       frame_ = panel.frame();
       xOffset_ = xOffset.clone;
@@ -128,7 +137,11 @@ class TextLogView implements View {
    public void notifyChanged() {
       int y = yOffset_ + TopMargin, x = xOffset_ + TextIndent;
       int currentLine = 1;
-      panel_.removeAll();
+      //panel_.removeAll();
+      for (Object a : dynamicStringCookies_) {
+         panel_.remove(a);
+      }
+      dynamicStringCookies_ = new List<Object>();
       reframe();
 
       int numberOfLinesInText = numberOfLinesIn(text_);
@@ -136,10 +149,11 @@ class TextLogView implements View {
          if (numberOfLinesInText - currentLine < numberOfLinesInFrame) {
             if (aLine.text() == "\n") {
                x = xOffset_ + TextIndent;
-               y = y + 14
+               y = y + LineHeight
             } else {
                panel_.setForeground(aLine.color());
-               panel_.drawString(x, y, aLine.text());
+               Object cookie = panel_.drawString(x, y, aLine.text());
+               dynamicStringCookies_.add(cookie)
                x = x + widthOf(aLine.text())
             }
          } else if (aLine.text() == "\n") {
@@ -148,7 +162,7 @@ class TextLogView implements View {
       }
       panel_.setForeground(Color.blue);
       panel_.repaint();
-      frame_.setVisible(true);
+      frame_.setVisible(true)
    }
    private int numberOfLinesIn(List<ALine> lines) {
       int retval = 0;
@@ -162,6 +176,7 @@ class TextLogView implements View {
    }
 
    private List<ALine> text_;
+   private List<Object> dynamicStringCookies_;
    private MyPanel panel_
    private Frame frame_;
    private int xOffset_, yOffset_
@@ -271,7 +286,7 @@ context BorrowLibraryItems {
 
     role ColorHandler {
        public void setForegroundColor(Color c) { setForeground(c) }
-       public Color inputColor() { return new Color(50, 255, 5) }
+       public Color inputColor() { return new Color(50, 200, 5) }
     } requires {
        void setForeground(Color c)
     }
@@ -290,12 +305,12 @@ context BorrowLibraryItems {
            ColorHandler.setForegroundColor(Color.blue)
         }
         public void echoInvisibleChar() {
-           ColorHandler.setForegroundColor(new Color(52, 200, 5));
+           ColorHandler.setForegroundColor(ColorHandler.inputColor());
            print("*")
            ColorHandler.setForegroundColor(Color.blue);
         }
         public void closeLine() { println("") }
-        public void changed() { notifyChanged(); CheckoutList.changed() }
+        public void changed() { notifyChanged();/* CheckoutList.changed() */}
     } requires {
         void print(String text) const;
         void println(String text) const;
@@ -305,7 +320,7 @@ context BorrowLibraryItems {
     role Transcript {
        public void displayEnterPin() {
           TranscriptView.addText("Enter PIN: ");
-          TranscriptView.changed()
+          TranscriptView.changed();
        }
        public void displayWelcomeMessage() {
            TranscriptView.addTextLine(
@@ -378,6 +393,7 @@ context BorrowLibraryItems {
            int a = read();
            assert (a isnot null);
            TranscriptView.changed();
+           CheckoutList.changed();
            return a.to1CharString()
         }
         public String readPin() {
@@ -403,7 +419,7 @@ context BorrowLibraryItems {
             Transcript.addTextLine("1. Borrow another item");
             Transcript.addTextLine("2. Finish with a receipt");
             Transcript.addTextLine("3. Finish without a receipt");
-            Transcript.addTextLine("Select option: ");
+            Transcript.addText("Select option: ");
 
             String choice = Keypad.readChar();
             Transcript.addTextLineColored(choice, ColorHandler.inputColor());
@@ -422,6 +438,7 @@ context BorrowLibraryItems {
                     Menu.selectOptions();
                     break;
             }
+            CheckoutList.changed()
         }
     }
 
@@ -444,7 +461,7 @@ context BorrowLibraryItems {
         BookScanner = new MockBookScanner();
         Transcript = null;
         TranscriptView = new TextLogView(panel, 20, 85);
-        CheckoutList = new TextListView(panel, 20, 245)
+        CheckoutList = new TextListView("Checkout List", panel, 20, 245)
         Printer = new ScreenPrinter();
         Keypad = new InputStream(panel);
     }

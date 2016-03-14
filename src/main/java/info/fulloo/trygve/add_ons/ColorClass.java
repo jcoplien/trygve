@@ -223,8 +223,8 @@ public final class ColorClass {
 			assert greenArg instanceof RTIntegerObject;
 			assert blueArg instanceof RTIntegerObject;
 			final int red = (int)((RTIntegerObject)redArg).intValue();
-			final int green = (int)((RTIntegerObject)blueArg).intValue();
-			final int blue = (int)((RTIntegerObject)greenArg).intValue();
+			final int green = (int)((RTIntegerObject)greenArg).intValue();
+			final int blue = (int)((RTIntegerObject)blueArg).intValue();
 			((RTColorObject)theColorObject).ctor1(red, green, blue);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
 			return super.nextCode();
@@ -245,8 +245,8 @@ public final class ColorClass {
 			assert greenArg instanceof RTDoubleObject;
 			assert blueArg instanceof RTDoubleObject;
 			final double red = ((RTDoubleObject)redArg).doubleValue();
-			final double green = ((RTDoubleObject)blueArg).doubleValue();
-			final double blue = ((RTDoubleObject)greenArg).doubleValue();
+			final double green = ((RTDoubleObject)greenArg).doubleValue();
+			final double blue = ((RTDoubleObject)blueArg).doubleValue();
 			((RTColorObject)theColorObject).ctor2(red, green, blue);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
 			return super.nextCode();

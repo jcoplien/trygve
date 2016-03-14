@@ -252,7 +252,7 @@ public class InputStreamClass {
 	    	 myComponent_.requestFocusInWindow();
 	    }
 	    
-	    private void echo(final Integer i) {
+	    protected void echo(final Integer i) {
 	    	System.out.print((char)i.intValue());
 	    	System.out.flush();
 	    }
@@ -424,6 +424,8 @@ public class InputStreamClass {
 	    	panel_.setGraphicsEventHandler(null);
 	    	return retval;
 	    }
+	    
+	    @Override protected void echo(final Integer i) { }
 	    
 	   
 	    final GraphicsPanel panel_;

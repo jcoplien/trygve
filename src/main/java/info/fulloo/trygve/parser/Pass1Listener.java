@@ -2102,15 +2102,16 @@ public class Pass1Listener extends Pass0Listener {
 				lhs.lineNumber());
 		argumentList.addFirstActualParameter(self);
 
-		final MethodDeclaration methodDecl = lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", argumentList, false);
+		final MethodDeclaration methodDecl = lhsType.enclosedScope().lookupMethodDeclarationRecursive("compareTo", argumentList, false);
 		if (null != methodDecl) {
 			// O.K., it does. Generate code that will call
 			// compareTo on the users' behalf
 			
 			// Nice constants
-			final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
-			final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
-			final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
+			final StaticScope globalScope = StaticScope.globalScope();
+			final Type stringType = globalScope.lookupTypeDeclaration("String");
+			final Type intType = globalScope.lookupTypeDeclaration("int");
+			final Type booleanType = globalScope.lookupTypeDeclaration("boolean");
 			final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			
 			// The final result
