@@ -2107,9 +2107,15 @@ public class Pass1Listener extends Pass0Listener {
 				lhs.lineNumber());
 		argumentList.addFirstActualParameter(self);
 
-		final MethodDeclaration methodDecl = lhsType.enclosedScope().lookupMethodDeclarationRecursive("compareTo", argumentList, false);
-		if (null != methodDecl) {
-			// O.K., it does. Generate code that will call
+		MethodSignature methodSignature = null;
+		if (lhsType instanceof InterfaceType) {
+			methodSignature = ((InterfaceType)lhsType).lookupMethodSignatureWithConversionIgnoringParameter("compareTo", argumentList, null);
+		} else {
+			final MethodDeclaration methodDecl = lhsType.enclosedScope().lookupMethodDeclarationRecursive("compareTo", argumentList, false);
+			methodSignature = methodDecl.signature();
+		}
+		if (null != methodSignature) {
+			// O.K., it does have a compareTo. Generate code that will call
 			// compareTo on the users' behalf
 			
 			// Nice constants

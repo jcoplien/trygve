@@ -1732,6 +1732,8 @@ public class StaticScope {
 			retval = MethodInvocationEnvironmentClass.ContextEnvironment;
 		} else if (associatedDeclaration_ instanceof ClassDeclaration) {
 			retval = MethodInvocationEnvironmentClass.ClassEnvironment;
+		} else if (associatedDeclaration_ instanceof InterfaceDeclaration) {
+			retval = MethodInvocationEnvironmentClass.ClassEnvironment;
 		} else {
 			retval = MethodInvocationEnvironmentClass.Unknown;
 			assert false;
