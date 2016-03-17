@@ -143,7 +143,7 @@ public final class FrameClass {
 		}
 		public RTCode runDetails(final RTObject scope, final RTFrameObject thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 	}

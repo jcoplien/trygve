@@ -25,6 +25,7 @@ package info.fulloo.trygve.parser;
 
 
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -74,13 +75,14 @@ public class Pass0Listener extends KantBaseListener {
 	
 	@Override public void enterContext_declaration(KantParser.Context_declarationContext ctx)
 	{
-		// context_declaration : 'context' JAVA_ID '{' context_body '}'
+		// context_declaration : 'context' JAVA_ID (implements_list)* '{' context_body '}'
 		final String name = ctx.JAVA_ID().getText();
 		
 		if (null != ctx.context_body()) {
 			final ContextDeclaration oldContext = currentContext_;
 			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
 			currentContext_.setParentContext(oldContext);
+			parsingData_.pushContextDeclaration(currentContext_);
 		} else {
 			assert false;
 		}
@@ -180,9 +182,9 @@ public class Pass0Listener extends KantBaseListener {
 		final Declaration rawNewDeclaration = currentScope_.associatedDeclaration();
 		assert rawNewDeclaration instanceof TypeDeclaration;	
 		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
-		if (newDeclaration instanceof ClassDeclaration) {
+		if (newDeclaration instanceof ClassDeclaration || newDeclaration instanceof ContextDeclaration) {
 			// (Could be a template, in which case we skip it)
-			this.implementsCheck((ClassDeclaration)newDeclaration, ctx.getStart().getLine());
+			this.implementsCheck((ClassOrContextDeclaration)newDeclaration, ctx.getStart().getLine());
 		}
 		
 		exitType_declarationCommon();
@@ -236,12 +238,15 @@ public class Pass0Listener extends KantBaseListener {
 		if (newDeclaration instanceof ClassDeclaration) {
 			if (null != ((ClassDeclaration)newDeclaration).generatingTemplate()) {
 				parsingData_.popTemplateDeclaration();
+				assert false;	// this never seems to get invoked
+			} else {
+				parsingData_.popClassDeclaration();
+				// implements_list is taken care of along the way
+				assert true;
 			}
-		} else if (newDeclaration instanceof ClassDeclaration) {
-			parsingData_.popClassDeclaration();
-			// implements_list is taken care of along the way
+		} else if (newDeclaration instanceof ContextDeclaration) {
+			parsingData_.popContextDeclaration();
 		} else if (newDeclaration instanceof TemplateDeclaration) {
-			// Something wrong here...  FIXME.
 			parsingData_.popTemplateDeclaration();
 		}
 		
@@ -269,7 +274,7 @@ public class Pass0Listener extends KantBaseListener {
 		}
 	}
 	
-	protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+	protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, int lineNumber) {
 		// nothing on Pass 0
 	}
 	

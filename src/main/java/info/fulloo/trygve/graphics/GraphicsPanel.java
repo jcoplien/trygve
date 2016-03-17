@@ -8,11 +8,14 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
 import info.fulloo.trygve.run_time.RTCookieObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
+import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.run_time.RTMethod;
@@ -37,6 +40,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public GraphicsPanel(final RTObjectCommon rTPanel) {
 		rTPanel_ = rTPanel;
 		makeVectors();
+		inInterrupt_ = 0;
 	}
 	
 	public void setBackground(final RTObject colorArg) {
@@ -100,6 +104,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	
 	public void handleEventProgrammatically(final Event e) {
+		if (inInterrupt_++ > 0) return;
 		final RTType rTType = rTPanel_.rTType();
 		assert rTType instanceof RTClass;
 		final TypeDeclaration typeDeclaration = ((RTClass)rTType).typeDeclaration();
@@ -113,12 +118,39 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		
 		final RTMethod hE = rTType.lookupMethod("handleEvent", pl);
 		if (null != hE) {
+			final int preStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			this.dispatchInterrupt(hE, e);
+			
+			// Get the return value from the user function telling whether they
+			// handled the interrupt or not. If not, we should handle it ourselves
+			// (if it's a keystroke event)
+			//
+			// Note that this shouldn't affect blocked reads...
+			final RTObject retval = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert oldEventArg instanceof RTEventObject;
+			final int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+
+			if (postStackDepth != preStackDepth) {
+				assert postStackDepth == preStackDepth;
+			}
+			
+			if (retval instanceof RTBooleanObject) {
+				final boolean interruptWasHandled = ((RTBooleanObject)retval).value();
+				if (interruptWasHandled == false) {
+					if (e.key != 0 && e.id == Event.KEY_RELEASE) {
+						checkIOIntegration(e);
+					}
+				}
+			} else {
+				assert false;
+			}
 		} else {
 			if (e.key != 0 && e.id == Event.KEY_RELEASE) {
 				checkIOIntegration(e);
 			}
 		}
+		inInterrupt_ = 0;
 	}
 	
 	protected void checkIOIntegration(final Event e) {
@@ -133,6 +165,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final ClassType eventType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Event");
 		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
 		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt");
+		retInst.setResultIsConsumed(true);
 		final RTEventObject event = new RTEventObject(e, rTType);
 		
 		event.setObject("x", new RTIntegerObject(e.x));
@@ -159,7 +192,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		RTCode pc = method;
 		do {
 			pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-		} while (null != pc);
+		} while (null != pc && pc instanceof RTHalt == false);
 	}
 	
 	// ------------------ Internal stuff ------------------------------
@@ -219,7 +252,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		  case Event.MOUSE_DOWN:
 		  case Event.MOUSE_UP:
 			this.handleEventProgrammatically(e);
-		    repaint();
+		    // repaint();
+			final Graphics g = this.getGraphics();
+			if (null != g) {
+				paint(g);
+			}
 		    return true;
 		  case Event.WINDOW_DESTROY:
 		    System.exit(0);
@@ -283,10 +320,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public void remove(final RTObject thingToRemoveRTObject) {
 		assert thingToRemoveRTObject instanceof RTCookieObject;
 		final Object thingToRemove = ((RTCookieObject)thingToRemoveRTObject).cookie();
-		final int count = super.getComponentCount();
-		for (int i = 0; i < count; i++) {
-			final Component component = super.getComponent(i);
-		}
 
 		boolean removed = false;
 		for (int i = 0; i < strings_.size(); i++) {
@@ -378,6 +411,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	private       Vector<StringRecord> strings_;
 	private RTObjectCommon rTPanel_;
+	
+	private       int inInterrupt_;
 	
 	private static final long serialVersionUID = 238269472;
 	private int referenceCount_ = 1;

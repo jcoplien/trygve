@@ -710,12 +710,19 @@ public abstract class RTExpression extends RTCode {
     				nearestEnclosingType_,
     				originMessageClass(),
     				targetMessageClass());
-            RTCode retval = dispatcher.hasError();
-            if (null == retval) {
-            	retval = dispatcher.methodDecl();
-            	if (null == retval) {
-            		retval = new RTHalt();
-            	}
+            
+            RTCode retval = null;
+            
+            if (null == dispatcher) {
+            	retval = new RTHalt();
+            } else {
+	            retval = dispatcher.hasError();
+	            if (null == retval) {
+	            	retval = dispatcher.methodDecl();
+	            	if (null == retval) {
+	            		retval = new RTHalt();
+	            	}
+	            }
             }
             return retval;
         }
@@ -3936,7 +3943,7 @@ public abstract class RTExpression extends RTCode {
 					do {
 						pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 						if (pc instanceof RTHalt) return pc;
-					} while (pc != null);
+					} while (pc != null && pc instanceof RTHalt == false);
 					
 					// Now, the return value is on top of the stack. Pop it temporarily.
 					returnValue = RunTimeEnvironment.runTimeEnvironment_.popStack();

@@ -193,7 +193,7 @@ public final class PanelClass {
 		}
 		public RTCode runDetails(final RTObject scope, final GraphicsPanel thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 	}
@@ -478,9 +478,22 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			try{
-				// Revalidate call suggested by: http://stackoverflow.com/questions/18001087/jpanel-removeall-doesnt-get-rid-of-previous-components
+				// Re-validate call suggested by: http://stackoverflow.com/questions/18001087/jpanel-removeall-doesnt-get-rid-of-previous-components
 				thePanel.revalidate();
-				thePanel.repaint();
+				
+				// AWT repaint() just schedules a future task on the GUI thread.
+				// Because some of our graphics activities (like erasure) are done
+				// directly, this sometimes leads to interleaving and messed-up
+				// windows. So, concrete advice to the contrary not withstanding,
+				// we call paint directly.
+				//
+				// See: http://www.scs.ryerson.ca/mes/courses/cps530/programs/threads/Repaint/
+				//
+				// thePanel.repaint();	// no
+				final Graphics g = thePanel.getGraphics();
+				if (null != g) {
+					thePanel.paint(g);
+				}
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
 				RTMessage.printMiniStackStatus();
@@ -635,7 +648,7 @@ public final class PanelClass {
 			}
 			public RTCode runDetails(final RTObject scope, final RTEventObject theEvent) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 		}

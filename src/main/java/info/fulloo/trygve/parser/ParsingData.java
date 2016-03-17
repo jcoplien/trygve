@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Stack;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -78,6 +80,7 @@ public class ParsingData {
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
 		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
+		classOrContextDeclarations_ = new Stack<ClassOrContextDeclaration>();
 		
 		variableGeneratorCounter_ = 101;
 	}
@@ -120,6 +123,7 @@ public class ParsingData {
 	private Stack<ArrayList<String>>    typeNameListStack_;
 	private Stack<BlockExpression>      blockExpressionStack_;
 	private Stack<ClassDeclaration>     classDeclarations_;
+	private Stack<ClassOrContextDeclaration>     classOrContextDeclarations_;
 	private Stack<DeclarationList>      declarationList_;
 	private Stack<DoWhileExpression>    doWhileExpressionStack_;
 	private Stack<ExprAndDeclList>      exprAndDeclListStack_;
@@ -142,9 +146,12 @@ public class ParsingData {
 	private void                    pushBreakableExpression(final Expression e) { loopExpressionStack_.push(e); }
 	public boolean               currentBreakableExpressionExists() { return loopExpressionStack_.size() > 0; }
 	public Expression            currentBreakableExpression() { return loopExpressionStack_.peek(); }
-	public ClassDeclaration 	     popClassDeclaration() { return classDeclarations_.pop(); }
+	public ClassDeclaration 	     popClassDeclaration() {  classOrContextDeclarations_.pop(); return classDeclarations_.pop(); }
 	public ClassDeclaration 	 currentClassDeclaration() { return classDeclarations_.peek(); }
-	public void 					pushClassDeclaration(ClassDeclaration cd) { classDeclarations_.push(cd); };
+	public ClassOrContextDeclaration 	 currentClassOrContextDeclaration() { return classOrContextDeclarations_.peek(); }
+	public void 					pushClassDeclaration(ClassDeclaration cd) { classDeclarations_.push(cd); classOrContextDeclarations_.push(cd); };
+	public ContextDeclaration       popContextDeclaration() { return (ContextDeclaration)classOrContextDeclarations_.pop(); }
+	public void                     pushContextDeclaration(ContextDeclaration cd) { classOrContextDeclarations_.push(cd); }
 	public DoWhileExpression  	     popDoWhileExpression() { popBreakableExpression(); return doWhileExpressionStack_.pop(); }
 	public void 				    pushDoWhileExpression(final DoWhileExpression expr) { doWhileExpressionStack_.push(expr); pushBreakableExpression(expr); }
 	public DoWhileExpression 	 currentDoWhileExpression() { return doWhileExpressionStack_.peek(); }

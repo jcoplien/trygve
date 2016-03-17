@@ -185,7 +185,7 @@ public final class DateClass {
 		}
 		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails (Date domain)", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails (Date domain)", "", "", "");
 			return null;	// halt the machine
 		}
 	}

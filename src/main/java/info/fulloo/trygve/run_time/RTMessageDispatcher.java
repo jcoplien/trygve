@@ -35,6 +35,7 @@ import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
@@ -71,6 +72,7 @@ public abstract class RTMessageDispatcher {
 		case ClassEnvironment:
 			switch(targetMessageClass) {
 			case ClassEnvironment:
+				// WARNING: Factory-method-like constructor
 				retval = new RTNonContextToNonContext(
 					messageExpr,
 					methodSelectorName,
@@ -81,6 +83,8 @@ public abstract class RTMessageDispatcher {
 					isStatic,
 					nearestEnclosingType
 					);
+				retval = ((RTNonContextToNonContext)retval).value();
+				// NO: lookup can fail. assert null != retval;
 				break;
 			case RoleEnvironment:
 				assert false;
@@ -776,12 +780,65 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
+			retval_ = null;
 			
 			RTObject self = null;
 			RTCode start = argPush_;
 
 			// Now push the arguments onto the stack
 			final Type typeOfThisParameterToCalledMethod = super.commonProlog(indexForThisExtraction, expressionCounterForThisExtraction);
+			
+			if (typeOfThisParameterToCalledMethod instanceof InterfaceType) {
+				// Uh-oh. We don't really know what it is. It could be a Context or
+				// a class. If it's a class - fine; we're in the right place.
+				// If it's a Context, we've been hoodwinked behind the
+				// interface. Well, we can't know until run time, so now
+				// is the time to make amends and send control off to
+				// another handler.
+				//
+				// Effectively push the arguments. Ugly and inefficient, but
+				// it works.
+				
+				int stackSize = 0;
+				final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				RTCode pc = start;
+				do {
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+				} while (null != pc && pc instanceof RTHalt == false);
+				
+				// All the arguments are on the stack. Pop them off down to self.
+				RTObject inquisitiveSelf = null;
+				do {
+					inquisitiveSelf = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+					stackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				} while (stackSize - startingStackSize > indexForThisExtraction);
+				
+				// The value of this should be in inquisitiveSelf. Clean up the other arguments.
+				while (stackSize > startingStackSize) {
+					RunTimeEnvironment.runTimeEnvironment_.popStack();
+					stackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				}
+				
+				assert (stackSize == startingStackSize);
+				
+				if (inquisitiveSelf instanceof RTContextObject) {
+					// Houston, we have a problem.
+					// Start by undoing what commonProlog did
+					RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
+					RunTimeEnvironment.runTimeEnvironment_.popStack();
+					
+					retval_ = new RTNonContextToContext(messageExpr,
+							methodSelectorName,
+							argPush,
+							postReturnProcessing,
+							expressionsCountInArguments,
+							actualParameters,
+							isStatic,
+							nearestEnclosingType
+							);
+					return;
+				}
+			}
 			
 			// This loop just processes the pushing of the arguments
 			// The value of "pc" will eventually return null - there
@@ -793,10 +850,14 @@ public abstract class RTMessageDispatcher {
 			} else {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
-					assert self instanceof RTContextObject == false;
-					assert self instanceof RTRole == false;
+					if (self instanceof RTContextObject || self instanceof RTRole) {
+						ErrorLogger.error(ErrorType.Internal, "Dispatching error for `",
+								methodSelectorName, "'.", "");
+						hasError_ = new RTHalt();
+					}
 				}
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
+				retval_ = this;
 			}
 		}
 		
@@ -817,6 +878,11 @@ public abstract class RTMessageDispatcher {
 			}
 			return methodDecl;
 		}
+		
+		public RTMessageDispatcher value() {
+			return retval_;
+		}
+		private RTMessageDispatcher retval_;
 	}
 	
 	private static class RTNonContextToContext extends RTMessageDispatcher {

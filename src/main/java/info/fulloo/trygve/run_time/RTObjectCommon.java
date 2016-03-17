@@ -89,7 +89,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, 0);
 		pl.addActualArgument(otherVar);
 		
-		// final RTMethod compareTo = myType.lookupMethod("compareTo", pl);
 		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo", pl, null);
 		if (null != compareTo) {
 			// The user has provided a compareTo function. Call it.
@@ -161,11 +160,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			} while (null != pc && pc instanceof RTHalt == false);
 			
 			final RTObject result = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
-			assert result instanceof RTStringObject;
+			if (result instanceof RTStringObject == false) {
+				ErrorLogger.error(ErrorType.Internal, "user-supplied toString() operation led to unexpected type in `", this.getText(), "'.", "");
+				assert result instanceof RTStringObject;
+			}
 			retval = ((RTStringObject)result).toString();
 			
 			final int currentStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			if (startingStackSize != currentStackSize) {
+				ErrorLogger.error(ErrorType.Internal, "Stack corruption related to toString() operation and `", this.getText(), "'.", "");
 				assert startingStackSize == currentStackSize;
 			}
 		} else {

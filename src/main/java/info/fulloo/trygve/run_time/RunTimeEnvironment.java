@@ -198,6 +198,8 @@ public class RunTimeEnvironment {
 		while (stack.size() > framePointer) {
 			@SuppressWarnings("unused")
 			final RTStackable popped = stack.pop();	// save value here for debugging only
+			@SuppressWarnings("unused")
+			int i = 0;	// for breakpoint
 		}
 		retval = stack.peek();
 		return retval;
@@ -296,6 +298,14 @@ public class RunTimeEnvironment {
 			final RTDynamicScope retval = dynamicScopes.pop();
 			retval.decrementReferenceCount();
 		}
+	}
+	public int currentFramePointer() {
+		// Mainly for debugging
+		int retval = -1;
+		if (framePointers_.size() > 0) {
+			retval = framePointers_.peek();
+		}
+		return retval;
 	}
 	public void registerTypeByPath(final String path, final RTType rTType) {
 		pathToTypeMap_.put(path, rTType);

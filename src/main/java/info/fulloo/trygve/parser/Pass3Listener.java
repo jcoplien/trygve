@@ -28,16 +28,16 @@ import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
-import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
-import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -161,10 +161,10 @@ public class Pass3Listener extends Pass2Listener {
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
 		// nothing in pass 3, 4
 	}
-	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
+	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
 		// nothing in pass 3, 4
 	}
-	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, final int lineNumber) {
+	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final int lineNumber) {
 		// nothing in pass 3, 4
 	}
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { }

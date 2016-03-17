@@ -212,7 +212,7 @@ public final class ListClass {
 		}
 		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 		protected void addRetvalTo(final RTDynamicScope activationRecord) {
@@ -340,7 +340,7 @@ public final class ListClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTStackable stackableArgument = activationRecord.getObject("element");
-			final RTIntegerObject argument = (RTIntegerObject)stackableArgument;
+			final RTObject argument = (RTObject)stackableArgument;
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTObject result = theListObject.indexOf(argument);
 			

@@ -242,7 +242,7 @@ public final class SystemClass {
 		}
 		public RTCode runDetails(final RTObject scope, final PrintStream finalStream) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails (System domain)", "", "", "");
+			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails (System domain)", "", "", "");
 			return null;	// halt the machine
 		}
 		

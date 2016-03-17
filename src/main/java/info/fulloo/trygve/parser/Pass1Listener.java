@@ -43,6 +43,7 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
@@ -63,6 +64,7 @@ import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
+import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -242,13 +244,14 @@ public class Pass1Listener extends Pass0Listener {
 
 	@Override public void enterContext_declaration(KantParser.Context_declarationContext ctx)
 	{
-		// context_declaration : 'context' JAVA_ID '{' context_body '}'
+		// context_declaration : 'context' JAVA_ID (implements_list)* '{' context_body '}'
 		final String name = ctx.JAVA_ID().getText();
 		
 		if (null != ctx.context_body()) {
 			final ContextDeclaration oldContext = currentContext_;
 			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
 			currentContext_.setParentContext(oldContext);
+			parsingData_.pushContextDeclaration(currentContext_);
 		} else {
 			assert false;
 		}
@@ -381,6 +384,8 @@ public class Pass1Listener extends Pass0Listener {
 				// implements_list is taken care of along the way
 				assert true;
 			}
+		} else if (newDeclaration instanceof ContextDeclaration) {
+			parsingData_.popContextDeclaration();
 		} else if (newDeclaration instanceof TemplateDeclaration) {
 			parsingData_.popTemplateDeclaration();
 		}
@@ -487,9 +492,9 @@ public class Pass1Listener extends Pass0Listener {
 		assert rawNewDeclaration instanceof TypeDeclaration;	
 		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
 		
-		if (newDeclaration instanceof ClassDeclaration) {
+		if (newDeclaration instanceof ClassDeclaration || newDeclaration instanceof ContextDeclaration) {
 			// (Could be a template, in which case we skip it)
-			this.implementsCheck((ClassDeclaration)newDeclaration, ctx.getStart().getLine());
+			this.implementsCheck((ClassOrContextDeclaration)newDeclaration, ctx.getStart().getLine());
 		}
 		
 		exitType_declarationCommon();
@@ -522,7 +527,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, int lineNumber) {
+	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, int lineNumber) {
 		// nothing on pass one
 	}
 	
@@ -539,8 +544,8 @@ public class Pass1Listener extends Pass0Listener {
 			anInterface = new InterfaceDeclaration(" error", null, ctx.getStart().getLine());
 		}
 		
-		final ClassType classType = (ClassType)parsingData_.currentClassDeclaration().type();
-		this.addInterfaceTypeSuitableToPass(classType, (InterfaceType)anInterface.type());
+		final ClassOrContextType classOrContextType = (ClassOrContextType)parsingData_.currentClassOrContextDeclaration().type();
+		this.addInterfaceTypeSuitableToPass(classOrContextType, (InterfaceType)anInterface.type());
 		
 		if (printProductionsDebug) {
 			if (ctx.implements_list() != null) {
@@ -552,7 +557,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
+	protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classType, final InterfaceType interfaceType) {
 		// nothing on pass one
 	}
 	

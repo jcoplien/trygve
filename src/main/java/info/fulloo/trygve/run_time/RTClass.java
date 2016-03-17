@@ -245,7 +245,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 		}
@@ -406,7 +406,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -602,7 +602,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -701,7 +701,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -849,7 +849,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 
 			}
@@ -1204,7 +1204,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virutal method runDetails", "", "", "");
+				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 
 			}

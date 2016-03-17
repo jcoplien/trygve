@@ -156,6 +156,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(enclosedScope);
 			name_ = name;
 			baseClass_ = baseType;
+			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public Type type() {
 			return this;
@@ -176,15 +177,21 @@ public abstract class Type implements ExpressionStackAPI
 		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		
+		public void addInterfaceType(final InterfaceType it) {
+			interfaceTypes_.add(it);
+		}
+		public final List<InterfaceType> interfaceTypes() {
+			return interfaceTypes_;
+		}
+
+		private final List<InterfaceType> interfaceTypes_;
 		private final String name_;
-		private ClassType baseClass_;
+		private       ClassType baseClass_;
 	}
 
 	public static class ClassType extends ClassOrContextType {
 		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(name, enclosedScope, baseClass);
-			interfaceTypes_ =  new ArrayList<InterfaceType>();
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
@@ -279,12 +286,6 @@ public abstract class Type implements ExpressionStackAPI
 		public final TemplateInstantiationInfo templateInstantiationInfo() {
 			return enclosedScope_.templateInstantiationInfo();
 		}
-		public void addInterfaceType(final InterfaceType it) {
-			interfaceTypes_.add(it);
-		}
-		public final List<InterfaceType> interfaceTypes() {
-			return interfaceTypes_;
-		}
 		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
 			// ClassType
 			assert true;		// tests/new_luhnvalidation.k
@@ -317,8 +318,6 @@ public abstract class Type implements ExpressionStackAPI
 			
 			return retval;
 		}
-		
-		private List<InterfaceType> interfaceTypes_;
 	}
 	public static class TemplateType extends Type {
 		public TemplateType(final String name, final StaticScope scope, final ClassType baseClass) {

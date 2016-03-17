@@ -34,6 +34,7 @@ import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Message;
@@ -1514,10 +1515,10 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
 		interfaceType.addSignature(signature);
 	}
-	@Override protected void addInterfaceTypeSuitableToPass(final ClassType classType, final InterfaceType interfaceType) {
-		classType.addInterfaceType(interfaceType);
+	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
+		classOrContextType.addInterfaceType(interfaceType);
 	}
-	@Override protected void implementsCheck(final ClassDeclaration newDeclaration, final int lineNumber) {
+	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final int lineNumber) {
 		newDeclaration.doIImplementImplementsList(this, lineNumber);
 	}
 	@Override protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {

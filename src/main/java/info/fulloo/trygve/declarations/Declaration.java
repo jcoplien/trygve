@@ -31,6 +31,7 @@ import java.util.Hashtable;
 
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
+import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
@@ -209,7 +210,47 @@ public abstract class Declaration implements BodyPart {
 		protected final List<BodyPart> inSituInitializations_;
 	}
 	
-	public static class ContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration
+	public static class ClassOrContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration {
+		public ClassOrContextDeclaration(final String name, final StaticScope myEnclosedScope,
+				final ClassDeclaration baseClass, int lineNumber) {
+			super(name, myEnclosedScope, baseClass, lineNumber);
+		}
+		public void doIImplementImplementsList(final Pass1Listener parser, final int lineNumber) {
+			assert null != type_;
+			final List<InterfaceType> theInterfaceTypes = ((ClassOrContextType)type_).interfaceTypes();
+			final int listSize = theInterfaceTypes.size();
+			InterfaceType anInterfaceType = null;
+			
+			// Iterate through all the interfaces that I implement
+			for (int i = 0; i < listSize; i++) {
+				anInterfaceType = theInterfaceTypes.get(i);
+				if (null == anInterfaceType) {
+					parser.errorHook5p2(ErrorType.Fatal, lineNumber,
+							"Class `", name(), "' is using an undeclared interface: see other error messages", "");
+				} else {
+					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
+					
+					// For each interface, iterate over the signatures it declares
+					for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
+						final String signatureMethodSelector = iter.getKey();
+						final List<MethodSignature> signatures = iter.getValue();
+						for (final MethodSignature anInterfaceSignature: signatures) {
+							final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
+							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this",
+									/* conversionAllowed = */ false);
+							if (null == methodDecl) {
+								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
+										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
+										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	public static class ContextDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
 	{
 		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, int lineNumber) {
 			super(name, myEnclosedScope, StaticScope.globalScope().lookupClassDeclaration("Object"), lineNumber);
@@ -228,7 +269,7 @@ public abstract class Declaration implements BodyPart {
 		private ContextDeclaration parentContext_;
 	}
 	
-	public static class ClassDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration
+	public static class ClassDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
 	{
 		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final int lineNumber) {
 			super(name, myEnclosedScope, baseClass, lineNumber);
@@ -268,40 +309,7 @@ public abstract class Declaration implements BodyPart {
 		public void setMethodsHaveBodyParts(final boolean tf) {
 			methodsHaveBodyParts_ = tf;
 		}
-		public void doIImplementImplementsList(final Pass1Listener parser, final int lineNumber) {
-			assert null != type_;
-			final List<InterfaceType> theInterfaceTypes = ((ClassType)type_).interfaceTypes();
-			final int listSize = theInterfaceTypes.size();
-			InterfaceType anInterfaceType = null;
-			
-			// Iterate through all the interfaces that I implement
-			for (int i = 0; i < listSize; i++) {
-				anInterfaceType = theInterfaceTypes.get(i);
-				if (null == anInterfaceType) {
-					parser.errorHook5p2(ErrorType.Fatal, lineNumber,
-							"Class `", name(), "' is using an undeclared interface: see other error messages", "");
-				} else {
-					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
-					
-					// For each interface, iterate over the signatures it declares
-					for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
-						final String signatureMethodSelector = iter.getKey();
-						final List<MethodSignature> signatures = iter.getValue();
-						for (final MethodSignature anInterfaceSignature: signatures) {
-							final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
-							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this",
-									/* conversionAllowed = */ false);
-							if (null == methodDecl) {
-								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
-										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
-										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
-							}
-						}
-					}
-				}
-			}
-		}
-
+		
 		private TemplateDeclaration templateDeclaration_;
 		private boolean methodsHaveBodyParts_;
 	}
@@ -326,7 +334,7 @@ public abstract class Declaration implements BodyPart {
 		
 		final private String name_;
 		final private ClassType baseClassType_;
-		private int argumentPosition_;
+		      private int argumentPosition_;
 	}
 	
 	public static class TemplateDeclaration extends TypeDeclarationCommon implements TypeDeclaration

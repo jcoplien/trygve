@@ -49,7 +49,7 @@ type_declaration
 		;
 		
 context_declaration
-        : 'context' JAVA_ID '{' context_body '}'
+        : 'context' JAVA_ID (implements_list)* '{' context_body '}'
         ;
         
 class_declaration
