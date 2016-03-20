@@ -714,6 +714,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				panelCode.add(new PanelClass.RTFillRectCode(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("drawOval")) {
 				panelCode.add(new PanelClass.RTDrawEllipseCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("fillOval")) {
+				panelCode.add(new PanelClass.RTFillEllipseCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}

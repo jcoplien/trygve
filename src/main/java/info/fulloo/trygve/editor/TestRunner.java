@@ -87,6 +87,7 @@ public class TestRunner {
 		"interface1.k",
 		"interface2.k",
 		"interface3.k",
+		"interface_compareto_1.k",
 		"quadratic1.k",
 		"rightAssociativeSum2.k",
 		"thisqualbug1.k",
@@ -166,6 +167,7 @@ public class TestRunner {
 		"borrow_library_items.k",
 		"spellcheck.k",
 		"spellcheck2.k",
+		"borrow_library_panel4.k",
 		"panel1.k",
 	};
 	public static int numberOfTestCases() {

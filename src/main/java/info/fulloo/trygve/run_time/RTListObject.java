@@ -34,6 +34,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
 
 public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
@@ -163,6 +164,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		if (i >= theList_.size()) {
 			ErrorLogger.error(ErrorType.Runtime, 0, "List index out-of-range: ",
 					Integer.toString(i), " on list of size ", Integer.toString(theList_.size()));
+			RTMessage.printMiniStackStatus();
 			retval = null;
 		} else {
 			retval = theList_.get(i);

@@ -91,6 +91,18 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Color currentColor = getForeground();
 		this.addOval(x, y, width, height, currentColor);
 	}
+	public void fillOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
+		assert xArg instanceof RTIntegerObject;
+		assert yArg instanceof RTIntegerObject;
+		assert widthArg instanceof RTIntegerObject;
+		assert heightArg instanceof RTIntegerObject;
+		final int x = (int)((RTIntegerObject)xArg).intValue();
+		final int y = (int)((RTIntegerObject)yArg).intValue();
+		final int width = (int)((RTIntegerObject)widthArg).intValue();
+		final int height = (int)((RTIntegerObject)heightArg).intValue();
+		final Color currentColor = getForeground();
+		this.addFilledOval(x, y, width, height, currentColor);
+	}
 	public RTObject drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
@@ -208,6 +220,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		ellipses_ = new Vector<Ellipse2D>();
 		ellipseColors_ = new Vector<Color>();
 		
+		filledEllipses_ = new Vector<Ellipse2D>();
+		filledEllipseColors_ = new Vector<Color>();
+		
 		strings_ = new Vector<StringRecord>();
 	}
 	
@@ -302,6 +317,13 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
 		}
 		
+		/* same, only filled ellipses */
+		for (int i = 0; i < filledEllipses_.size(); i++) {
+		    final Ellipse2D p = filledEllipses_.elementAt(i);
+		    g.setColor((Color)filledEllipseColors_.elementAt(i));
+		    g.fillOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+		}
+		
 		/* draw the current texts */
 		g.setColor(getForeground());
 		g.setPaintMode();
@@ -389,6 +411,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		ellipseColors_.addElement(color);
 	}
 	
+	public void addFilledOval(final int x, final int y, final int width, final int height, final Color color) {
+		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
+		filledEllipses_.addElement(ellipse);
+		filledEllipseColors_.addElement(color);
+	}
+	
 	public RTObject addString(final int x, final int y, final String string, final Color color) {
 		final StringRecord stringRecord = new StringRecord(x, y, string, color);
 		strings_.addElement(stringRecord);
@@ -408,6 +436,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	private       Vector<Ellipse2D> ellipses_;
 	private       Vector<Color> ellipseColors_;
+	
+	private       Vector<Ellipse2D> filledEllipses_;
+	private       Vector<Color> filledEllipseColors_;
 	
 	private       Vector<StringRecord> strings_;
 	private RTObjectCommon rTPanel_;

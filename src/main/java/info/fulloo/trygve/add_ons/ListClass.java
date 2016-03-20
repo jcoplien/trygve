@@ -260,7 +260,7 @@ public final class ListClass {
 			
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", result);
-			
+
 			return super.nextCode();
 		}
 	}

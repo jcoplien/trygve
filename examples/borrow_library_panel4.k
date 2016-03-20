@@ -14,7 +14,8 @@ class MyPanel extends Panel {
    public boolean handleEvent(Event event) {
       int eventId = event.id.clone;
       boolean retval = false;
-      if (eventId == Event.MOUSE_UP) {
+
+      if (eventId == Event.MOUSE_DOWN) {
           for (Button button : buttons_) {
              if (button.contains(event.x, event.y)) {
                 button.wasPushed();
@@ -22,20 +23,27 @@ class MyPanel extends Panel {
                 break
              }
           }
+      } else if (eventId == Event.MOUSE_UP) {
+          for (Button button : buttons_) {
+             if (button.contains(event.x, event.y)) {
+                button.wasReleasedInsideButton();
+                retval = true
+             } else {
+                button.wasReleasedOutsideButton()
+             }
+          }
       }
       return retval
    }
 
-   public Frame frame() {
-      return frame_
-   }
+   public Frame frame() { return frame_ }
  
    private List<Button> buttons_;
    private Frame frame_
 }
 
 interface ButtonHandler {
-   public void buttonWasPushed(Object buttonId);
+   public void buttonWasReleased(Object buttonId)
 }
 
 class Button {
@@ -47,10 +55,18 @@ class Button {
       panel_.addButton(this);
       handler_ = handler;
       radius_ = radius.clone;
+      state_ = "up";
       this.draw()
    }
 
-   public void wasPushed() { handler_.buttonWasPushed(this) }
+   public void wasPushed() { state_="down"; draw() }
+   public void wasReleasedInsideButton() {
+      state_="up"; handler_.buttonWasReleased(this); draw()
+   }
+   public void wasReleasedOutsideButton() {
+      // In case of a drag that started inside a button
+      state_="up"; draw()
+   }
  
    public boolean contains(int x, int y) {
       int centerX = x_ + radius_;
@@ -63,7 +79,17 @@ class Button {
    public void draw() {
       panel_.drawOval(x_, y_, radius_, radius_);
       panel_.drawString(x_ + radius_ - ((label_.length() * 6) / 2),
-                        y_+ radius_ + 6 , label_);
+                        y_+ radius_ + 6 , label_)
+      Color saveColor = panel_.getForeground();
+      if (state_ == "down") {
+         panel_.setForeground(Color.blue);
+         panel_.fillOval(x_, y_, radius_, radius_)
+      } else {
+         panel_.setForeground(new Color(0, 255, 255));
+         panel_.fillOval(x_+2, y_+1, radius_-2, radius_-1);
+         panel_.drawOval(x_, y_, radius_, radius_)
+      }
+      panel_.setForeground(saveColor)
    }
 
    public int x() { return x_ }
@@ -72,7 +98,8 @@ class Button {
    private ButtonHandler handler_;
    private MyPanel panel_;
    private String label_;
-   private int x_, y_, radius_
+   private int x_, y_, radius_;
+   private String state_
 }
 
 interface View {
@@ -179,15 +206,11 @@ class TextLogView implements View {
       this.print(text);
       text_.add(new ALine("\n", Color.blue))
    }
-   private int widthOf(String s) {
-      return (s.length() * CharacterPixelWidth)
-   }
+   private int widthOf(String s) { return (s.length() * CharacterPixelWidth) }
    public void notifyChanged() {
       int y = yOffset_ + TopMargin, x = xOffset_ + TextIndent;
       int currentLine = 1;
-      for (Object a : dynamicStringCookies_) {
-         panel_.remove(a);
-      }
+      for (Object a : dynamicStringCookies_) panel_.remove(a);
       dynamicStringCookies_ = new List<Object>();
       reframe();
 
@@ -288,7 +311,7 @@ class ScreenPrinter {
     }
 
     void cutPaper() const {
-        System.out.println("--------------------------------------------------------");
+       System.out.println("----------------------------------------------------");
     }
 }
 
@@ -331,9 +354,7 @@ context BorrowLibraryItems implements ButtonHandler {
            while (theIndex >= 0) { removeItem(items.get(theIndex--)) }
         }
     
-        public List<ItemRecord> currentScannedItems() {
-            return scannedItems()
-        }
+        public List<ItemRecord> currentScannedItems() { return scannedItems() }
 
         public int numberOfScannedItems() { return scannedItems().size() }
     } requires {
@@ -368,7 +389,7 @@ context BorrowLibraryItems implements ButtonHandler {
            ColorHandler.setForegroundColor(Color.blue);
         }
         public void closeLine() { println("") }
-        public void changed() { notifyChanged();/* CheckoutList.changed() */}
+        public void changed() { notifyChanged() }
     } requires {
         void print(String text) const;
         void println(String text) const;
@@ -385,12 +406,8 @@ context BorrowLibraryItems implements ButtonHandler {
               "Welcome to the automatic library borrowing service!");
            CardReader.validateCardPin();
        }
-       public void addText(String s) {
-          TranscriptView.addText(s)
-       }
-       public void addTextLine(String s) {
-          TranscriptView.addTextLine(s)
-       }
+       public void addText(String s) { TranscriptView.addText(s) }
+       public void addTextLine(String s) { TranscriptView.addTextLine(s) }
        public void addTextLineColored(String s, Color c) {
           TranscriptView.addTextLineColored(s, c)
        }
@@ -515,7 +532,7 @@ context BorrowLibraryItems implements ButtonHandler {
           if (BookScanner.numberOfScannedItems() > 0) {
              BookScanner.removeCheckoutItems();
              Transcript.addTextLineColored("\nAll checkouts removed!", Color.red);
-             Transcript.addText("Select option: ");
+             Transcript.addText("Select option: ")
           }
           CheckoutList.reset()
        }
@@ -537,14 +554,11 @@ context BorrowLibraryItems implements ButtonHandler {
         ClearButton = new Button(panel, "Clear", 35, 20, 40, this)
     }
 
-    public void buttonWasPushed(Object buttonID) {
+    public void buttonWasReleased(Object buttonID) {
        ClearButton.buttonWasPushed(buttonID)
     }
 
-    public void start() {
-        Transcript.displayWelcomeMessage();
-    }
+    public void start() { Transcript.displayWelcomeMessage() }
 }
 
 new BorrowLibraryItems().start()
-

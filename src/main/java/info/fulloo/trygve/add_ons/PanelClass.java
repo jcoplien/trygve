@@ -117,6 +117,7 @@ public final class PanelClass {
 			declarePanelMethod("drawRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("fillRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
+			declarePanelMethod("fillOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawString", objectType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
 			declarePanelMethod("removeAll", voidType, null, null, false);
 			declarePanelMethod("remove", voidType, asList("component"), asList(objectType), false);
@@ -374,6 +375,29 @@ public final class PanelClass {
 				thePanel.drawOval(leftX, topY, width, height);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawOval.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTFillEllipseCode extends RTPanelCommon {
+		public RTFillEllipseCode(final StaticScope enclosingMethodScope) {
+			super("Panel", "fillOval", asList("leftX", "topY", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
+			assert null != thePanel;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject leftX = (RTObject)activationRecord.getObject("leftX");
+			final RTObject topY = (RTObject)activationRecord.getObject("topY");
+			final RTObject width = (RTObject)activationRecord.getObject("width");
+			final RTObject height = (RTObject)activationRecord.getObject("height");
+			
+			try {
+				thePanel.fillOval(leftX, topY, width, height);
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.fillOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}

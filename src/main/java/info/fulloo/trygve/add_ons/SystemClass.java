@@ -462,9 +462,23 @@ public final class SystemClass {
 				final String formatString = format.stringValue();
 				final String [] formats = formatString.split("%");
 				int j = arguments.size() - 1;
-				for (int i = 0; i < formats.length; i++) {
+				
+				// Maybe the format string start with just a
+				// normal string
+				int i = 0;
+				if (formatString.substring(0,1) != "%") {
+					finalStream.format(formats[0]);
+					i++;
+				}
+				
+				for (; i < formats.length; i++) {
 					if (formats[i].length() == 0) {
-						;
+						// %%stuff
+						if (i + 1 < formats.length && formats[i+1].length() == 0) {
+							// %%%sstuff
+							// Don't print two "%" characters
+							i++;
+						}
 					} else if (formats[i].startsWith("n")) {
 						// takes no argument
 						finalStream.format("%" + formats[i]);
@@ -472,7 +486,7 @@ public final class SystemClass {
 						// takes no argument
 						finalStream.format("%" + formats[i]);
 					} else {
-						printedOK = this.printObjectInFormatOn((RTObject)arguments.get(j), formats[i], finalStream);
+						printedOK = printedOK && this.printObjectInFormatOn((RTObject)arguments.get(j), formats[i], finalStream);
 						j--;
 					}
 				}
