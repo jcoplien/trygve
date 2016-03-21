@@ -46,7 +46,7 @@ ___________________________________________________________
 line 33: FATAL: TERMINATED: Attempting to invoke method bar on a null object
 popping stack: type is RTStringObject
 popping stack: type is RTNullObject
-	In script `bar'
-	Called from script `role1Method'
-	Called from script `trigger'
+	In script `Role1.bar'
+	Called from script `Role1.role1Method'
+	Called from script `AContext.trigger'
 */

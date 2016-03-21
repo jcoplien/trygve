@@ -76,15 +76,15 @@ Base constructor
 Blah
 line 45: FATAL: TERMINATED: Attempting to invoke method toString on a null object
 popping stack: type is RTNullObject
-	In script `toString'
-	Called from script `+'
-	Called from script `+'
-	Called from script `+'
-	Called from script `Bar'
-	Called from script `DoIt'
-	Called from script `Blah'
-	Called from script `Base'
-	Called from script `Derived'
-	Called from script `MoreDerived'
+	In script `int.toString'
+	Called from script `String.+'
+	Called from script `String.+'
+	Called from script `String.+'
+	Called from script `Foo.Bar'
+	Called from script `Derived.DoIt'
+	Called from script `Base.Blah'
+	Called from script `Base.Base'
+	Called from script `Derived.Derived'
+	Called from script `MoreDerived.MoreDerived'
 */
 

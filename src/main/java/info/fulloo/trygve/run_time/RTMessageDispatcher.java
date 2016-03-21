@@ -301,6 +301,10 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	protected void populateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
+		// Get class for debugging info
+		final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
+		final StaticScope methodScope = originalMethodDecl.enclosingScope();
+		activationRecord.setDebuggingTypeName(methodScope.name());
 		final FormalParameterList formalParameters = methodDecl.formalParameters();
 		if (formalParameters.containsVarargs()) {
 			varargsPopulateActivationRecord(methodDecl, activationRecord);

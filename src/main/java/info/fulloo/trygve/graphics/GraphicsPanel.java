@@ -1,6 +1,7 @@
 package info.fulloo.trygve.graphics;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -176,7 +177,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final RTCode halt = null;
 		final ClassType eventType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Event");
 		final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
-		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt");
+		final MethodDeclaration methodDecl = method.methodDeclaration();
+		final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
+		final String debugName = null == methodParentScope? "???": methodParentScope.name();
+		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
 		retInst.setResultIsConsumed(true);
 		final RTEventObject event = new RTEventObject(e, rTType);
 		

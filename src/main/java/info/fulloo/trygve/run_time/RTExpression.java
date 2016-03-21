@@ -553,6 +553,8 @@ public abstract class RTExpression extends RTCode {
 			lineNumber_ = messageExpr.lineNumber();
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
+			final StaticScope parentScope = methodDecl == null? null: methodDecl.enclosingScope();
+			final String debugName = parentScope == null? "???": parentScope.name();
 			
 			if (null != methodDecl) {
 				// "if" test is error stumble insurance
@@ -564,7 +566,7 @@ public abstract class RTExpression extends RTCode {
 			final Type returnType = messageExpr.returnType();
 			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
 					(returnType.name().equals("void") == false);
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
 			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
 			super.setNextCode(postReturnProcessing_);	// necessary?
 			setResultIsConsumed(!resultNeedsToBePopped);
@@ -600,6 +602,9 @@ public abstract class RTExpression extends RTCode {
 			}
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
+			final StaticScope parentScope = methodDecl == null? null: methodDecl.enclosingScope();
+			final String debugName = parentScope == null? "???": parentScope.name();
+			
 			FormalParameterList fakeParameterList = null;
 			if (null != methodDecl) {
 				fakeParameterList = methodDecl.formalParameterList();
@@ -609,7 +614,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
 			final boolean resultNeedsToBePopped = (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);
 			postReturnProcessing_.setResultIsConsumed(this.resultIsConsumed());
@@ -698,24 +703,24 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		@Override public RTCode run() {
-            RTMessageDispatcher dispatcher =
-            	RTMessageDispatcher.makeDispatcher(
-            		messageExpr_,
-    				methodSelectorName_,
-    				argPush_,
-    				postReturnProcessing_,
-    				expressionsCountInArguments_,
-    				actualParameters_,
-    				isStatic(),
-    				nearestEnclosingType_,
-    				originMessageClass(),
-    				targetMessageClass());
+			RTMessageDispatcher dispatcher =
+				RTMessageDispatcher.makeDispatcher(
+					messageExpr_,
+					methodSelectorName_,
+					argPush_,
+					postReturnProcessing_,
+					expressionsCountInArguments_,
+					actualParameters_,
+					isStatic(),
+					nearestEnclosingType_,
+					originMessageClass(),
+					targetMessageClass());
             
-            RTCode retval = null;
+			RTCode retval = null;
             
-            if (null == dispatcher) {
-            	retval = new RTHalt();
-            } else {
+			if (null == dispatcher) {
+				retval = new RTHalt();
+			} else {
 	            retval = dispatcher.hasError();
 	            if (null == retval) {
 	            	retval = dispatcher.methodDecl();
@@ -723,9 +728,9 @@ public abstract class RTExpression extends RTCode {
 	            		retval = new RTHalt();
 	            	}
 	            }
-            }
-            return retval;
-        }
+			}
+			return retval;
+		}
 		
 		@Override public void setNextCode(final RTCode nextCode) {
 			// This becomes the public version of setNextCode. The value
@@ -858,10 +863,11 @@ public abstract class RTExpression extends RTCode {
 		// to the debugging empire in RunTimeEnvironment
 		
 		public static class RTPostReturnProcessing extends RTExpression {
-			public RTPostReturnProcessing(final RTCode nextCode, final String name) {
+			public RTPostReturnProcessing(final RTCode nextCode, final String name, String debugName) {
 				super();
 				super.setNextCode(nextCode);
 				name_ = name;
+				debugName_ = debugName;
 			}
 			@Override public RTCode run() {
 				if (false == resultIsConsumed()) {
@@ -873,8 +879,11 @@ public abstract class RTExpression extends RTCode {
 			public String name() {
 				return name_;
 			}
+			public String debugName() {
+				return debugName_;
+			}
 			
-			private final String name_;		// for debugging only
+			private final String name_, debugName_;		// for debugging only
 		}
 		
 		@Override public void setResultIsConsumed(final boolean tf) {
@@ -940,12 +949,14 @@ public abstract class RTExpression extends RTCode {
 				topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (topOfStack instanceof RTPostReturnProcessing) {
 					RTPostReturnProcessing currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-					ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.name(), "'", "");
+					ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.debugName() + ".",
+							currentMethodReturn.name(), "'");
 					while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
 						topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
 						if (topOfStack instanceof RTPostReturnProcessing) {
 							currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-							ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.name(), "'", "");
+							ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.debugName() + ".",
+									currentMethodReturn.name(), "'");
 						}
 					}
 					break;
@@ -2625,7 +2636,7 @@ public abstract class RTExpression extends RTCode {
 					return pc;
 				}
 				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-			} while ( null != pc);
+			} while (null != pc);
 			
 			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			assert rawIndexResult instanceof RTIntegerObject;
@@ -2647,8 +2658,10 @@ public abstract class RTExpression extends RTCode {
 			assert rawContextInfo instanceof RTContextInfo;
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
-			final RTObject rolePlayer = contextInfo.rolePlayerNamedAndIndexed(roleName_, indexResult);
-			if (null != rolePlayer) {
+			final RTStackable rolePlayer = contextInfo.rolePlayerNamedAndIndexed(roleName_, indexResult);
+			if (rolePlayer instanceof RTHalt) {
+				return (RTCode)rolePlayer;
+			} else if (null != rolePlayer) {
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(rolePlayer);
 				return nextCode_;
 			} else {

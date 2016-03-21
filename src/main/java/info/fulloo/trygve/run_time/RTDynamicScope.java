@@ -168,10 +168,17 @@ public final class RTDynamicScope extends RTObjectCommon {
 	public String name() {
 		return name_;
 	}
+	public String debuggingTypeName() {
+		return debuggingTypeName_;
+	}
+	public void setDebuggingTypeName(final String name) {
+		debuggingTypeName_ = name;
+	}
 		
 	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
 	private final String name_;
+	private       String debuggingTypeName_;
 	
 	private String methodSelector_;
 }

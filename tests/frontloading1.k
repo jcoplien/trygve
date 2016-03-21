@@ -222,8 +222,8 @@ line 89: NONCOMPLIANT: Trying to enact object script `size()' without using the 
 line 90: NONCOMPLIANT: Trying to enact object script `get(int)' without using the interface of the Role it is playing: `Predecessors'.
 ___________________________________________________________
 FATAL: TERMINATED: Attempt to invoke script `+' on null object on left-hand side of operation involving `rhs'.
-	In script `+'
-	Called from script `earlyStartTime'
-	Called from script `findUnplanned'
-	Called from script `frontload'
+	In script `EarlyStart.+'
+	Called from script `Activity.earlyStartTime'
+	Called from script `Activities.findUnplanned'
+	Called from script `FrontloadActivities.frontload'
 */

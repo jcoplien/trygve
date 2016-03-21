@@ -466,7 +466,7 @@ public final class SystemClass {
 				// Maybe the format string start with just a
 				// normal string
 				int i = 0;
-				if (formatString.substring(0,1) != "%") {
+				if (formatString.substring(0,1).equals("%") == false) {
 					finalStream.format(formats[0]);
 					i++;
 				}

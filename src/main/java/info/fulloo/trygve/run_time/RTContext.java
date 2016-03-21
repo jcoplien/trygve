@@ -33,6 +33,7 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -275,8 +276,8 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				}
 			}
 		}
-		public RTObject rolePlayerNamedAndIndexed(final String roleName, final RTIntegerObject theIndex) {
-			RTObject retval = null;
+		public RTStackable rolePlayerNamedAndIndexed(final String roleName, final RTIntegerObject theIndex) {
+			RTStackable retval = null;
 			final Map<Integer,RTObject> intToObjectMap = roleArrayPlayers_.get(roleName);
 			final int iIndex = (int)theIndex.intValue();
 			if (null == intToObjectMap) {
@@ -287,10 +288,14 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				RTMessage.printMiniStackStatus(); 
 				retval = null;
 			} else {
-				if (iIndex > intToObjectMap.size()) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "Role vector ", roleName, " indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+				if (iIndex >= intToObjectMap.size()) {
+					ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
 					RTMessage.printMiniStackStatus();
-					retval = null;
+					retval = (RTStackable) new RTHalt();
+				} else if (iIndex < 0) {
+						ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
+						RTMessage.printMiniStackStatus();
+						retval = (RTStackable) new RTHalt();
 				} else {
 					retval = intToObjectMap.get(Integer.valueOf(iIndex));
 				}
@@ -324,7 +329,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		}
 		public RTIntegerObject indexOfLastRolePlayer(final String roleName) {
 			final Map<Integer,RTObject> roleVecElements = roleArrayPlayers_.get(roleName);
-			final RTIntegerObject retval = new RTIntegerObject(roleVecElements.size());
+			final RTIntegerObject retval = new RTIntegerObject(roleVecElements.size() - 1);
 			return retval;
 		}
 		
