@@ -963,6 +963,7 @@ public abstract class RTExpression extends RTCode {
 				}
 				System.err.format("popping stack: type is %s\n", topOfStack.getClass().getSimpleName());
 			}
+			System.err.println();
 		}
 
 
@@ -4177,8 +4178,12 @@ public abstract class RTExpression extends RTCode {
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
 			final RTIntegerObject theIndex = contextInfo.indexOfRolePlayer(roleName_, self);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
-			return nextCode_;
+			if (null == theIndex) {
+				return new RTHalt();
+			} else {
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
+				return nextCode_;
+			}
 		}
 		
 		final private String roleName_;
@@ -4196,8 +4201,13 @@ public abstract class RTExpression extends RTCode {
 			final RTContextInfo contextInfo = (RTContextInfo) rawContextInfo;
 			
 			final RTIntegerObject theIndex = contextInfo.indexOfLastRolePlayer(roleName_);
-			RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
-			return nextCode_;
+			
+			if (null == theIndex) {
+				return new RTHalt();
+			} else {
+				RunTimeEnvironment.runTimeEnvironment_.pushStack(theIndex);
+				return nextCode_;
+			}
 		}
 		
 		final private String roleName_;

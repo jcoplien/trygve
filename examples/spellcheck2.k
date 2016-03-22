@@ -114,7 +114,7 @@ context SpellCheck {
 
    role [] Words {
       public void check() {
-          Words[lastIndex-1].review()
+          Words[lastIndex].review()
       }
 
       public void replaceWith(String correction) {

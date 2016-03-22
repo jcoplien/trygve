@@ -318,11 +318,18 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		public RTIntegerObject indexOfRolePlayer(final String roleName, final RTObject rolePlayer) {
 			RTIntegerObject retval = new RTIntegerObject(-1);
 			final Map<Integer,RTObject> roleVecElements = roleArrayPlayers_.get(roleName);
-			for (Map.Entry<Integer, RTObject> aRole : roleVecElements.entrySet()) {
-				final RTObject potentialRolePlayer = aRole.getValue();
-				if (potentialRolePlayer == rolePlayer) {
-					retval = new RTIntegerObject(aRole.getKey().intValue());
-					break;
+			if (null == roleVecElements) {
+				retval = null;
+				ErrorLogger.error(ErrorType.Runtime, "Undefined behavior: attempted use of unbound Role vector `",
+						roleName, "'.", "");
+				RTMessage.printMiniStackStatus();
+			} else {
+				for (Map.Entry<Integer, RTObject> aRole : roleVecElements.entrySet()) {
+					final RTObject potentialRolePlayer = aRole.getValue();
+					if (potentialRolePlayer == rolePlayer) {
+						retval = new RTIntegerObject(aRole.getKey().intValue());
+						break;
+					}
 				}
 			}
 			return retval;
