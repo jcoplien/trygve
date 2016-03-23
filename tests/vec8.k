@@ -1,0 +1,19 @@
+context C {
+    role [] rolevector { void foo() {int theIndex = 0} }
+    public C(Object o) {
+       // rolevector = o
+   }
+}
+
+{
+   Object roleplayer = new Object();
+   C c = new C(roleplayer);
+   String [] ls = new String[3];
+   // for (String s : ls) System.out.format("%s\n", s)
+   for (String s : ls) System.out.print(s)
+}
+
+/* GOLD:
+___________________________________________________________
+line 0: Runtime: `s' has been bound to an uninitialized object.
+*/

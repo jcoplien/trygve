@@ -1826,7 +1826,11 @@ public abstract class RTExpression extends RTCode {
 							assert lhs_ instanceof RTRoleIdentifier;
 							this.processRoleArrayBinding2b((RTListObject)aRhs);
 						} else {
-							assert false;
+							ErrorLogger.error(ErrorType.Runtime, lineNumber(),
+									"Argument `", rhs.getText(), "' is not of an iterable type (List or vector) suitable to playing Role `" +
+											((RTRoleIdentifier)lhs_).name(),
+											"'.");
+							return new RTHalt();
 						}
 					} else {
 						this.processRoleOrStagePropBinding(rhs);
@@ -2983,12 +2987,20 @@ public abstract class RTExpression extends RTCode {
 				if (null == scope) {
 					ErrorLogger.error(ErrorType.Internal, 0, "INTERNAL: Cannot find loop variable ",
 							iterationIdentifierName, ".", "");
+					RTMessage.printMiniStackStatus();
 					
 					// Halt the machine
-					return null;
-				} else {
+					return new RTHalt();
+				} else if (null != valueFromIteration) {
 					scope.setObject(iterationIdentifierName, valueFromIteration);
 					return body_;
+				} else {
+					ErrorLogger.error(ErrorType.Internal, 0, "Runtime: `",
+							iterationIdentifierName, "' has been bound to an uninitialized object.", "");
+					RTMessage.printMiniStackStatus();
+					
+					// Halt the machine
+					return new RTHalt();
 				}
 			}
 			

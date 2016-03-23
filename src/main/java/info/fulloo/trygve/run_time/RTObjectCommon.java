@@ -1180,6 +1180,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		return retval;
 	}
+	@Override public String getText() {
+		return "<object of type " + classOrContext_.name() + ">";
+	}
 	
 	private final RTType classOrContext_;
 	protected final Map<String, RTObject> objectMembers_;
