@@ -63,6 +63,9 @@ public class SimpleList {
 		rep_[0] = o;
 		numElements_++;
 	}
+	public void replaceFirstWith(final Object o) {
+		rep_[0] = o;
+	}
 	public void remove(Object o) {
 		boolean removed = false;
 		for (int i = 0; i < numElements_; i++) {

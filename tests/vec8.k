@@ -10,10 +10,11 @@ context C {
    C c = new C(roleplayer);
    String [] ls = new String[3];
    // for (String s : ls) System.out.format("%s\n", s)
-   for (String s : ls) System.out.print(s)
+   for (String s : ls) System.out.print(s);
+   System.out.println()
 }
 
 /* GOLD:
 ___________________________________________________________
-line 0: Runtime: `s' has been bound to an uninitialized object.
+<null><null><null>
 */

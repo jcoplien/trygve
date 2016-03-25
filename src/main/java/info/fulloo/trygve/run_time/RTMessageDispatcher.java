@@ -592,7 +592,6 @@ public abstract class RTMessageDispatcher {
 					// final RTRole theRole = context.getRole(roleName);
 					if (null == theRole) {
 						final RTStageProp theStageProp = context.getStagePropDecl(roleName);
-						// final RTStageProp theStageProp = context.getStageProp(roleName);
 						if (null != theStageProp) {
 							methodDecl = theStageProp.lookupMethod(methodSelectorName_, actualParameters_);
 						}

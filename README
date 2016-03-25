@@ -1,0 +1,2 @@
+gradlew build — builds binary in build/distributions
+gradlew antlr - update the antlr builds

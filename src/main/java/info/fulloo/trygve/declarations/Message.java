@@ -78,6 +78,17 @@ public class Message {
 		}
 	}
 	
+	public void replaceActualThisParameter(final Expression objectForWhichMethodIsInvoked) {
+		final Type type = objectForWhichMethodIsInvoked.type();
+		if (null != type) {		// error stumble check
+			if (type.name().equals("Class")) {
+				assert false;	// this is a leftover from addActualThisParameter, shouldn't happen
+			} else {
+				argumentList_.replaceFirstActualParameter(objectForWhichMethodIsInvoked);
+			}
+		}
+	}
+	
 	public void setArgumentList(final ActualArgumentList argumentList) {
 		argumentList_ = argumentList;
 	}

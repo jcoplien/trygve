@@ -80,6 +80,8 @@ public class TestRunner {
 		"basectortest.k",
 		"rolevec1.k",
 		"rolevec2.k",
+		"badrole.k",
+		"badrole2.k",
 		"vec8.k",
 		"access1.k",
 		"roleclass1.k",

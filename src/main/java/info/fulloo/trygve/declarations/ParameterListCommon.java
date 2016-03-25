@@ -60,6 +60,10 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 		containsVarargs_ |= typeOf(parameter) instanceof VarargsType;
 		parameters_.insertAtStart(parameter);
 	}
+	public void replaceFirstParameter(final Object parameter) {
+		containsVarargs_ |= typeOf(parameter) instanceof VarargsType;
+		parameters_.replaceFirstWith(parameter);
+	}
 	public void addArgument(final Object parameter) {
 		final Type type = typeOf(parameter);
 		containsVarargs_ |= type instanceof VarargsType;

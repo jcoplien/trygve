@@ -104,6 +104,9 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 	public void addFirstActualParameter(final Expression e) {
 		insertAtStart(e);
 	}
+	public void replaceFirstActualParameter(final Expression e) {
+		this.replaceFirstParameter(e);
+	}
 	@Override public Type typeOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).type();
 	}

@@ -141,7 +141,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			// Note that this shouldn't affect blocked reads...
 			final RTObject retval = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
-			assert oldEventArg instanceof RTEventObject;
+			if (oldEventArg instanceof RTEventObject == false) {
+				assert oldEventArg instanceof RTEventObject;
+			}
 			final int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 
 			if (postStackDepth != preStackDepth) {
@@ -262,20 +264,25 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		// These constants need to be coordinated only with stuff in the
 		// setup and postSetupInitialization methods in PanelClass.java
 		
+		int startingStackSize = 0;
+		
 		switch (e.id) {
 		  case Event.KEY_PRESS:
 		  case Event.KEY_RELEASE:
-			  this.handleEventProgrammatically(e);
-			  return true;
+			startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			this.handleEventProgrammatically(e);
+			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
+			return true;
 		  case Event.MOUSE_DRAG:
 		  case Event.MOUSE_DOWN:
 		  case Event.MOUSE_UP:
+			startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			this.handleEventProgrammatically(e);
-		    // repaint();
 			final Graphics g = this.getGraphics();
 			if (null != g) {
 				paint(g);
 			}
+			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
 		    return true;
 		  case Event.WINDOW_DESTROY:
 		    System.exit(0);

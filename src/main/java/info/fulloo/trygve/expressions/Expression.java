@@ -202,7 +202,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				final MethodInvocationEnvironmentClass targetMethodClass,
 				final boolean isPolymorphic) {
 			super(message.selectorName(), type, message.enclosingMegaType());
-
 			object_ = object;
 			message_ = message;
 			lineNumber_ = lineNumber;
@@ -802,6 +801,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return roleNameInvocation_.lineNumber();
+		}
+		@Override public String getText() {
+			return roleNameInvocation_.getText() + "[" + indexExpr_.getText() + "]";
 		}
 		
 		private final Expression indexExpr_;

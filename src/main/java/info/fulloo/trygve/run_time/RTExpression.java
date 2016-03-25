@@ -2425,6 +2425,14 @@ public abstract class RTExpression extends RTCode {
 			final int size = (int)sizeExpr.intValue();
 			
 			final RTArrayObject newArrayObjectToPush = new RTArrayObject(size, rTType_);
+			
+			// Set all slots to the value null
+			final RTObject slotInitializer = new RTNullObject();
+			for (int i = 0; i < size; i++) {
+				final RTIntegerObject theIndexObject = new RTIntegerObject(i);
+				newArrayObjectToPush.setObject(theIndexObject, slotInitializer);
+			}
+			
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(newArrayObjectToPush);
 			setLastExpressionResult(newArrayObjectToPush, lineNumber_);
 			sizeExpr.decrementReferenceCount();

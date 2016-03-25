@@ -4706,7 +4706,7 @@ public class Pass1Listener extends Pass0Listener {
 				message.setReturnType(type);
 			}
 		}
-		
+
 		final MessageExpression retval = new MessageExpression(object, message, type, ctxGetStart.getLine(), isStatic,
 				originMethodClass, targetMethodClass, isPolymorphic);
 
@@ -5041,8 +5041,8 @@ public class Pass1Listener extends Pass0Listener {
 								new LastIndexExpression(currentRole_, currentContext_);
 				} else {
 					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
-							"Symbol `", idName, "' may be used only within a Role vector method. The role ",
-							currentRole_.name(), " is a scalar.", "");
+							"Symbol `", idName, "' may be used only within a Role vector method. The Role ",
+							currentRole_.name(), " is a not a vector.", "");
 				}
 			}
 		} else if (null != objdecl) {

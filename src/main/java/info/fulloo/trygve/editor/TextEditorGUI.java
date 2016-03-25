@@ -57,7 +57,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.6.15";
+    final String TrygveVersion = "1.6.16";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -264,14 +264,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        openFileButton.setText("Open File");
+        openFileButton.setText("Open File ➜");
         openFileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openFileButtonActionPerformed(evt);
             }
         });
         
-        saveFileButton.setText("Save File");
+        saveFileButton.setText("⬅︎ Save File");
         saveFileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveFileButtonActionPerformed(evt);
