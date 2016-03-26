@@ -41,9 +41,9 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
-import info.fulloo.trygve.expressions.Expression.NullExpression;
+import info.fulloo.trygve.expressions.Expression.ErrorExpression;
 import info.fulloo.trygve.parser.KantParser.Class_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Method_declContext;
 import info.fulloo.trygve.parser.KantParser.Method_decl_hookContext;
@@ -69,7 +69,7 @@ public class Pass3Listener extends Pass2Listener {
 		if (null != ctx.expr()) {
 			expression = parsingData_.popExpression();
 		} else {
-			expression = new NullExpression();
+			expression = new ErrorExpression(null);
 		}
 		assert null != expression;
 		parsingData_.pushExpression(expression);
@@ -111,26 +111,28 @@ public class Pass3Listener extends Pass2Listener {
 		assert null == methodDecl || methodDecl instanceof MethodDeclaration;
 		
 		if (null == methodDecl) {
-			expressionReturned = new NullExpression();
-			ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
+			expressionReturned = new ErrorExpression(null);
+			ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
 		} else {
 			if (methodDecl.returnType() == null || methodDecl.returnType().name().equals("void")) {
 				if (null == expressionReturned || expressionReturned.type().name().equals("void")) {
 					;
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(), "Return expression `", expressionReturned.getText(), "' of type ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Return expression `", expressionReturned.getText(), "' of type ",
 							expressionReturned.type().getText(), " is incompatible with method that returns no value.", "");
-					expressionReturned = new NullExpression();
+					expressionReturned = new ErrorExpression(null);
 				}
 			} else if (methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
 				;
 			} else {
-				ErrorLogger.error(ErrorType.Fatal, ctxGetStart.getLine(),
-						"Return expression `" + expressionReturned.getText(),
-						"`' of type `", expressionReturned.type().getText(),
-						"' is not compatible with declared return type `",
-						methodDecl.returnType().getText(), "'.");
-				expressionReturned = new NullExpression();
+				if (expressionReturned.isntError()) {
+					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+							"Return expression `" + expressionReturned.getText(),
+							"`' of type `", expressionReturned.type().getText(),
+							"' is not compatible with declared return type `",
+							methodDecl.returnType().getText(), "'.");
+					expressionReturned = new ErrorExpression(expressionReturned);
+				}
 			}
 		}
 		return expressionReturned;
@@ -169,8 +171,8 @@ public class Pass3Listener extends Pass2Listener {
 	}
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { }
 	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) { }
-	@Override public void errorHook5p1(final ErrorType errorType, int i, final String s1, final String s2, final String s3, final String s4) { }
-	@Override public void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
-	@Override public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) { }
-	@Override public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
+	@Override public void errorHook5p1(final ErrorIncidenceType errorType, int i, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
+	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
 }

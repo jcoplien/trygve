@@ -58,12 +58,14 @@ import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
+import info.fulloo.trygve.declarations.Type.ErrorType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
+import info.fulloo.trygve.expressions.Expression.ErrorExpression;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
@@ -192,7 +194,7 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != returnType) {
 			final String returnTypeName = returnType.getText();
 			if (null == currentScope_.lookupTypeDeclarationRecursive(returnTypeName)) {
-				errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "' not declared for `",
+				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "' not declared for `",
 						currentMethod.name(), "'.", "");
 			} else {
 				currentMethod.setReturnType(returnType);
@@ -205,7 +207,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 					; // then O.K. - constructor
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "'.", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "'.", "");
 				}
 			} else if (otherAssociatedDeclaration instanceof ClassDeclaration) {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
@@ -216,20 +218,20 @@ public class Pass2Listener extends Pass1Listener {
 						if (currentMethod.name().equals(templateDeclaration.name())) {
 							// o.k. - constructors on templates don't include parameter names
 						} else {
-							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
 						}
 					} else {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
 					}
 				}
 			} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
 				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 					; // then O.K. - constructor
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
 				}
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
 			}
 		}
 		// +++++++++++++++++++++++++
@@ -263,7 +265,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != baseClassVersionOfMethod) {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
-						errorHook6p2(ErrorType.Fatal, lineNumber,
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 								"Derived class declaration of `", currentMethod.signature().getText(),
 								"' must have same access qualifier as that of declaration in base class `",
 								baseClass.name(), "'.", "");
@@ -397,10 +399,10 @@ public class Pass2Listener extends Pass1Listener {
 			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
 		} else if (baseType instanceof BuiltInType && baseType.name().equals("void")) {
 			// Stumbling error
-			expression = new NullExpression();
+			expression = new ErrorExpression(rawArrayBase);
 		} else if (baseType instanceof BuiltInType && baseType.name().equals("Null")) {
 			// Stumbling error
-			expression = new NullExpression();
+			expression = new ErrorExpression(rawArrayBase);
 		} else {
 			assert false;
 		}
@@ -414,22 +416,22 @@ public class Pass2Listener extends Pass1Listener {
 			if (executionContext instanceof Method_declContext) {
 				break;
 			} else if (executionContext instanceof Stageprop_bodyContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Role_bodyContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Stageprop_declContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Role_declContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Class_bodyContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Class scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Class scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Type_declarationContext) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in a global program element scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in a global program element scope: it must be in a method", "", "", "");
 				break;
 			}
 			executionContext = executionContext.parent;
@@ -443,8 +445,9 @@ public class Pass2Listener extends Pass1Listener {
 		final Type leftExprType = leftExpr.type(), rightExprType = rightExpr.type();
 		final Type resultType = leftExprType;
 
-		if (resultType.canBeConvertedFrom(rightExpr.type()) == false) {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Invalid operands to `" +
+		if (resultType.canBeConvertedFrom(rightExpr.type()) == false && leftExpr.isntError() && rightExpr.isntError()
+				&& leftExpr.type().isntError() && rightExpr.type().isntError()) {
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Invalid operands to `" +
 					"", operationAsString, "' on type ", leftExpr.type().name(),
 					" with operand of type ", rightExpr.type().name());
 		}
@@ -460,8 +463,8 @@ public class Pass2Listener extends Pass1Listener {
 			mdecl = enclosedScope.lookupMethodDeclarationRecursive(operationAsString, argList, false);
 			if (null == mdecl) {
 				mdecl = enclosedScope.lookupMethodDeclarationIgnoringRoleStuff(operationAsString, argList);
-				if (null == mdecl) {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "No such operation `", operationAsString, "' on type `",
+				if (null == mdecl && rightExpr.isntError() && rightExpr.type().isntError() && resultType.isntError()) {
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "No such operation `", operationAsString, "' on type `",
 							resultType.name(), "' for argument `" + rightExpr.type().name(), "'.");
 				}
 			}
@@ -480,8 +483,8 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (leftExprType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rightExprType) &&
 				rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
 			;	// o.k.
-		} else {
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type `",
+		} else if (rightExpr.isntError() && resultType.isntError() && rightExpr.type().isntError()){
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type `",
 					resultType.name(), "' for argument `", rightExpr.type().name() + "'.");
 		}
 	}
@@ -514,7 +517,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == odecl) {
 				final MethodDeclaration javaId2 = qualifier.type().enclosedScope().lookupMethodDeclarationRecursive(javaIdString, null, true);
 				if (null == javaId2) {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Identifier `", javaIdString, "' not declared for object `", qualifier.name(), "'.", "");
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Identifier `", javaIdString, "' not declared for object `", qualifier.name(), "'.", "");
 					type = StaticScope.globalScope().lookupTypeDeclaration("void");
 				} else {
 					type = javaId2.returnType();
@@ -550,14 +553,14 @@ public class Pass2Listener extends Pass1Listener {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor
 					if (null == constructor) {
-						errorHook5p2(ErrorType.Fatal, lineNumber, "No matching constructor on class `", className, "' for `new' invocation", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "No matching constructor on class `", className, "' for `new' invocation", "");
 					}
 				}
 				
 				if (null != constructor) {
 					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
 					if (isAccessible == false) {
-						errorHook6p2(ErrorType.Fatal, lineNumber,
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 								"Cannot access constructor `", constructor.name(),
 								"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 					}
@@ -615,7 +618,7 @@ public class Pass2Listener extends Pass1Listener {
 						message.argumentList(), "this", true);
 				if (null != testDecl) {
 					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-					errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
 							"NONCOMPLIANT: Enacting enclosed Context script `", message.selectorName() + message.argumentList().selflessGetText(),
 							"' from within `" + nearestEnclosingMegaType.name() + "." + currentMethodScope.associatedDeclaration().name(),
 							"'.");
@@ -645,7 +648,7 @@ public class Pass2Listener extends Pass1Listener {
 				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
 						message, roleDecl);
 				if (null != signatureInRequiresSection) {
-					errorHook5p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
 							"NONCOMPLIANT: Trying to enact object script `", message.selectorName() + message.argumentList().selflessGetText(),
 							"' without using the interface of the Role it is playing: `" + roleDecl.name(),
 							"'.");
@@ -670,12 +673,12 @@ public class Pass2Listener extends Pass1Listener {
 					final Object unused = parsingData_.popRawExpression();
 					
 					// Come in with a suitable substitute
-					object = new NullExpression();
+					object = new ErrorExpression(null);
 				} else {
 					object = parsingData_.popExpression();
 				}
 			} else {
-				return null;	// get out
+				return new ErrorExpression(null);	// get out
 			}
 		} else if (ctx_builtin_typeName != null) {
 			// e.g. String.join
@@ -687,7 +690,7 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (null != nearestEnclosingMegaType) {
 			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
 		} else {
-			object = new NullExpression();
+			object = new ErrorExpression(null);
 		}
 		object.setResultIsConsumed(true);
 		
@@ -757,14 +760,14 @@ public class Pass2Listener extends Pass1Listener {
 			} else {
 				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart.getLine());
 				if (accessOK == false) {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Cannot access method `", methodDeclaration.name(),
 							"' with `", methodDeclaration.accessQualifier().asString(), "' access qualifier.", "");
 				}
 			}
 		} else {
 			// Stumble elegantly
-			retval = new NullExpression();
+			retval = new ErrorExpression(object);
 		}
 		
 		return retval;
@@ -786,11 +789,11 @@ public class Pass2Listener extends Pass1Listener {
 		Message message = parsingData_.popMessage();
 				
 		if (null == message) {
-			return new NullExpression();		// yuk. refactor.
+			return new ErrorExpression(object);		// yuk. refactor.
 		}
 		
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
 		} else if (null != object) {
 			// For future reference, we don't want to do this if the
@@ -824,7 +827,7 @@ public class Pass2Listener extends Pass1Listener {
 					message.selectorName(), message.argumentList(), false, /*parameterToIgnore*/ null);
 			}
 			if (null == methodDeclaration) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Cannot find declaration of ", object.name() + ".", message.selectorName(),
 						".");
 			} else {
@@ -859,7 +862,7 @@ public class Pass2Listener extends Pass1Listener {
 							// as holds this method
 							final String objectTypePathName = object.type().pathName();
 							if (nearestEnclosingMegaType.pathName().equals(objectTypePathName) == false) {
-								errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+								errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 										"Trying to access method `", message.selectorName(), "' of another Role (`",
 										object.name(), "') with indexing the Role vector to yield a Role-player.", "");
 							} else {
@@ -885,7 +888,7 @@ public class Pass2Listener extends Pass1Listener {
 					} else {
 						// Then this is trying to invoke a Role vector method
 						// without specifying the individual vector method
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Trying to access a Role method `", message.selectorName(), "' on the vector ID `", object.name() + "'.");
 					}
 				}
@@ -895,7 +898,7 @@ public class Pass2Listener extends Pass1Listener {
 						message, roleDecl);
 				if (null != signatureInRequiresSection) {
 					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Context script `", currentMethodScope.associatedDeclaration().name(),
 							"' may enact only Role scripts. Script `",
 							message.selectorName() + message.argumentList().selflessGetText(),
@@ -996,10 +999,10 @@ public class Pass2Listener extends Pass1Listener {
 								null;
 					if (null == methodDeclaration) {
 						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
 								message.getText(),
-								"' not declared in class ", classObjectType.name());
-						return null;		// punt
+								"' not declared in class `", classObjectType.name() + "'.");
+						return new ErrorExpression(null);		// punt
 					} else {
 						methodSignature = methodDeclaration.signature();
 					}
@@ -1027,8 +1030,9 @@ public class Pass2Listener extends Pass1Listener {
 							null;
 				if (null == methodDeclaration) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", message.getText(), "' not declared in class ", classObjectType.name());
-					return null;		// punt
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", message.getText(),
+							"' not declared in class `", classObjectType.name() + "'.");
+					return new ErrorExpression(null);		// punt
 				} else {
 					methodSignature = methodDeclaration.signature();
 				}
@@ -1044,7 +1048,8 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == methodSignature) {
 				// Mainly for error recovery (bad argument to method / method not declared)
 				final String methodSelectorName = message.selectorName();
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName, "' not declared in interface ", classObjectType.name());
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
+						"' not declared in interface ", classObjectType.name());
 			} else {
 				isOKMethodSignature = true;
 			}
@@ -1068,14 +1073,16 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		
 		if (objectType.name().equals(message.selectorName())) {
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
 		}
 		
 		if (null == methodDeclaration && isOKMethodSignature == false) {
 			final String methodSelectorName = message.selectorName();
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
-					methodSelectorName + message.argumentList().selflessGetText(),
-					"' not declared in class ", "classname (dubious error — see other messages)");
+			if (message.argumentList().isntError()) {
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+						methodSelectorName + message.argumentList().selflessGetText(),
+						"' not declared in class ", "classname (dubious error — see other messages)");
+			}
 		}
 		
 		assert null != returnType;
@@ -1139,14 +1146,14 @@ public class Pass2Listener extends Pass1Listener {
 				  numberOfActualParameters = (null == actuals)? 0: actuals.count();
 		if (null == actuals) {
 			if (numberOfActualParameters != 0) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
 				int lineNumber = mdecl.lineNumber();
 				if (0 == lineNumber) {
 					// e.g., for a built-in type
 					lineNumber = ctxGetStart.getLine();
 				}
-				errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 			}
 		} else {
 			// Strip off all the stuff up front
@@ -1212,7 +1219,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (false == parametersMatch) {
 					final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 					final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
 							" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
 				}
 			}
@@ -1220,7 +1227,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (formalParameterIndex != numberOfFormalParameters ||
 						actualParameterIndex != numberOfActualParameters) {
 				if (null != mdecl) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
 				}
 					
@@ -1230,7 +1237,7 @@ public class Pass2Listener extends Pass1Listener {
 					lineNumber = ctxGetStart.getLine();
 				}
 				if (null != classdecl && null != mdecl) {
-					errorHook5p2(ErrorType.Fatal, lineNumber, "\tScript ", mdecl.name(), " is declared in ", classdecl.name());
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tScript ", mdecl.name(), " is declared in ", classdecl.name());
 				}	
 			}
 		}
@@ -1245,13 +1252,13 @@ public class Pass2Listener extends Pass1Listener {
 		if (numberOfFormalParameters != numberOfActualParameters) {
 			if (formals.containsVarargs()) {
 				if (numberOfActualParameters < numberOfFormalParameters) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
 							"' must be at least as many as in declaration of the script (", String.format("%d", numberOfFormalParameters-1) + ").");
 				} else {
 					;	// O.K.
 				}
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
 				int lineNumber = mdecl.lineNumber();
 				if (0 == lineNumber) {
@@ -1259,7 +1266,7 @@ public class Pass2Listener extends Pass1Listener {
 					lineNumber = ctxGetStart.getLine();
 				}
 				if (null != classdecl) {
-					errorHook5p2(ErrorType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 				}
 			}
 		} else {
@@ -1287,7 +1294,7 @@ public class Pass2Listener extends Pass1Listener {
 					} else {
 						final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 						final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
 								" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
 					}
 				}	
@@ -1350,7 +1357,7 @@ public class Pass2Listener extends Pass1Listener {
 			
 			// We don't want Role scope to be able to access symbols at
 			// Context scope. Do a specific check for that and issue
-			// a noncompliance warning
+			// a non-compliance warning
 			
 			final StaticScope currentProcScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			if (null != currentProcScope) {
@@ -1364,7 +1371,7 @@ public class Pass2Listener extends Pass1Listener {
 					if (symbolsEnclosingMegaType instanceof ContextDeclaration) {
 						// Then there is code within the Role method accessing a symbol
 						// in the surrounding Context. Maybe a no-no.
-						errorHook6p2(ErrorType.Noncompliant, ctxGetStart.getLine(),
+						errorHook6p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
 								"NONCOMPLIANT: Attempt to access Context member `", idText,
 								"' from within scope of Role script `",
 								enclosingMegaTypeDeclaration.name() + "." + currentMethod.name(),
@@ -1416,17 +1423,18 @@ public class Pass2Listener extends Pass1Listener {
 							new IndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration):
 								new LastIndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
 				} else {
-					retval = new NullExpression();
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
-							"The identifier `index' may be invoked only from a method of an element of a Role vector", "", "", "");
+					retval = new ErrorExpression(null);
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+							"The identifier `", idText, "' may be invoked only from a method of an element of a Role vector.", "");
 				}
 			} else if (associatedDeclaration == currentContext_) {
 				if (null != possibleContextScope) {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleOrStagePropDeclaration(idText);
 					if (null == roleDecl) {
-						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
 								"' is not declared in scope `", currentScope_.name(), "'.", "");
-						type = StaticScope.globalScope().lookupTypeDeclaration("void");
+						type = new ErrorType();
+						retval = new ErrorExpression(null);
 					} else {
 						// it's O.K. - maybe. Can be used as an L-value in an assignment. R-value, too, I guess
 						type = possibleContextScope.lookupTypeDeclaration(idText);
@@ -1434,10 +1442,11 @@ public class Pass2Listener extends Pass1Listener {
 					}
 					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 				} else {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
 							"' is not declared in scope `", currentScope_.name(), "'.", "");
-					type = StaticScope.globalScope().lookupTypeDeclaration("void");
+					type = new ErrorType();
 					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
+					retval = new ErrorExpression(retval);
 				}
 			} else {
 				// Could be a base class reference
@@ -1445,9 +1454,10 @@ public class Pass2Listener extends Pass1Listener {
 				
 				// That was about the last chance
 				if (null == retval) {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Object `", idText,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText,
 							"' is not declared in scope `", currentScope_.name(), "'.", "");
-					type = StaticScope.globalScope().lookupTypeDeclaration("void");
+					type = new ErrorType();
+					retval = new ErrorExpression(null);
 				}
 			}
 		}
@@ -1466,10 +1476,10 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != baseClassInstance) {
 					// Hmmm. It also exists in the base class
 					final String lastPartOfMessage = baseClassDeclaration.name() + "'.";
-					errorHook6p2(ErrorType.Fatal, lineNumber, "Object declaration `", idName,
+					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Object declaration `", idName,
 							"' appears both in class `",
 							associatedDeclaration.name(), "' and in base class `", lastPartOfMessage);
-					errorHook5p2(ErrorType.Fatal, lineNumber, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
 							"", "", "");
 				}
 			}
@@ -1503,13 +1513,13 @@ public class Pass2Listener extends Pass1Listener {
 						self.setResultIsConsumed(true);
 						retval = new QualifiedIdentifierExpression(self, idName, type);
 					} else {
-						errorHook6p2(ErrorType.Fatal, lineNumber, "Symbol `", idName,
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Symbol `", idName,
 								"' is not public and so is not accessible to `", associatedDeclaration.name(), "'.", "");
 					}
 				} else {
 					final ClassDeclaration nextBaseClassDeclaration = baseClassDeclaration.baseClassDeclaration();
 					if (null == nextBaseClassDeclaration) {
-						errorHook5p2(ErrorType.Fatal, lineNumber, "Symbol `", idName, "' cannot be found.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Symbol `", idName, "' cannot be found.", "");
 					} else {
 						// Recur
 						retval = this.lookToBaseClassForHelp(idName, lineNumber, nextBaseClassDeclaration.enclosedScope());
@@ -1586,16 +1596,16 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final int lineNumber) {
 		newDeclaration.doIImplementImplementsList(this, lineNumber);
 	}
-	@Override protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override protected void errorHook5p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* Nothing */
 	}
-	@Override protected void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	@Override protected void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* Nothing */
 	}	
-	@Override public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
 	}
-	@Override public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
 	@Override protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
@@ -1626,7 +1636,7 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			// We can have no idea where the array base is "pointing," so we have
 			// to deny such expressions
-			errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 					"Modification of array ", expression.getText(),
 					" from within const method ",
 					enclosingMethod.name(), ", which violates the const modifier of the latter.", "");
@@ -1645,20 +1655,20 @@ public class Pass2Listener extends Pass1Listener {
 			final Declaration idDecl = currentScope_.lookupObjectDeclarationRecursiveWithinMethod(assignee.name());
 			if (null == idDecl) {
 				// Then it's not on the activation record
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Assignment statement violates constness of declaration of ",
 						enclosingMethod.name(), "", "");
 			}
 		} else if (assignee instanceof QualifiedIdentifierExpression) {
 			// We're assigning to something within "qualifier." That doesn't immediately
 			// disqualify it - could be a locally created object.
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 					"Assignment statement modifies a member object that could be shared; ",
 					"that violates the constness of ",
 					enclosingMethod.name(), "");
 		} else if (assignee instanceof QualifiedClassMemberExpression) {
 			// Certainly off-limits
-			errorHook5p2(ErrorType.Warning, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart.getLine(),
 					"WARNING: Assignment statement modifies a class member that could be shared; ",
 					"that violates the constness of ",
 					enclosingMethod.name(), "");
@@ -1669,7 +1679,7 @@ public class Pass2Listener extends Pass1Listener {
 			checkLhsForAssignmentViolatingConstness(arrayExpression.originalExpression(), enclosingMethod, ctxGetStart);
 		} else if (assignee instanceof ArrayIndexExpression) {
 			// Can't know without full dataflow analysis
-			errorHook5p2(ErrorType.Warning, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart.getLine(),
 					"WARNING: Assignment statement modifies an array member that could be shared; ",
 					"that violates the constness of `",
 					enclosingMethod.name(), "'.");
@@ -1682,7 +1692,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (signature.hasConstModifier()) {
 				; // it's O.K. - this is a const method
 			} else {
-				errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Call of non-const method ", signature.name(),
 						" from within const method ",
 						enclosingMethod.name(), ", which violates the const modifier of the latter.", "");

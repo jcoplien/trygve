@@ -48,8 +48,6 @@ line 27: Identifier `i1' declared multiple times (earlier declaration at line 26
 line 31: WARNING: Gratuitous access qualifier `private' ignored.
 line 12: Cannot access method `c1r2f2' with `default' access qualifier.
 line 23: Object `cl1o' is not declared in scope `c1r2f1'.
-line 23: Field `cl1o1' not found as member of void
-line 23: Type mismatch in initialization of `j'.
 line 26: Cannot access expression `cl1o.cl1o1' with `private' access qualifier.
 line 28: Cannot access expression `cl1o.cl1o1' with `private' access qualifier.
 line 39: Cannot access constructor `cl1' with `private' access qualifier.

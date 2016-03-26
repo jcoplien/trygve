@@ -17,7 +17,7 @@ import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass;
@@ -194,7 +194,7 @@ public final class PanelClass {
 		}
 		public RTCode runDetails(final RTObject scope, final GraphicsPanel thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 	}
@@ -210,7 +210,7 @@ public final class PanelClass {
 			try {
 				thePanel.setBackground(color);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.setBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setBackground.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -233,7 +233,7 @@ public final class PanelClass {
 				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
 				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.getBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getBackground.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -256,7 +256,7 @@ public final class PanelClass {
 			try {
 				thePanel.setForeground(color);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.setForeground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setForeground.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -279,7 +279,7 @@ public final class PanelClass {
 				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
 				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.getForeground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getForeground.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -305,7 +305,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawLine(fromX, fromY, toX, toY);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawLine.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawLine.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -328,7 +328,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawRect(fromX, fromY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawRect.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawRect.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -351,7 +351,7 @@ public final class PanelClass {
 			try {
 				thePanel.fillRectangle(fromX, fromY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.fillRect.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.fillRect.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -374,7 +374,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawOval(leftX, topY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawOval.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -397,7 +397,7 @@ public final class PanelClass {
 			try {
 				thePanel.fillOval(leftX, topY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.fillOval.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.fillOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -421,7 +421,7 @@ public final class PanelClass {
 				// remove the String from the container
 				value = thePanel.drawString(x, y, text);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -442,7 +442,7 @@ public final class PanelClass {
 				thePanel.removeAll();
 				thePanel.revalidate();
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.removeAll()", ".", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.removeAll()", ".", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -462,7 +462,7 @@ public final class PanelClass {
 				thePanel.remove(component);
 				thePanel.revalidate();
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.remove(Object)", ".", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.remove(Object)", ".", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -487,7 +487,7 @@ public final class PanelClass {
 				}
 				
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.clear()", ".", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.clear()", ".", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -519,7 +519,7 @@ public final class PanelClass {
 					thePanel.paint(g);
 				}
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -540,7 +540,7 @@ public final class PanelClass {
 				thePanelObject.setObject("panelObject", theGraphicsPanel);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Panel constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -672,7 +672,7 @@ public final class PanelClass {
 			}
 			public RTCode runDetails(final RTObject scope, final RTEventObject theEvent) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 		}

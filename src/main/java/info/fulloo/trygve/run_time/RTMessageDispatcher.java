@@ -38,7 +38,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
@@ -224,7 +224,7 @@ public abstract class RTMessageDispatcher {
 		
 		final Type objectListType = StaticScope.globalScope().lookupTypeDeclaration("List<Object>");
 		if (null == objectListType) {
-			ErrorLogger.error(ErrorType.Internal, "List<Object> lookup failure.", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "List<Object> lookup failure.", "", "", "");
 			assert false;
 		}
 		final Type objectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
@@ -669,14 +669,14 @@ public abstract class RTMessageDispatcher {
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 
 		if (self instanceof RTNullObject) {
-			ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
+			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 					methodSelectorName_, " on a null object", "");
 			RTMessage.printMiniStackStatus();
 			
 			// Halt the machine
 			return null;
 		} else if (null == rTTypeOfSelf) {
-			ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+			ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
 					methodSelectorName_, "' on a null Java object", "");
 			return null;
 			// assert null != rTTypeOfSelf;
@@ -854,7 +854,7 @@ public abstract class RTMessageDispatcher {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
 					if (self instanceof RTContextObject || self instanceof RTRole) {
-						ErrorLogger.error(ErrorType.Internal, "Dispatching error for `",
+						ErrorLogger.error(ErrorIncidenceType.Internal, "Dispatching error for `",
 								methodSelectorName, "'.", "");
 						hasError_ = new RTHalt();
 					}
@@ -948,14 +948,14 @@ public abstract class RTMessageDispatcher {
 				final RTType rTTypeOfSelf = null != self? self.rTType():
 					InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
 							methodSelectorName_, " on a null object", "");
 					RTMessage.printMiniStackStatus();
 					
 					// Halt the machine
 					return null;
 				} else if (null == rTTypeOfSelf) {
-					ErrorLogger.error(ErrorType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+					ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
 							methodSelectorName_, "' on a null Java object", "");
 					return null;
 					// assert null != rTTypeOfSelf;

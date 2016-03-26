@@ -65,7 +65,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.editor.InputStreamClass;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
@@ -674,7 +674,7 @@ public class StaticScope {
 	public void declareContext(final ContextDeclaration decl) {
 		final String contextName = decl.name();
 		if (contextDeclarationDictionary_.containsKey(contextName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of context ", contextName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of context ", contextName, " in ", name());
 		} else {
 			contextDeclarationDictionary_.put(contextName, decl);
 			if (null != parentScope_) parentScope_.checkMegaTypeShadowing(decl);
@@ -699,7 +699,7 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Warning, decl.lineNumber(), "WARNING: Declaration hides ", name, " declaration at line ",
+					ErrorLogger.error(ErrorIncidenceType.Warning, decl.lineNumber(), "WARNING: Declaration hides ", name, " declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
 			}
@@ -728,7 +728,7 @@ public class StaticScope {
 	public void declareRoleOrStageProp(final RoleDeclaration decl) {
 		final String roleOrStagePropName = decl.name();
 		if (roleAndStagePropDeclarationDictionary_.containsKey(roleOrStagePropName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of role ", roleOrStagePropName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of role ", roleOrStagePropName, " in ", name());
 		} else {
 			roleAndStagePropDeclarationDictionary_.put(roleOrStagePropName, decl);
 		}
@@ -775,7 +775,7 @@ public class StaticScope {
 	public void declareClass(final ClassDeclaration decl) {
 		final String className = decl.name();
 		if (classDeclarationDictionary_.containsKey(className)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of class ", className, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of class ", className, " in ", name());
 		} else {
 			classDeclarationDictionary_.put(className, decl);
 		}
@@ -795,7 +795,7 @@ public class StaticScope {
 	public void declareTemplate(final TemplateDeclaration decl) {
 		final String templateName = decl.name();
 		if (templateDeclarationDictionary_.containsKey(templateName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of template ", templateName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of template ", templateName, " in ", name());
 		} else {
 			templateDeclarationDictionary_.put(templateName, decl);
 		}
@@ -854,7 +854,7 @@ public class StaticScope {
 	public void declareInterface(final InterfaceDeclaration decl) {
 		final String interfaceName = decl.name();
 		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of interface ", interfaceName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of interface ", interfaceName, " in ", name());
 		} else {
 			interfaceDeclarationDictionary_.put(interfaceName, decl);
 		}
@@ -869,10 +869,10 @@ public class StaticScope {
 			for (final MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
 				if (null == loggedSignature && null == decl.formalParameterList()) {
-					ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
+					ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
 					break;
 				} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
-					ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
+					ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of method ", methodName, " in ", name());
 					break;
 				}
 			}
@@ -924,7 +924,7 @@ public class StaticScope {
 								else if (typeOfWhichDeclIsAMember instanceof RoleType) rightName = "Role";
 								else if (typeOfWhichDeclIsAMember instanceof ClassType) rightName = "Class";
 								else rightName = "declaration";
-								ErrorLogger.error(ErrorType.Warning,
+								ErrorLogger.error(ErrorIncidenceType.Warning,
 										decl.lineNumber(),
 										"WARNING: Script declaration for `",
 										decl.name(),
@@ -937,7 +937,7 @@ public class StaticScope {
 					}
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Method ", name,
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Method ", name,
 							" hides method of same name at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
@@ -949,10 +949,10 @@ public class StaticScope {
 	public void declareType(final Type typeDecl) {
 		final String typeName = typeDecl.name();
 		if (typeDeclarationDictionary_.containsKey(typeName)) {
-			ErrorLogger.error(ErrorType.Fatal, typeDecl.lineNumber(), "Multiple definitions of type ", typeName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.lineNumber(), "Multiple definitions of type ", typeName, " in ", name());
 		} else {
 			if (this.lookupTypeDeclarationRecursive(typeName) != null) {
-				ErrorLogger.error(ErrorType.Fatal, typeDecl.lineNumber(), "Type declaration of `", typeName, "' might hide declaration in enclosing scope", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.lineNumber(), "Type declaration of `", typeName, "' might hide declaration in enclosing scope", "");
 			} else {
 				typeDeclarationDictionary_.put(typeName, typeDecl);
 			}
@@ -990,7 +990,7 @@ public class StaticScope {
 		final String objectName = decl.name();
 
 		if (objectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
 		} else {
 			reDeclareObject(decl);
 		}
@@ -1006,16 +1006,16 @@ public class StaticScope {
 	public void declareStaticObject(final ObjectDeclaration decl) {
 		final String objectName = decl.name();
 		if (objectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of object ", objectName, " in ", name());
 		} else if (staticObjectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorType.Fatal, "Multiple definitions of object: static ", objectName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of object: static ", objectName, " in ", name());
 		} else {
 			// Make sure that this is a class scope
 			final Declaration associatedDeclaration = this.associatedDeclaration();
 			assert null != associatedDeclaration;
 			
 			if (!(associatedDeclaration instanceof TypeDeclaration)) {
-				ErrorLogger.error(ErrorType.Fatal, 0, "Static member ", objectName, " in ", name(),
+				ErrorLogger.error(ErrorIncidenceType.Fatal, 0, "Static member ", objectName, " in ", name(),
 						" may be declared only in a class, Context or Role", "");
 			} else {
 				final TypeDeclaration typeDeclaration = (TypeDeclaration)associatedDeclaration;
@@ -1045,7 +1045,7 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of ", name,
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of ", name,
 							" may hide declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
@@ -1180,7 +1180,7 @@ public class StaticScope {
 		MethodDeclaration retval = null;
 		
 		if (methodSelector.equals(previousMethodSelector_) && previousArgumentList_.equals(parameterList)) {	// yes, I really mean ==
-			ErrorLogger.error(ErrorType.Fatal, "Method lookup argument type recursion for method `", methodSelector, "':", "");
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Method lookup argument type recursion for method `", methodSelector, "':", "");
 			return null;
 		} else {
 			previousMethodSelector_ = methodSelector;
@@ -1391,7 +1391,7 @@ public class StaticScope {
 			}
 			
 			if (dup) {
-				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
+				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
 					name(), " would create multiple methods of the same name in the same object.", "");
 			} else {
 				super.declareMethod(decl);
@@ -1403,17 +1403,17 @@ public class StaticScope {
 			final MethodDeclaration lookupExistingEntry = this.lookupMethodDeclaration(methodName,
 					decl.formalParameterList(), true);
 			if (null != lookupExistingEntry) {
-				ErrorLogger.error(ErrorType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
+				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
 						name(), " would create multiple methods of the same name in the same object.", "");
 			} else if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
 				for (final MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
+						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
 						break;
 					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
-						ErrorLogger.error(ErrorType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
+						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
 						break;
 					}
 				}

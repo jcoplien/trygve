@@ -32,7 +32,7 @@ import java.util.Scanner;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 
@@ -69,7 +69,7 @@ public class RTScannerObject extends RTObjectCommon implements RTObject {
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 		}
 	}

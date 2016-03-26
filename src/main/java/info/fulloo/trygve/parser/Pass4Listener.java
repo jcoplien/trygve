@@ -30,7 +30,7 @@ import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class Pass4Listener extends Pass3Listener {
@@ -56,7 +56,7 @@ public class Pass4Listener extends Pass3Listener {
 			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart().getLine(),
 					typeNameList);
 			if (null == type) {
-				errorHook5p2(ErrorType.Internal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart().getLine(),
 						"No Type returned from commonTemplateInstantiationHandling: ",
 						"instantiating a type in an expression: `",
 						ctx.getText(),

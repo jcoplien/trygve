@@ -29,7 +29,7 @@ import java.util.Stack;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ReturnExpression;
@@ -81,29 +81,29 @@ public class ReturnStatementAudit {
 		for (final ReturnExpression retExpr : returnExpressions_) {
 			if (null == returnType_) {
 				if (null != retExpr.returnExpression()) {
-					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
 							null == retExpr.type()? "unknown": retExpr.type().name(), " when no return value was expected.", "");
 				}
 			} else if (null == retExpr.type()) {
-				pass_.errorHook5p2(ErrorType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",
+				pass_.errorHook5p2(ErrorIncidenceType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",
 						"Please read nearby error messages carefully.", "", "");
 			} else if (returnType_.canBeConvertedFrom(retExpr.type()) == false) {
 				if (null == retExpr.returnExpression()) {
-					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Return statement with no return type cannot be converted to expected type of ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with no return type cannot be converted to expected type of ",
 							returnType_.getText(), "", "");
 				} else {
-					pass_.errorHook5p2(ErrorType.Fatal, retExpr.lineNumber(), "Return statement with return type of ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with return type of ",
 							retExpr.type().getText(), " cannot be converted to expected type of ",
 							returnType_.getText());
 				}
 			}
 		}
 		if (somethingFollowedReturn_ && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Warning, lineNumber_, "WARNING: Possible missing return statement. ", 
+			pass_.errorHook5p2(ErrorIncidenceType.Warning, lineNumber_, "WARNING: Possible missing return statement. ", 
 					"Do you need to parenthesize the return expression?", "", "");
 		}
 		if (0 == returnExpressions_.size() && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorType.Fatal, lineNumber_, "Missing return statement.", "", "", "");
+			pass_.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber_, "Missing return statement.", "", "", "");
 		}
 	}
 	

@@ -32,7 +32,7 @@ import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
@@ -161,18 +161,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			
 			final RTObject result = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (result instanceof RTStringObject == false) {
-				ErrorLogger.error(ErrorType.Internal, "user-supplied toString() operation led to unexpected type in `", this.getText(), "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "user-supplied toString() operation led to unexpected type in `", this.getText(), "'.", "");
 				assert result instanceof RTStringObject;
 			}
 			retval = ((RTStringObject)result).toString();
 			
 			final int currentStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			if (startingStackSize != currentStackSize) {
-				ErrorLogger.error(ErrorType.Internal, "Stack corruption related to toString() operation and `", this.getText(), "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "Stack corruption related to toString() operation and `", this.getText(), "'.", "");
 				assert startingStackSize == currentStackSize;
 			}
 		} else {
-			ErrorLogger.error(ErrorType.Runtime, "No toString() operation on `", this.getText(), "'.", "");
+			ErrorLogger.error(ErrorIncidenceType.Runtime, "No toString() operation on `", this.getText(), "'.", "");
 		}
 
 		return retval;
@@ -231,7 +231,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 			for (Map.Entry<RTContextObject, List<String>> iter : rolesIAmPlayingInContext_.entrySet()) {
 				final StringBuffer stringBuffer = new StringBuffer();
@@ -245,9 +245,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 					stringBuffer.append(aRoleName);
 				}
 				final String message = stringBuffer.toString();
-				ErrorLogger.error(ErrorType.Fatal, message, ".", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, message, ".", "", "");
 			}
-			ErrorLogger.error(ErrorType.Fatal,
+			ErrorLogger.error(ErrorIncidenceType.Fatal,
 					"Objects may play Role(s) only in one Context at a time (note: this does not apply to Stage Props).",
 					System.getProperty("line.separator") ,
 					"Further execution may exhibit undefined behaviour.", "");

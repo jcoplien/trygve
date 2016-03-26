@@ -225,4 +225,16 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 		}
 		return retval;
 	}
+	
+	@Override public boolean isError() {
+		boolean retval = false;
+		for (int i = 0; i < count(); i++) {
+			final Expression param = parameterAtPosition(i);
+			if (param.isError()) {
+				retval = true;
+				break;
+			}
+		}
+		return retval;
+	}
 }

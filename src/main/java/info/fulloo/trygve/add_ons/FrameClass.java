@@ -13,7 +13,7 @@ import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.run_time.RTCode;
@@ -143,7 +143,7 @@ public final class FrameClass {
 		}
 		public RTCode runDetails(final RTObject scope, final RTFrameObject thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 	}
@@ -162,7 +162,7 @@ public final class FrameClass {
 			try {
 				theFrame.add(name, panel);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.add.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.add.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -185,7 +185,7 @@ public final class FrameClass {
 			try {
 				theFrame.resize(width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.resize.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.resize.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -208,7 +208,7 @@ public final class FrameClass {
 			try {
 				theFrame.resize(width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.setSize.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setSize.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -240,7 +240,7 @@ public final class FrameClass {
 			try {
 				theFrame.setVisible(tf);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame.setVisible.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setVisible.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -261,7 +261,7 @@ public final class FrameClass {
 			try {
 				theFrameObject.ctor1(name.stringValue());
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad call to Frame constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}

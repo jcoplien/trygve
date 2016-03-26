@@ -27,7 +27,7 @@ public class ErrorLogger {
 	public ErrorLogger() {
 		resetCounts();
 	}
-	public static void error(final ErrorType errorType, final String s1, final String s2, final String s3, final String s4) {
+	public static void error(final ErrorIncidenceType errorType, final String s1, final String s2, final String s3, final String s4) {
 		updateCounts(errorType);
 		System.err.print(s1);
 		System.err.print(s2);
@@ -35,14 +35,14 @@ public class ErrorLogger {
 		System.err.print(s4);
 		System.err.println();
 	}
-	public static void error(final ErrorType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4) {
+	public static void error(final ErrorIncidenceType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4) {
 		updateCounts(errorType);
 		System.err.print("line ");
 		System.err.print(lineNumber);
 		System.err.print(": ");
 		ErrorLogger.error(errorType, s1, s2, s3, s4);
 	}
-	public static void error(final ErrorType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	public static void error(final ErrorIncidenceType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		updateCounts(errorType);
 		System.err.print("line ");
 		System.err.print(lineNumber);
@@ -63,7 +63,7 @@ public class ErrorLogger {
 		numberOfRuntimeErrors_ = 0;
 		numberOfUnimplementedErrors_ = 0;
 	}
-	private static void updateCounts(ErrorType errorType) {
+	private static void updateCounts(ErrorIncidenceType errorType) {
 		switch (errorType) {
 		case Warning: numberOfWarnings_++; break;
 		case Fatal: numberOfFatalErrors_++; break;
@@ -75,7 +75,8 @@ public class ErrorLogger {
 		}
 	}
 	public static int numberOfFatalErrors() { return numberOfFatalErrors_ + numberOfInternalErrors_ + numberOfUnimplementedErrors_; }
-	public enum ErrorType { Warning, Fatal, Noncompliant, Internal, Runtime, Unimplemented };
+	public enum ErrorIncidenceType { Warning, Fatal, Noncompliant, Internal, Runtime, Unimplemented };
+	
 	@SuppressWarnings("unused")
 	private static int numberOfFatalErrors_, numberOfWarnings_, numberOfNonCompliances_, numberOfInternalErrors_,
 						numberOfRuntimeErrors_, numberOfUnimplementedErrors_;

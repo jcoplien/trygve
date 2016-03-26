@@ -40,7 +40,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -152,7 +152,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 					if (null != originalMethodDecl) {
 						toPrint = originalMethodDecl.signature().getText();
 					}
-					ErrorLogger.error(ErrorType.Fatal, lineNumber, "Multiple declarations of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "Multiple declarations of `",
 							toPrint + "' in scope `", name(), "'.");
 				}
 			}

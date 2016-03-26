@@ -80,7 +80,7 @@ public abstract class Constant extends Expression {
 		} else if (l > 0 && isDouble(s)) {
 			expression = new DoubleConstant(s);
 		} else if (l == 0) {
-			expression = new NullExpression();
+			expression = new ErrorExpression(null);
 		}
 		return expression;
 	}

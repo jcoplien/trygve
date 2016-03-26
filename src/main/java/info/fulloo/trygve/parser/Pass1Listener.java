@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ErrorDeclaration;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectSubclassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
@@ -69,6 +70,7 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.ContextType;
+import info.fulloo.trygve.declarations.Type.ErrorType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
@@ -76,7 +78,7 @@ import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
@@ -92,6 +94,7 @@ import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
+import info.fulloo.trygve.expressions.Expression.ErrorExpression;
 import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
 import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
@@ -190,9 +193,9 @@ public class Pass1Listener extends Pass0Listener {
 		
 		if (null == ctx.main()) {
 			if (null != ctx.getStop()) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStop().getLine(), "Missing main expression.", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStop().getLine(), "Missing main expression.", "", "", "");
 			} else {
-				errorHook5p2(ErrorType.Fatal, 1, "Missing main expression.", " Did you enter any program at all?", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, 1, "Missing main expression.", " Did you enter any program at all?", "", "");
 			}
 			new Program(null, currentList, templateInstantiationList);	// static singleton
 		} else {
@@ -453,12 +456,12 @@ public class Pass1Listener extends Pass0Listener {
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
 				if ((rawBaseType instanceof ClassType) == false) {
 					// Leave to pass 2
-					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
 							"' is not a declared class type as base of `", name, "'.", "");
 				} else {
 					baseType = (ClassType)rawBaseType;
 					if (baseType.name().equals(name)) {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
 					}
 				}
 			} else {
@@ -539,7 +542,7 @@ public class Pass1Listener extends Pass0Listener {
 		InterfaceDeclaration anInterface = currentScope_.lookupInterfaceDeclarationRecursive(interfaceName);
 		
 		if (null == anInterface) {
-			errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(),
+			errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 					"Interface ", interfaceName, " is not declared.", "", "", "");
 			anInterface = new InterfaceDeclaration(" error", null, ctx.getStart().getLine());
 		}
@@ -570,7 +573,7 @@ public class Pass1Listener extends Pass0Listener {
 		for (int i = 0; i < numberOfActualParameters; i++) {
 			final IdentifierExpression type_name = (IdentifierExpression)parsingData_.popExpression();
 			if (dupMap.containsKey(type_name.name())) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 						"Duplicate template parameter name: ", type_name.name(), "", "");
 				currentTemplateDecl.addTypeParameter(new IdentifierExpression("$error$",
 						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_, ctx.getStart().getLine()),
@@ -804,7 +807,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (null != ctx.access_qualifier()) {
 			final String accessQualifier = ctx.access_qualifier().getText();
 			if (0 != accessQualifier.length()) {
-				errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+				errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
 						ctx.access_qualifier().getText(), "' ignored", ".");
 			}
 		}
@@ -820,7 +823,7 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Stageprop ", stagePropName, " can be declared only in a Context scope - not ", currentScope_.name());
+				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Stageprop ", stagePropName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRole_.enclosedScope();
 		} else {
@@ -860,7 +863,7 @@ public class Pass1Listener extends Pass0Listener {
 					final List<MethodSignature> signatures = iter.getValue();
 					for (final MethodSignature signature : signatures) {
 						if (signature.hasConstModifier() == false) {
-							errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(),
+							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
 									"WARNING: Signatures for functions required by stageprops like ", currentRole_.name(),
 									" should have a const modifier: method ", methodName, " does not.", "");
 						}
@@ -1448,18 +1451,18 @@ public class Pass1Listener extends Pass0Listener {
 		
 		final Declaration associatedDeclaration = currentScope_.associatedDeclaration();
 		if (associatedDeclaration instanceof StagePropDeclaration) {
-			errorHook6p2(ErrorType.Fatal, lineNumber, "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else if (associatedDeclaration instanceof RoleDeclaration) {
-			errorHook6p2(ErrorType.Fatal, lineNumber, "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
 					associatedDeclaration.name(), " are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else {
 			Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			
 			if (null == type) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Type ", typeName, " undefined for declaration", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type ", typeName, " undefined for declaration", "");
 				
 				// Put in some reasonable type to avoid stumbling
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
@@ -1659,7 +1662,7 @@ public class Pass1Listener extends Pass0Listener {
 			// error stumbling null check
 			parsingData_.pushExpression(type);
 		} else {
-			parsingData_.pushExpression(new NullExpression());
+			parsingData_.pushExpression(new ErrorExpression(null));
 		}
 		
 		if (printProductionsDebug) {
@@ -1780,7 +1783,7 @@ public class Pass1Listener extends Pass0Listener {
 				// Error stumbling (undefined method)
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			if (printProductionsDebug) { System.err.println("expr : abelian_expr"); }
 		} else if (null != ctx.boolean_expr()) {
@@ -1807,7 +1810,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			if (printProductionsDebug) { System.err.println("expr : switch_expr"); }
 		} else if (null != ctx.BREAK()) {
@@ -1817,14 +1820,14 @@ public class Pass1Listener extends Pass0Listener {
 				currentBreakableExpression = parsingData_.currentBreakableExpression();
 			}
 			if (null == currentBreakableExpression) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "There is no switch or loop statement to break", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "There is no switch or loop statement to break", "", "", "");
 			} else if (nestingLevelInsideBreakable == -1) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "The break statement is not in the scope of any switch or loop statement", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "The break statement is not in the scope of any switch or loop statement", "", "", "");
 			}
 			if (null != currentBreakableExpression) {
 				expression = new BreakExpression(lineNumber, currentBreakableExpression, nestingLevelInsideBreakable);
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			if (printProductionsDebug) { System.err.print("expr : BREAK (nesting level is "); System.err.print(nestingLevelInsideBreakable); System.err.println(")"); }
 		} else if (null != ctx.CONTINUE()) {
@@ -1832,9 +1835,9 @@ public class Pass1Listener extends Pass0Listener {
 			final Expression currentContinuableExpression = parsingData_.nearestContinuableLoop();
 			assert currentContinuableExpression instanceof SwitchExpression == false;
 			if (null == currentContinuableExpression) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "There is no loop statement to continue", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "There is no loop statement to continue", "", "", "");
 			} else if (nestingLevelInsideBreakable == -1) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "The continue statement is not in the scope of any loop statement", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "The continue statement is not in the scope of any loop statement", "", "", "");
 			}
 			expression = new ContinueExpression(lineNumber, currentContinuableExpression, nestingLevelInsideBreakable);
 			if (printProductionsDebug) { System.err.println("expr : CONTINUE"); }
@@ -1842,7 +1845,7 @@ public class Pass1Listener extends Pass0Listener {
 			expression = processReturnExpression(ctx);
 		} else {
 			// Could be a parsing error
-			expression = new NullExpression();
+			expression = new ErrorExpression(null);
 			if (printProductionsDebug) { System.err.println("expr : <internal error>"); }
 		}
 		
@@ -1884,9 +1887,9 @@ public class Pass1Listener extends Pass0Listener {
 			
 			if (null != nearestEnclosingMegaType) {		// error stumbling
 				if (expression instanceof ReturnExpression) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 							"You may not return another `return' expression.", "", "", "");
-					expression = new NullExpression();
+					expression = new ErrorExpression(expression);
 				} else {
 					// Check to make sure it is of the right type
 					final Type methodReturnType = currentMethod.returnType();
@@ -1900,7 +1903,7 @@ public class Pass1Listener extends Pass0Listener {
 							;	// Null converts to anything
 						} else if (methodReturnType.canBeConvertedFrom(expressionType)) {
 							// We're almost cool...
-							errorHook5p2(ErrorType.Warning, ctx.getStart().getLine(),
+							errorHook5p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
 									"WARNING: substituting object of type `",
 									methodReturnType.name(),
 									"' for `",
@@ -1908,7 +1911,7 @@ public class Pass1Listener extends Pass0Listener {
 							expression = expression.promoteTo(methodReturnType);
 							expression.setResultIsConsumed(true);
 						} else {
-							errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 									"Type mismatch in return statement. Expected `",
 									methodReturnType.name(),
 									"' and found `",
@@ -1919,7 +1922,6 @@ public class Pass1Listener extends Pass0Listener {
 				expression = new ReturnExpression(methodName, expression, ctx.getStart().getLine(),
 						nearestEnclosingMegaType, currentScope_);
 			} else {
-				// expression = new NullExpression();
 				expression = new ReturnExpression(methodName, null, ctx.getStart().getLine(),
 						nearestEnclosingMegaType, currentScope_);
 			}
@@ -2042,7 +2044,7 @@ public class Pass1Listener extends Pass0Listener {
 					}
 				}	
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			if (printProductionsDebug) {
@@ -2066,12 +2068,12 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				rhs = parsingData_.popExpression();
 			} else {
-				rhs = new NullExpression();
+				rhs = new ErrorExpression(null);
 			}
 			if (parsingData_.currentExpressionExists()) {
 				lhs = parsingData_.popExpression();
 			} else {
-				lhs = new NullExpression();
+				lhs = new ErrorExpression(null);
 			}
 			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
 			expression = this.assignmentExpr(lhs, ctx.ASSIGN().getText(), rhs, ctx);
@@ -2081,7 +2083,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 		} else {
 			assert false;
@@ -2217,12 +2219,12 @@ public class Pass1Listener extends Pass0Listener {
 			// This was kind of the last chance. We've probably
 			// already given the user some diagnostics. Now let's
 			// give her some advice.
-			errorHook6p2(ErrorType.Fatal, lineNumber,
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 					"To use `", operationAsString + "' on object `",
 					lhs.name(), "' you must declare a compareTo(",
 					rhs.type().name() + " argument",
 					") operation in the `requires' section of " +  lhs.type().name());
-			expression = new NullExpression();
+			expression = new ErrorExpression(lhs);
 		}
 		
 		return expression;
@@ -2376,12 +2378,14 @@ public class Pass1Listener extends Pass0Listener {
 				// This was kind of the last chance. We've probably
 				// already given the user some diagnostics. Now let's
 				// give her some advice.
-				errorHook6p2(ErrorType.Fatal, lineNumber,
-						"To use `", operationAsString + "' on Role `",
-						lhs.name(), "' you must declare a compareTo(",
-						rhs.type().name() + " argument",
-						") operation in the `requires' section of " +  lhs.name());
-				expression = new NullExpression();
+				if (lhs.isntError() && rhs.isntError()) {
+					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+							"To use `", operationAsString + "' on Role `",
+							lhs.name(), "' you must declare a compareTo(",
+							rhs.type().name() + " argument",
+							") operation in the `requires' section of " +  lhs.name());
+				}
+				expression = new ErrorExpression(lhs);
 			}
 		} else {
 			expression = new RelopExpression(lhs, operationAsString, rhs);
@@ -2407,12 +2411,12 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				rhs = parsingData_.popExpression();
 			} else {
-				rhs = new NullExpression();
+				rhs = new ErrorExpression(null);
 			}
 			if (parsingData_.currentExpressionExists()) {
 				lhs = parsingData_.popExpression();
 			} else {
-				lhs = new NullExpression();
+				lhs = new ErrorExpression(null);
 			}
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
@@ -2425,7 +2429,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				rhs = parsingData_.popExpression();
 			} else {
-				rhs = new NullExpression();
+				rhs = new ErrorExpression(null);
 			}
 
 			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
@@ -2456,7 +2460,7 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new SumExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 				}
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			if (printProductionsDebug) {
@@ -2480,14 +2484,14 @@ public class Pass1Listener extends Pass0Listener {
 	
 			final Expression rhs = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+					new ErrorExpression(null);
 			final Expression lhs = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+					new ErrorExpression(null);
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
-			if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
+			if (lhs.isntError() && rhs.isntError() && lhs.type().canBeConvertedFrom(rhs.type()) == false) {
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"Expression '" + rhs.getText(), "' is not of the right type (",
 						lhs.type().getText(), ").");
 			}
@@ -2510,12 +2514,12 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				rhs = parsingData_.popExpression();
 			} else {
-				rhs = new NullExpression();
+				rhs = new ErrorExpression(null);
 			}
 			if (parsingData_.currentExpressionExists()) {
 				lhs = parsingData_.popExpression();
 			} else {
-				lhs = new NullExpression();
+				lhs = new ErrorExpression(null);
 			}
 			// rhs.setResultIsConsumed(true);	// done by assignmentExpr call
 			expression = this.assignmentExpr(lhs, ctx.ASSIGN().getText(), rhs, ctx);
@@ -2529,12 +2533,12 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				rhs = parsingData_.popExpression();
 			} else {
-				rhs = new NullExpression();
+				rhs = new ErrorExpression(null);
 			}
 			if (parsingData_.currentExpressionExists()) {
 				lhs = parsingData_.popExpression();
 			} else {
-				lhs = new NullExpression();
+				lhs = new ErrorExpression(null);
 			}
 			lhs.setResultIsConsumed(true);
 			rhs.setResultIsConsumed(true);
@@ -2548,7 +2552,7 @@ public class Pass1Listener extends Pass0Listener {
 			} else {
 				// Refactor into method
 				if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-					errorHook5p2(ErrorType.Fatal, lineNumber,
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"Expression `" + rhs.getText(), "' is not of the right type (",
 							lhs.type().getText(), ").");
 				}
@@ -2557,7 +2561,7 @@ public class Pass1Listener extends Pass0Listener {
 				if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
 					;	// O.K.
 				} else {
-					errorHook5p2(ErrorType.Fatal, lineNumber,
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"You may not apply '" + operationAsString, "' to objects of type `",
 							lhs.type().getText(), "'.");
 				}
@@ -2584,7 +2588,7 @@ public class Pass1Listener extends Pass0Listener {
 				} else if (rhs instanceof NullExpression) {
 					;	// can always compare with NULL
 				} else {
-					errorHook5p2(ErrorType.Fatal, lineNumber,
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"You may not use an object of type '" +
 									(null == rhs || null == rhs.type()?
 											"<unknown>": rhs.type().getText()),
@@ -2657,7 +2661,7 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 				}
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			
@@ -2712,7 +2716,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			if (printProductionsDebug) {
@@ -2740,7 +2744,7 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new ProductExpression(expression, operatorAsString, expr2, ctx.getStart(), this);
 				}
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			
@@ -2777,35 +2781,18 @@ public class Pass1Listener extends Pass0Listener {
 				expression = parsingData_.popExpression();
 				expression = new UnaryAbelianopExpression(expression, ctx.ABELIAN_SUMOP().getText(), this);
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			if (printProductionsDebug) {
 				System.err.println("abelian_unary_op : '-' abelian_atom");
 			}
-		/*
-		} else if (null != ctx.LOGICAL_NEGATION()) {
-			//	| LOGICAL_NEGATION  abelian_atom
-			expression = parsingData_.popExpression();
-			final Type type = expression.type();
-			if (StaticScope.globalScope().lookupTypeDeclaration("boolean").canBeConvertedFrom(type)) {
-				;	// is O.K.
-			} else {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
-						"Expression `", expression.getText(), "' is not of type boolean.", "");
-			}
-			expression = new UnaryAbelianopExpression(expression, "!");
-			
-			if (printProductionsDebug) {
-				System.err.println("abelian_unary_op : '!' abelian_atom");
-			}
-		*/
 		} else {
 			if (parsingData_.currentExpressionExists()) {
 				// Only do it if it's there to protect against error stumbling.
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			if (printProductionsDebug) {
 				System.err.println("abelian_unary_op : abelian_atom");
@@ -2835,7 +2822,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (StaticScope.globalScope().lookupTypeDeclaration("boolean").canBeConvertedFrom(type)) {
 				;	// is O.K.
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 						"Expression `", expression.getText(), "' is not of type boolean.", "");
 			}
 			expression = new UnaryAbelianopExpression(expression, "!", this);
@@ -2850,7 +2837,7 @@ public class Pass1Listener extends Pass0Listener {
 				// Only do it if it's there to protect against error stumbling.
 				expression = parsingData_.popExpression();
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			if (printProductionsDebug) {
 				System.err.println("boolean_unary_op : boolean_atom");
@@ -2943,10 +2930,10 @@ public class Pass1Listener extends Pass0Listener {
 			final String JAVA_ID = ctx.JAVA_ID().getText();
 			final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(JAVA_ID);
 			if (null == templateDeclaration) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"Cannot find template ", JAVA_ID, "", "");
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			} else {
 				final StringBuffer typeNameBuffer = new StringBuffer();
 				typeNameBuffer.append(JAVA_ID); typeNameBuffer.append("<");
@@ -2962,7 +2949,7 @@ public class Pass1Listener extends Pass0Listener {
 				if (null == type) {
 					type = this.lookupOrCreateTemplateInstantiation(JAVA_ID, typeParameterNameList, lineNumber);
 					if (null == type) {
-						errorHook5p2(ErrorType.Internal, lineNumber,
+						errorHook5p2(ErrorIncidenceType.Internal, lineNumber,
 							"Cannot find template instantiation ", compoundTypeName, "", "");
 						type = StaticScope.globalScope().lookupTypeDeclaration("void");
 					}
@@ -2980,7 +2967,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null != constructor) {
 				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
 				if (isAccessible == false) {
-					errorHook6p2(ErrorType.Fatal, lineNumber,
+					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 							"Cannot access constructor `", constructor.signature().getText(),
 							"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 				}
@@ -3004,9 +2991,9 @@ public class Pass1Listener extends Pass0Listener {
 			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom(), null);
 			
 			if (null == expression) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"No match for call: ", ctx.abelian_atom().getText(), ".", ctx.message().getText());
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 												
 			if (printProductionsDebug) {
@@ -3019,10 +3006,10 @@ public class Pass1Listener extends Pass0Listener {
 			// This routine actually does pop the expressions stack (and the Message stack)
 			expression = this.messageSend(ctx.getStart(), ctx.abelian_atom(), ctx.builtin_type_name());
 			
-			if (null == expression) {
-				errorHook5p2(ErrorType.Fatal, lineNumber,
+			if (null == expression || expression.isError()) {
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"No match for call: ", ctx.type_name().getText(), ".", ctx.message().getText());
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 												
 			if (printProductionsDebug) {
@@ -3039,7 +3026,7 @@ public class Pass1Listener extends Pass0Listener {
 			final MessageContext ctxMessage = ctx.message();
 			expression = this.newExpr(ctxChildren, ctxGetStart, sizeExprCtx, ctxMessage);
 			
-			if (expression instanceof NullExpression == false) {
+			if (expression instanceof NullExpression == false && expression.isntError()) {
 				expression = checkNakedNew(expression);
 			}
 			
@@ -3085,7 +3072,7 @@ public class Pass1Listener extends Pass0Listener {
 				expression = new UnaryopExpressionWithSideEffect(expression, ctx.ABELIAN_INCREMENT_OP().getText(), preOrPost);
 				assert null != expression;
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 			
 			if (printProductionsDebug) {
@@ -3133,11 +3120,11 @@ public class Pass1Listener extends Pass0Listener {
 			//	| abelian_atom '[' expr ']'
 			final Expression indexExpr = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+						new ErrorExpression(null);
 			indexExpr.setResultIsConsumed(true);
 			final Expression rawArrayBase = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+						new ErrorExpression(indexExpr);
 			
 			// The fidelity of this varies according to how much
 			// type information we have at hand
@@ -3284,7 +3271,7 @@ public class Pass1Listener extends Pass0Listener {
 			arrayBase.setResultIsConsumed(true);
 			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
 		} else {
-			expression = new NullExpression();
+			expression = new ErrorExpression(null);
 		}
 		return expression;
 	}
@@ -3391,7 +3378,7 @@ public class Pass1Listener extends Pass0Listener {
         //	| /* null */
         //	;
 		if (ctx.expr() == null) {
-			final Expression expression = new NullExpression();
+			final Expression expression = new ErrorExpression(null);
 			parsingData_.pushExpression(expression);
 		} else {
 			// just leave alone
@@ -3427,12 +3414,12 @@ public class Pass1Listener extends Pass0Listener {
 			elsePart = new NullExpression();
 		}
 		final Expression thenPart = parsingData_.currentExpressionExists()?
-				parsingData_.popExpression(): new NullExpression();
+				parsingData_.popExpression(): new ErrorExpression(null);
 		final Expression conditional = parsingData_.currentExpressionExists()?
-				parsingData_.popExpression(): new NullExpression();
+				parsingData_.popExpression(): new ErrorExpression(null);
 		final Type conditionalType = conditional.type();
 		if (conditionalType.name().equals("boolean") == false) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
 					"' is not of type boolean", "");
 		}
 		
@@ -3470,7 +3457,7 @@ public class Pass1Listener extends Pass0Listener {
 			final String secondModifier = children.get(2).getText();
 			if (firstModifier.equals("[") && secondModifier.equals("]")) {
 				// Is an array declaration
-				errorHook5p2(ErrorType.Fatal, lineNumber,
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"An array declaration is not appropriate for this context", "",
 						"", "");
 			}
@@ -3480,7 +3467,7 @@ public class Pass1Listener extends Pass0Listener {
 		
 		Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 		if (null == type) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Type `", typeName,
+			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type `", typeName,
 					"' seems not to be declared in any enclosing scope", "");
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");
 		}
@@ -3535,7 +3522,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type conditionalType = conditional.type();
 			
 			if (conditionalType.name().equals("boolean") == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
 						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(initializer, falseExpr, increment, body);
@@ -3548,13 +3535,13 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final Expression body = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+					new ErrorExpression(null);
 			final Expression increment = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+					new ErrorExpression(null);
 			final Expression conditional = parsingData_.currentExpressionExists()?
 					parsingData_.popExpression():
-					new NullExpression();
+					new ErrorExpression(null);
 			expression = parsingData_.popForExpression();
 			
 			body.setResultIsConsumed(false);
@@ -3564,7 +3551,7 @@ public class Pass1Listener extends Pass0Listener {
 			final Type conditionalType = conditional.type();
 			
 			if (conditionalType.name().equals("boolean") == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Conditional expression `", conditional.getText(),
 						"' is not of type boolean", "");
 				final BooleanConstant falseExpr = new BooleanConstant(true);
 				expression.reInit(null, falseExpr, increment, body);
@@ -3579,7 +3566,7 @@ public class Pass1Listener extends Pass0Listener {
 			final String JAVA_IDasString = ctx.JAVA_ID().getText();
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
 						"' is not declared", "");
 			}
 			expression = parsingData_.popForExpression();
@@ -3592,7 +3579,7 @@ public class Pass1Listener extends Pass0Listener {
 					typeIncrementingOver.name().startsWith("List<") == false &&
 					typeIncrementingOver.name().startsWith("Set<") == false &&
 					typeIncrementingOver.name().startsWith("Map<") == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}
 			
@@ -3605,7 +3592,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				thingToIncrementOver = parsingData_.popExpression();
 			} else {
-				thingToIncrementOver = new NullExpression();
+				thingToIncrementOver = new ErrorExpression(body);
 			}
 			expression = parsingData_.popForExpression();
 			
@@ -3618,7 +3605,7 @@ public class Pass1Listener extends Pass0Listener {
 			// final String JAVA_IDasString = ctx.JAVA_ID().getText();
 			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclaration(JAVA_IDasString);
 			if (null == JAVA_ID_DECL) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Loop identifier `", JAVA_IDasString,
 						"' is not declared", " (strange error)");
 			}
 			
@@ -3631,7 +3618,7 @@ public class Pass1Listener extends Pass0Listener {
 					typeIncrementingOver.name().startsWith("List<") == false &&
 					typeIncrementingOver.name().startsWith("Set<") == false &&
 					typeIncrementingOver.name().startsWith("Map<") == false) {
-				errorHook5p2(ErrorType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
 			}
 					
@@ -3685,7 +3672,7 @@ public class Pass1Listener extends Pass0Listener {
 	
 		final Expression body = parsingData_.popExpression();
 		final Expression conditional = parsingData_.currentExpressionExists()?
-				parsingData_.popExpression(): new NullExpression();
+				parsingData_.popExpression(): new ErrorExpression(null);
 		final WhileExpression expression = parsingData_.currentWhileExpressionExists()?
 				parsingData_.popWhileExpression(): null;
 		
@@ -3693,7 +3680,7 @@ public class Pass1Listener extends Pass0Listener {
 		conditional.setResultIsConsumed(true);
 		
 		if (conditional.type() != StaticScope.globalScope().lookupTypeDeclaration("boolean")) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in `while' statement is not of type boolean", conditional.getText(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Condition in `while' statement is not of type boolean", conditional.getText(),
 					" of type ", conditional.type().name());
 		}
 		
@@ -3701,7 +3688,7 @@ public class Pass1Listener extends Pass0Listener {
 			expression.reInit(conditional, body);
 			parsingData_.pushExpression(expression);
 		} else {
-			parsingData_.pushExpression(new NullExpression());
+			parsingData_.pushExpression(new ErrorExpression(null));
 		}
 		
 		if (printProductionsDebug) {
@@ -3737,19 +3724,19 @@ public class Pass1Listener extends Pass0Listener {
 
 		final Expression conditional = parsingData_.currentExpressionExists()?
 				parsingData_.popExpression():
-				new NullExpression();
+				new ErrorExpression(null);
 		final Expression body = parsingData_.currentExpressionExists()?
 				parsingData_.popExpression():
-				new NullExpression();
+				new ErrorExpression(null);
 		final Expression expression = parsingData_.currentDoWhileExpressionExists()?
 				parsingData_.popDoWhileExpression():
-				new NullExpression();
+				new ErrorExpression(null);
 		
 		body.setResultIsConsumed(true);
 		conditional.setResultIsConsumed(true);
 		
 		if (conditional.type() != StaticScope.globalScope().lookupTypeDeclaration("boolean")) {
-			errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Condition in `do / while' statement is not of type boolean", conditional.getText(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Condition in `do / while' statement is not of type boolean", conditional.getText(),
 					" of type ", conditional.type().name());
 		}
 		
@@ -3828,7 +3815,7 @@ public class Pass1Listener extends Pass0Listener {
 						// Make sure that all case test expressions are of type of switch expression
 						if (aCase.isDefault()) continue;
 						if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
-							errorHook6p2(ErrorType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
+							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
 									aCase.type().name(), "' is incompatible with switch expression of type `",
 									switchExpressionType.name(), "'.", "");
 						}
@@ -3868,20 +3855,20 @@ public class Pass1Listener extends Pass0Listener {
 		if (null != ctx.constant()) {
 			final Expression temp = parsingData_.popExpression();
 			if (temp instanceof Constant == false) {
-				ErrorLogger.error(ErrorType.Internal, ctx.getStart().getLine(), "Case statement has non-const expression: `",
+				ErrorLogger.error(ErrorIncidenceType.Internal, ctx.getStart().getLine(), "Case statement has non-const expression: `",
 					temp.getText(), "'", "");
 				constant = new Constant.IntegerConstant(0);
 			} else {
 				constant = (Constant)temp;
 			}
 			if (null != parsingData_.currentSwitchExpr().elementForConstant(constant)) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Switch statement has multiple clauses for ",
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Switch statement has multiple clauses for ",
 						constant.getText(), ".", "");
 			}
 		} else {
 			isDefault = true;
 			if (parsingData_.currentSwitchExpr().hasDefault()) {
-				errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Switch statement has multiple default clauses",
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Switch statement has multiple default clauses",
 						"", "", "");
 			}
 		}
@@ -4008,7 +3995,7 @@ public class Pass1Listener extends Pass0Listener {
 		Type retval = null;
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);
 		if (null == templateDeclaration) {
-			errorHook5p2(ErrorType.Fatal, lineNumber, "Template ", templateName, " is not defined. ", "");
+			errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Template ", templateName, " is not defined. ", "");
 		} else {
 			final StringBuffer stringBuffer = new StringBuffer();
 			stringBuffer.append(templateName);
@@ -4038,7 +4025,7 @@ public class Pass1Listener extends Pass0Listener {
 				for (final String aTypeName : parameterTypeNames) {
 					final Type correspondingType = currentScope_.lookupTypeDeclarationRecursive(aTypeName);
 					if (null == correspondingType) {
-						errorHook5p2(ErrorType.Fatal, lineNumber,
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 								"Cannot find type named ", aTypeName, " in instantiation of ", templateDeclaration.name());
 						newTypes.add(StaticScope.globalScope().lookupTypeDeclaration("void"));
 					} else {
@@ -4202,8 +4189,9 @@ public class Pass1Listener extends Pass0Listener {
 				
 				// New initialization association
 				objDecl.setInitialization(initialization);
-			} else {
-				errorHook5p2(ErrorType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `", objDecl.name(), "'.", "");
+			} else if (expressionType.isntError() && declarationType.isntError() && initializationExpression.isntError()) {
+				errorHook5p2(ErrorIncidenceType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `",
+						objDecl.name(), "'.", "");
 			}
 		}
 		
@@ -4285,7 +4273,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (null != objDecl) {
 			final String addedMessage = "(earlier declaration at line " +
 								Integer.toString(objDecl.lineNumber()) + ").";
-			errorHook5p1(ErrorType.Fatal, lineNumber, "Identifier `",
+			errorHook5p1(ErrorIncidenceType.Fatal, lineNumber, "Identifier `",
 					name, "' declared multiple times ", addedMessage);
 		}
 		return objDecl;
@@ -4323,9 +4311,9 @@ public class Pass1Listener extends Pass0Listener {
 				
 				Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
 				if (null == paramType) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
 					paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
 				} else if (isArray) {
 					// A derived type
 					final String aName = paramType.getText() + "_$array";
@@ -4341,7 +4329,7 @@ public class Pass1Listener extends Pass0Listener {
 					newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
 				}
 				if (parsingData_.currentFormalParameterList().containsVarargs()) {
-					errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 							"Formal parameter `", newFormalParameter.name(),
 							"' comes after `...', which must be the last element in a parameter list.",
 							"");
@@ -4430,13 +4418,13 @@ public class Pass1Listener extends Pass0Listener {
 				// It must be static
 				final ObjectDeclaration odecl2 = theClass.type().enclosedScope().lookupStaticDeclaration(javaIdString);
 				if (null == odecl2) {
-					errorHook5p2(ErrorType.Fatal,
+					errorHook5p2(ErrorIncidenceType.Fatal,
 							ctxGetStart.getLine(),
 							"Attempt to access instance member `",
 							javaIdString,
 							"' as a member of class `" + theClass.name(),
 							"'.");
-					type = odecl.type();	// why not?  stops parser error babbling.
+					type = new ErrorType();
 				} else {
 					type = odecl.type();
 				}
@@ -4451,15 +4439,20 @@ public class Pass1Listener extends Pass0Listener {
 		} else {
 			final Expression object = (Expression)qualifier;
 			object.setResultIsConsumed(true);
-			ObjectDeclaration odecl = object.type().enclosedScope().lookupObjectDeclarationRecursive(javaIdString);
+			final Type objectType = object.type();
+			Declaration odecl = null;
+			if (objectType.isntError()) {
+				odecl = objectType.enclosedScope().lookupObjectDeclarationRecursive(javaIdString);
+			}
 		
 			if (null != odecl) {
 				type = odecl.type();
 				assert type != null;
 			} else {
-				// errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
-				// 	"Cannot find member `", javaIdString, "' of `", qualifier.toString(), "'.", "");
-				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+				// errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
+				// 		"' not found as member of ", object.type().name());
+				type = new ErrorType();
+				odecl = new ErrorDeclaration("");
 			}
 			
 			if (null != ctxABELIAN_INCREMENT_OP) {
@@ -4469,18 +4462,20 @@ public class Pass1Listener extends Pass0Listener {
 			}
 			
 			if (null != odecl) {
-				final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(odecl, odecl.accessQualifier_, 
-						ctxGetStart.getLine());
-				if (isAccessible == false) {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				if (odecl instanceof ObjectDeclaration) {
+					final ObjectDeclaration odeclAsOdecl = (ObjectDeclaration)odecl;
+					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(
+							odeclAsOdecl, odeclAsOdecl.accessQualifier_, ctxGetStart.getLine());
+					if (isAccessible == false) {
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+								"Cannot access expression `", expression.getText(),
+								"' with `", odeclAsOdecl.accessQualifier_.asString(), "' access qualifier.", "");
+					}
+				} else if (odecl.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Cannot access expression `", expression.getText(),
-							"' with `", odecl.accessQualifier_.asString(), "' access qualifier.", "");
+							"' with non-object type declaration", "");
 				}
-			}
-			
-			if (null == odecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
-						"' not found as member of ", object.type().name());
 			}
 		}
 		
@@ -4509,8 +4504,8 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new NewExpression(type, message, ctxMessage.getStart().getLine(), enclosingMegaType);
 					addSelfAccordingToPass(type, message, currentScope_);
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "`new ", classOrContextName, "': can apply `new' only to a class or Context type", "");
-					expression = new NullExpression();
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "`new ", classOrContextName, "': can apply `new' only to a class or Context type", "");
+					expression = new ErrorExpression(null);
 				}
 			} else {
 				// On the first pass, message doesn't yet have an argument list
@@ -4535,8 +4530,10 @@ public class Pass1Listener extends Pass0Listener {
 			final String typeName = type_name_expression.name();
 			final Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			if (null == type) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "'new ", typeName, " [] for undefined type: ", typeName);
-				expression = new NullExpression();
+				if (expr.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "'new ", typeName, " [] for undefined type: ", typeName);
+				}
+				expression = new ErrorExpression(expr);
 			} else {
 				expr.setResultIsConsumed(true);
 				expression = new NewArrayExpression(type, expr, enclosingMegaType);
@@ -4590,7 +4587,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (parsingData_.currentExpressionExists()) {
 				object = parsingData_.popExpression();
 			} else {
-				object = new NullExpression();
+				object = new ErrorExpression(null);
 			}
 		} else if (null != ctx_typeName) {
 			// e.g. String.join
@@ -4603,7 +4600,7 @@ public class Pass1Listener extends Pass0Listener {
 			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 			if (null == enclosingMegaType) {
-				object = new NullExpression();
+				object = new ErrorExpression(null);
 			} else {
 				object = new IdentifierExpression("this", enclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
 			}
@@ -4612,14 +4609,15 @@ public class Pass1Listener extends Pass0Listener {
 			
 		final Message message = parsingData_.popMessage();
 
-		if (null == enclosingMegaType && object instanceof NullExpression) {
+		if (null == enclosingMegaType && (object instanceof NullExpression ||
+				object.isError())) {
 			// Because this here is Pass 1 code this really does nothing.
 			// We'll catch it again on Pass 2
-			errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");
 		} else {
 			final Type objectType = object.type();
-			if (null == objectType) return new NullExpression();	// error stumbling avoidance
+			if (null == objectType) return new ErrorExpression(object);	// error stumbling avoidance
 				
 			final String methodSelectorName = message.selectorName();
 			final ClassDeclaration classdecl = currentScope_.lookupClassDeclarationRecursive(objectType.name());
@@ -4632,7 +4630,7 @@ public class Pass1Listener extends Pass0Listener {
 					// Is of the form ClassType.classMethod()
 					assert object instanceof IdentifierExpression;
 					if (false == mdecl.signature().isStatic()) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 								"Attempt to call instance method `" + mdecl.signature().getText(),
 								"' as though it were a static method of class `", objectType.name(), "'.");
 					}
@@ -4642,7 +4640,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == mdecl) {
 				// final String className = classdecl != null? classdecl.name(): " <unresolved>.";
 				// skip it - we'll barked at the user in pass 2
-				// errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName, "' not declared in class ", className);
+				// errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName, "' not declared in class ", className);
 				type = StaticScope.globalScope().lookupTypeDeclaration("void");
 			} else {
 				type = mdecl.returnType();
@@ -4766,13 +4764,13 @@ public class Pass1Listener extends Pass0Listener {
 				if (currentEnclosingType instanceof TemplateType) {
 					// Ingore parameters as in Pass 1. We may not find a match with a template type...
 					mdecl = classDecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, actualArgumentList, true);
-					if (null == mdecl) {
-						errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+					if (null == mdecl && actualArgumentList.isntError()) {
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
 								methodSelectorName + actualArgumentList.selflessGetText(),
 								"' not declared in class `", classDecl.name(), "'.", "");
 					}
-				} else {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `",
+				} else if (actualArgumentList.isntError()) {
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
 							methodSelectorName + actualArgumentList.selflessGetText(),
 							"' not declared in class `", classDecl.name(), "'.", "");
 				}
@@ -4789,7 +4787,7 @@ public class Pass1Listener extends Pass0Listener {
 					if (parsingData_.currentExprAndDeclExists()) {
 						final ExprAndDeclList currentExprAndDecl = parsingData_.currentExprAndDecl();
 						if (currentExprAndDecl.bodyParts().isEmpty() == false) {
-							errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 									"Call of base class constructor `",
 									baseClassName,
 									"' must be the first statement in the derived class constructor.",
@@ -4797,7 +4795,7 @@ public class Pass1Listener extends Pass0Listener {
 							noerrors = false;
 						}
 						if (mdecl.accessQualifier() != AccessQualifier.PublicAccess) {
-							errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+							errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 									"Call of base class constructor for class `",
 									baseClassName,
 									"', which is not accessible to class `",
@@ -4810,7 +4808,7 @@ public class Pass1Listener extends Pass0Listener {
 					final MethodSignature currentMethod = parsingData_.currentMethodSignature();
 					final ClassDeclaration currentClass = parsingData_.currentClassDeclaration();
 					if (currentClass.name().equals(currentMethod.name()) == false) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 								"Base class constructor `",
 								baseClassName,
 								"' can be explicitly invoked only from a derived class constructor.",
@@ -4879,15 +4877,15 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in Role `", roleDecl.name() + "'.");
 				if (message.lineNumber() < roleDecl.lineNumber()) {
 					final MethodSignature enclosingMethod = parsingData_.currentMethodSignature();
 					if (null != enclosingMethod) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
 								"' before the definition of method `", enclosingMethod.getText() + "'.");
 					} else {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "\tTry moving the declaration of `", roleDecl.name(),
 							"' before the invocation of `", methodSelectorName+ "'.");
 					}
 				}
@@ -4895,13 +4893,13 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (null != contextDecl) {
 			mdecl = processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(contextDecl, methodSelectorName, actualArgumentList);
 			if (null == mdecl) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in Context `", contextDecl.name() + "'.");
 			}
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in interface ", interfaceDecl.name());
 			} else {
 				returnType = methodSignature.returnType();
@@ -4909,14 +4907,14 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
 			if (null == classDeclaration) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "'", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "'", "");
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
 					mdecl = classDeclaration.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 							methodSelectorName, actualArgumentList, false, /*parameterToIgnore*/ null);
 					if (null == mdecl) {
-						errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 								"Cannot find static script `" + methodSelectorName
 								+ actualArgumentList.getText(),
 							"' of class `", object.name(), "'.");
@@ -4928,17 +4926,17 @@ public class Pass1Listener extends Pass0Listener {
 				returnType = StaticScope.globalScope().lookupTypeDeclaration("int");	// is O.K.
 			} else {
 				if (object.name().length() > 0) {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
 				} else {
-					errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 				}
 				assert null == mdecl;
 			}
 		} else {
 			if (object.name().length() > 0) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
 			} else {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 			}
 			assert null == mdecl;
 		}
@@ -5032,7 +5030,7 @@ public class Pass1Listener extends Pass0Listener {
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");	// default/error value
 			expression = new NullExpression();
 			if (null == currentRole_) {
-				errorHook5p2(ErrorType.Fatal, ctxGetStart.getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Symbol `", idName, "' may be used only within certain Role methods.", "");
 			} else {
 				if (currentRole_.isArray()) {
@@ -5040,7 +5038,7 @@ public class Pass1Listener extends Pass0Listener {
 							new IndexExpression(currentRole_, currentContext_):
 								new LastIndexExpression(currentRole_, currentContext_);
 				} else {
-					errorHook6p2(ErrorType.Fatal, ctxGetStart.getLine(),
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Symbol `", idName, "' may be used only within a Role vector method. The Role ",
 							currentRole_.name(), " is a not a vector.", "");
 				}
@@ -5072,12 +5070,12 @@ public class Pass1Listener extends Pass0Listener {
 					qualifier.setResultIsConsumed(true);
 					expression = new QualifiedIdentifierExpression(qualifier, idName, roleType);
 				} else {
-					errorHook5p2(ErrorType.Unimplemented, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Unimplemented, ctxGetStart.getLine(),
 							"Static initializers for Roles are unimplemented.", "", "", "");
-					expression = new NullExpression();
+					expression = new ErrorExpression(null);
 				}
 			} else {
-				expression = new NullExpression();
+				expression = new ErrorExpression(null);
 			}
 		} else {
 			final ClassDeclaration cdecl = currentScope_.lookupClassDeclarationRecursive(idName);
@@ -5196,8 +5194,8 @@ public class Pass1Listener extends Pass0Listener {
 		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
 			if (((RoleType)lhsType).isArray()) {
 				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), lineNumber, this);
-			} else {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhs.getText(),
+			} else if (lhs.isntError() && rhs.isntError()) {
+				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
 		} else if (null != lhsType && null != rhsType) {
@@ -5207,18 +5205,18 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		if (lhs.name().equals("this")) {
-			errorHook5p2(ErrorType.Noncompliant, lineNumber,
+			errorHook5p2(ErrorIncidenceType.Noncompliant, lineNumber,
 					"You're on your own here.", "", "", "");
 		}
 		
 		if (lhs.name().equals("index") || lhs.name().equals("lastIndex")) {
-			errorHook5p2(ErrorType.Fatal, lineNumber,
+			errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 					"`index' is a reserved word which is a read-only property of a Role vector element,",
 					" and may not be assigned.", "", "");
 		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
 			if (lhsType.canBeConvertedFrom(baseType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Role vector elements of type ", lhsType.name(),
+				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role vector elements of type ", lhsType.name(),
 						" cannot be played by objects of type ",
 						((ArrayType)rhsType).baseType().name(), ":", "");
 			}
@@ -5230,37 +5228,42 @@ public class Pass1Listener extends Pass0Listener {
 				final Type rhsBaseType = currentScope_.lookupTypeDeclarationRecursive(ofWhatThisIsAList);
 				if (null != rhsBaseType) {	// error stumbling check
 					tf = lhsType.canBeConvertedFrom(rhsBaseType, lineNumber, this);
-					if (false == tf) {
-						errorHook6p2(ErrorType.Fatal, lineNumber, "Roles in `", lhsType.name(),
+					if (false == tf && lhs.isntError() && rhs.isntError()) {
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Roles in `", lhsType.name(),
 								"' cannot be played by objects of type `", rhsBaseType.name(), "':", "");
 						this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsBaseType);
 					}
 				}
-			} else if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(),
+			} else if (lhsType.canBeConvertedFrom(rhsType) == false && lhs.isntError() &&
+					rhs.isntError()) {
+				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role `", lhsType.name(),
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
-		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false) {
-			errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhsType.name(),
+		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false
+				&& lhs.isntError() && rhs.isntError()) {
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhsType.name(),
 					"' is incompatible with expression type `", rhsType.name(), "'.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType &&
-					anotherLhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Type of `", lhs.getText(),
+					anotherLhsType.canBeConvertedFrom(rhsType) == false &&
+					lhs.isntError() && rhs.isntError()) {
+				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
 		} else if (lhs instanceof RoleArrayIndexExpression) {
-			if (lhsType.canBeConvertedFrom(rhsType) == false) {
-				errorHook6p2(ErrorType.Fatal, lineNumber, "Role `", lhsType.name(),
+			if (lhsType.canBeConvertedFrom(rhsType) == false && lhs.isntError() &&
+					rhs.isntError()) {
+				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role `", lhsType.name(),
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);
 			}
 		} else if ((lhs instanceof IdentifierExpression) == false &&
-				   (lhs instanceof QualifiedIdentifierExpression) == false) {
-			errorHook5p2(ErrorType.Fatal, lineNumber,
+				   (lhs instanceof QualifiedIdentifierExpression) == false &&
+				   lhs.isntError() && rhs.isntError()) {
+			errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 					"Can assign only to an identifier, qualified identifier, or vector element.",
 					"", "", "");
 		}
@@ -5284,7 +5287,7 @@ public class Pass1Listener extends Pass0Listener {
 				final String methodSelector = methodDeclaration.name();
 				final MethodDeclaration correspondingRoleMethod = lhsType.enclosedScope().lookupMethodDeclarationIgnoringRoleStuff(methodSelector, parameterList);
 				if (null != correspondingRoleMethod) {
-					errorHook6p2(ErrorType.Warning, lineNumber,
+					errorHook6p2(ErrorIncidenceType.Warning, lineNumber,
 							"WARNING: Both class `" + baseType.name(), "' and Role `" + lhsType.name(),
 							"' contain the same method signature `", correspondingRoleMethod.signature().getText(),
 							"'. This results in several methods of the same name in the same object",
@@ -5328,13 +5331,13 @@ public class Pass1Listener extends Pass0Listener {
 	public void nameCheck(final String name, int lineNumber) {
 		if (name.equals("this") || name.equals("Ralph") || name.equals("Sue") || name.equals("index")||
 				name.equals("lastIndex")) {
-			errorHook5p2(ErrorType.Fatal, lineNumber,
+			errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 					"Please avoid the use of the names `this', `Sue', `index', `lastIndex' and `Ralph' for identifiers.",
 					"", "", "");
 		}
 	}
 	
-	@Override protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override protected void errorHook5p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
 	}
 	

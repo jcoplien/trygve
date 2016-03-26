@@ -12,7 +12,7 @@ import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.graphics.GraphicsEventHandler;
 import info.fulloo.trygve.graphics.GraphicsPanel;
@@ -168,7 +168,7 @@ public class InputStreamClass {
 		}
 		public RTCode runDetails(final RTObject scope, final RTObjectCommon finalStream) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails (System domain)", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails (System domain)", "", "", "");
 			return null;	// halt the machine
 		}
 		protected void addRetvalTo(final RTDynamicScope activationRecord) {
@@ -264,7 +264,7 @@ public class InputStreamClass {
 	        try {
 	            i = queue.take();
 	        } catch (final InterruptedException ex) {
-	        	ErrorLogger.error(ErrorType.Runtime, "\n! ! ! Enactment interrupted.\n",
+	        	ErrorLogger.error(ErrorIncidenceType.Runtime, "\n! ! ! Enactment interrupted.\n",
 	        			"", "", "");
 	        }
 	        if (i != null) {

@@ -40,7 +40,7 @@ import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.BreakExpression;
 import info.fulloo.trygve.expressions.Expression.ContinueExpression;
@@ -67,6 +67,14 @@ public abstract class Declaration implements BodyPart {
 	
 	public void addInSituInitializers(List<BodyPart> initializerList) {
 		assert false;	// pure virtual, kind of
+	}
+	
+	public boolean isError() {
+		return false;
+	}
+	
+	public boolean isntError() {
+		return isError() == false;
 	}
 	
 	public static class ObjectDeclaration extends Declaration
@@ -103,9 +111,9 @@ public abstract class Declaration implements BodyPart {
 			if (accessLevel != AccessQualifier.DefaultAccess) {
 				assert null != currentScope;
 				if (currentScope.associatedDeclaration() instanceof MethodDeclaration) {
-					final ErrorType errorType = accessLevel == AccessQualifier.PrivateAccess?
-															ErrorType.Warning:
-															ErrorType.Fatal;
+					final ErrorIncidenceType errorType = accessLevel == AccessQualifier.PrivateAccess?
+															ErrorIncidenceType.Warning:
+															ErrorIncidenceType.Fatal;
 					ErrorLogger.error(errorType, lineNumber,
 							errorType.toString(),
 							": Identifier `", name(),
@@ -166,7 +174,7 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public void declareStaticObject(final ObjectDeclaration declaration) {
 			if (stringToStaticObjectMap_.containsKey(declaration.name())) {
-				ErrorLogger.error(ErrorType.Fatal, lineNumber_, "Duplicate declaration of static object ", declaration.name(), "", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber_, "Duplicate declaration of static object ", declaration.name(), "", "");
 			} else {
 				stringToStaticObjectMap_.put(declaration.name(), declaration);
 			}
@@ -176,7 +184,7 @@ public abstract class Declaration implements BodyPart {
 			if (stringToStaticObjectMap_.containsKey(name)) {
 				retval = stringToStaticObjectMap_.get(name);
 			} else {
-				ErrorLogger.error(ErrorType.Fatal, lineNumber_, "Static object ", name, " not found in type ", name());
+				ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber_, "Static object ", name, " not found in type ", name());
 			}
 			return retval;
 		}
@@ -225,7 +233,7 @@ public abstract class Declaration implements BodyPart {
 			for (int i = 0; i < listSize; i++) {
 				anInterfaceType = theInterfaceTypes.get(i);
 				if (null == anInterfaceType) {
-					parser.errorHook5p2(ErrorType.Fatal, lineNumber,
+					parser.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"Class `", name(), "' is using an undeclared interface: see other error messages", "");
 				} else {
 					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
@@ -239,7 +247,7 @@ public abstract class Declaration implements BodyPart {
 							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this",
 									/* conversionAllowed = */ false);
 							if (null == methodDecl) {
-								parser.errorHook6p2(ErrorType.Fatal, lineNumber,
+								parser.errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
 										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
 							}
@@ -443,7 +451,7 @@ public abstract class Declaration implements BodyPart {
 					// Role methods quack out the type of the object
 					continue;
 				} else if (paramType instanceof RoleType) {
-					parserPass.errorHook5p2(ErrorType.Fatal, lineNumber,
+					parserPass.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"You cannot require that a Role-player have a script that takes a Role argument such as `",
 							paramType.name(), "'.", "");
 					retval = false;
@@ -1026,6 +1034,24 @@ public abstract class Declaration implements BodyPart {
 		
 		private final Type type_;
 		private final int lineNumber_;
+	}
+	
+	public static class ErrorDeclaration extends Declaration {
+		public ErrorDeclaration(final String name) {
+			super(name);
+		}
+		@Override public String getText() {
+			return "*Error*";
+		}
+		@Override public int lineNumber() {
+			return 0;
+		}
+		@Override public Type type() {
+			return null;
+		}
+		@Override public boolean isError() {
+			return true;
+		}
 	}
 
 	

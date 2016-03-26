@@ -32,7 +32,7 @@ import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -284,16 +284,16 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				// The map at roleArrayPlayers_[roleName] would never have been set
 				// up if the vector / array size were zero. Treat as an out-of-range
 				// error
-				ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
 				RTMessage.printMiniStackStatus(); 
 				retval = null;
 			} else {
 				if (iIndex >= intToObjectMap.size()) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
 					RTMessage.printMiniStackStatus();
 					retval = (RTStackable) new RTHalt();
 				} else if (iIndex < 0) {
-						ErrorLogger.error(ErrorType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
+						ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
 						RTMessage.printMiniStackStatus();
 						retval = (RTStackable) new RTHalt();
 				} else {
@@ -320,7 +320,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			final Map<Integer,RTObject> roleVecElements = roleArrayPlayers_.get(roleName);
 			if (null == roleVecElements) {
 				retval = null;
-				ErrorLogger.error(ErrorType.Runtime, "Undefined behavior: attempted use of unbound Role vector `",
+				ErrorLogger.error(ErrorIncidenceType.Runtime, "Undefined behavior: attempted use of unbound Role vector `",
 						roleName, "'.", "");
 				RTMessage.printMiniStackStatus();
 			} else {
@@ -340,7 +340,7 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			
 			if (null == roleVecElements) {
 				retval = null;
-				ErrorLogger.error(ErrorType.Runtime, "Undefined behavior: attempted use of unbound Role vector `",
+				ErrorLogger.error(ErrorIncidenceType.Runtime, "Undefined behavior: attempted use of unbound Role vector `",
 						roleName, "'.", "");
 				RTMessage.printMiniStackStatus();
 			} else {

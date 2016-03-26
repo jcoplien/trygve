@@ -43,7 +43,7 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.graphics.GraphicsPanel;
@@ -245,7 +245,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 		}
@@ -406,7 +406,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -478,7 +478,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
 				final RTStackable self = dynamicScope.getObject("this");
 				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorType.Runtime,
+					ErrorLogger.error(ErrorIncidenceType.Runtime,
 							"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on left-hand side of operation involving `",
 							parameterName_ + "'.");
 					RTMessage.printMiniStackStatus();
@@ -486,7 +486,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				} else {
 					final RTStackable rhs = dynamicScope.getObject("rhs");
 					if (rhs instanceof RTNullObject) {
-						ErrorLogger.error(ErrorType.Runtime,
+						ErrorLogger.error(ErrorIncidenceType.Runtime,
 								"FATAL: TERMINATED: Attempt to invoke script `", methodName_, "' on null object on right-hand side, named `",
 								parameterName_ + "'.");
 						RTMessage.printMiniStackStatus();
@@ -602,7 +602,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -701,7 +701,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 			}
 			
@@ -785,7 +785,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
 					if (null == otherObject) {
 						final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
-						ErrorLogger.error(ErrorType.Runtime, 0,
+						ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
 								"Attempt to access uninitialized double in argument to `",
 								"compareTo'; calling context may be `",
 								parentScope.name(), "'.");
@@ -849,7 +849,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 
 			}
@@ -912,7 +912,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					retval = stringObject.replaceFirst(regex, replacement);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}
@@ -1012,7 +1012,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					sRetval = thisString.split(rxstring);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}
@@ -1204,7 +1204,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 			}
 			public RTCode runDetails(final RTObject scope) {
 				// Effectively a pure virtual method, but Java screws us again...
-				ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 				return null;	// halt the machine
 
 			}

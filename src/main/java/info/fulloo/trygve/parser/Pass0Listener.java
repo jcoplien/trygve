@@ -42,7 +42,7 @@ import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
@@ -112,7 +112,7 @@ public class Pass0Listener extends KantBaseListener {
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
 				if ((rawBaseType instanceof ClassType) == false) {
 					// Leave to pass 2
-					errorHook6p2(ErrorType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
 							"' is not a declared class type as base of `", name, "'.", "");
 					
 					// Stumbling measures
@@ -121,7 +121,7 @@ public class Pass0Listener extends KantBaseListener {
 				} else {
 					baseType = (ClassType)rawBaseType;
 					if (baseType.name().equals(name)) {
-						errorHook5p2(ErrorType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
 					}
 				}
 			} else {
@@ -295,7 +295,7 @@ public class Pass0Listener extends KantBaseListener {
 		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
 					ctx.access_qualifier().getText(), "' ignored", ".");
 		}
 		
@@ -315,7 +315,7 @@ public class Pass0Listener extends KantBaseListener {
 		
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
+				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRole_.enclosedScope();
 		} else {
@@ -491,23 +491,23 @@ public class Pass0Listener extends KantBaseListener {
 		final String objectIdentifier = objDecl.name();
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
-			errorHook5p1(ErrorType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
+			errorHook5p1(ErrorIncidenceType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
 					objectIdentifier, "'", "");
 		} else {
 			scope.declareObject(objDecl);
 		}
 	}
 	
-	protected void errorHook5p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	protected void errorHook5p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* Nothing */
 	}
-	public void errorHook5p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
 		/* nothing */
 	}
-	protected void errorHook6p1(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	protected void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
 	}
-	public void errorHook6p2(final ErrorType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* nothing */
 	}
 

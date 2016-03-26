@@ -30,7 +30,7 @@ import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTArrayIterator;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
@@ -203,7 +203,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 		}
 	}
@@ -232,7 +232,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < stagePropsIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 		}
 	}
@@ -255,7 +255,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		RTObject retval = null;
 		final int index = this.calculateIndexFrom(theIndex);
 		if (index >= size_) {
-			ErrorLogger.error(ErrorType.Internal, 0, "array index ", Integer.toString(index), " beyone array bounds 0:",
+			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "array index ", Integer.toString(index), " beyone array bounds 0:",
 					Integer.toString(size_));
 		}
 		switch (preOrPost) {

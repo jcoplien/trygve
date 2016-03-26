@@ -35,7 +35,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
@@ -57,7 +57,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.6.16";
+    final String TrygveVersion = "1.6.17";
     
     public InputStream getIn() {
     	return console_.getIn();
@@ -773,10 +773,10 @@ public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt)
 		try {
 			worker_.cancel(true);
 		} catch (final Exception e) {
-			ErrorLogger.error(ErrorType.Runtime,
+			ErrorLogger.error(ErrorIncidenceType.Runtime,
 					"Program enactment interrupted by user.", "", "", "");
 		} finally {
-			ErrorLogger.error(ErrorType.Runtime,
+			ErrorLogger.error(ErrorIncidenceType.Runtime,
 					"Program enactment interrupted by user.", "", "", "");
 		}
 	}

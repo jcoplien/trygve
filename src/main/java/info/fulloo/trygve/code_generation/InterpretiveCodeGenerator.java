@@ -61,15 +61,13 @@ import info.fulloo.trygve.declarations.Declaration.TypeDeclarationList;
 import info.fulloo.trygve.editor.InputStreamClass;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.ArrayExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpression;
 import info.fulloo.trygve.expressions.Expression.ArrayIndexExpressionUnaryOp;
 import info.fulloo.trygve.expressions.Expression.AssignmentExpression;
-import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
-import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.BinopExpression;
 import info.fulloo.trygve.expressions.Expression.BlockExpression;
 import info.fulloo.trygve.expressions.Expression.BooleanExpression;
@@ -78,9 +76,12 @@ import info.fulloo.trygve.expressions.Expression.ContinueExpression;
 import info.fulloo.trygve.expressions.Expression.DoWhileExpression;
 import info.fulloo.trygve.expressions.Expression.DoubleCasterExpression;
 import info.fulloo.trygve.expressions.Expression.DupMessageExpression;
+import info.fulloo.trygve.expressions.Expression.ErrorExpression;
 import info.fulloo.trygve.expressions.Expression.ExpressionList;
 import info.fulloo.trygve.expressions.Expression.ForExpression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
+import info.fulloo.trygve.expressions.Expression.IdentityBooleanExpression;
+import info.fulloo.trygve.expressions.Expression.InternalAssignmentExpression;
 import info.fulloo.trygve.expressions.Expression.IfExpression;
 import info.fulloo.trygve.expressions.Expression.IndexExpression;
 import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
@@ -469,7 +470,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		final List<RTCode> mathCode = new ArrayList<RTCode>();
 		if (methodDeclaration.name().equals("Math")) {
-			ErrorLogger.error(ErrorType.Fatal, "Cannot instantiate class Math", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Cannot instantiate class Math", "", "", "");
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("random")) {
 			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
@@ -1017,7 +1018,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else if (elementsParamType instanceof ArrayType) {
 					code.add(new RTStringClass.RTJoinArrayCode(methodDeclaration.enclosedScope()));
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, methodDeclaration.lineNumber(),
+					ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
 							"Invalid parameter type `",
 							elementsParamType.name(),
 							"' to String.join.", "", "", "");
@@ -1296,9 +1297,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 							methodScope, lhs.lineNumber());
 					newLhs = new QualifiedIdentifierExpression(self, lhs.name(), lhs.type());
 				} else {
-					ErrorLogger.error(ErrorType.Fatal, lhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, lhs.lineNumber(), "Improperly formed initialization of `",
 							lhs.name(), "'.", "");
-					newLhs = new NullExpression();
+					newLhs = new ErrorExpression(lhs);
 				}
 				
 				boolean isWellFormedInitialization = false;
@@ -1311,9 +1312,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					isWellFormedInitialization = innerExpr instanceof Constant;
 				}
 				if (false == isWellFormedInitialization) {
-					ErrorLogger.error(ErrorType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
 							lhs.name() + "': non-constant right-hand side `", rhs.getText(), "'.");
-					rhs = new NullExpression();
+					rhs = new ErrorExpression(rhs);
 				}
 				final AssignmentExpression newAssignmentExpression =
 						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
@@ -1369,7 +1370,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (megaTypeOfPotentialCtor.name().equals(methodDeclaration.name()) &&
 						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
 					if (methodDeclaration.hasManualBaseClassConstructorInvocations() == false) {
-						ErrorLogger.error(ErrorType.Fatal, methodDeclaration.lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
 							"Constructor `", methodDeclaration.name(),
 							"' has no valid means to ensure that the base class part of the object is initialized.", "");
 					}

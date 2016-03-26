@@ -57,7 +57,7 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.BreakableExpression;
 import info.fulloo.trygve.expressions.Constant;
 import info.fulloo.trygve.expressions.Expression;
@@ -356,7 +356,7 @@ public abstract class RTExpression extends RTCode {
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (qualifier == null) {
 					// Run-time error
-					ErrorLogger.error(ErrorType.Runtime, lineNumber_, "INTERNAL Error: Unitialized reference to object `",
+					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_, "INTERNAL Error: Unitialized reference to object `",
 									idName_, "'.", "");
 					return new RTHalt();
 				} else {
@@ -759,7 +759,7 @@ public abstract class RTExpression extends RTCode {
 			final String sourceTypePathName = sourceType.pathName();
 			if (formalParameterType.pathName().equals("double.")) {
 				if (sourceTypePathName.equals("int.")) {
-					ErrorLogger.error(ErrorType.Warning, lineNumber,
+					ErrorLogger.error(ErrorIncidenceType.Warning, lineNumber,
 							"WARNING: Substituting double object for `", anArgument.getText(),
 							"' for call to method `", methodName, "' at line ",
 							String.valueOf(anArgument.lineNumber()));
@@ -824,7 +824,7 @@ public abstract class RTExpression extends RTCode {
 				// Special kludge when argument push is zero
 				// (e.g., Math.random()). Handle boundary conditions
 				// with a pseudo push
-				Expression anArgument = new NullExpression();
+				final Expression anArgument = new NullExpression();
 				
 				// Can be null on error conditions
 				final RTCode rtCodePointer = RTExpression.makeExpressionFrom(anArgument, nearestEnclosingType_);
@@ -949,13 +949,13 @@ public abstract class RTExpression extends RTCode {
 				topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (topOfStack instanceof RTPostReturnProcessing) {
 					RTPostReturnProcessing currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-					ErrorLogger.error(ErrorType.Runtime, "\tIn script `", currentMethodReturn.debugName() + ".",
+					ErrorLogger.error(ErrorIncidenceType.Runtime, "\tIn script `", currentMethodReturn.debugName() + ".",
 							currentMethodReturn.name(), "'");
 					while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
 						topOfStack = RunTimeEnvironment.runTimeEnvironment_.popStack();
 						if (topOfStack instanceof RTPostReturnProcessing) {
 							currentMethodReturn = (RTPostReturnProcessing)topOfStack;
-							ErrorLogger.error(ErrorType.Runtime, "\tCalled from script `", currentMethodReturn.debugName() + ".",
+							ErrorLogger.error(ErrorIncidenceType.Runtime, "\tCalled from script `", currentMethodReturn.debugName() + ".",
 									currentMethodReturn.name(), "'");
 						}
 					}
@@ -1125,7 +1125,7 @@ public abstract class RTExpression extends RTCode {
 						value = null == parentScope? null: parentScope.getObject(idName_);
 					}
 					if (null == value) {
-						ErrorLogger.error(ErrorType.Internal, lineNumber_,
+						ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber_,
 								"RUNTIME: Unknown run-time error around source line ",
 								Integer.toString(lineNumber_),
 								" associated with `", idName_,
@@ -1826,7 +1826,7 @@ public abstract class RTExpression extends RTCode {
 							assert lhs_ instanceof RTRoleIdentifier;
 							this.processRoleArrayBinding2b((RTListObject)aRhs);
 						} else {
-							ErrorLogger.error(ErrorType.Runtime, lineNumber(),
+							ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber(),
 									"Argument `", rhs.getText(), "' is not of an iterable type (List or vector) suitable to playing Role `" +
 											((RTRoleIdentifier)lhs_).name(),
 											"'.");
@@ -1887,7 +1887,7 @@ public abstract class RTExpression extends RTCode {
 					// it's all done within the "assign" method called above
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTArrayIndexExpressionUnaryOp) {
-					ErrorLogger.error(ErrorType.Internal, 0, "INTERNAL Error: Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
+					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "INTERNAL Error: Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
 				} else {
 					assert false;
 				}
@@ -1992,7 +1992,7 @@ public abstract class RTExpression extends RTCode {
 				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
-				ErrorLogger.error(ErrorType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
 			}
 			
 			private RTCode processRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
@@ -2521,14 +2521,14 @@ public abstract class RTExpression extends RTCode {
 				final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
 				result = arrayBase.getObject(theIndex);
 			} else if (rawArrayBase instanceof RTNullObject) {
-				ErrorLogger.error(ErrorType.Runtime, lineNumber_, "Likely access of uninitialized array. Machine halted.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_, "Likely access of uninitialized array. Machine halted.", "", "", "");
 				return new RTHalt();
 			} else if (true) {
 				assert false;
 			}
 			
 			if (null == result) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "Likely access of uninitialized array element.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Likely access of uninitialized array element.", "", "", "");
 				return null;
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
@@ -2552,13 +2552,13 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (theIndex instanceof RTNullObject) {
-				ErrorLogger.error(ErrorType.Runtime, 0, "Array index ", rTIndexExpression_.toString(), " unitialized at run-time for array ", 
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Array index ", rTIndexExpression_.toString(), " unitialized at run-time for array ", 
 						rTArrayExpression_.toString());
 				pc2 = null; 	// halt
 			} else {
 				final RTStackable evaluationResult = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (evaluationResult instanceof RTNullObject) {
-					ErrorLogger.error(ErrorType.Runtime, 0, "Object ", rTArrayExpression_.toString(), " unitialized at run-time.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Object ", rTArrayExpression_.toString(), " unitialized at run-time.", "");
 					pc2 = null; 	// halt
 				} else {
 					assert evaluationResult instanceof RTArrayObject;
@@ -2993,7 +2993,7 @@ public abstract class RTExpression extends RTCode {
 				final RTDynamicScope scope = dynamicScope.nearestEnclosingScopeDeclaring(iterationIdentifierName);
 				
 				if (null == scope) {
-					ErrorLogger.error(ErrorType.Internal, 0, "INTERNAL: Cannot find loop variable ",
+					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "INTERNAL: Cannot find loop variable ",
 							iterationIdentifierName, ".", "");
 					RTMessage.printMiniStackStatus();
 					
@@ -3003,7 +3003,7 @@ public abstract class RTExpression extends RTCode {
 					scope.setObject(iterationIdentifierName, valueFromIteration);
 					return body_;
 				} else {
-					ErrorLogger.error(ErrorType.Internal, 0, "Runtime: `",
+					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Runtime: `",
 							iterationIdentifierName, "' has been bound to an uninitialized object.", "");
 					RTMessage.printMiniStackStatus();
 					
@@ -3790,7 +3790,7 @@ public abstract class RTExpression extends RTCode {
 				part2_.setResultIsConsumed(expr.resultIsConsumed());
 			} else {
 				lhs_ = rhs_ = new RTNullExpression();
-				ErrorLogger.error(ErrorType.Internal, 0, "Internal error in building RTProduct", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Internal error in building RTProduct", "", "", "");
 			}
 		}
 		@Override public RTCode run() {
@@ -4264,7 +4264,7 @@ public abstract class RTExpression extends RTCode {
 	
 	protected static void setLastExpressionResult(final RTObject value, final int lineNumber) {
 		if (null == value) {
-			ErrorLogger.error(ErrorType.Internal, "INTERNAL ERROR: Internal expression evaluated to a NULL Java object, line ", Integer.toString(lineNumber), ".", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "INTERNAL ERROR: Internal expression evaluated to a NULL Java object, line ", Integer.toString(lineNumber), ".", "");
 		} else {
 			final RTObject previousLastResult = lastExpressionResult_;
 			value.incrementReferenceCount();

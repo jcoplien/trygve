@@ -32,7 +32,7 @@ import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
@@ -109,7 +109,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorType.Fatal, "Object of type ", this.rTType().name(),
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
 					" playing too many roles, including ", roleName);
 		}
 	}
@@ -162,7 +162,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public RTObject get(final int i) {
 		RTObject retval;
 		if (i >= theList_.size()) {
-			ErrorLogger.error(ErrorType.Runtime, 0, "List index out-of-range: ",
+			ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "List index out-of-range: ",
 					Integer.toString(i), " on list of size ", Integer.toString(theList_.size()));
 			RTMessage.printMiniStackStatus();
 			retval = null;

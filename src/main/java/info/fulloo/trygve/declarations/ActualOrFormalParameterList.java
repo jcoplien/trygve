@@ -30,4 +30,6 @@ public interface ActualOrFormalParameterList {
 	public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo lt);
 	public String getText();
 	public boolean containsVarargs();
+	public boolean isError();
+	public boolean isntError();
 }

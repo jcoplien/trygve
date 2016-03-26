@@ -28,6 +28,6 @@ import java.util.List;
 public interface BodyPart {
 	public String getText();
 	public Type type();
-	List<BodyPart> bodyParts();
-	int lineNumber();
+	public List<BodyPart> bodyParts();
+	public int lineNumber();
 }

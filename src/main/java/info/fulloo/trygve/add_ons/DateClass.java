@@ -10,7 +10,7 @@ import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTCode;
@@ -185,7 +185,7 @@ public final class DateClass {
 		}
 		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails (Date domain)", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails (Date domain)", "", "", "");
 			return null;	// halt the machine
 		}
 	}

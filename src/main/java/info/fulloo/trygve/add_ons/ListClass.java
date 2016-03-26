@@ -16,7 +16,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;  
@@ -212,7 +212,7 @@ public final class ListClass {
 		}
 		public RTCode runDetails(final RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 		}
 		protected void addRetvalTo(final RTDynamicScope activationRecord) {
@@ -308,7 +308,7 @@ public final class ListClass {
 			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == argument) {
-				ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
 						"Use of uninitialized list value, or index out of range.", "", "", "");
 				pc = new RTHalt();	// halt instruction
 			} else {
@@ -321,7 +321,7 @@ public final class ListClass {
 					
 					pc = super.nextCode();
 				} else {
-					ErrorLogger.error(ErrorType.Runtime, lineNumber_,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
 							"List.get(): List index out-of-range: ",
 							Integer.toString((int)argument.intValue()),
 							" on list of size ", Integer.toString(theListObject.size()));

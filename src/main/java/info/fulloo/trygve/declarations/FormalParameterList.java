@@ -279,7 +279,6 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return stringBuffer.toString();
 	}
 	
-	
 	@Override public int hashCode() {
 		final int numberOfPositions = this.count();
 		final String middlePosition = numberOfPositions > 0? nameOfParameterAtPosition(numberOfPositions / 2): "rumplestiltskin";
@@ -306,6 +305,17 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 						break;
 					}
 				}
+			}
+		}
+		return retval;
+	}
+	@Override public boolean isError() {
+		boolean retval = false;
+		for (int i = 0; i < count(); i++) {
+			final ObjectDeclaration paramDecl = parameterAtPosition(i);
+			if (paramDecl.isError()) {
+				retval = true;
+				break;
 			}
 		}
 		return retval;

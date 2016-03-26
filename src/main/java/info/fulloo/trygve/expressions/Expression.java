@@ -51,7 +51,7 @@ import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.parser.Pass0Listener;
@@ -506,7 +506,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (type.hasUnaryOperator(operator)) {
 				;		// is O.K.
 			} else {
-				pass.errorHook5p2(ErrorType.Fatal, rhs.lineNumber(),
+				pass.errorHook5p2(ErrorIncidenceType.Fatal, rhs.lineNumber(),
 						"The unary operator `" + operator,"' does not apply to type ",
 						type.getText(), ".");
 			}
@@ -579,7 +579,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (null != lhs_ && null != rhs_ && null != lhs_.type() && null != rhs_.type()) {		// error stumbling check
 				if (lhs_.type().name().equals("double")) {
 					if (rhs_.type().name().equals("int")) {
-						parser.errorHook6p2(ErrorType.Warning, lineNumber_,
+						parser.errorHook6p2(ErrorIncidenceType.Warning, lineNumber_,
 								"WARNING: Substituting double object for `", rhs_.getText(),
 								"' in assignment to `", lhs_.getText(), "'.",
 								"");
@@ -603,7 +603,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				final Type lhsType = lhs.type(), rhsType = rhs.type();
 				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
 					if (lhsType.pathName().equals(rhsType.pathName())) {
-						parser.errorHook6p2(ErrorType.Warning, lhs.lineNumber(),
+						parser.errorHook6p2(ErrorIncidenceType.Warning, lhs.lineNumber(),
 								"WARNING: Assignment / initialization does not create a new instance. Both `", lhs.name(),
 								"' and `" + rhs.name(), "' will refer to the same object. Use `",
 								rhs.name(), ".clone' to create a separate instance.");
@@ -1383,7 +1383,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 							final List<MethodSignature> newMethodSignatures = requiresSection.get(operator_);
 							if (null != newMethodSignatures) {
 								if (newMethodSignatures.size() > 1) {
-									ErrorLogger.error(ErrorType.Fatal, lhs_.lineNumber(),
+									ErrorLogger.error(ErrorIncidenceType.Fatal, lhs_.lineNumber(),
 											"Overloading ambiguity in operator `", operator_, "'.", "");
 								} else {
 									retval = newMethodSignatures.get(0).returnType();
@@ -1783,6 +1783,35 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		final private ContextDeclaration enclosingContext_;
 	}
 	
+	public static class ErrorExpression extends Expression {
+		// Make this type as passive as possible
+		public ErrorExpression(final Expression originalExpression) {
+			super("*Error*", StaticScope.globalScope().lookupTypeDeclaration("void"), StaticScope.globalScope().lookupTypeDeclaration("void"));
+			originalExpression_ = originalExpression == null?
+					new NullExpression(): originalExpression;
+		}
+		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
+			return new ArrayList<RTCode>();
+		}
+		@Override public int lineNumber() {
+			return originalExpression_.lineNumber();
+		}
+		@Override public String getText() {
+			return "*Error*";
+		}
+		@Override public boolean resultIsConsumed() {
+			return false;
+		}
+		@Override public Expression promoteTo(final Type t) {
+			return this;
+		}
+		@Override public boolean isError() {
+			return true;
+		}
+		
+		final private Expression originalExpression_;
+	}
+	
 	// This is part of the endeavor to add methods to naked
 	// array objects. See also Type.java, method ArrayType.sizeMethodDeclaration.
 	private Type finesseArrayType(final Type type) {
@@ -1894,6 +1923,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	protected void setType(final Type t) {
 		type_ = t;
 	}	
+	
+	public boolean isError() {
+		return false;
+	}
+	public boolean isntError() {
+		return isError() == false;
+	}
+	
 	public abstract List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);
 	
 	private final String id_;

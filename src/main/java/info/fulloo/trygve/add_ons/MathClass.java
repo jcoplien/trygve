@@ -9,7 +9,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt; 
 import info.fulloo.trygve.run_time.RTClass;
@@ -140,7 +140,7 @@ public final class MathClass {
 		}
 		public RTCode runDetails(RTObject scope) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
 
 		}
@@ -180,7 +180,7 @@ public final class MathClass {
 
 			RTDoubleObject answer = null;
 			if (argument < 0) {
-				ErrorLogger.error(ErrorType.Runtime, "square root of negative number", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, "square root of negative number", "", "", "");
 				answer = new RTDoubleObject(0);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(answer);
 				nextPC = new RTHalt();	// halt the machine

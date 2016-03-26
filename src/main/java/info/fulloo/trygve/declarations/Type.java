@@ -37,7 +37,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.ExpressionStackAPI;
 import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.run_time.RTCode;
@@ -67,7 +67,7 @@ public abstract class Type implements ExpressionStackAPI
 	public void declareStaticObject(final ObjectDeclaration declaration) {
 		final String objectName = declaration.name();
 		if (staticObjectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorType.Internal, declaration.lineNumber(), "Multiple definitions of static member ",
+			ErrorLogger.error(ErrorIncidenceType.Internal, declaration.lineNumber(), "Multiple definitions of static member ",
 					objectName, "", "");
 		} else {
 			staticObjectDeclarationDictionary_.put(objectName, declaration);
@@ -470,7 +470,7 @@ public abstract class Type implements ExpressionStackAPI
 				final String parameterToIgnore) {
 			if (recurDepth > 5) {
 				if (recurRecovery == false) {
-						ErrorLogger.error(ErrorType.Fatal, lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(),
 								"Type reference recursion involving argument of `", selectorName, "'.", "");
 				}
 				recurRecovery = true;
@@ -761,12 +761,12 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' is declared as private in interface of `", type.name() +
@@ -934,12 +934,12 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' is declared as private in interface of `", type.name() +
@@ -1007,7 +1007,7 @@ public abstract class Type implements ExpressionStackAPI
 							final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
 									" does not match the contract at line " +
 									Integer.toString(rolesSignature.lineNumber());
-							parserPass.errorHook5p2(ErrorType.Warning, lineNumber,
+							parserPass.errorHook5p2(ErrorIncidenceType.Warning, lineNumber,
 									"WARNING: Required methods for stage props should be const. The declaration of method ",
 									signatureForMethodSelector.name(), " at line ",
 									roleSignatureLineNumber);
@@ -1054,7 +1054,7 @@ public abstract class Type implements ExpressionStackAPI
 						} else if (signatureForMethodSelector.hasConstModifier() == false) {
 							// Now handled by error-reporting version above...
 							// final String roleSignatureLineNumber = Integer.toString(rolesSignature.lineNumber());
-							// ErrorLogger.error(ErrorType.Warning, signatureForMethodSelector.lineNumber(),
+							// ErrorLogger.error(ErrorIncidenceType.Warning, signatureForMethodSelector.lineNumber(),
 							// 		"Required methods for stage props should be const. The declaration of method ",
 							//		signatureForMethodSelector.name(), " does not match the contract at line ", roleSignatureLineNumber);
 						}
@@ -1226,10 +1226,38 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 	}
 	
+	public static class ErrorType extends Type {
+		public ErrorType() {
+			super(null);
+		}
+		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+			return true;
+		}
+		@Override public boolean canBeConvertedFrom(final Type t) {
+			return true;
+		}
+		@Override public String name() {
+			return "*Error*";
+		}
+		@Override public Type type() {
+			return this;
+		}
+		@Override public boolean isError() {
+			return true;
+		}
+	}
+	
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
 	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
 
+	public boolean isError() {
+		return false;
+	}
+	public boolean isntError() {
+		return isError() == false;
+	}
+	
 	public boolean hasUnaryOperator(final String operator) {
 		return false;
 	}

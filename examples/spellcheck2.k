@@ -252,7 +252,7 @@ context SpellCheck {
    }
 
    public void spellCheck() {
-      Words.check()
+      Words[0].check()
    }
 
    public String resultsText() {

@@ -37,7 +37,7 @@ import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
-import info.fulloo.trygve.error.ErrorLogger.ErrorType;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTPrintStreamInfo;
@@ -216,7 +216,7 @@ public final class SystemClass {
 			final RTObject theStream = myEnclosedScope.getObject("this");
 			final RTObject printStreamInfo = theStream.getObject("printStreamInfo");
 			if (printStreamInfo instanceof RTPrintStreamInfo == false) {
-				ErrorLogger.error(ErrorType.Internal, lineNumber(), "Print empire (", this.methodSelectorName(),
+				ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "Print empire (", this.methodSelectorName(),
 						"): Internal Error with stack corruption so PrintStreamInfo is missing.", "");
 				return new RTHalt();
 			}
@@ -242,7 +242,7 @@ public final class SystemClass {
 		}
 		public RTCode runDetails(final RTObject scope, final PrintStream finalStream) {
 			// Effectively a pure virtual method, but Java screws us again...
-			ErrorLogger.error(ErrorType.Internal, "call of pure virtual method runDetails (System domain)", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails (System domain)", "", "", "");
 			return null;	// halt the machine
 		}
 		
@@ -551,7 +551,7 @@ public final class SystemClass {
 					}
 				}
 			} catch (final IllegalFormatException e) {
-				ErrorLogger.error(ErrorType.Runtime, "Invalid format specification: ", "`%", formatString, "'.");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, "Invalid format specification: ", "`%", formatString, "'.");
 				retval = false;
 			}
 			return retval;
