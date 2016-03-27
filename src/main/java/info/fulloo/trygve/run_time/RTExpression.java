@@ -784,7 +784,8 @@ public abstract class RTExpression extends RTCode {
 					assert null != anObjectArgument && anObjectArgument instanceof Expression;
 					Expression anArgument = (Expression)anObjectArgument;
 					
-					final ObjectDeclaration formalParameter = actualMethodFormals.parameterAtPosition(i);
+					final Declaration formalParameter = actualMethodFormals.parameterAtPosition(i);
+					assert null == formalParameter || formalParameter instanceof ObjectDeclaration || formalParameter.isError();
 					final Type formalParameterType = null == formalParameter
 							? StaticScope.globalScope().lookupTypeDeclaration("void")
 							: formalParameter.type();

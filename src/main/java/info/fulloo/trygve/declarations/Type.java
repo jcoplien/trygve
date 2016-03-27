@@ -897,7 +897,8 @@ public abstract class Type implements ExpressionStackAPI
 					for (final MethodSignature rolesSignature: requiredSignatureList) {
 						final FormalParameterList formalParameters = rolesSignature.formalParameterList();
 						if (formalParameters.count() > 1) {
-							final ObjectDeclaration wannabeRhsArg = formalParameters.parameterAtPosition(1);
+							final Declaration wannabeRhsArg = formalParameters.parameterAtPosition(1);
+							assert wannabeRhsArg instanceof ObjectDeclaration || wannabeRhsArg.isError();
 							final Type argType = wannabeRhsArg.type();
 							if (rhs.pathName().equals(argType.pathName())) {
 								retval = true;
@@ -1230,6 +1231,12 @@ public abstract class Type implements ExpressionStackAPI
 		public ErrorType() {
 			super(null);
 		}
+		@Override public boolean canBeLhsOfBinaryOperatorForRhsType(final String operator, final Type type) {
+			return true;
+		}
+		@Override public boolean isBaseClassOf(final Type t) {
+			return true;
+		}
 		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
 			return true;
 		}
@@ -1244,6 +1251,9 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		@Override public boolean isError() {
 			return true;
+		}
+		@Override public StaticScope enclosedScope() {
+			return StaticScope.globalScope();
 		}
 	}
 	

@@ -37,11 +37,11 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	public void addFormalParameter(final Declaration parameter) {
 		insertAtStart(parameter);
 	}
-	public ObjectDeclaration parameterAtPosition(final int i) {
+	public Declaration parameterAtPosition(final int i) {
 		final Object backFromParameterAtIndex = parameterAtIndex(i);
-		ObjectDeclaration retval = null;
+		Declaration retval = null;
 		if (null != backFromParameterAtIndex) {
-			retval = (ObjectDeclaration) backFromParameterAtIndex;
+			retval = (Declaration)backFromParameterAtIndex;
 		}
 		return retval;
 	}
@@ -215,7 +215,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		// templateTypes can be null if we're processing a lookup in an actual template
 		final FormalParameterList retval = new FormalParameterList();
 		for (int i = count() - 1; i >= 0; --i) {
-			final ObjectDeclaration aParameter = parameterAtPosition(i);
+			final Declaration aParameter = parameterAtPosition(i);
 			final Type typeOfParameter = typeOfParameterAtPosition(i);
 			
 			// This method's scope has been been given a templateTypes
@@ -246,7 +246,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			stringBuffer.append(")");
 		} else for (int i = 0; i < numberOfParameters; i++) {
 			final Type argumentType = this.typeOfParameterAtPosition(i);
-			final ObjectDeclaration argument = this.parameterAtPosition(i);
+			final Declaration argument = this.parameterAtPosition(i);
 			stringBuffer.append(argumentType.name());
 			stringBuffer.append(" ");
 			stringBuffer.append(argument.name());
@@ -266,7 +266,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			stringBuffer.append(")");
 		} else for (int i = 1; i < numberOfParameters; i++) {
 			final Type argumentType = this.typeOfParameterAtPosition(i);
-			final ObjectDeclaration argument = this.parameterAtPosition(i);
+			final Declaration argument = this.parameterAtPosition(i);
 			stringBuffer.append(argumentType.name());
 			stringBuffer.append(" ");
 			stringBuffer.append(argument.name());
@@ -312,7 +312,8 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	@Override public boolean isError() {
 		boolean retval = false;
 		for (int i = 0; i < count(); i++) {
-			final ObjectDeclaration paramDecl = parameterAtPosition(i);
+			final Declaration paramDecl = parameterAtPosition(i);
+			assert paramDecl instanceof ObjectDeclaration || paramDecl.isError();
 			if (paramDecl.isError()) {
 				retval = true;
 				break;

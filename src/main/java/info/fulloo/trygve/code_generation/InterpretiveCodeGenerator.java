@@ -516,7 +516,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		final List<RTCode> printlnCode = new ArrayList<RTCode>();
 		RTMethod rtMethod = null;
 		if (formalParameterList.count() == 2) {
-			final ObjectDeclaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
+			final Declaration printableArgumentDeclaration = formalParameterList.parameterAtPosition(1);
+			assert printableArgumentDeclaration instanceof ObjectDeclaration || printableArgumentDeclaration.isError();
 			final Type printableArgumentType = printableArgumentDeclaration.type();
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
@@ -867,7 +868,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 2) {
-			final ObjectDeclaration argumentDeclaration = formalParameterList.parameterAtPosition(1);
+			final Declaration argumentDeclaration = formalParameterList.parameterAtPosition(1);
+			assert argumentDeclaration instanceof ObjectDeclaration || argumentDeclaration.isError();
 			final Type argumentType = argumentDeclaration.type();
 
 			if (argumentType.name().equals("int") || argumentType.name().equals("Integer")) {

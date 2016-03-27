@@ -336,7 +336,8 @@ public abstract class RTMessageDispatcher {
 		// Second -1 is for the varargs
 		// This indexing causes "i" to traverse the arguments lexically right-to-left
 		for (int i = formalParameters.count() - 1 - 1; i >= 0; --i) {
-			final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
+			final Declaration ithParameter = formalParameters.parameterAtPosition(i);
+			assert ithParameter instanceof ObjectDeclaration || ithParameter.isError();
 			final String ithParameterName = ithParameter.name();
 			final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
 			activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
@@ -364,7 +365,8 @@ public abstract class RTMessageDispatcher {
 	private void nonVarargsPopulateActivationRecord(final RTMethod methodDecl, final RTDynamicScope activationRecord) {
 		final FormalParameterList formalParameters = methodDecl.formalParameters();
 		for (int i = formalParameters.count() - 1; 0 <= i; --i) {
-			final ObjectDeclaration ithParameter = formalParameters.parameterAtPosition(i);
+			final Declaration ithParameter = formalParameters.parameterAtPosition(i);
+			assert ithParameter instanceof ObjectDeclaration || ithParameter.isError();
 			final String ithParameterName = ithParameter.name();
 			final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
 			activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);

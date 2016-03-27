@@ -48,6 +48,7 @@ import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.ErrorType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -251,7 +252,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class DupMessageExpression extends Expression
 	{
-		public DupMessageExpression(Expression object, Type type) {
+		public DupMessageExpression(final Expression object, final Type type) {
 			super("clone", type, object.enclosingMegaType());
 			object_ = object;
 			object_.setResultIsConsumed(true);
@@ -1385,6 +1386,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 								if (newMethodSignatures.size() > 1) {
 									ErrorLogger.error(ErrorIncidenceType.Fatal, lhs_.lineNumber(),
 											"Overloading ambiguity in operator `", operator_, "'.", "");
+									retval = new ErrorType();
 								} else {
 									retval = newMethodSignatures.get(0).returnType();
 								}

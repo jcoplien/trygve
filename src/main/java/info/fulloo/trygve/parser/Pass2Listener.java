@@ -518,7 +518,7 @@ public class Pass2Listener extends Pass1Listener {
 				final MethodDeclaration javaId2 = qualifier.type().enclosedScope().lookupMethodDeclarationRecursive(javaIdString, null, true);
 				if (null == javaId2) {
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Identifier `", javaIdString, "' not declared for object `", qualifier.name(), "'.", "");
-					type = StaticScope.globalScope().lookupTypeDeclaration("void");
+					type = new ErrorType();
 				} else {
 					type = javaId2.returnType();
 				}
@@ -1181,7 +1181,7 @@ public class Pass2Listener extends Pass1Listener {
 				
 			Expression actualParameter = null;
 			Type actualParameterType = null;
-			ObjectDeclaration formalParameter = null;
+			Declaration formalParameter = null;
 			Type formalParameterType = null;
 				
 			while (formalParameterIndex < numberOfFormalParameters &&
@@ -1197,6 +1197,7 @@ public class Pass2Listener extends Pass1Listener {
 					
 				formalParameterName = formals.nameOfParameterAtPosition(formalParameterIndex);
 				formalParameter = formals.parameterAtPosition(formalParameterIndex);
+				assert formalParameter instanceof ObjectDeclaration || formalParameter.isError();
 				formalParameterType = formalParameter.type();
 					
 				if (actualParameterType.enclosedScope() == formalParameterType.enclosedScope()) {
@@ -1277,7 +1278,7 @@ public class Pass2Listener extends Pass1Listener {
 				final Expression actualParameter = (Expression)rawParameter;
 				final Type actualParameterType = actualParameter.type();
 
-				final ObjectDeclaration formalParameter = formals.parameterAtPosition(j);
+				final Declaration formalParameter = formals.parameterAtPosition(j);
 				final Type formalParameterType = formalParameter.type();
 
 				if (formalParameterType instanceof VarargsType) {
@@ -1439,8 +1440,8 @@ public class Pass2Listener extends Pass1Listener {
 						// it's O.K. - maybe. Can be used as an L-value in an assignment. R-value, too, I guess
 						type = possibleContextScope.lookupTypeDeclaration(idText);
 						declaringScope = roleDecl.enclosingScope();
+						retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 					}
-					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
 				} else {
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
 							"' is not declared in scope `", currentScope_.name(), "'.", "");

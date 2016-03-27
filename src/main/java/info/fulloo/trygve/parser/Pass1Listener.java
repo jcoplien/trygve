@@ -576,7 +576,7 @@ public class Pass1Listener extends Pass0Listener {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
 						"Duplicate template parameter name: ", type_name.name(), "", "");
 				currentTemplateDecl.addTypeParameter(new IdentifierExpression("$error$",
-						StaticScope.globalScope().lookupTypeDeclaration("void"), currentScope_, ctx.getStart().getLine()),
+						new ErrorType(), currentScope_, ctx.getStart().getLine()),
 						numberOfActualParameters);
 			} else {
 				dupMap.put(type_name.name(), type_name.name());
@@ -1097,12 +1097,14 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		for (int i = 0; i <  parsingData_.currentFormalParameterList().count(); i++) {
-			final ObjectDeclaration objectDeclaration = parsingData_.currentFormalParameterList().parameterAtPosition(i);
+			final Declaration objectDeclaration = parsingData_.currentFormalParameterList().parameterAtPosition(i);
 			
 			// Nothing on Pass 1
 			// Processed on Pass 2
 			// Functionality duplicated on Passes 3 & 4
-			declareFormalParametersSuitableToPass(currentScope_, objectDeclaration);
+			if (objectDeclaration instanceof ObjectDeclaration) {
+				declareFormalParametersSuitableToPass(currentScope_, (ObjectDeclaration)objectDeclaration);
+			}
 		}
 		
 		// Can't we associate the signature with the parameter list here? Experiment.
@@ -1465,7 +1467,7 @@ public class Pass1Listener extends Pass0Listener {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type ", typeName, " undefined for declaration", "");
 				
 				// Put in some reasonable type to avoid stumbling
-				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+				type = new ErrorType();
 			}
 			
 			if (isArray) {
@@ -2551,38 +2553,44 @@ public class Pass1Listener extends Pass0Listener {
 				expression = new IdentityBooleanExpression(lhs, operationAsString, rhs);
 			} else {
 				// Refactor into method
-				if (lhs.type().canBeConvertedFrom(rhs.type()) == false) {
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
-							"Expression `" + rhs.getText(), "' is not of the right type (",
-							lhs.type().getText(), ").");
-				}
+				final Type lhsType = null == lhs? null: lhs.type(),
+							rhsType = null == rhs? null: rhs.type();
 				
-				final Type lhsType = lhs.type(), rhsType = rhs.type();
-				if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
-					;	// O.K.
-				} else {
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
-							"You may not apply '" + operationAsString, "' to objects of type `",
-							lhs.type().getText(), "'.");
+				if (null != lhsType && null != rhsType) {
+					if (lhsType.canBeConvertedFrom(rhsType) == false && lhs.isntError() &&
+							lhsType.isntError() && rhs.isntError() && rhsType.isntError()) {
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
+								"Expression `" + rhs.getText(), "' is not of the right type (",
+								lhs.type().getText(), ").");
+					}
+
+					if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
+						;	// O.K.
+					} else if (lhs.isntError() && lhs.type().isntError()) {
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
+								"You may not apply '" + operationAsString, "' to objects of type `",
+								lhs.type().getText(), "'.");
+					}
 				}
 	
 				final ActualArgumentList parameterList = new ActualArgumentList();
 				parameterList.addActualArgument(lhs);
 				parameterList.addActualArgument(rhs);
-				if (null != lhs && null != rhs && null != lhs.type() && (lhs.type() instanceof InterfaceType) == false &&
+				if (null != lhs && null != rhs && null != lhsType && (lhsType instanceof InterfaceType) == false &&
+						lhs.isntError() && rhs.isntError() && lhsType.isntError() && rhsType.isntError() &&
 						(operationAsString.equals("<") || operationAsString.equals(">") ||
 								operationAsString.equals("<=") || operationAsString.equals(">=") ||
 								operationAsString.equals("==") || operationAsString.equals("!=")) &&
-						null != lhs.type().enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
+						null != lhsType.enclosedScope().lookupMethodDeclarationRecursive("compareTo", parameterList, false)) {
 					useCompareTo = true;	// then, yeah...
-				} else if (null != lhs && null != rhs && null != lhs.type() && lhs.type() instanceof InterfaceType &&
+				} else if (null != lhs && null != rhs && null != lhsType && lhsType instanceof InterfaceType &&
 						(operationAsString.equals("<") || operationAsString.equals(">") ||
 								operationAsString.equals("<=") || operationAsString.equals(">=") ||
 								operationAsString.equals("==") || operationAsString.equals("!=")) &&
 						null != ((StaticInterfaceScope)lhs.type().enclosedScope()).
 							lookupMethodDeclarationWithConversionIgnoringParameter("compareTo", parameterList, false, "this")) {
 					useCompareTo = true;	// then, yeah...
-				} else if (null != rhs && null != rhs.type() &&
+				} else if (null != rhs && null != rhsType &&
 						rhs.type().canBeRhsOfBinaryOperator(operationAsString)) {
 					;	// O.K.
 				} else if (rhs instanceof NullExpression) {
@@ -2932,7 +2940,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == templateDeclaration) {
 				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 						"Cannot find template ", JAVA_ID, "", "");
-				type = StaticScope.globalScope().lookupTypeDeclaration("void");
+				type = new ErrorType();
 				expression = new ErrorExpression(null);
 			} else {
 				final StringBuffer typeNameBuffer = new StringBuffer();
@@ -2951,7 +2959,7 @@ public class Pass1Listener extends Pass0Listener {
 					if (null == type) {
 						errorHook5p2(ErrorIncidenceType.Internal, lineNumber,
 							"Cannot find template instantiation ", compoundTypeName, "", "");
-						type = StaticScope.globalScope().lookupTypeDeclaration("void");
+						type = new ErrorType();
 					}
 				}
 				
@@ -2984,7 +2992,10 @@ public class Pass1Listener extends Pass0Listener {
 			final ExpressionStackAPI rawExpression = this.exprFromExprDotJAVA_ID(ctx.JAVA_ID(), ctx.getStart(), null);
 			assert rawExpression instanceof Expression;
 			expression = (Expression)rawExpression;
-			if (printProductionsDebug) { System.err.print("abelian_atom : abelian_atom '.' JAVA_ID ("); System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");}
+			if (printProductionsDebug) {
+				System.err.print("abelian_atom : abelian_atom '.' JAVA_ID (");
+				System.err.print(ctx.JAVA_ID().getText()); System.err.println(")");
+			}
 		} else if (null == ctx.builtin_type_name() && null != ctx.abelian_atom() && null != ctx.message()) {
 			//	| abelian_atom '.' message
 			// This routine actually does pop the expressions stack (and the Message stack)
@@ -3177,6 +3188,11 @@ public class Pass1Listener extends Pass0Listener {
 			
 			final Expression qualifier = parsingData_.popExpression();
 			expression = new DupMessageExpression(qualifier, qualifier.type());
+			
+			if (qualifier.isError() || qualifier.type().isError()) {
+				expression = new ErrorExpression(expression);
+			}
+			
 			if (printProductionsDebug) { System.err.println("abelian_atom : abelian_expr '.' 'clone'"); }
 		} else {
 			assert false;
@@ -3469,7 +3485,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (null == type) {
 			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type `", typeName,
 					"' seems not to be declared in any enclosing scope", "");
-			type = StaticScope.globalScope().lookupTypeDeclaration("void");
+			type = new ErrorType();
 		}
 		
 		final ObjectDeclaration objectDecl = new ObjectDeclaration(idName, type, ctx.getStart().getLine());
@@ -4027,7 +4043,7 @@ public class Pass1Listener extends Pass0Listener {
 					if (null == correspondingType) {
 						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 								"Cannot find type named ", aTypeName, " in instantiation of ", templateDeclaration.name());
-						newTypes.add(StaticScope.globalScope().lookupTypeDeclaration("void"));
+						newTypes.add(new ErrorType());
 					} else {
 						newTypes.add(correspondingType);
 					}
@@ -4190,7 +4206,8 @@ public class Pass1Listener extends Pass0Listener {
 				// New initialization association
 				objDecl.setInitialization(initialization);
 			} else if (expressionType.isntError() && declarationType.isntError() && initializationExpression.isntError()) {
-				errorHook5p2(ErrorIncidenceType.Fatal, objDecl.lineNumber(), "Type mismatch in initialization of `",
+				errorHook5p2(ErrorIncidenceType.Fatal, objDecl.lineNumber(),
+						"Type mismatch in initialization of `",
 						objDecl.name(), "'.", "");
 			}
 		}
@@ -4312,15 +4329,20 @@ public class Pass1Listener extends Pass0Listener {
 				Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
 				if (null == paramType) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
-					paramType = parsingData_.globalScope().lookupTypeDeclaration("void");
+					paramType = new ErrorType();
+				} else if (formalParameterName.equals("this")) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
+					paramType = new ErrorType();
 				} else if (isArray) {
 					// A derived type
 					final String aName = paramType.getText() + "_$array";
 					paramType = new ArrayType(aName, paramType);
 				}
 				
-				ObjectDeclaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
+				Declaration newFormalParameter = new ObjectDeclaration(formalParameterName, paramType, ctx.getStart().getLine());
+				if (paramType.isError()) {
+					newFormalParameter = new ErrorDeclaration("");
+				}
 				
 				// They go in reverse order...
 				if (newFormalParameter.name().equals("this")) {
@@ -4390,7 +4412,7 @@ public class Pass1Listener extends Pass0Listener {
 	}
 	
 	private ExpressionStackAPI exprFromExprDotJAVA_ID(final TerminalNode ctxJAVA_ID, final Token ctxGetStart, final TerminalNode ctxABELIAN_INCREMENT_OP) {
-		// Certified Pass 1 version ;-) There is no longer any Pass 2 version
+		// Certified Pass 1 version ;-) There is no longer any Pass 2+ version
 		UnaryopExpressionWithSideEffect.PreOrPost preOrPost;
 		Type type = null;
 		final ExpressionStackAPI qualifier = parsingData_.popRawExpression();
@@ -4429,12 +4451,14 @@ public class Pass1Listener extends Pass0Listener {
 					type = odecl.type();
 				}
 				assert type != null;
-			}
-			
-			if (null != ctxABELIAN_INCREMENT_OP) {
-				expression = new QualifiedClassMemberExpressionUnaryOp(theClass, javaIdString, type, ctxABELIAN_INCREMENT_OP.getText(), preOrPost);
+				
+				if (null != ctxABELIAN_INCREMENT_OP) {
+					expression = new QualifiedClassMemberExpressionUnaryOp(theClass, javaIdString, type, ctxABELIAN_INCREMENT_OP.getText(), preOrPost);
+				} else {
+					expression = new QualifiedClassMemberExpression(theClass, javaIdString, type);
+				}
 			} else {
-				expression = new QualifiedClassMemberExpression(theClass, javaIdString, type);
+				expression = new ErrorExpression(null);
 			}
 		} else {
 			final Expression object = (Expression)qualifier;
@@ -4448,20 +4472,13 @@ public class Pass1Listener extends Pass0Listener {
 			if (null != odecl) {
 				type = odecl.type();
 				assert type != null;
-			} else {
-				// errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
-				// 		"' not found as member of ", object.type().name());
-				type = new ErrorType();
-				odecl = new ErrorDeclaration("");
-			}
-			
-			if (null != ctxABELIAN_INCREMENT_OP) {
-				expression = new QualifiedIdentifierExpressionUnaryOp(object, javaIdString, type, ctxABELIAN_INCREMENT_OP.getText(), preOrPost);
-			} else {
-				expression = new QualifiedIdentifierExpression(object, javaIdString, type);
-			}
-			
-			if (null != odecl) {
+				
+				if (null != ctxABELIAN_INCREMENT_OP) {
+					expression = new QualifiedIdentifierExpressionUnaryOp(object, javaIdString, type, ctxABELIAN_INCREMENT_OP.getText(), preOrPost);
+				} else {
+					expression = new QualifiedIdentifierExpression(object, javaIdString, type);
+				}
+				
 				if (odecl instanceof ObjectDeclaration) {
 					final ObjectDeclaration odeclAsOdecl = (ObjectDeclaration)odecl;
 					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(
@@ -4476,12 +4493,74 @@ public class Pass1Listener extends Pass0Listener {
 							"Cannot access expression `", expression.getText(),
 							"' with non-object type declaration", "");
 				}
+			} else if (null == (expression = degenerateProcedureCheck(qualifier, objectType, javaIdString, ctxGetStart.getLine()))){
+				if (object.isntError() && object.type().isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Field `", javaIdString,
+						"' not found as member of `", object.type().name() + "'.");
+				}
+				type = new ErrorType();
+				odecl = new ErrorDeclaration("");
+				expression = new ErrorExpression(null);
 			}
 		}
 		
-		assert null != expression;
-		
-		return expression;
+		return null == expression? new ErrorExpression(null): expression;
+	}
+	
+	private Expression degenerateProcedureCheck(final ExpressionStackAPI object, final Type objectType,
+			final String methodSelector, final int lineNumber) {
+		// Eiffel-style feature invocation
+		Expression retval = null;
+		if (object instanceof Expression && null != objectType) {
+			final ActualArgumentList parameterList = new ActualArgumentList();
+			
+			if (objectType instanceof RoleType) {
+				IdentifierExpression currentContext = new IdentifierExpression("current$context", currentContext_.type(),
+						currentScope_, lineNumber);
+				parameterList.addFirstActualParameter(currentContext);
+				parameterList.addActualArgument((Expression)object);
+			} else {
+				parameterList.addFirstActualParameter((Expression)object);
+			}
+			final MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclarationRecursive(
+					methodSelector, parameterList, false);
+			if (null != methodDecl) {
+				final Message message = new Message(methodSelector, parameterList, lineNumber, methodDecl.returnType());
+				MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
+				if (null != currentScope_.associatedDeclaration()) {
+					originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+				} else {
+					final Type anotherType = ((Expression)object).enclosingMegaType();
+					if (null != anotherType) {
+						final StaticScope anotherScope = anotherType.enclosedScope();
+						originMethodClass = anotherScope.methodInvocationEnvironmentClass();
+					} else {
+						originMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;	// outermost scope
+					}
+				}
+				
+				MethodInvocationEnvironmentClass targetMethodClass = null;
+				if (objectType instanceof RoleType) targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+				else if (objectType instanceof ContextType) targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+				else targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				
+				final boolean isStatic = (null != methodDecl) && (null != methodDecl.signature()) && methodDecl.signature().isStatic();
+			
+				boolean isPolymorphic = true;
+				if (amInConstructor()) {
+					if (object instanceof IdentifierExpression) {
+						// Don't dynamically dispatch methods from within a constructor
+						if (((IdentifierExpression)object).name().equals("this")) {
+							isPolymorphic = false;
+						}
+					}
+				}
+				
+				retval = new MessageExpression((Expression) object, message, methodDecl.returnType(),
+						lineNumber, isStatic, originMethodClass, targetMethodClass, isPolymorphic);
+			}
+		}
+		return retval;
 	}
 	
 	public <ExprType> Expression newExpr(final List<ParseTree> ctxChildren, final Token ctxGetStart,
@@ -5032,6 +5111,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == currentRole_) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Symbol `", idName, "' may be used only within certain Role methods.", "");
+				type = new ErrorType();
 			} else {
 				if (currentRole_.isArray()) {
 					expression = idName.equals("index")?
@@ -5041,6 +5121,7 @@ public class Pass1Listener extends Pass0Listener {
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Symbol `", idName, "' may be used only within a Role vector method. The Role ",
 							currentRole_.name(), " is a not a vector.", "");
+					type = new ErrorType();
 				}
 			}
 		} else if (null != objdecl) {
