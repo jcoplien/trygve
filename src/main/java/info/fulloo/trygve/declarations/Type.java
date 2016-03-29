@@ -97,6 +97,9 @@ public abstract class Type implements ExpressionStackAPI
 		if ((operator.equals("!=") || operator.equals("==")) && type.pathName().equals("Null")) {
 			// Can always compare with null
 			retval = true;
+		} else if ((operator.equals("!=") || operator.equals("==")) && this.pathName().equals("Null")) {
+			// Can always compare with null
+			retval = true;
 		} else if (operator.equals("!=") || operator.equals("==") || operator.equals("<") ||
 				operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
 			// Valid if compareTo(X) is defined on us. Probably needs some loosening up
@@ -383,6 +386,20 @@ public abstract class Type implements ExpressionStackAPI
 					final ClassType classyT = (ClassType)t;
 					for (final InterfaceType it : classyT.interfaceTypes()) {
 						if (it.pathName().equals(pathName())) {
+							retval = true;
+							break;
+						}
+					}
+				}
+			}
+			
+			if (retval == false) {
+				// See if t just outright implements this interface
+				if (t instanceof ClassOrContextType) {
+					final ClassOrContextType cocType = (ClassOrContextType)t;
+					final List<InterfaceType> itsInterfaces = cocType.interfaceTypes();
+					for (final InterfaceType anInterface : itsInterfaces) {
+						if (anInterface.pathName().equals(pathName())) {
 							retval = true;
 							break;
 						}

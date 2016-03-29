@@ -283,7 +283,10 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		final int numberOfPositions = this.count();
 		final String middlePosition = numberOfPositions > 0? nameOfParameterAtPosition(numberOfPositions / 2): "rumplestiltskin";
 		final int middlePositionLength = middlePosition.length();
-		return (int)numberOfPositions * 37 + (int)middlePosition.charAt(middlePositionLength / 2);
+		return (int)numberOfPositions * 37 +
+				((middlePositionLength > 0)?
+						(int)middlePosition.charAt(middlePositionLength / 2):
+						41);
 	}
 	
 	public boolean equals(final Object o) {

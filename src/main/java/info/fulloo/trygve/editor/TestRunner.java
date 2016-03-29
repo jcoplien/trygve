@@ -69,6 +69,7 @@ public class TestRunner {
 		"trygve2.k",
 		"trygve3.k",
 		"whiletest.k",
+		"whiletest2.k",
 		"roleplaytest.k",
 		"roleplaytest2.k",
 		"roleplaytest3.k",
@@ -172,6 +173,7 @@ public class TestRunner {
 		"spellcheck2.k",
 		"borrow_library_panel4.k",
 		"panel1.k",
+		"pong.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

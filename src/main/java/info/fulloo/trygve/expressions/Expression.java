@@ -1791,6 +1791,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			super("*Error*", StaticScope.globalScope().lookupTypeDeclaration("void"), StaticScope.globalScope().lookupTypeDeclaration("void"));
 			originalExpression_ = originalExpression == null?
 					new NullExpression(): originalExpression;
+			type_ = new ErrorType();
 		}
 		@Override public List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope) {
 			return new ArrayList<RTCode>();
@@ -1810,8 +1811,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public boolean isError() {
 			return true;
 		}
+		@Override public Type type() {
+			return type_;
+		}
 		
 		final private Expression originalExpression_;
+		final private Type type_;
 	}
 	
 	// This is part of the endeavor to add methods to naked

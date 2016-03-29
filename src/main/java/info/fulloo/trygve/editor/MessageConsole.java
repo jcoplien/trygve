@@ -24,6 +24,8 @@ package info.fulloo.trygve.editor;
  */
 
 
+import info.fulloo.trygve.configuration.ConfigurationOptions;
+
 import java.io.*;
 import java.util.EventListener;
 import java.awt.*;
@@ -180,10 +182,12 @@ public class MessageConsole
 	 *  is specified the message will be added to the Document before
 	 *  it is also written to the PrintStream.
 	 */
-	public void redirectErr(Color textColor, PrintStream printStream)
+	public void redirectErr(final Color textColor, final PrintStream printStream)
 	{
-		ConsoleOutputStream cos = new ConsoleOutputStream(textColor, printStream);
-		System.setErr( new PrintStream(cos, true) );
+		if (ConfigurationOptions.redirectStandardErrorToConsole() == false) {
+			ConsoleOutputStream cos = new ConsoleOutputStream(textColor, printStream);
+			System.setErr( new PrintStream(cos, true) );
+		}
 	}
 
 	/*

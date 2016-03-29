@@ -1453,27 +1453,29 @@ public class Pass1Listener extends Pass0Listener {
 		
 		final Declaration associatedDeclaration = currentScope_.associatedDeclaration();
 		if (associatedDeclaration instanceof StagePropDeclaration) {
-			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Stage props are stateless, so the decaration of objects of type ", typeName, " in ",
-					associatedDeclaration.name(), " are not allowed.", "");
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Stage props are stateless, so the declaration of objects of type `",
+					typeName, "' in `",
+					associatedDeclaration.name(), "' are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else if (associatedDeclaration instanceof RoleDeclaration) {
-			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Roles are stateless, so the decaration of objects of type ", typeName, " in ",
-					associatedDeclaration.name(), " are not allowed.", "");
+			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Roles are stateless, so the declaration of objects of type `",
+					typeName, "' in `",
+					associatedDeclaration.name(), "' are not allowed.", "");
 			declaredObjectDeclarations = new ArrayList<ObjectDeclaration>();	// empty list just to keep things happy
 		} else {
 			Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
-			
-			if (null == type) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type ", typeName, " undefined for declaration", "");
-				
-				// Put in some reasonable type to avoid stumbling
-				type = new ErrorType();
-			}
 			
 			if (isArray) {
 				// A derived type
 				final String aName = type.getText() + "_$array";
 				type = new ArrayType(aName, type);
+			}
+			
+			if (null == type) {
+				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Type `", typeName, "' undefined for declaration.", "");
+				
+				// Put in some reasonable type to avoid stumbling
+				type = new ErrorType();
 			}
 						
 			final Identifier_listContext identifier_list = ctx.identifier_list();
@@ -1535,6 +1537,9 @@ public class Pass1Listener extends Pass0Listener {
 					final ObjectSubclassDeclaration declaration = (ObjectSubclassDeclaration)currentScope_.associatedDeclaration();
 					declaration.addInSituInitializers(intializationExprs);
 				} else {
+					final DeclarationList declarationList = new DeclarationList(lineNumber);
+					declarationList.addDeclaration(new ErrorDeclaration(null));
+					parsingData_.pushDeclarationList(declarationList);
 					return;	// punt - error return
 				}
 			}
@@ -2566,7 +2571,8 @@ public class Pass1Listener extends Pass0Listener {
 
 					if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
 						;	// O.K.
-					} else if (lhs.isntError() && lhs.type().isntError()) {
+					} else if (lhs.isntError() && lhs.type().isntError() && rhs.isntError() &&
+							rhsType.isntError()) {
 						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 								"You may not apply '" + operationAsString, "' to objects of type `",
 								lhs.type().getText(), "'.");
@@ -2595,7 +2601,7 @@ public class Pass1Listener extends Pass0Listener {
 					;	// O.K.
 				} else if (rhs instanceof NullExpression) {
 					;	// can always compare with NULL
-				} else {
+				} else if (rhs.isntError() && rhs.type().isntError()){
 					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"You may not use an object of type '" +
 									(null == rhs || null == rhs.type()?
@@ -3434,7 +3440,7 @@ public class Pass1Listener extends Pass0Listener {
 		final Expression conditional = parsingData_.currentExpressionExists()?
 				parsingData_.popExpression(): new ErrorExpression(null);
 		final Type conditionalType = conditional.type();
-		if (conditionalType.name().equals("boolean") == false) {
+		if (conditionalType.name().equals("boolean") == false && conditional.isntError()) {
 			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
 					"' is not of type boolean", "");
 		}
@@ -4328,7 +4334,9 @@ public class Pass1Listener extends Pass0Listener {
 				
 				Type paramType = currentScope_.lookupTypeDeclarationRecursive(paramTypeBaseName);
 				if (null == paramType) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Parameter type ", paramTypeName, " not declared for ", formalParameterName);
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
+							"Parameter type `", paramTypeName, "' not declared for `",
+							formalParameterName + "'.");
 					paramType = new ErrorType();
 				} else if (formalParameterName.equals("this")) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "You cannot name a formal parameter `this'.", "", "", "");
@@ -4956,8 +4964,11 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 			if (null == mdecl) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+				if (actualArgumentList.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+						methodSelectorName + actualArgumentList.selflessGetText(),
 						"' not declared in Role `", roleDecl.name() + "'.");
+				}
 				if (message.lineNumber() < roleDecl.lineNumber()) {
 					final MethodSignature enclosingMethod = parsingData_.currentMethodSignature();
 					if (null != enclosingMethod) {
@@ -4978,15 +4989,21 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (null != interfaceDecl) {
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
-						"' not declared in interface ", interfaceDecl.name());
+				if (actualArgumentList.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+						"' not declared in interface `", interfaceDecl.name() + "'.");
+				}
+				returnType = new ErrorType();
 			} else {
 				returnType = methodSignature.returnType();
 			}
 		} else if (objectTypeName.equals("Class")) {
 			final ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(object.name());
 			if (null == classDeclaration) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `", object.name(), "'", "");
+				if (object.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface `",
+							object.name(), "'", "");
+				}
 			} else {
 				mdecl = classDeclaration.enclosedScope().lookupMethodDeclaration(methodSelectorName, actualArgumentList, false);
 				if (null == mdecl) {
@@ -5005,7 +5022,10 @@ public class Pass1Listener extends Pass0Listener {
 				returnType = StaticScope.globalScope().lookupTypeDeclaration("int");	// is O.K.
 			} else {
 				if (object.name().length() > 0) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
+					if (object.isntError()) {
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `",
+							object.name(), "'.", "");
+					}
 				} else {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 				}
@@ -5013,7 +5033,10 @@ public class Pass1Listener extends Pass0Listener {
 			}
 		} else {
 			if (object.name().length() > 0) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `", object.name(), "'.", "");
+				if (object.isntError() && objectType.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface for `",
+							object.name(), "'.", "");
+				}
 			} else {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot find class, Role, or interface of this ", "type", "", "");
 			}

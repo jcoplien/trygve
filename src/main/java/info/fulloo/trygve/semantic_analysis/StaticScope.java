@@ -40,6 +40,7 @@ import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
+import info.fulloo.trygve.add_ons.ThreadClass;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
@@ -198,6 +199,7 @@ public class StaticScope {
 			DateClass.setup();
 			MapClass.setup();
 			ColorClass.setup();
+			ThreadClass.setup();
 			PanelClass.setup();			// must follow Color, System
 			FrameClass.setup();			// must follow Panel
 			PanelClass.EventClass.setup();
@@ -1154,7 +1156,7 @@ public class StaticScope {
 					retval = aDecl; break;
 				}
 			}
-			
+
 			if (null == retval) {
 				// Now try it with promotion
 				for (final MethodDeclaration aDecl : oldEntry) {

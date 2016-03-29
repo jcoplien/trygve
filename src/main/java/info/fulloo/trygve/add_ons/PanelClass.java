@@ -630,7 +630,7 @@ public final class PanelClass {
 				// These need to be coordinated only with what is in the postSetupInitialization
 				// method below, and what is in the driver (GraphicsPanel.java)
 				for (final String attributeName : asList("MOUSE_UP", "MOUSE_DOWN", "MOUSE_ENTER", "MOUSE_EXIT", "MOUSE_DRAG",
-						"KEY_PRESS", "KEY_RELEASE")) {
+						"MOUSE_MOVE", "KEY_PRESS", "KEY_RELEASE")) {
 					final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, 0);
 					attributeDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
 					eventType_.enclosedScope().declareStaticObject(attributeDeclaration);
@@ -723,6 +723,9 @@ public final class PanelClass {
 
 			final RTIntegerObject mouseDragValue = new RTIntegerObject(Event.MOUSE_DRAG);
 			nameToStaticObjectMap_.put("MOUSE_DRAG", mouseDragValue);
+			
+			final RTIntegerObject mouseMoveValue = new RTIntegerObject(Event.MOUSE_MOVE);
+			nameToStaticObjectMap_.put("MOUSE_MOVE", mouseMoveValue);
 			
 			final RTIntegerObject keyPressValue = new RTIntegerObject(Event.KEY_PRESS);
 			nameToStaticObjectMap_.put("KEY_PRESS", keyPressValue);

@@ -184,70 +184,72 @@ public class Pass2Listener extends Pass1Listener {
 			// this someday to support overloading. (But it seems to work now - probably O.K.)
 			currentMethod = currentScope_.lookupMethodDeclarationRecursive(signature.name(),
 					parsingData_.currentFormalParameterList(), false);
-			assert null != currentMethod;
 		}
-		assert null != currentMethod;
+		if (null != currentMethod) {
+			// It *can* be null. We had an example where one of the
+			// parameter types was undeclared and...
 		
-		// +++++++++++++++++++++++++
-		final Type returnType = signature.returnType();
-		currentMethod.setReturnType(returnType);
-		if (null != returnType) {
-			final String returnTypeName = returnType.getText();
-			if (null == currentScope_.lookupTypeDeclarationRecursive(returnTypeName)) {
-				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "' not declared for `",
-						currentMethod.name(), "'.", "");
-			} else {
-				currentMethod.setReturnType(returnType);
-			}
-		} else {
-			final StaticScope currentScope = currentMethod.enclosedScope();
-			final StaticScope parentScope = currentScope.parentScope();
-			final Declaration otherAssociatedDeclaration = parentScope.associatedDeclaration();
-			if (otherAssociatedDeclaration instanceof ContextDeclaration) {
-				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
-					; // then O.K. - constructor
+			// +++++++++++++++++++++++++
+			final Type returnType = signature.returnType();
+			currentMethod.setReturnType(returnType);
+			if (null != returnType) {
+				final String returnTypeName = returnType.getText();
+				if (null == currentScope_.lookupTypeDeclarationRecursive(returnTypeName)) {
+					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "' not declared for `",
+							currentMethod.name(), "'.", "");
 				} else {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "'.", "");
+					currentMethod.setReturnType(returnType);
 				}
-			} else if (otherAssociatedDeclaration instanceof ClassDeclaration) {
-				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
-					; // then O.K. - constructor
-				} else {
-					final TemplateDeclaration templateDeclaration = ((ClassDeclaration)otherAssociatedDeclaration).generatingTemplate();
-					if (null != templateDeclaration) {
-						if (currentMethod.name().equals(templateDeclaration.name())) {
-							// o.k. - constructors on templates don't include parameter names
-						} else {
-							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
-						}
+			} else {
+				final StaticScope currentScope = currentMethod.enclosedScope();
+				final StaticScope parentScope = currentScope.parentScope();
+				final Declaration otherAssociatedDeclaration = parentScope.associatedDeclaration();
+				if (otherAssociatedDeclaration instanceof ContextDeclaration) {
+					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
+						; // then O.K. - constructor
 					} else {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "'.", "");
 					}
-				}
-			} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
-				if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
-					; // then O.K. - constructor
+				} else if (otherAssociatedDeclaration instanceof ClassDeclaration) {
+					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
+						; // then O.K. - constructor
+					} else {
+						final TemplateDeclaration templateDeclaration = ((ClassDeclaration)otherAssociatedDeclaration).generatingTemplate();
+						if (null != templateDeclaration) {
+							if (currentMethod.name().equals(templateDeclaration.name())) {
+								// o.k. - constructors on templates don't include parameter names
+							} else {
+								errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+							}
+						} else {
+							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
+						}
+					}
+				} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
+					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
+						; // then O.K. - constructor
+					} else {
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+					}
 				} else {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
 				}
-			} else {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
 			}
+			// +++++++++++++++++++++++++
+			
+			this.checkMethodAccess(currentMethod, ctx.getStart().getLine());
+			
+			final StaticScope parentScope = currentScope_.parentScope();
+			currentScope_ = parentScope;
+			
+			@SuppressWarnings("unused")
+			final FormalParameterList pl = parsingData_.popFormalParameterList();	// hope this is the right place
+			final int lastLineNumber = ctx.getStop().getLine();
+			
+			final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
+			assert null != audit;	// just so it's used...
+			this.setMethodBodyAccordingToPass(currentMethod);
 		}
-		// +++++++++++++++++++++++++
-		
-		this.checkMethodAccess(currentMethod, ctx.getStart().getLine());
-		
-		final StaticScope parentScope = currentScope_.parentScope();
-		currentScope_ = parentScope;
-		
-		@SuppressWarnings("unused")
-		final FormalParameterList pl = parsingData_.popFormalParameterList();	// hope this is the right place
-		final int lastLineNumber = ctx.getStop().getLine();
-		
-		final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
-		assert null != audit;	// just so it's used...
-		this.setMethodBodyAccordingToPass(currentMethod);
 	}
 	
 	private void checkMethodAccess(final MethodDeclaration currentMethod, int lineNumber) {
@@ -1048,8 +1050,11 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == methodSignature) {
 				// Mainly for error recovery (bad argument to method / method not declared)
 				final String methodSelectorName = message.selectorName();
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Method `", methodSelectorName,
-						"' not declared in interface ", classObjectType.name());
+				if (argumentList.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Method `",
+							methodSelectorName + "(" + argumentList.getText() + ")",
+						"' not declared in interface `", classObjectType.name() + "'.");
+				}
 			} else {
 				isOKMethodSignature = true;
 			}
@@ -1293,10 +1298,23 @@ public class Pass2Listener extends Pass1Listener {
 						// It could just work. This is just the template we're processing. Check things out
 						// later in the class instead.
 					} else {
-						final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
-						final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
-								" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
+						// See if it could be an interface of the class
+						boolean isOK = false;
+						if (actualParameterType instanceof ClassOrContextType) {
+							final List<InterfaceType> interfaceTypes = ((ClassOrContextType)actualParameterType).interfaceTypes();
+							for (final Type alternativeActualParameterType : interfaceTypes) {
+								if (formalParameterType.canBeConvertedFrom(alternativeActualParameterType)) {
+									isOK = true;
+									break;
+								}
+							}
+						}
+						if (false == isOK) {
+							final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
+							final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+									" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
+						}
 					}
 				}	
 			}

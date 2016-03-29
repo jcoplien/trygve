@@ -73,16 +73,7 @@ public abstract class RTMessageDispatcher {
 			switch(targetMessageClass) {
 			case ClassEnvironment:
 				// WARNING: Factory-method-like constructor
-				retval = new RTNonContextToNonContext(
-					messageExpr,
-					methodSelectorName,
-					argPush,
-					postReturnProcessing,
-					expressionsCountInArguments,
-					actualParameters,
-					isStatic,
-					nearestEnclosingType
-					);
+				retval = new RTNonContextToNonContext(messageExpr, methodSelectorName, argPush, postReturnProcessing, expressionsCountInArguments, actualParameters, isStatic, nearestEnclosingType);
 				retval = ((RTNonContextToNonContext)retval).value();
 				// NO: lookup can fail. assert null != retval;
 				break;
@@ -153,28 +144,10 @@ public abstract class RTMessageDispatcher {
 		case ContextEnvironment:
 			switch(targetMessageClass) {
 			case ClassEnvironment:
-				retval = new RTContextToClass(
-						messageExpr,
-						methodSelectorName,
-						argPush,
-						postReturnProcessing,
-						expressionsCountInArguments,
-						actualParameters,
-						isStatic,
-						nearestEnclosingType
-						);
+				retval = new RTContextToClass(messageExpr, methodSelectorName, argPush, postReturnProcessing, expressionsCountInArguments, actualParameters, isStatic, nearestEnclosingType);
 				break;
 			case RoleEnvironment:
-				retval = new RTContextToRole(
-						messageExpr,
-						methodSelectorName,
-						argPush,
-						postReturnProcessing,
-						expressionsCountInArguments,
-						actualParameters,
-						isStatic,
-						nearestEnclosingType
-						);
+				retval = new RTContextToRole(messageExpr, methodSelectorName, argPush, postReturnProcessing, expressionsCountInArguments, actualParameters, isStatic, nearestEnclosingType);
 				break;
 			case ContextEnvironment:
 				retval = new RTContextToContext(
@@ -286,6 +259,8 @@ public abstract class RTMessageDispatcher {
 		}
 		
 		if (false == isStatic_ && RunTimeEnvironment.runTimeEnvironment_.stackIndex() <= startingStackIndex_ + indexForThisExtraction) {
+			ErrorLogger.error(ErrorIncidenceType.Internal, "Internal error in message dispatching: no `this' pushed?",
+					new Throwable().getStackTrace()[1].getMethodName(), ":", Integer.toString(new Throwable().getStackTrace()[1].getLineNumber()));
 			assert RunTimeEnvironment.runTimeEnvironment_.stackIndex() > startingStackIndex_ + indexForThisExtraction;
 		}
 		
@@ -1081,14 +1056,7 @@ public abstract class RTMessageDispatcher {
 				final ActualArgumentList actualParameters,
 				final boolean isStatic,
 				final RTType nearestEnclosingType) {
-			super(messageExpr,
-					methodSelectorName,
-					argPush,
-					postReturnProcessing,
-					expressionsCountInArguments,
-					actualParameters,
-					isStatic,
-					nearestEnclosingType);
+			super(messageExpr, methodSelectorName, argPush, postReturnProcessing, expressionsCountInArguments, actualParameters, isStatic, nearestEnclosingType);
 			
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];

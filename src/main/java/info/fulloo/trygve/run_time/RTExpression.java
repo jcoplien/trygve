@@ -704,17 +704,8 @@ public abstract class RTExpression extends RTCode {
 
 		@Override public RTCode run() {
 			RTMessageDispatcher dispatcher =
-				RTMessageDispatcher.makeDispatcher(
-					messageExpr_,
-					methodSelectorName_,
-					argPush_,
-					postReturnProcessing_,
-					expressionsCountInArguments_,
-					actualParameters_,
-					isStatic(),
-					nearestEnclosingType_,
-					originMessageClass(),
-					targetMessageClass());
+				RTMessageDispatcher.makeDispatcher(messageExpr_, methodSelectorName_, argPush_, postReturnProcessing_, expressionsCountInArguments_,
+					actualParameters_, isStatic(), nearestEnclosingType_, originMessageClass(), targetMessageClass());
             
 			RTCode retval = null;
             
@@ -1634,7 +1625,9 @@ public abstract class RTExpression extends RTCode {
 					assert false;
 				}
 				
-				RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+				if (resultIsConsumed()) {
+					RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+				}
 				setLastExpressionResult(value, lineNumber_);
 				
 				lhs.decrementReferenceCount();
@@ -3243,15 +3236,25 @@ public abstract class RTExpression extends RTCode {
 
 			body_ = new RTExpressionList(expr.body(), nearestEnclosingType);
 			
+			loopTerminate_ = new RTPopDownToFramePointer();
 			if (expr.resultIsConsumed()) {
-				last_ = new RTPushEvaluationResult();
+				last_ = new RTPushEvaluationResult();	// last evaluation result is on the stack, leave it
 			} else {
 				last_ = new RTNullExpression();
 			}
+			loopTerminate_.setNextCode(last_);
+			
 			last_.setNextCode(nextCode());
-			test_ = new RTDoWhileTestRunner(expr.test(), body_, last_, nearestEnclosingType);
+			
+			popBlockResults_ = new RTPopStack();
+			popBlockResults_.setNextCode(body_);
+			test_ = new RTDoWhileTestRunner(expr.test(), popBlockResults_, loopTerminate_, nearestEnclosingType);
 			
 			body_.setNextCode(test_);
+			
+			// Set up a frame boundary at the beginning
+			loopEntry_ = new RTPushFramePointer();
+			loopEntry_.setNextCode(body_);
 			
 			label_ = expr.uniqueLabel();
 			parsingData.addBreakableRTExpression(label_, this);
@@ -3260,7 +3263,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// And run the loop
-			return body_;
+			return loopEntry_;
 		}
 		@Override public void setNextCode(final RTCode code) {
 			assert null != last_;
@@ -3275,14 +3278,38 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode breakExit() {
 			// There is no RTPopDynamicScope node in our list, so the exit
 			// point is "last_" with no need for a separate node
-			return last_;
+			return loopTerminate_;
 		}
 		@Override public RTCode continueHook() {
 			return test_;
 		}
 		
-		private RTExpression test_, body_, last_;
+		private RTExpression loopEntry_, loopTerminate_, popBlockResults_, test_, body_, last_;
 		private final String label_;
+	}
+	
+	private static class RTPushFramePointer extends RTExpression {
+		@Override public RTCode run() {
+			// And run the loop
+			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+			return super.nextCode();
+		}
+	}
+	
+	private static class RTPopDownToFramePointer extends RTExpression {
+		@Override public RTCode run() {
+			// And run the loop
+			RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();
+			return super.nextCode();
+		}
+	}
+	
+	private static class RTPopStack extends RTExpression {
+		@Override public RTCode run() {
+			// And run the loop
+			RunTimeEnvironment.runTimeEnvironment_.popStack();
+			return super.nextCode();
+		}
 	}
 	
 	public static class RTExpressionList extends RTExpression {

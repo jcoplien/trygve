@@ -41,7 +41,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public GraphicsPanel(final RTObjectCommon rTPanel) {
 		rTPanel_ = rTPanel;
 		makeVectors();
-		inInterrupt_ = 0;
 	}
 	
 	public void setBackground(final RTObject colorArg) {
@@ -117,7 +116,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	
 	public void handleEventProgrammatically(final Event e) {
-		if (inInterrupt_++ > 0) return;
 		final RTType rTType = rTPanel_.rTType();
 		assert rTType instanceof RTClass;
 		final TypeDeclaration typeDeclaration = ((RTClass)rTType).typeDeclaration();
@@ -144,10 +142,20 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			if (oldEventArg instanceof RTEventObject == false) {
 				assert oldEventArg instanceof RTEventObject;
 			}
-			final int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			
+			int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 
 			if (postStackDepth != preStackDepth) {
-				assert postStackDepth == preStackDepth;
+				// assert postStackDepth == preStackDepth;
+				assert (postStackDepth > preStackDepth);
+				
+				// Dunno what's going on but just try to recover
+				while (postStackDepth > preStackDepth) {
+					RunTimeEnvironment.runTimeEnvironment_.popStack();
+					postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				}
+				
+				return;
 			}
 			
 			if (retval instanceof RTBooleanObject) {
@@ -165,7 +173,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 				checkIOIntegration(e);
 			}
 		}
-		inInterrupt_ = 0;
 	}
 	
 	protected void checkIOIntegration(final Event e) {
@@ -243,7 +250,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			}
 		}
 		
-		public String toString() {
+		@Override public String toString() {
 			return string_;
 		}
 		
@@ -263,6 +270,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	@Override public boolean handleEvent(final Event e) {
 		// These constants need to be coordinated only with stuff in the
 		// setup and postSetupInitialization methods in PanelClass.java
+		if (inInterrupt_++ > 0) {
+			--inInterrupt_;
+			return false;
+		}
 		
 		int startingStackSize = 0;
 		
@@ -272,6 +283,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			this.handleEventProgrammatically(e);
 			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
+			inInterrupt_ = 0;
 			return true;
 		  case Event.MOUSE_DRAG:
 		  case Event.MOUSE_DOWN:
@@ -282,32 +294,61 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			if (null != g) {
 				paint(g);
 			}
-			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
+			
+			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
+			
+			// Desperate attempt to fix up something that we don't know the reason for
+			while (RunTimeEnvironment.runTimeEnvironment_.stackSize() != startingStackSize) {
+				RunTimeEnvironment.runTimeEnvironment_.popStack();
+			}
+		
+			inInterrupt_ = 0;
 		    return true;
 		  case Event.WINDOW_DESTROY:
-		    System.exit(0);
-		    return true;
+			inInterrupt_ = 0;
+			System.exit(0);
+			return true;
 		  case Event.MOUSE_EXIT:
 		  case Event.MOUSE_ENTER:
+		  case Event.MOUSE_MOVE:
 			this.handleEventProgrammatically(e);
+			inInterrupt_ = 0;
 			return true;
 		  default:
-		    return false;
+			inInterrupt_ = 0;
+			return false;
 		}
 	}
 	
 	@Override public void paint(final Graphics g) {
+		if (inDrawing_++ > 0) {
+			--inDrawing_;
+			return;
+		}
+		
 		/* draw the current rectangles */
 		g.setColor(getForeground());
 		g.setPaintMode();
-		for (int i = 0; i < rectangles_.size(); i++) {
-		    final Rectangle p = rectangles_.elementAt(i);
-		    g.setColor((Color)rectColors_.elementAt(i));
-		    if (p.width != -1) {
-		    	g.drawRect(p.x, p.y, p.width, p.height);
-		    } else {
-		    	g.drawLine(p.x, p.y, p.width, p.height);
-		    }
+		
+		// Copies, just in case we get interrupted
+		@SuppressWarnings("unchecked")
+		Vector<Rectangle> rectanglesCopy = (Vector<Rectangle>) rectangles_.clone();
+		
+		@SuppressWarnings("unchecked")
+		Vector<Color> rectColorsCopy = (Vector<Color>) rectColors_.clone();
+		
+		try {
+			for (int i = 0; i < rectanglesCopy.size(); i++) {
+			    final Rectangle p = rectanglesCopy.elementAt(i);
+			    g.setColor((Color)rectColorsCopy.elementAt(i));
+			    if (p.width != -1) {
+			    	g.drawRect(p.x, p.y, p.width, p.height);
+			    } else {
+			    	g.drawLine(p.x, p.y, p.width, p.height);
+			    }
+			}
+		} catch (ArrayIndexOutOfBoundsException exception) {
+			;
 		}
 		
 		/* draw the current lines */
@@ -319,14 +360,19 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		    g.drawLine(p.x, p.y, p.x+p.width, p.y+p.height);
 		}
 		
-		/* draw the current ellipses */
-		g.setColor(getForeground());
-		g.setPaintMode();
-		for (int i = 0; i < ellipses_.size(); i++) {
-		    final Ellipse2D p = ellipses_.elementAt(i);
-		    g.setColor((Color)ellipseColors_.elementAt(i));
-		    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+		try {
+			/* draw the current ellipses */
+			g.setColor(getForeground());
+			g.setPaintMode();
+			for (int i = 0; i < ellipses_.size(); i++) {
+			    final Ellipse2D p = ellipses_.elementAt(i);
+			    g.setColor((Color)ellipseColors_.elementAt(i));
+			    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+			}
+		} catch (ArrayIndexOutOfBoundsException exception) {
+			;
 		}
+		
 		
 		/* same, only filled ellipses */
 		for (int i = 0; i < filledEllipses_.size(); i++) {
@@ -343,6 +389,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		    g.setColor(p.color());
 		    g.drawString(p.toString(), p.x(), p.y());
 		}
+		
+		inDrawing_ = 0;
 	}
 	
 	@Override public void removeAll() {
@@ -454,7 +502,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	private       Vector<StringRecord> strings_;
 	private RTObjectCommon rTPanel_;
 	
-	private       int inInterrupt_;
+	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;
 	
 	private static final long serialVersionUID = 238269472;
 	private int referenceCount_ = 1;
