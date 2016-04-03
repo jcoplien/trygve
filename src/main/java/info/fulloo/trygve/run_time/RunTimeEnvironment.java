@@ -1,7 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 1.6
+ * Trygve IDE 2.0
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -71,7 +71,6 @@ public class RunTimeEnvironment {
 		pathToTypeMap_ = new LinkedHashMap<String, RTType>();
 		reboot();
 		setRunTimeEnvironment(this);
-		machineMutex_ = new RTMutex();
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
 		if (null != gui) {
@@ -85,13 +84,41 @@ public class RunTimeEnvironment {
 	}
 	public void reboot() {
 		RTExpression.reboot();	// reset lastExpression_, etc.
-		stack = new Stack<RTStackable>();
-		dynamicScopes = new Stack<RTDynamicScope>();
-		framePointers_ = new Stack<Integer>();
+		swingWorkerThreadStack_ = new Stack<RTStackable>();
+		awtEventQueueStack_ = new Stack<RTStackable>();
+		swingWorkerDynamicScopes_ = new Stack<RTDynamicScope>();
+		awtEventDynamicScopes_ = new Stack<RTDynamicScope>();
+		awtEventDynamicScopes_.push(this.globalDynamicScope);
+		swingWorkerFramePointerStack_ = new Stack<Integer>();
+		awtEventFramePointerStack_ = new Stack<Integer>();
 		if (null != gui_) {
 			redirectedInputStream_ = gui_.getIn();
 		} else {
 			redirectedInputStream_ = System.in;
+		}
+	}
+	private Stack<RTStackable> theStack() {
+		final String threadName = Thread.currentThread().getName();
+		if (threadName.startsWith("AWT-EventQueue")) {
+			return awtEventQueueStack_;
+		} else {
+			return swingWorkerThreadStack_;
+		}
+	}
+	private Stack<Integer> framePointerStack() {
+		final String threadName = Thread.currentThread().getName();
+		if (threadName.startsWith("AWT-EventQueue")) {
+			return awtEventFramePointerStack_;
+		} else {
+			return swingWorkerFramePointerStack_;
+		}
+	}
+	private Stack<RTDynamicScope> dynamicScopeStack() {
+		final String threadName = Thread.currentThread().getName();
+		if (threadName.startsWith("AWT-EventQueue")) {
+			return awtEventDynamicScopes_;
+		} else {
+			return swingWorkerDynamicScopes_;
 		}
 	}
 	private void preDeclareTypes() {
@@ -183,39 +210,39 @@ public class RunTimeEnvironment {
 		} while (pc != null && pc != exitNode);
 	}
 	public synchronized void setFramePointer() {
-		final int stackSize = stack.size();
-		framePointers_.push(new Integer(stackSize));
+		final int stackSize = theStack().size();
+		framePointerStack().push(new Integer(stackSize));
 	}
 	
 	public RTStackable popDownToFramePointer() {
 		RTStackable retval = null;
-		final int stackSize = stack.size();
-		final int framePointer = (framePointers_.pop()).intValue();
+		final int stackSize = theStack().size();
+		final int framePointer = (framePointerStack().pop()).intValue();
 		if (framePointer > stackSize) {
 			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
-		while (stack.size() > framePointer) {
+		while (theStack().size() > framePointer) {
 			@SuppressWarnings("unused")
-			final RTStackable popped = stack.pop();	// save value here for debugging only
+			final RTStackable popped = theStack().pop();	// save value here for debugging only
 		}
-		retval = stack.peek();
+		retval = theStack().peek();
 		return retval;
 	}
 	public RTStackable popDownToFramePointerMinus1() {
 		RTStackable retval = null;
-		final int stackSize = stack.size();
-		int framePointer = (framePointers_.pop()).intValue() + 1;
+		final int stackSize = theStack().size();
+		int framePointer = (framePointerStack().pop()).intValue() + 1;
 		if (framePointer < stackSize) {
 			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
-		while (stack.size() > framePointer) {
-			stack.pop();
+		while (theStack().size() > framePointer) {
+			theStack().pop();
 		}
-		retval = stack.peek();
+		retval = theStack().peek();
 		return retval;
 	}
 	
@@ -234,48 +261,44 @@ public class RunTimeEnvironment {
 	}
 	
 	public void pushStack(final RTStackable stackable) {
-		machineMutex_.acquire();
 		if (null != stackable) {
 			// Can be null (e.g., the nextCode for end-of-evaluation at the end of the program)
 			stackable.incrementReferenceCount();
 		}
 
-		stack.push(stackable);
+		theStack().push(stackable);
 		
 		if (ConfigurationOptions.runtimeStackTrace()) {
 			printStack();
 		}
-		machineMutex_.release();
 	}
 	public RTStackable popStack() {
-		machineMutex_.acquire();
 		if (ConfigurationOptions.runtimeStackTrace()) {
 			printStack();
 		}
-		final RTStackable retval = stack.pop();
-		machineMutex_.release();
+		final RTStackable retval = theStack().pop();
 		return retval;
 	}
 	public synchronized int stackIndex() {
-		return stack.size();
+		return theStack().size();
 	}
 	public synchronized RTStackable stackValueAtIndex(final int index) {
-		return stack.get(index);
+		return theStack().get(index);
 	}
-	public synchronized RTStackable peekStack() { return stack.peek(); }
-	public int stackSize() { return stack.size(); }
+	public synchronized RTStackable peekStack() { return theStack().peek(); }
+	public int stackSize() { return theStack().size(); }
 	
 	public void pushDynamicScope(final RTDynamicScope element) {
 		// Subtle. Reference count was initialized to one and this is
 		// its first use, so we don't increment
 		// element.incrementReferenceCount();
-		dynamicScopes.push(element);
+		dynamicScopeStack().push(element);
 		if (ConfigurationOptions.activationRecordStackTrace()) {
 			printDynamicScopeStack();
 		}
 	}
 	public RTDynamicScope popDynamicScope() {
-		final RTDynamicScope retval = dynamicScopes.pop();
+		final RTDynamicScope retval = dynamicScopeStack().pop();
 		
 		if (ConfigurationOptions.activationRecordStackTrace()) {
 			printDynamicScopeStack();
@@ -287,26 +310,29 @@ public class RunTimeEnvironment {
 	}
 	private void printDynamicScopeStack() {
 		System.err.format("vvvvvvvvvvvvvvvvvvvvvv\n");
-		for (final RTDynamicScope aScope : dynamicScopes) {
+		for (final RTDynamicScope aScope : dynamicScopeStack()) {
 			System.err.format("%s\n", aScope.name());
 		}
 		System.err.format("^^^^^^^^^^^^^^^^^^^^^^\n");
 	}
 	public RTDynamicScope currentDynamicScope() {
-		return dynamicScopes.peek();
+		if (dynamicScopeStack().size() <= 0) {
+			assert dynamicScopeStack().size() > 0;
+		}
+		return dynamicScopeStack().peek();
 	}
 	public void popDynamicScopeInstances(final long depth) {
 		// May be zero, but usually not
 		for (int i = 0; i < depth; i++) {
-			final RTDynamicScope retval = dynamicScopes.pop();
+			final RTDynamicScope retval = dynamicScopeStack().pop();
 			retval.decrementReferenceCount();
 		}
 	}
 	public int currentFramePointer() {
 		// Mainly for debugging
 		int retval = -1;
-		if (framePointers_.size() > 0) {
-			retval = framePointers_.peek();
+		if (framePointerStack().size() > 0) {
+			retval = framePointerStack().peek();
 		}
 		return retval;
 	}
@@ -403,11 +429,11 @@ public class RunTimeEnvironment {
 	}
 	
 	public void printStack() {
-		final int stackSize = stack.size();
+		final int stackSize = theStack().size();
 		System.err.format("________________________________________________________ (%d)\n", stackSize);
 		final int endIndex = stackSize > 5? stackSize - 5: 0;
 		for (int i = stackSize-1; i >= endIndex; i--) {
-			RTStackable element = stack.elementAt(i);
+			RTStackable element = theStack().elementAt(i);
 			if (null == element) {
 				System.err.format(":  NULL");
 			} else {
@@ -428,7 +454,7 @@ public class RunTimeEnvironment {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
 				}
 			}
-			if (framePointers_.contains(new Integer(i-1))) {
+			if (framePointerStack().contains(new Integer(i-1))) {
 				System.err.format(" <== frame pointer (%d)", i+1);
 			}
 			System.err.format("\n");
@@ -437,19 +463,23 @@ public class RunTimeEnvironment {
 			System.err.format(":  ...\n");
 		}
 	}
-	public RTMutex machineMutex() { return machineMutex_; }
 	
 	
 	private final Map<String, RTContext> stringToRTContextMap_;
 	private final Map<String, RTClass> stringToRTClassMap_;
 	private final Map<String, RTInterface> stringToRTInterfaceMap_;
 	private final Map<String, RTType> pathToTypeMap_;
-	private       Stack<RTStackable> stack;
-	private       Stack<Integer> framePointers_;
-	private       Stack<RTDynamicScope> dynamicScopes;
+	
+	private       Stack<RTStackable> swingWorkerThreadStack_;
+	private       Stack<RTStackable> awtEventQueueStack_;
+	private       Stack<Integer> swingWorkerFramePointerStack_;
+	private       Stack<Integer> awtEventFramePointerStack_;
+	
+	private       Stack<RTDynamicScope> swingWorkerDynamicScopes_;
+	private       Stack<RTDynamicScope> awtEventDynamicScopes_;
+	
 	private final List<RTClass> allClassList_;
 	public        RTDynamicScope globalDynamicScope;
 	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
-	private final RTMutex machineMutex_;
 }

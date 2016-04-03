@@ -15,7 +15,6 @@ import info.fulloo.trygve.run_time.RTColorObject;
 import info.fulloo.trygve.run_time.RTCookieObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
-import info.fulloo.trygve.run_time.RTMutex;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -278,9 +277,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		
 		boolean retval = false;
 		
-		final RTMutex mutex = RunTimeEnvironment.runTimeEnvironment_.machineMutex();
-		mutex.acquireWithKey(this);
-		
 		try {
 			int startingStackSize = 0;
 			
@@ -327,7 +323,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 				break;
 			}
 		} finally {
-			mutex.releaseWithKey(this);
 			inInterrupt_ = 0;
 		}
 		return retval;

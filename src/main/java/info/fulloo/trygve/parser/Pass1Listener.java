@@ -1,7 +1,7 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 1.6
+ * Trygve IDE 2.0
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -130,6 +130,7 @@ import info.fulloo.trygve.parser.KantParser.Abelian_productContext;
 import info.fulloo.trygve.parser.KantParser.Abelian_unary_opContext;
 import info.fulloo.trygve.parser.KantParser.Argument_listContext;
 import info.fulloo.trygve.parser.KantParser.BlockContext;
+import info.fulloo.trygve.parser.KantParser.Boolean_atomContext;
 import info.fulloo.trygve.parser.KantParser.Boolean_exprContext;
 import info.fulloo.trygve.parser.KantParser.Boolean_productContext;
 import info.fulloo.trygve.parser.KantParser.Boolean_unary_opContext;
@@ -3838,7 +3839,8 @@ public class Pass1Listener extends Pass0Listener {
 						
 						// Make sure that all case test expressions are of type of switch expression
 						if (aCase.isDefault()) continue;
-						if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false) {
+						if (switchExpressionType.canBeConvertedFrom(aCase.expression().type()) == false &&
+								switchExpressionType.isntError()) {
 							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "Case statement with expression of type `",
 									aCase.type().name(), "' is incompatible with switch expression of type `",
 									switchExpressionType.name(), "'.", "");
@@ -5261,6 +5263,8 @@ public class Pass1Listener extends Pass0Listener {
 				;
 			} else if (walker instanceof Do_while_exprContext) {
 				;
+			} else if (walker instanceof Boolean_atomContext) {	// pong.k
+				;
 			} else {
 				assert false;
 				retval = false;
@@ -5300,7 +5304,7 @@ public class Pass1Listener extends Pass0Listener {
 		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
 			if (((RoleType)lhsType).isArray()) {
 				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), lineNumber, this);
-			} else if (lhs.isntError() && rhs.isntError()) {
+			} else if (lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
 				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}
@@ -5352,14 +5356,14 @@ public class Pass1Listener extends Pass0Listener {
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false
-				&& lhs.isntError() && rhs.isntError()) {
+				&& lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
 			errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhsType.name(),
 					"' is incompatible with expression type `", rhsType.name(), "'.", "");
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType &&
 					anotherLhsType.canBeConvertedFrom(rhsType) == false &&
-					lhs.isntError() && rhs.isntError()) {
+					lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
 				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
 						"' is incompatible with expression type `", rhsType.name(), "'.", "");
 			}

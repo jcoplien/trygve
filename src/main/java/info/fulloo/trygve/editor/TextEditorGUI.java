@@ -6,7 +6,7 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 1.6
+ * Trygve IDE 2.0
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "1.6.19";
+    final String TrygveVersion = "2.0";
     
     public InputStream getIn() {
     	return console_.getIn();

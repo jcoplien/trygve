@@ -12,7 +12,7 @@ import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 /*
- * Trygve IDE 1.6
+ * Trygve IDE 2.0
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify

@@ -19,23 +19,18 @@ class MyPanel extends Panel {
       repaint()
    }
 
-/**/
    public boolean handleEvent(Event event) {
-      int eventId = event.id.clone;
       boolean retval = true;
-
-      if (eventId == Event.MOUSE_MOVED) {
+      if (event.id == Event.MOUSE_MOVE) {
          if (eventHandler_ != null) {
             eventHandler_.handleEvent(event)
          }
       }
       return retval
    }
-/**/
 
    public void setEventHandler(EventHandler eh) {
       eventHandler_ = eh
-      // System.err.println("setEventHandler called")
    }
 
    public Frame frame() { return frame_ }
@@ -55,13 +50,13 @@ class Point {
 class BallObject extends Point {
    public BallObject(int x, int y) {
       Point(x, y);
-      velocity_ = new Point(5, 5)
+      velocity_ = new Point(7, 7)
    }
    public int radius() { return RADIUS }
    public Point velocity() { return velocity_ }
    public void setVelocity(Point velocity) { velocity_ = velocity }
    Point velocity_;
-   private int RADIUS = 10
+   private int RADIUS = 15
 }
 
 context Arena implements EventHandler {
@@ -74,7 +69,6 @@ context Arena implements EventHandler {
    }
    public void run() {
       do {
-         // int i = Inp.rd();
          ThePanel.clear();
          Ball.draw();
          Paddle.draw();
@@ -89,8 +83,9 @@ context Arena implements EventHandler {
          setForeground(Color.blue);
          fillOval(x+r, y+r, r, r)
       }
-      public void drawPaddle(int xs, int ys, int xe, int ye) {
-         drawRect(xs, ys, xe, ye)
+      public void drawPaddle(int xs, int ys, int h, int w) {
+         setForeground(new Color(32, 170, 64));
+         drawRect(xs, ys, h, w)
       }
       public int maxX() { return xsize() }
       public int maxY() { return ysize() }
@@ -111,16 +106,24 @@ context Arena implements EventHandler {
       void setForeground(Color color)
    }
    role Paddle {
+      public int thickness() const { return 10 }
+      public int width() const { return 100 }
       public void draw() {
-         ThePanel.drawPaddle(x() - 50, y(), 100, 40)
+         ThePanel.drawPaddle(x() - (width() / 2), y(),
+                             width(), thickness())
       }
       public void moveTo(Point p) {
          setXY(p.x(), y())
       }
+      public boolean contains(int x) const {
+         return ((x > x() - (width() / 2)) &&
+                (x < x() + (width() / 2)))
+      }
+      public int vertical() const { return y() - thickness() }
    } requires {
       void setXY(int x, int y);
-      int x();
-      int y()
+      int x() const;
+      int y() const
    }
    role Ball {
       public void draw() {
@@ -129,19 +132,27 @@ context Arena implements EventHandler {
       public void step() {
          setXY(x() + velocity().x, y() + velocity().y);
       }
+      private boolean bouncingOffOfPaddle() {
+         if (y() + (radius() * 2) > Paddle.vertical()) {
+            return Paddle.contains(x())
+         }
+         return false
+      }
       public void velocityAdjust() {
          int maxX = ThePanel.maxX(), maxY = ThePanel.maxY();
          int xv = velocity().x, yv = velocity().y;
-         xv = if (xv == 0) 5 else xv;
-         yv = if (yv == 0) 5 else yv;
+         xv = if (xv == 0) velocity().x() else xv;
+         yv = if (yv == 0) velocity().y() else yv;
          int newX = xv.clone, newY = yv.clone;
          if (velocity().x() > 0) {
             if (x() + (radius() * 2) >= maxX) newX = -xv
-         } else if (x() + 15 <= 0) newX = -xv;
+         } else if (x() + radius() <= 0) newX = -xv;
 
          if (velocity().y() > 0) {
-            if (y() + (radius() * 2) + 30 >= maxY) newY = -yv
-         } else if (y() + (radius() * 2) <= 0) newY = -yv;
+            if (bouncingOffOfPaddle()) newY = -yv
+         } else {
+            if (y() + (radius() * 2) <= 0) newY = -yv
+         }
 
          Point retval = new Point(newX, newY);
          setVelocity(retval)
