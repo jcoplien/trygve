@@ -15,6 +15,7 @@ import info.fulloo.trygve.run_time.RTColorObject;
 import info.fulloo.trygve.run_time.RTCookieObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
+import info.fulloo.trygve.run_time.RTMutex;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
@@ -267,7 +268,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		assert false;
 	}
 	
-	@Override public boolean handleEvent(final Event e) {
+	@Override public synchronized boolean handleEvent(final Event e) {
 		// These constants need to be coordinated only with stuff in the
 		// setup and postSetupInitialization methods in PanelClass.java
 		if (inInterrupt_++ > 0) {
@@ -275,49 +276,61 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			return false;
 		}
 		
-		int startingStackSize = 0;
+		boolean retval = false;
 		
-		switch (e.id) {
-		  case Event.KEY_PRESS:
-		  case Event.KEY_RELEASE:
-			startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
-			this.handleEventProgrammatically(e);
-			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
-			inInterrupt_ = 0;
-			return true;
-		  case Event.MOUSE_DRAG:
-		  case Event.MOUSE_DOWN:
-		  case Event.MOUSE_UP:
-			startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
-			this.handleEventProgrammatically(e);
-			final Graphics g = this.getGraphics();
-			if (null != g) {
-				paint(g);
-			}
-			
-			assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
-			
-			// Desperate attempt to fix up something that we don't know the reason for
-			while (RunTimeEnvironment.runTimeEnvironment_.stackSize() != startingStackSize) {
-				RunTimeEnvironment.runTimeEnvironment_.popStack();
-			}
+		final RTMutex mutex = RunTimeEnvironment.runTimeEnvironment_.machineMutex();
+		mutex.acquireWithKey(this);
 		
+		try {
+			int startingStackSize = 0;
+			
+			switch (e.id) {
+			  case Event.KEY_PRESS:
+			  case Event.KEY_RELEASE:
+				startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				this.handleEventProgrammatically(e);
+				assert RunTimeEnvironment.runTimeEnvironment_.stackSize() ==  startingStackSize;
+				retval = true;
+				break;
+			  case Event.MOUSE_DRAG:
+			  case Event.MOUSE_DOWN:
+			  case Event.MOUSE_UP:
+				startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				this.handleEventProgrammatically(e);
+				final Graphics g = this.getGraphics();
+				if (null != g) {
+					paint(g);
+					// repaint();
+				}
+				
+				assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
+				
+				// Desperate attempt to fix up something that we don't know the reason for
+				while (RunTimeEnvironment.runTimeEnvironment_.stackSize() != startingStackSize) {
+					RunTimeEnvironment.runTimeEnvironment_.popStack();
+				}
+			
+				retval = true;
+				break;
+			  case Event.WINDOW_DESTROY:
+				System.exit(0);
+				retval = true;
+				break;
+			  case Event.MOUSE_EXIT:
+			  case Event.MOUSE_ENTER:
+			  case Event.MOUSE_MOVE:
+				this.handleEventProgrammatically(e);
+				retval = true;
+				break;
+			  default:
+				retval = false;
+				break;
+			}
+		} finally {
+			mutex.releaseWithKey(this);
 			inInterrupt_ = 0;
-		    return true;
-		  case Event.WINDOW_DESTROY:
-			inInterrupt_ = 0;
-			System.exit(0);
-			return true;
-		  case Event.MOUSE_EXIT:
-		  case Event.MOUSE_ENTER:
-		  case Event.MOUSE_MOVE:
-			this.handleEventProgrammatically(e);
-			inInterrupt_ = 0;
-			return true;
-		  default:
-			inInterrupt_ = 0;
-			return false;
 		}
+		return retval;
 	}
 	
 	@Override public void paint(final Graphics g) {

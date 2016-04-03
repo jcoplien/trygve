@@ -71,6 +71,7 @@ public class RunTimeEnvironment {
 		pathToTypeMap_ = new LinkedHashMap<String, RTType>();
 		reboot();
 		setRunTimeEnvironment(this);
+		machineMutex_ = new RTMutex();
 		allClassList_ = new ArrayList<RTClass>();
 		this.preDeclareTypes();
 		if (null != gui) {
@@ -181,7 +182,7 @@ public class RunTimeEnvironment {
 			oldPc.decrementReferenceCount();
 		} while (pc != null && pc != exitNode);
 	}
-	public void setFramePointer() {
+	public synchronized void setFramePointer() {
 		final int stackSize = stack.size();
 		framePointers_.push(new Integer(stackSize));
 	}
@@ -198,8 +199,6 @@ public class RunTimeEnvironment {
 		while (stack.size() > framePointer) {
 			@SuppressWarnings("unused")
 			final RTStackable popped = stack.pop();	// save value here for debugging only
-			@SuppressWarnings("unused")
-			int i = 0;	// for breakpoint
 		}
 		retval = stack.peek();
 		return retval;
@@ -235,6 +234,7 @@ public class RunTimeEnvironment {
 	}
 	
 	public void pushStack(final RTStackable stackable) {
+		machineMutex_.acquire();
 		if (null != stackable) {
 			// Can be null (e.g., the nextCode for end-of-evaluation at the end of the program)
 			stackable.incrementReferenceCount();
@@ -245,21 +245,24 @@ public class RunTimeEnvironment {
 		if (ConfigurationOptions.runtimeStackTrace()) {
 			printStack();
 		}
+		machineMutex_.release();
 	}
 	public RTStackable popStack() {
+		machineMutex_.acquire();
 		if (ConfigurationOptions.runtimeStackTrace()) {
 			printStack();
 		}
 		final RTStackable retval = stack.pop();
+		machineMutex_.release();
 		return retval;
 	}
-	public int stackIndex() {
+	public synchronized int stackIndex() {
 		return stack.size();
 	}
-	public RTStackable stackValueAtIndex(final int index) {
+	public synchronized RTStackable stackValueAtIndex(final int index) {
 		return stack.get(index);
 	}
-	public RTStackable peekStack() { return stack.peek(); }
+	public synchronized RTStackable peekStack() { return stack.peek(); }
 	public int stackSize() { return stack.size(); }
 	
 	public void pushDynamicScope(final RTDynamicScope element) {
@@ -434,6 +437,7 @@ public class RunTimeEnvironment {
 			System.err.format(":  ...\n");
 		}
 	}
+	public RTMutex machineMutex() { return machineMutex_; }
 	
 	
 	private final Map<String, RTContext> stringToRTContextMap_;
@@ -447,4 +451,5 @@ public class RunTimeEnvironment {
 	public        RTDynamicScope globalDynamicScope;
 	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
+	private final RTMutex machineMutex_;
 }

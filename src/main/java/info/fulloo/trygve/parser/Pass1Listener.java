@@ -422,6 +422,8 @@ public class Pass1Listener extends Pass0Listener {
 		
 		exitType_declarationCommon();
 		
+		this.implementsCheck((ClassOrContextDeclaration)currentContext_.type().enclosedScope().associatedDeclaration(), ctx.getStart().getLine());
+		
 		if (null != currentContext_) {
 			currentContext_ = currentContext_.parentContext();
 		}
@@ -5326,8 +5328,12 @@ public class Pass1Listener extends Pass0Listener {
 			}
 			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
 		} else if (lhsType instanceof RoleType && null != rhsType) {
-			if (lhsType instanceof RoleType && ((RoleType)lhsType).associatedDeclaration() instanceof RoleArrayDeclaration
-					&& rhsType instanceof ClassType && rhsType.name().startsWith("List<")) {
+			final boolean isRoleArray = lhsType instanceof RoleType &&
+					((RoleType)lhsType).associatedDeclaration() instanceof RoleArrayDeclaration;
+			final boolean isStagePropArray = lhsType instanceof StagePropType &&
+					((StagePropType)lhsType).associatedDeclaration() instanceof StagePropArrayDeclaration;
+			if ((isRoleArray || isStagePropArray) && rhsType instanceof ClassType && rhsType.name().startsWith("List<")) {
+				// includes stage props
 				final String ofWhatThisIsAList = rhsType.name().substring(5, rhsType.name().length() - 1);
 				final Type rhsBaseType = currentScope_.lookupTypeDeclarationRecursive(ofWhatThisIsAList);
 				if (null != rhsBaseType) {	// error stumbling check

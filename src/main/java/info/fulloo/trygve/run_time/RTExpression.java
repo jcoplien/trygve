@@ -2655,7 +2655,7 @@ public abstract class RTExpression extends RTCode {
 			// it's a Role method the Context pointer is in current$context. Otherwise,
 			// current$context is undeclared and we just use "this"
 			RTObject currentContext = null;
-			if (nearestEnclosingType_ instanceof RTRole) {
+			if (nearestEnclosingType_ instanceof RTRole || nearestEnclosingType_ instanceof RTStageProp) {
 				currentContext = RTExpression.getObjectUpToMethodScopeFrom("current$context", currentScope);
 			} else {
 				currentContext = RTExpression.getObjectUpToMethodScopeFrom("this", currentScope);
