@@ -1,5 +1,6 @@
 package info.fulloo.trygve.graphics;
 
+import info.fulloo.trygve.add_ons.PanelClass.RTEventClass;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -139,8 +140,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			// Note that this shouldn't affect blocked reads...
 			final RTObject retval = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
-			if (oldEventArg instanceof RTEventObject == false) {
-				assert oldEventArg instanceof RTEventObject;
+			if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
+				assert false;
 			}
 			
 			int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
@@ -191,15 +192,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final String debugName = null == methodParentScope? "???": methodParentScope.name();
 		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
 		retInst.setResultIsConsumed(true);
-		final RTEventObject event = new RTEventObject(e, rTType);
-		
-		event.setObject("x", new RTIntegerObject(e.x));
-		event.setObject("y", new RTIntegerObject(e.y));
-		event.setObject("id", new RTIntegerObject(e.id));
-		event.setObject("key", new RTIntegerObject(e.key));
-		final char cKey = (char)e.key;
-		final String keyAsString = "" + cKey;
-		event.setObject("keyString", new RTStringObject(keyAsString));
+		final RTObject event = RTEventObject.ctor1(e);
 
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(event);
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
@@ -328,6 +321,33 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		return retval;
 	}
 	
+	private synchronized void drawEllipses(final Graphics g) {
+		try {
+			/* draw the current ellipses */
+			g.setColor(getForeground());
+			g.setPaintMode();
+			for (int i = 0; i < ellipses_.size(); i++) {
+			    final Ellipse2D p = ellipses_.elementAt(i);
+			    g.setColor((Color)ellipseColors_.elementAt(i));
+			    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+			}
+		} catch (ArrayIndexOutOfBoundsException exception) {
+			;
+		}
+	}
+	private synchronized void drawFilledEllipses(final Graphics g) {
+		/* same, only filled ellipses */
+		try {
+			for (int i = 0; i < filledEllipses_.size(); i++) {
+				final Ellipse2D p = filledEllipses_.elementAt(i);
+				g.setColor((Color)filledEllipseColors_.elementAt(i));
+				g.fillOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+			}
+		} catch (ArrayIndexOutOfBoundsException exception) {
+			;
+		}
+	}
+	
 	@Override public void paint(final Graphics g) {
 		if (inDrawing_++ > 0) {
 			--inDrawing_;
@@ -368,26 +388,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		    g.drawLine(p.x, p.y, p.x+p.width, p.y+p.height);
 		}
 		
-		try {
-			/* draw the current ellipses */
-			g.setColor(getForeground());
-			g.setPaintMode();
-			for (int i = 0; i < ellipses_.size(); i++) {
-			    final Ellipse2D p = ellipses_.elementAt(i);
-			    g.setColor((Color)ellipseColors_.elementAt(i));
-			    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
-			}
-		} catch (ArrayIndexOutOfBoundsException exception) {
-			;
-		}
-		
-		
-		/* same, only filled ellipses */
-		for (int i = 0; i < filledEllipses_.size(); i++) {
-		    final Ellipse2D p = filledEllipses_.elementAt(i);
-		    g.setColor((Color)filledEllipseColors_.elementAt(i));
-		    g.fillOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
-		}
+		drawEllipses(g);
+		drawFilledEllipses(g);
 		
 		/* draw the current texts */
 		g.setColor(getForeground());
@@ -450,12 +452,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		}
 	}
 	
-	public void addRectangle(final Rectangle rect, final Color color) {
+	public synchronized void addRectangle(final Rectangle rect, final Color color) {
 		rectangles_.addElement(rect);
 		rectColors_.addElement(color);
 	}
 	
-	public void fillRectangle(final RTObject xObject, final RTObject yObject, 
+	public synchronized void fillRectangle(final RTObject xObject, final RTObject yObject, 
 			final RTObject widthObject, final RTObject heightObject) {
 		final int x = (int)((RTIntegerObject)yObject).intValue();
 		final int y = (int)((RTIntegerObject)widthObject).intValue();
@@ -467,24 +469,24 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		}
 	}
 	
-	public void addLine(final Rectangle line, final Color color) {
+	public synchronized void addLine(final Rectangle line, final Color color) {
 		lines_.addElement(line);
 		lineColors_.addElement(color);
 	}
 	
-	public void addOval(final int x, final int y, final int width, final int height, final Color color) {
+	public synchronized void addOval(final int x, final int y, final int width, final int height, final Color color) {
 		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
 		ellipses_.addElement(ellipse);
 		ellipseColors_.addElement(color);
 	}
 	
-	public void addFilledOval(final int x, final int y, final int width, final int height, final Color color) {
+	public synchronized void addFilledOval(final int x, final int y, final int width, final int height, final Color color) {
 		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
 		filledEllipses_.addElement(ellipse);
 		filledEllipseColors_.addElement(color);
 	}
 	
-	public RTObject addString(final int x, final int y, final String string, final Color color) {
+	public synchronized RTObject addString(final int x, final int y, final String string, final Color color) {
 		final StringRecord stringRecord = new StringRecord(x, y, string, color);
 		strings_.addElement(stringRecord);
 		final RTObject retval = new RTCookieObject(stringRecord);
@@ -495,20 +497,20 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		eventsAreBeingHijacked_ = eventsAreBeingHijacked;
 	}
 	
-	private       Vector<Rectangle> rectangles_;
-	private       Vector<Color> rectColors_;
+	private       volatile Vector<Rectangle> rectangles_;
+	private       volatile Vector<Color> rectColors_;
 	
-	private       Vector<Rectangle> lines_;
-	private       Vector<Color> lineColors_;
+	private       volatile Vector<Rectangle> lines_;
+	private       volatile Vector<Color> lineColors_;
 	
-	private       Vector<Ellipse2D> ellipses_;
-	private       Vector<Color> ellipseColors_;
+	private       volatile Vector<Ellipse2D> ellipses_;
+	private       volatile Vector<Color> ellipseColors_;
 	
-	private       Vector<Ellipse2D> filledEllipses_;
-	private       Vector<Color> filledEllipseColors_;
+	private       volatile Vector<Ellipse2D> filledEllipses_;
+	private       volatile Vector<Color> filledEllipseColors_;
 	
-	private       Vector<StringRecord> strings_;
-	private RTObjectCommon rTPanel_;
+	private       volatile Vector<StringRecord> strings_;
+	private       RTObjectCommon rTPanel_;
 	
 	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;
 	

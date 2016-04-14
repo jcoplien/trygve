@@ -2274,7 +2274,10 @@ public abstract class RTExpression extends RTCode {
 			} else if (classType_.name().equals("Frame")) {
 				newlyCreatedObject = new RTFrameObject(rTType_);
 			} else if (classType_.name().equals("Event")) {
-				newlyCreatedObject = new RTEventObject(rTType_);
+				// Events are just common objects. We leave it to the
+				// Event constructor to stash away a private internal RTEventObect
+				// newlyCreatedObject = new RTEventObject(rTType_);
+				newlyCreatedObject = new RTObjectCommon(rTType_);
 			} else {
 				newlyCreatedObject = new RTObjectCommon(rTType_);
 			}

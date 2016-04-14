@@ -16,6 +16,7 @@ class MyPanel extends Panel {
       frame_.add("Center", this);
       frame_.resize(XSIZE, YSIZE);
       frame_.setVisible(true);
+      drawRect(0, 0, xsize(), ysize());
       repaint()
    }
 
@@ -54,7 +55,7 @@ class BallObject extends Point {
    }
    public int radius() { return RADIUS }
    public Point velocity() { return velocity_ }
-   public void setVelocity(Point velocity) { velocity_ = velocity }
+   public void setVelocity(Point velocity) { velocity_=velocity }
    Point velocity_;
    private int RADIUS = 15
 }
@@ -63,42 +64,45 @@ context Arena implements EventHandler {
    public Arena() {
       MyPanel panel = new MyPanel();
       ThePanel = panel;
+      ThePanel.clear();
       Ball = new BallObject(50, 50);
       Paddle = new Point(450, 560);
       panel.setEventHandler(this)
    }
    public void run() {
       do {
-         ThePanel.clear();
-         Ball.draw();
+         ThePanel.clearObjects();
+         Paddle.erase();
+         Ball.erase()
          Paddle.draw();
+         Ball.draw()
          Ball.velocityAdjust();
+         Ball.erase();
          Ball.step();
-         ThePanel.refresh();
          Thread.sleep(20)
       } while (true)
    }
    role ThePanel {
       public void drawCircle(int x, int y, int r) {
-         setForeground(Color.blue);
          fillOval(x+r, y+r, r, r)
       }
       public void drawPaddle(int xs, int ys, int h, int w) {
-         setForeground(new Color(32, 170, 64));
          drawRect(xs, ys, h, w)
       }
       public int maxX() { return xsize() }
       public int maxY() { return ysize() }
-      public void refresh() { repaint() }
-      public void clear() {
+      public void setColor(Color c) { setForeground(c) }
+      public void clearObjects() {
          removeAll();
-         setForeground(Color.white);
-         drawRect(0, 0, xsize(), ysize());
-         setForeground(Color.white)
+      }
+      public void clear() {
+         setColor(new Color(227, 221, 240));
+         fillRect(0, 0, maxX()-1, maxY()-1)
       }
    } requires {
       void fillOval(int x, int y, int h, int w);
       void drawRect(int x, int y, int h, int w);
+      void fillRect(int x, int y, int h, int w);
       int xsize();
       int ysize();
       void repaint();
@@ -109,6 +113,12 @@ context Arena implements EventHandler {
       public int thickness() const { return 10 }
       public int width() const { return 100 }
       public void draw() {
+         ThePanel.setColor(new Color(32, 170, 64));
+         ThePanel.drawPaddle(x() - (width() / 2), y(),
+                             width(), thickness())
+      }
+      public void erase() {
+         ThePanel.setColor(new Color(239, 237, 239));
          ThePanel.drawPaddle(x() - (width() / 2), y(),
                              width(), thickness())
       }
@@ -126,7 +136,12 @@ context Arena implements EventHandler {
       int y() const
    }
    role Ball {
+      public void erase() {
+         ThePanel.setColor(new Color(239, 237, 239));
+         ThePanel.drawCircle(x(), y(), radius())
+      }
       public void draw() {
+         ThePanel.setColor(Color.blue);
          ThePanel.drawCircle(x(), y(), radius())
       }
       public void step() {
@@ -141,8 +156,6 @@ context Arena implements EventHandler {
       public void velocityAdjust() {
          int maxX = ThePanel.maxX(), maxY = ThePanel.maxY();
          int xv = velocity().x, yv = velocity().y;
-         xv = if (xv == 0) velocity().x() else xv;
-         yv = if (yv == 0) velocity().y() else yv;
          int newX = xv.clone, newY = yv.clone;
          if (velocity().x() > 0) {
             if (x() + (radius() * 2) >= maxX) newX = -xv

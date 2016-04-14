@@ -132,10 +132,43 @@ public class RTEventObject extends RTObjectCommon implements RTObject {
 		return eventType_;
 	}
 
-	public void ctor1() {
-		theEvent_ = new Event(null, 0, null);
+	public static void ctor1(final RTObject theEventObject) {
+		theEventObject.setObject("id", new RTNullObject());
+		theEventObject.setObject("key", new RTNullObject());
+		theEventObject.setObject("keyString", new RTNullObject());
+		theEventObject.setObject("x", new RTNullObject());
+		theEventObject.setObject("y", new RTNullObject());
 	}
-	
+	public static RTObject ctor1(final Event e) {
+		final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+		final StaticScope intScope = intType.enclosedScope();
+		final RTType rTIntType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(intScope);
+		
+		final Type stringType = StaticScope.globalScope().lookupTypeDeclaration("String");
+		final StaticScope stringScope = stringType.enclosedScope();
+		final RTType rTStringType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(stringScope);
+		
+		final Type eventType = StaticScope.globalScope().lookupTypeDeclaration("Event");
+		final StaticScope eventScope = eventType.enclosedScope();
+		final RTType rTEventType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventScope);
+		
+		final RTObject theEventObject = new RTObjectCommon(rTEventType);
+		theEventObject.addObjectDeclaration("id", rTIntType);
+		theEventObject.addObjectDeclaration("key", rTIntType);
+		theEventObject.addObjectDeclaration("keyString", rTStringType);
+		theEventObject.addObjectDeclaration("x", rTIntType);
+		theEventObject.addObjectDeclaration("y", rTIntType);
+		
+		theEventObject.setObject("x", new RTIntegerObject(e.x));
+		theEventObject.setObject("y", new RTIntegerObject(e.y));
+		theEventObject.setObject("id", new RTIntegerObject(e.id));
+		theEventObject.setObject("key", new RTIntegerObject(e.key));
+		final char cKey = (char)e.key;
+		final String keyAsString = "" + cKey;
+		theEventObject.setObject("keyString", new RTStringObject(keyAsString));
+		
+		return theEventObject;
+	}
 	
 	private       Event theEvent_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;

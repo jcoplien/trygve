@@ -25,6 +25,7 @@ import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RTObjectCommon;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
@@ -660,8 +661,8 @@ public final class PanelClass {
 				// activation record
 				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 				final RTObject self = (RTObject)activationRecord.getObject("this");
-				assert self instanceof RTEventObject;
-				final RTCode retval = this.runDetails(activationRecord, (RTEventObject)self);
+				// assert self instanceof RTEventObject;	// No, because it could be a class derived from Event
+				final RTCode retval = this.runDetails(activationRecord, self);
 				
 				// All dogs go to heaven, and all return statements that
 				// have something to return do it. We deal with consumption
@@ -670,22 +671,19 @@ public final class PanelClass {
 				
 				return retval;
 			}
-			public RTCode runDetails(final RTObject scope, final RTEventObject theEvent) {
+			public RTCode runDetails(final RTObject scope, final RTObject theEvent) {
 				// Effectively a pure virtual method, but Java screws us again...
 				ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
-				return null;	// halt the machine
+				return new RTHalt();	// halt the machine
 			}
 		}
 
-		
 		public static class RTEventCtorCode extends RTEventCommon {
 			public RTEventCtorCode(final StaticScope enclosingMethodScope) {
 				super("Event", "Event", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 			}
-			@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTEventObject theFrame) {
-				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTEventObject theEventObject = (RTEventObject)activationRecord.getObject("this");
-				theEventObject.ctor1();
+			@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theEventObject) {
+				RTEventObject.ctor1(theEventObject);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(theEventObject);
 				return super.nextCode();
 			}

@@ -34,6 +34,7 @@ import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.add_ons.FrameClass;
 import info.fulloo.trygve.add_ons.PanelClass;
+import info.fulloo.trygve.add_ons.PanelClass.EventClass;
 import info.fulloo.trygve.add_ons.ScannerClass;
 import info.fulloo.trygve.add_ons.SetClass;
 import info.fulloo.trygve.add_ons.SystemClass;
@@ -181,6 +182,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = FrameClass.typeDeclarationList();	// "Frame"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = EventClass.typeDeclarationList();	// "Event"
 		compileDeclarations(typeDeclarationList);
 				
 		TypeDeclarationList typeDeclarationListWrapper = program_.theRest();
@@ -825,6 +829,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					colorMethodCode.add(new ColorClass.RTColorCtor1Code(methodDeclaration.enclosedScope()));
 				} else {
 					colorMethodCode.add(new ColorClass.RTColorCtor2Code(methodDeclaration.enclosedScope()));
+				}
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 5) {
+			if (methodDeclaration.name().equals("Color")) {
+				final Type elementsParamType = formalParameterList.typeOfParameterAtPosition(1);
+				if (elementsParamType.pathName().equals("int.") || elementsParamType.pathName().equals("Integer.")) {
+					colorMethodCode.add(new ColorClass.RTColorCtor3Code(methodDeclaration.enclosedScope()));
+				} else {
+					colorMethodCode.add(new ColorClass.RTColorCtor4Code(methodDeclaration.enclosedScope()));
 				}
 			} else {
 				assert false;

@@ -99,6 +99,8 @@ public final class ColorClass {
 
 			declareColorMethod("Color", null, asList("blue", "green", "red"), asList(intType, intType, intType), false);
 			declareColorMethod("Color", null, asList("blue", "green", "red"), asList(doubleType, doubleType, doubleType), false);
+			declareColorMethod("Color", null, asList("alpha", "blue", "green", "red"), asList(intType, intType, intType, intType), false);
+			declareColorMethod("Color", null, asList("alpha", "blue", "green", "red"), asList(doubleType, doubleType, doubleType, doubleType), false);
 			declareColorMethod("getRed", intType, null, null, false);
 			declareColorMethod("getBlue", intType, null, null, false);
 			declareColorMethod("getGreen", intType, null, null, false);
@@ -248,6 +250,56 @@ public final class ColorClass {
 			final double green = ((RTDoubleObject)greenArg).doubleValue();
 			final double blue = ((RTDoubleObject)blueArg).doubleValue();
 			((RTColorObject)theColorObject).ctor2(red, green, blue);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
+			return super.nextCode();
+		}
+	}
+	public static class RTColorCtor3Code extends RTColorCommon {
+		public RTColorCtor3Code(final StaticScope enclosingMethodScope) {
+			super("Color", "Color", asList("red", "green", "blue", "alpha"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject theColor) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject theColorObject = activationRecord.getObject("this");
+			assert theColorObject instanceof RTColorObject;
+			final RTObject redArg = activationRecord.getObject("red");
+			final RTObject greenArg = activationRecord.getObject("green");
+			final RTObject blueArg = activationRecord.getObject("blue");
+			final RTObject alphaArg = activationRecord.getObject("alpha");
+			assert redArg instanceof RTIntegerObject;
+			assert greenArg instanceof RTIntegerObject;
+			assert blueArg instanceof RTIntegerObject;
+			assert alphaArg instanceof RTIntegerObject;
+			final int red = (int)((RTIntegerObject)redArg).intValue();
+			final int green = (int)((RTIntegerObject)greenArg).intValue();
+			final int blue = (int)((RTIntegerObject)blueArg).intValue();
+			final int alpha = (int)((RTIntegerObject)alphaArg).intValue();
+			((RTColorObject)theColorObject).ctor3(red, green, blue, alpha);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
+			return super.nextCode();
+		}
+	}
+	public static class RTColorCtor4Code extends RTColorCommon {
+		public RTColorCtor4Code(final StaticScope enclosingMethodScope) {
+			super("Color", "Color", asList("red", "green", "blue", "alpha"), asList("double", "double", "double", "double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject theColor) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject theColorObject = activationRecord.getObject("this");
+			assert theColorObject instanceof RTColorObject;
+			final RTObject redArg = activationRecord.getObject("red");
+			final RTObject greenArg = activationRecord.getObject("green");
+			final RTObject blueArg = activationRecord.getObject("blue");
+			final RTObject alphaArg = activationRecord.getObject("alpha");
+			assert redArg instanceof RTDoubleObject;
+			assert greenArg instanceof RTDoubleObject;
+			assert blueArg instanceof RTDoubleObject;
+			assert alphaArg instanceof RTDoubleObject;
+			final double red = ((RTDoubleObject)redArg).doubleValue();
+			final double green = ((RTDoubleObject)greenArg).doubleValue();
+			final double blue = ((RTDoubleObject)blueArg).doubleValue();
+			final double alpha = ((RTDoubleObject)alphaArg).doubleValue();
+			((RTColorObject)theColorObject).ctor4(red, green, blue, alpha);
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(theColorObject);
 			return super.nextCode();
 		}

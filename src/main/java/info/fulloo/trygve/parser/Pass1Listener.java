@@ -4470,6 +4470,8 @@ public class Pass1Listener extends Pass0Listener {
 					expression = new QualifiedClassMemberExpression(theClass, javaIdString, type);
 				}
 			} else {
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+						"Member `", javaIdString, "' of `" + qualifier.name(), "' is not defined.");
 				expression = new ErrorExpression(null);
 			}
 		} else {
@@ -5119,6 +5121,41 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		return retval;
 	}
+	
+	private class ClassAndObjectDeclaration {
+		public ClassAndObjectDeclaration(final ClassType classType, final ObjectDeclaration objectDecl) {
+			classType_ = classType;
+			objectDecl_ = objectDecl;
+		}
+		
+		public ClassType classType() { return classType_; }
+		public ObjectDeclaration objectDecl() { return objectDecl_; }
+		
+		private ClassType classType_;
+		private ObjectDeclaration objectDecl_;
+	}
+	
+	private ClassAndObjectDeclaration isMemberOfEnclosingObject(final String idName) {
+		ClassAndObjectDeclaration retval = null;
+		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		if (null != nearestEnclosingMegaType) {
+			if (nearestEnclosingMegaType instanceof ClassType) {
+				ClassType nearestEnclosingClass = (ClassType) nearestEnclosingMegaType;
+				do {
+					final StaticScope classScope = nearestEnclosingClass.enclosedScope();
+					final ObjectDeclaration odecl = classScope.lookupObjectDeclaration(idName);
+					if (null != retval) {
+						retval = new ClassAndObjectDeclaration(nearestEnclosingClass, odecl);
+						break;
+					} else {
+						// Try the base class
+						nearestEnclosingClass = nearestEnclosingClass.baseClass();
+					}
+				} while (null != nearestEnclosingClass);
+			}
+		}
+		return retval;
+	}
 	public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// Pass 1 version
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -5126,9 +5163,10 @@ public class Pass1Listener extends Pass0Listener {
 		Type type = null;
 		StaticScope declaringScope = null;
 		final String idName = ctxJAVA_ID.getText();
-		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
+		ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idName);
 		final RoleDeclaration roleDecl = currentScope_.lookupRoleOrStagePropDeclarationRecursive(idName);
 		final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+		ClassAndObjectDeclaration classAndObjectDeclaration = null;
 		if (idName.equals("index") || idName.equals("lastIndex")) {
 			// This is a legal identifier if invoked from within the
 			// scope of a Role, where the Role is declared as a Role
@@ -5185,6 +5223,12 @@ public class Pass1Listener extends Pass0Listener {
 			} else {
 				expression = new ErrorExpression(null);
 			}
+		} else if (null != (classAndObjectDeclaration = isMemberOfEnclosingObject(idName))) {
+			objdecl = classAndObjectDeclaration.objectDecl();
+			final Type classType = classAndObjectDeclaration.classType();
+			final IdentifierExpression qualifier = new IdentifierExpression("this", classType, nearestEnclosingMethodScope, ctxGetStart.getLine());
+			qualifier.setResultIsConsumed(true);
+			expression = new QualifiedIdentifierExpression(qualifier, idName, objdecl.type());
 		} else {
 			final ClassDeclaration cdecl = currentScope_.lookupClassDeclarationRecursive(idName);
 			if (null != cdecl) {

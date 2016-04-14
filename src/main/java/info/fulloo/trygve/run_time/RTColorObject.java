@@ -117,6 +117,12 @@ public class RTColorObject extends RTObjectCommon implements RTObject {
 	public void ctor2(final double r, final double g, final double b) {
 		theColor_ = new Color((int)(255*r), (int)(255*g), (int)(255*b));
 	}
+	public void ctor3(final int r, final int g, final int b, final int alpha) {
+		theColor_ = new Color(r, g, b, alpha);
+	}
+	public void ctor4(final double r, final double g, final double b, final double alpha) {
+		theColor_ = new Color((int)(255*r), (int)(255*g), (int)(255*b), (int)(255*alpha));
+	}
 	
 	public int getRed() {
 		return theColor_.getRed();
