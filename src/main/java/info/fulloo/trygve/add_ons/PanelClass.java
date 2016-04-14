@@ -514,10 +514,10 @@ public final class PanelClass {
 				//
 				// See: http://www.scs.ryerson.ca/mes/courses/cps530/programs/threads/Repaint/
 				//
-				// thePanel.repaint();	// no
 				final Graphics g = thePanel.getGraphics();
 				if (null != g) {
-					thePanel.paint(g);
+					// thePanel.paint(g);
+					thePanel.repaint();
 				}
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");

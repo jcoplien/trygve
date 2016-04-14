@@ -2604,7 +2604,7 @@ public class Pass1Listener extends Pass0Listener {
 					;	// O.K.
 				} else if (rhs instanceof NullExpression) {
 					;	// can always compare with NULL
-				} else if (rhs.isntError() && rhs.type().isntError()){
+				} else if (rhs.isntError() && null != rhs.type() && rhs.type().isntError()){
 					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
 							"You may not use an object of type '" +
 									(null == rhs || null == rhs.type()?
