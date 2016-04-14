@@ -2,7 +2,9 @@ package info.fulloo.trygve.graphics;
 
 import info.fulloo.trygve.add_ons.PanelClass.RTEventClass;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -201,16 +203,26 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final RTDynamicScope activationRecord = new RTDynamicScope(
 				method.name(),
 				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
-		activationRecord.addObjectDeclaration("event", rTType);
-		activationRecord.addObjectDeclaration("this", null);
-		activationRecord.setObject("event", event);
-		activationRecord.setObject("this", rTPanel_);
-		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 		
-		RTCode pc = method;
-		do {
-			pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-		} while (null != pc && pc instanceof RTHalt == false);
+		if (null != methodDecl) {
+			// Get formal parameter name for "event" parameter
+			final MethodSignature signature = methodDecl.signature();
+			final FormalParameterList formalParameters = signature.formalParameterList();
+			final Declaration eventParameter = formalParameters.parameterAtPosition(1);
+			assert eventParameter instanceof ObjectDeclaration;
+			final String eventName = eventParameter.name();
+			
+			activationRecord.addObjectDeclaration(eventName, rTType);
+			activationRecord.addObjectDeclaration("this", null);
+			activationRecord.setObject(eventName, event);
+			activationRecord.setObject("this", rTPanel_);
+			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			
+			RTCode pc = method;
+			do {
+				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+			} while (null != pc && pc instanceof RTHalt == false);
+		}
 	}
 	
 	// ------------------ Internal stuff ------------------------------
