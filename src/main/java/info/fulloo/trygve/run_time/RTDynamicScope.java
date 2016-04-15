@@ -32,6 +32,7 @@ public final class RTDynamicScope extends RTObjectCommon {
 		super(object);
 		// An object IS a scope
 		
+		isARealMethodScope_ = false;
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
 		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 		object.incrementReferenceCount();
@@ -41,8 +42,9 @@ public final class RTDynamicScope extends RTObjectCommon {
 		parentScope_ = parentScope;
 		name_ =  null != methodSelector? methodSelector: "unknown";
 	}
-	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope) {
+	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope, final boolean isReallyAMethodScope) {
 		super((RTType)null);
+		isARealMethodScope_ = isReallyAMethodScope;
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
 		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 		
@@ -174,11 +176,22 @@ public final class RTDynamicScope extends RTObjectCommon {
 	public void setDebuggingTypeName(final String name) {
 		debuggingTypeName_ = name;
 	}
+	public boolean isARealMethodScope() {
+		return isARealMethodScope_;
+	}
 		
 	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
 	private final String name_;
 	private       String debuggingTypeName_;
+	
+	// This is used when walking up the scope stack, as a delimiter
+	// to demarcate when we've gone outside of a script scope. It
+	// is set when we create an RTDynamicScope object and should be
+	// set to true only for the activation record that corresponds
+	// to the script itself (i.e., not to scopes nested within the
+	// script)
+	private final boolean isARealMethodScope_;
 	
 	private String methodSelector_;
 }

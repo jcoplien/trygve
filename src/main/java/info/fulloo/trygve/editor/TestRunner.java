@@ -164,6 +164,7 @@ public class TestRunner {
 		"runeInitialization3.k",
 		"listrole2.k",
 		"isexpression_test.k",
+		"confused_role_vec.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

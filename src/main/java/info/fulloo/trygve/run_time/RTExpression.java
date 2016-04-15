@@ -272,7 +272,9 @@ public abstract class RTExpression extends RTCode {
 		RTObject retval = null;
 		RTDynamicScope scope = scopeArg;
 		do {
+			assert null != scope;
 			retval = scope.getObject(id);
+			if (scope.isARealMethodScope()) break;
 			scope = scope.parentScope();
 		} while (null == retval && null != scope && scope.rTType() instanceof RTMethod == false);
 		
@@ -2830,7 +2832,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public RTCode run() {
 			// A FOR loop opens a new scope. Open it.
-			dynamicScope_ = new RTDynamicScope("for", RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+			dynamicScope_ = new RTDynamicScope("for", RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope_);
 						
 			// Declare local variables
@@ -3477,7 +3479,7 @@ public abstract class RTExpression extends RTCode {
 
 		@Override public RTCode run() {
 			final RTDynamicScope dynamicScope = new RTDynamicScope("switch @ line " + Integer.toString(lineNumber_),
-					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			
 			// Declare local variables
 			for (Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
@@ -4136,7 +4138,7 @@ public abstract class RTExpression extends RTCode {
 			final RTCode nextCode = rTBlockBody_;
 			
 			final RTDynamicScope dynamicScope = new RTDynamicScope("block @ line " + Integer.toString(lineNumber_),
-					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope);
 			
 			// Declare local variables

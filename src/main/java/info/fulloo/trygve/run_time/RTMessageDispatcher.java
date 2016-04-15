@@ -426,7 +426,7 @@ public abstract class RTMessageDispatcher {
 			// Push the activation record onto the activation record stack
 			// (I think this is the only place in the code where activation
 			// records are pushed)
-			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			this.populateActivationRecord(methodDecl_, activationRecord);
 		}

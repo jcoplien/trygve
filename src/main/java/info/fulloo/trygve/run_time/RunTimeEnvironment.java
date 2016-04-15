@@ -181,7 +181,7 @@ public class RunTimeEnvironment {
 		final RTExpression exitNode = new RTHalt();
 		mainExpr.setNextCode(exitNode);
 		
-		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null);
+		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null, true);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
 		
@@ -349,13 +349,13 @@ public class RunTimeEnvironment {
 		return retval;
 	}
 	private void runnerPrefix(final RTCode code) {
-		assert null != code;		// put the check up here, out of the
-		                            // code we will be stepping through...
+		if (null == code) {
+			assert null != code;		// put the check up here, out of the
+										// code we will be stepping through...
+		}
 		final PrintStream stream = System.err;
 		if (ConfigurationOptions.fullExecutionTrace()) {
-			if (null == code) {
-				stream.format("> code == NULL\n");
-			} else if (null == code.getClass()) {
+			if (null == code.getClass()) {
 				stream.format("> *code == NULL\n");
 			} else {
 				String lineNumber = "   ";

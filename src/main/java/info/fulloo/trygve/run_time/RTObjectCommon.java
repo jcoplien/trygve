@@ -94,7 +94,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			// The user has provided a compareTo function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope);
+			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.addObjectDeclaration("this", myType);
 			
@@ -144,7 +144,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			// The user has provided a toString function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope);
+			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.addObjectDeclaration("this", myType);
 						

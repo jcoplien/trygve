@@ -202,10 +202,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		
 		final RTDynamicScope activationRecord = new RTDynamicScope(
 				method.name(),
-				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope());
+				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
+				true);
 		
 		if (null != methodDecl) {
-			// Get formal parameter name for "event" parameter
+			// Get formal parameter name that the user used for the "event" parameter
 			final MethodSignature signature = methodDecl.signature();
 			final FormalParameterList formalParameters = signature.formalParameterList();
 			final Declaration eventParameter = formalParameters.parameterAtPosition(1);
