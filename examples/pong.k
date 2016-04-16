@@ -73,7 +73,6 @@ context Arena implements EventHandler {
       do {
          ThePanel.clearObjects();
          Paddle.erase();
-         Ball.erase()
          Paddle.draw();
          Ball.draw()
          Ball.velocityAdjust();
@@ -92,9 +91,7 @@ context Arena implements EventHandler {
       public int maxX() { return xsize() }
       public int maxY() { return ysize() }
       public void setColor(Color c) { setForeground(c) }
-      public void clearObjects() {
-         removeAll();
-      }
+      public void clearObjects() { removeAll() }
       public void clear() {
          setColor(new Color(227, 221, 240));
          fillRect(0, 0, maxX()-1, maxY()-1)
@@ -105,7 +102,6 @@ context Arena implements EventHandler {
       void fillRect(int x, int y, int h, int w);
       int xsize();
       int ysize();
-      void repaint();
       void removeAll();
       void setForeground(Color color)
    }

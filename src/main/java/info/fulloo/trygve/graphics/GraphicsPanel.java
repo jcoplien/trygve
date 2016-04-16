@@ -299,11 +299,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			  case Event.MOUSE_UP:
 				startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 				this.handleEventProgrammatically(e);
-				final Graphics g = this.getGraphics();
-				if (null != g) {
-					paint(g);
-					// repaint();
-				}
+				// final Graphics g = this.getGraphics();
+				// if (null != g) {
+				// 	paint(g);
+				// 	repaint();
+				// }
 				
 				assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
 				

@@ -102,11 +102,11 @@ class Range {
 context SpellCheck {
    role Utilities {
       public boolean isDelim(String c) const {
-         boolean retval = switch (c) {
-         case "ø": case "Ø": case "æ": case "Æ": case "å": case "Å": false; break
-         default: (c < "a" || c > "z") && (c < "A" || c > "Z")
+         return switch (c) {
+            case "ø": case "Ø": case "æ": case "Æ": case "å": case "Å":
+               false; break
+            default: (c < "a" || c > "z") && (c < "A" || c > "Z")
          }
-         return retval
       }
    }
 

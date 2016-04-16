@@ -3443,7 +3443,7 @@ public class Pass1Listener extends Pass0Listener {
 		final Expression conditional = parsingData_.currentExpressionExists()?
 				parsingData_.popExpression(): new ErrorExpression(null);
 		final Type conditionalType = conditional.type();
-		if (conditionalType.name().equals("boolean") == false && conditional.isntError()) {
+		if (null != conditionalType && conditionalType.name().equals("boolean") == false && conditional.isntError()) {
 			errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Conditional expression `", conditional.getText(),
 					"' is not of type boolean", "");
 		}

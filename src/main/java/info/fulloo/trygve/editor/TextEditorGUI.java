@@ -57,7 +57,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "2.0.4";
+    final String TrygveVersion = "2.1";
     
     public InputStream getIn() {
     	return console_.getIn();
