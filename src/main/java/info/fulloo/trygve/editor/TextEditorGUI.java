@@ -57,8 +57,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
-    final String TrygveVersion = "2.1";
-    
     public InputStream getIn() {
     	return console_.getIn();
     }
@@ -81,7 +79,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
-    	System.out.print(TrygveVersion);
+    	System.out.print(Main.TRYGVE_VERSION);
     	System.out.println(". Copyright (c)2016 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
