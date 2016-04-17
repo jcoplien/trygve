@@ -25,28 +25,25 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
+	public static final String TRYGVE_VERSION = "2.1";
+
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
 		// to get platform independence in the output. Many thanks to
 		// Egon Elbre!
 		System.setProperty("line.separator", "\n");
-		if (args.length > 0 && args[0].startsWith("-g") == false) {
+		if (args.length == 0 || args[0].startsWith("-g")) {
+			printUsage();
+			java.awt.EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					new TextEditorGUI().setVisible(true);
+				}
+			});
+		} else if (args[0].startsWith("-c")) {
 			new BatchRunner().processBatch(args);
-		} else if (args.length > 0 && args[0].startsWith("-g")) {
-			java.awt.EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					new TextEditorGUI().setVisible(true);
-				}
-			});
-		} else if (args.length == 0) {
-			printUsage();
-			java.awt.EventQueue.invokeLater(new Runnable() {
-				public void run() {
-					new TextEditorGUI().setVisible(true);
-				}
-			});
-		} else if (args.length == 0 || args[0].startsWith("-?") || args[0].startsWith("-h")) {
-			printUsage();
+		} else if (args[0].startsWith("-v")) {
+			System.out.print("trygve version ");
+			System.out.println(Main.TRYGVE_VERSION);
 		} else {
 			printUsage();
 		}
