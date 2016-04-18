@@ -31,6 +31,9 @@ import java.util.LinkedHashMap;
 
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.ColorClass;
+import info.fulloo.trygve.add_ons.MouseInfoClass;
+import info.fulloo.trygve.add_ons.MouseInfoClass.PointerInfoClass;
+import info.fulloo.trygve.add_ons.PointClass;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
@@ -199,6 +202,9 @@ public class StaticScope {
 			DateClass.setup();
 			MapClass.setup();
 			ColorClass.setup();
+			PointClass.setup();
+			PointerInfoClass.setup();
+			MouseInfoClass.setup();
 			ThreadClass.setup();
 			PanelClass.setup();			// must follow Color, System
 			FrameClass.setup();			// must follow Panel

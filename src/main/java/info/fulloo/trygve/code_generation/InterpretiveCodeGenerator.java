@@ -28,10 +28,14 @@ import java.util.List;
 import java.util.Stack;
 
 import info.fulloo.trygve.add_ons.ColorClass;
+import info.fulloo.trygve.add_ons.PointClass;
 import info.fulloo.trygve.add_ons.DateClass;
 import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.add_ons.MapClass;
 import info.fulloo.trygve.add_ons.MathClass;
+import info.fulloo.trygve.add_ons.MouseInfoClass;
+import info.fulloo.trygve.add_ons.MouseInfoClass.PointerInfoClass;
+import info.fulloo.trygve.add_ons.MouseInfoClass.PointerInfoClass.RTGetLocationCode;
 import info.fulloo.trygve.add_ons.FrameClass;
 import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.add_ons.PanelClass.EventClass;
@@ -126,7 +130,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class InterpretiveCodeGenerator implements CodeGenerator {
 	private enum RetvalTypes { usingInt, usingBool, usingDouble, usingTemplate,
-							   usingString, usingColor, none, undefined };
+							   usingString, usingColor, usingPoint, none, undefined };
 	
 	public static InterpretiveCodeGenerator interpretiveCodeGenerator = null;
 	private static void setStaticHandle(final InterpretiveCodeGenerator justThis) {
@@ -173,6 +177,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = ColorClass.typeDeclarationList();	// "Color"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = PointClass.typeDeclarationList();	// "Point"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = PointerInfoClass.typeDeclarationList();	// "PointerInfo"
+		compileDeclarations(typeDeclarationList);
+		
+		typeDeclarationList = MouseInfoClass.typeDeclarationList();	// "MouseInfo"
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = ThreadClass.typeDeclarationList();	// "Thread"
@@ -313,6 +326,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingTemplate:
 		case usingString:
 		case usingColor:
+		case usingPoint:
 			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
 					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
 			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.lineNumber(),
@@ -891,6 +905,100 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtMethod.addCode(threadMethodCode);
 	}
+	private void processMouseInfoMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> pointerInfoMethodCode = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.none;
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 0) {
+			if (methodDeclaration.name().equals("getPointerInfo")) {
+				retvalType = RetvalTypes.usingPoint;
+				pointerInfoMethodCode.add(new MouseInfoClass.RTGetPointerInfoCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, pointerInfoMethodCode);
+		
+		rtMethod.addCode(pointerInfoMethodCode);
+	}
+	private void processPointerInfoMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> pointerInfoMethodCode = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.none;
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 1) {
+			if (methodDeclaration.name().equals("getLocation")) {
+				retvalType = RetvalTypes.usingPoint;
+				pointerInfoMethodCode.add(new RTGetLocationCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, pointerInfoMethodCode);
+		
+		rtMethod.addCode(pointerInfoMethodCode);
+	}
+	private void processPointDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
+		final List<RTCode> pointerInfoMethodCode = new ArrayList<RTCode>();
+		RetvalTypes retvalType = RetvalTypes.none;
+		RTMethod rtMethod = null;
+		
+		final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtTypeDeclaration;
+		rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+		
+		if (formalParameterList.count() == 1) {
+			if (methodDeclaration.name().equals("Point")) {
+				retvalType = RetvalTypes.none;
+				pointerInfoMethodCode.add(new PointClass.RTPointCtor2(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("x")) {
+				retvalType = RetvalTypes.usingInt;
+				pointerInfoMethodCode.add(new PointClass.RTPointXCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("y")) {
+				retvalType = RetvalTypes.usingInt;
+				pointerInfoMethodCode.add(new PointClass.RTPointYCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else if (formalParameterList.count() == 3) {
+			if (methodDeclaration.name().equals("Point")) {
+				retvalType = RetvalTypes.none;
+				pointerInfoMethodCode.add(new PointClass.RTPointCtor1(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("setXY")) {
+				retvalType = RetvalTypes.none;
+				pointerInfoMethodCode.add(new PointClass.RTPointSetXYCode(methodDeclaration.enclosedScope()));
+			} else {
+				assert false;
+			}
+		} else {
+			assert false;
+		}
+		
+		addReturn(methodDeclaration, retvalType, pointerInfoMethodCode);
+		
+		rtMethod.addCode(pointerInfoMethodCode);
+	}
 	private void processDateMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		final FormalParameterList formalParameterList = methodDeclaration.formalParameterList();
 		RetvalTypes retvalType;
@@ -1468,6 +1576,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("MouseInfo")) {
+				processMouseInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("PointerInfo")) {
+				processPointerInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("Point")) {
+				processPointDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);

@@ -1288,6 +1288,8 @@ public class Pass2Listener extends Pass1Listener {
 
 				if (formalParameterType instanceof VarargsType) {
 					break;
+				} else if (null == formalParameterType) {
+					;	// formalParameter is likely of ErrorDeclaration type — just skip it
 				} else if (formalParameterType.canBeConvertedFrom(actualParameterType)) {
 					continue;
 				} else if (formalParameter.name().equals(parameterToIgnore)) {

@@ -175,6 +175,7 @@ public class TestRunner {
 		"borrow_library_panel4.k",
 		"panel1.k",
 		"pong.k",
+		"pong2.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

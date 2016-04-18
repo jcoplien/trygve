@@ -23,6 +23,7 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import info.fulloo.trygve.declarations.Declaration.ErrorDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
@@ -267,13 +268,17 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		} else for (int i = 1; i < numberOfParameters; i++) {
 			final Type argumentType = this.typeOfParameterAtPosition(i);
 			final Declaration argument = this.parameterAtPosition(i);
-			stringBuffer.append(argumentType.name());
-			stringBuffer.append(" ");
-			stringBuffer.append(argument.name());
-			if (i == numberOfParameters - 1) {
-				stringBuffer.append(")");
+			if (argument instanceof ErrorDeclaration) {
+				stringBuffer.append("Error)");
 			} else {
-				stringBuffer.append(", ");
+				stringBuffer.append(argumentType.name());
+				stringBuffer.append(" ");
+				stringBuffer.append(argument.name());
+				if (i == numberOfParameters - 1) {
+					stringBuffer.append(")");
+				} else {
+					stringBuffer.append(", ");
+				}
 			}
 		}
 		return stringBuffer.toString();

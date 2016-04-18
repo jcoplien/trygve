@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "2.1";
+	public static final String TRYGVE_VERSION = "2.2";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
@@ -52,5 +52,6 @@ public class Main {
 		System.out.format("Usage: trygve -gui\n");
 		System.out.format("       trygve -c filename.k\n");
 		System.out.format("       trygve -c filename.k -r\n");
+		System.out.format("       trygve -v\n");
 	}
 }

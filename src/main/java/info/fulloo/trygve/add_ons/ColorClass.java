@@ -150,7 +150,7 @@ public final class ColorClass {
 			
 			return retval;
 		}
-		public RTCode runDetails(final RTObject scope, final RTColorObject thePanel) {
+		public RTCode runDetails(final RTObject scope, final RTColorObject color) {
 			// Effectively a pure virtual method, but Java screws us again...
 			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
@@ -178,8 +178,8 @@ public final class ColorClass {
 		public RTGetGreenCode(final StaticScope enclosingMethodScope) {
 			super("Color", "getGreen", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject thePanel) {
-			assert null != thePanel;
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject color) {
+			assert null != color;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject theColor = activationRecord.getObject("this");
 			assert theColor instanceof RTColorObject;
@@ -196,8 +196,8 @@ public final class ColorClass {
 		public RTGetBlueCode(final StaticScope enclosingMethodScope) {
 			super("Color", "getBlue", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject thePanel) {
-			assert null != thePanel;
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject color) {
+			assert null != color;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject theColor = activationRecord.getObject("this");
 			assert theColor instanceof RTColorObject;

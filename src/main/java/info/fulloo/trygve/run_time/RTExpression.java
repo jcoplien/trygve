@@ -617,7 +617,7 @@ public abstract class RTExpression extends RTCode {
 			
 			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
 			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
-			final boolean resultNeedsToBePopped = (returnType.name().equals("void") == false);
+			final boolean resultNeedsToBePopped = null != returnType && (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);
 			postReturnProcessing_.setResultIsConsumed(this.resultIsConsumed());
 			super.setNextCode(postReturnProcessing_);

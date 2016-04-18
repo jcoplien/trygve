@@ -1893,7 +1893,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static StaticScope nearestEnclosingMethodScopeAround(final StaticScope scopeArg) {
 		StaticScope scopeRunner = scopeArg, retval = null;
-		while (scopeRunner != StaticScope.globalScope()) {
+		while (null != scopeRunner && scopeRunner != StaticScope.globalScope()) {
 			final Declaration associatedDeclaration = scopeRunner.associatedDeclaration();
 			
 			// NOTE: associatedDeclaration may be null for BlockDeclarations. No
