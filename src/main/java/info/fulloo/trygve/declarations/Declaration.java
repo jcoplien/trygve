@@ -145,11 +145,11 @@ public abstract class Declaration implements BodyPart {
 			return initialization_;
 		}
 
-		private Type type_;
+		private       Type type_;
 		private final int lineNumber_;
-		private StaticScope containingScope_;
-		public AccessQualifier accessQualifier_;
-		private Expression initialization_;
+		private       StaticScope containingScope_;
+		public        AccessQualifier accessQualifier_;
+		private       Expression initialization_;
 	}
 	
 	public static class TypeDeclarationCommon extends Declaration implements TypeDeclaration
@@ -193,8 +193,8 @@ public abstract class Declaration implements BodyPart {
 		}
 
 		private final int lineNumber_;
-		protected StaticScope myEnclosedScope_;
-		protected Type type_;
+		protected     StaticScope myEnclosedScope_;
+		protected     Type type_;
 		private final Map<String, ObjectDeclaration> stringToStaticObjectMap_;
 	}
 	
@@ -239,17 +239,31 @@ public abstract class Declaration implements BodyPart {
 					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
 					
 					// For each interface, iterate over the signatures it declares
-					for (Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
+					for (final Map.Entry<String, List<MethodSignature>> iter : selectorSignatureMap.entrySet()) {
 						final String signatureMethodSelector = iter.getKey();
 						final List<MethodSignature> signatures = iter.getValue();
 						for (final MethodSignature anInterfaceSignature: signatures) {
 							final ActualOrFormalParameterList parameterList = anInterfaceSignature.formalParameterList();
-							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(signatureMethodSelector, parameterList, "this",
+							final MethodDeclaration methodDecl = myEnclosedScope_.lookupMethodDeclarationIgnoringParameter(
+									signatureMethodSelector, parameterList, "this",
 									/* conversionAllowed = */ false);
 							if (null == methodDecl) {
 								parser.errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
 										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
+							} else {
+								// Check return type
+								final Type methodReturnType = methodDecl.returnType();
+								final Type signatureReturnType = anInterfaceSignature.returnType();
+								if (methodReturnType.pathName().equals(signatureReturnType.pathName())) {
+									continue; // is cool
+								} else if (signatureReturnType.canBeConvertedFrom(methodReturnType)) {
+									continue; // is also cool
+								} else {
+									parser.errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+											"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
+											"' because of a mismatch in the return type of `" + anInterfaceSignature.getText(), "'.");
+								}
 							}
 						}
 					}
@@ -394,7 +408,7 @@ public abstract class Declaration implements BodyPart {
 		
 		private final TypeDeclaration baseClass_;
 		private final List<TypeParameter> typeParameters_;
-		private int argumentPositionCounter_;
+		private       int argumentPositionCounter_;
 	}
 	
 	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
@@ -853,9 +867,9 @@ public abstract class Declaration implements BodyPart {
 			return isStatic_;
 		}
 		
-		private Type returnType_;
-		private boolean hasConstModifier_;
-		private FormalParameterList formalParameterList_;
+		private       Type returnType_;
+		private       boolean hasConstModifier_;
+		private       FormalParameterList formalParameterList_;
 		private final AccessQualifier accessQualifier_;
 		private final int lineNumber_;
 		private final boolean isStatic_;
@@ -917,7 +931,7 @@ public abstract class Declaration implements BodyPart {
 			return retval;
 		}
 		
-		private MethodDeclaration associatedDeclaration_;
+		private       MethodDeclaration associatedDeclaration_;
 		private final int lineNumber_;
 		private final List<BodyPart> bodyParts_;
 	}
@@ -1055,5 +1069,5 @@ public abstract class Declaration implements BodyPart {
 	}
 
 	
-	private String name_;
+	private final String name_;
 }
