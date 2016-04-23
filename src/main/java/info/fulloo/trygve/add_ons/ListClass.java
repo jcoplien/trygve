@@ -116,7 +116,6 @@ public final class ListClass {
 		return retval;
 	}
 	
-	
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -242,6 +241,8 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 			theListObject.add(rawElement);
+			// above method increments reference count
+			
 			return super.nextCode();
 		}
 	}
@@ -258,8 +259,22 @@ public final class ListClass {
 			final long theIndex = integerIndex.intValue();
 			final RTObject result = theListObject.remove((int)theIndex);
 			
+			// The object has been removed from the list. It has one less
+			// owner. We should decrement its reference count. However, it
+			// maybe be in an expression like "lhs = alist.remove(x)" where
+			// the assignment to lhs may again bump its reference count up.
+			// If it reached zero during the transition we don't want to
+			// trigger all kinds of cleanup operations (e.g., if it is a
+			// Context instance, to do all the RolePlayer processing).
+			//
+			// What should we do?  See below.
+			
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", result);
+			
+			// Now that it's assigned to ret$val we can decrement the reference count to
+			// reflect that it's no longer held by the list
+			result.decrementReferenceCount();
 
 			return super.nextCode();
 		}

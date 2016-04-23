@@ -428,6 +428,7 @@ public abstract class RTMessageDispatcher {
 			// records are pushed)
 			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			activationRecord.incrementReferenceCount();
 			this.populateActivationRecord(methodDecl_, activationRecord);
 		}
 	

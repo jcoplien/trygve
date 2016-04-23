@@ -42,7 +42,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		size_ = size;
 		baseType_ = arrayType.baseType();
 		rTArrayType_ = arrayType;
-		referenceCount_ = 1;
+		referenceCount_ = 0;
 		theArray_ = new RTObject[size_];
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 		stagePropsIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();

@@ -247,28 +247,28 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			oldRolePlayer.unenlistAsStagePropPlayerForContext(stagePropArrayName, rTContext_);
 		}
 		public void removeAllRoleAndStagePropPlayers() {
-			for (Map.Entry<String, RTObject> iter : rolePlayers_.entrySet()) {
+			for (final Map.Entry<String, RTObject> iter : rolePlayers_.entrySet()) {
 				final String roleName = iter.getKey();
 				if (this.isRoleArray(roleName) == false) {
 					final RTObject rolePlayer = iter.getValue();
 					rolePlayer.unenlistAsRolePlayerForContext(roleName, rTContext_);
 				}
 			}
-			for (Map.Entry<String, RTObject> iter : stagePropPlayers_.entrySet()) {
+			for (final Map.Entry<String, RTObject> iter : stagePropPlayers_.entrySet()) {
 				final String stagePropName = iter.getKey();
 				if (this.isStagePropArray(stagePropName) == false) {
 					final RTObject stagePropPlayer = iter.getValue();
 					stagePropPlayer.unenlistAsStagePropPlayerForContext(stagePropName, rTContext_);
 				}
 			}
-			for (Map.Entry<String, Map<Integer, RTObject>> iter : roleArrayPlayers_.entrySet()) {
+			for (final Map.Entry<String, Map<Integer, RTObject>> iter : roleArrayPlayers_.entrySet()) {
 				final String roleArrayName = iter.getKey();
 				for (Map.Entry<Integer, RTObject> iter2 : iter.getValue().entrySet()) {
 					final RTObject rolePlayerArray = iter2.getValue();
 					rolePlayerArray.unenlistAsRolePlayerForContext(roleArrayName, rTContext_);
 				}
 			}
-			for (Map.Entry<String, Map<Integer, RTObject>> iter : stagePropArrayPlayers_.entrySet()) {
+			for (final Map.Entry<String, Map<Integer, RTObject>> iter : stagePropArrayPlayers_.entrySet()) {
 				final String stagePropPlayerArrayName = iter.getKey();
 				for (Map.Entry<Integer, RTObject> iter2 : iter.getValue().entrySet()) {
 					final RTObject stagePropPlayerArray = iter2.getValue();

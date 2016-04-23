@@ -96,6 +96,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
 			
 			// What did the programmer name the argument? Canonically it's "other"
@@ -146,6 +147,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
 						
 			activationRecord.setObject("this", this);
@@ -594,9 +596,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public void decrementReferenceCount() {
 			super.decrementReferenceCount();
 			final RTContextInfo contextInfo = contextInfo();
-			if (0 >= referenceCount()) {
+			if (0 == referenceCount()) {
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
+			} else if (0 > referenceCount()) {
+				assert false;
 			}
 		}
 		@Override public String getText() {
@@ -996,8 +1000,16 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public String getText() {
 			return "\"" + foobar_ + "\"";
 		}
+		@Override public void incrementReferenceCount() {
+			// For debugging only
+			super.incrementReferenceCount();
+		}
+		@Override public void decrementReferenceCount() {
+			// For debugging only
+			super.decrementReferenceCount();
+		}
 
-		private String foobar_;
+		private final String foobar_;
 	}
 	
 	public static class RTBooleanObject extends RTObjectCommon implements RTObject {

@@ -7,7 +7,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 
 public class RTCommonRunTimeCrap implements RTObject {
 	public RTCommonRunTimeCrap() {
-		referenceCount_ = 1;
+		referenceCount_ = 0L;
 	}
 	@Override public RTObject getObject(String name) {
 		assert false;
@@ -146,5 +146,5 @@ public class RTCommonRunTimeCrap implements RTObject {
 	}
 	
 	
-	protected int referenceCount_;
+	protected long referenceCount_;
 }

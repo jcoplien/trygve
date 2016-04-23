@@ -118,7 +118,7 @@ public final class SetClass {
 					null == parameterTypeName? null: asList(parameterTypeName),
 					enclosingMethodScope, false), returnType, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), false);
 		}
-		public RTCode run() {
+		@Override public RTCode run() {
 			// Don't need to push or pop anything. The return code stays
 			// until the RTReturn statement processes it, and everything
 			// else has been popped into the activation record by
@@ -182,11 +182,13 @@ public final class SetClass {
 			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
 			final RTObject rawElement = activationRecord.getObject("element");
 
+			// following method decrements reference count 
 			final boolean bResult = theListObject.remove(rawElement);
 			final RTObject result = new RTBooleanObject(bResult);
 			
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", result);
+			
 			return super.nextCode();
 		}
 	}

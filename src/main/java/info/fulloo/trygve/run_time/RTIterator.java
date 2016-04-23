@@ -29,7 +29,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 public abstract class RTIterator extends RTCommonRunTimeCrap {
 	public RTIterator() {
 		super();
-		referenceCount_ = 1;
+		referenceCount_ = 0;
 	}
 	public abstract boolean isThereANext();
 	public abstract void advance();

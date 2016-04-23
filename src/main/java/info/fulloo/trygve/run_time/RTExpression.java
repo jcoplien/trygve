@@ -2373,9 +2373,6 @@ public abstract class RTExpression extends RTCode {
 			// record
 			setLastExpressionResult(newlyCreatedObject, lineNumber_);
 			
-			// The variable newlyCreatedObject is going out of scope
-			newlyCreatedObject.decrementReferenceCount();
-			
 			// If there is a constructor, this returns its address. If not,
 			// it is just the nextCode_ value set in the flow.
 			return nextCode_;
@@ -2834,6 +2831,7 @@ public abstract class RTExpression extends RTCode {
 			// A FOR loop opens a new scope. Open it.
 			dynamicScope_ = new RTDynamicScope("for", RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope_);
+			dynamicScope_.incrementReferenceCount();
 						
 			// Declare local variables
 			for (final Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {
@@ -3489,6 +3487,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope);
+			dynamicScope.incrementReferenceCount();
 			final RTCode retval = RunTimeEnvironment.runTimeEnvironment_.runner(switchExpression_);
 			assert null != retval;
 			return retval;
@@ -4140,6 +4139,7 @@ public abstract class RTExpression extends RTCode {
 			final RTDynamicScope dynamicScope = new RTDynamicScope("block @ line " + Integer.toString(lineNumber_),
 					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope);
+			dynamicScope.incrementReferenceCount();
 			
 			// Declare local variables
 			for (Map.Entry<String, RTType> iter : objectDeclarations_.entrySet()) {

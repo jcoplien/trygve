@@ -184,6 +184,7 @@ public class RunTimeEnvironment {
 		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null, true);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
+		firstActivationRecord.incrementReferenceCount();
 		
 		// Take all object declarations from global scope and
 		// get them into firstActivationRecord
@@ -289,9 +290,7 @@ public class RunTimeEnvironment {
 	public int stackSize() { return theStack().size(); }
 	
 	public void pushDynamicScope(final RTDynamicScope element) {
-		// Subtle. Reference count was initialized to one and this is
-		// its first use, so we don't increment
-		// element.incrementReferenceCount();
+		// Reference count is managed by the caller
 		dynamicScopeStack().push(element);
 		if (ConfigurationOptions.activationRecordStackTrace()) {
 			printDynamicScopeStack();

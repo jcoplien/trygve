@@ -282,6 +282,9 @@ public final class MapClass {
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", (RTObject)answer);
 			
+			key.decrementReferenceCount();
+			answer.decrementReferenceCount();
+			
 			return super.nextCode();
 		}
 	}

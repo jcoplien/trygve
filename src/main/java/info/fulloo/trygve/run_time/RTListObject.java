@@ -126,7 +126,6 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		}
 	}
 	
-	
 	public RTObject performUnaryOpOnObject(final RTObject theIndex, final String operation, final PreOrPost preOrPost) {
 		assert false;
 		return null;
@@ -172,13 +171,31 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		return retval;
 	}
 	public RTObject remove(final int i) {
-		return theList_.remove(i);
+		final RTObject retval = theList_.remove(i);
+		// don't decrement reference count here, because it may prematurely
+		// to to zero and cause bad things to happen (particularly for Context
+		// instances) in case the removed value is being assigned to some lhs
+		// (as it usually is assigned to ret$val by the caller ListClass$RTRemoveCode)
+		return retval;
 	}
 	public boolean remove(final RTObject o) {
+		// here we can decrement reference count and be done with it
+		o.decrementReferenceCount();
 		return theList_.remove(o);
+	}
+	@Override public void decrementReferenceCount() {
+		super.decrementReferenceCount();
+		if (referenceCount_ == 0) {
+			for (final RTObject o : theList_) {
+				o.decrementReferenceCount();
+			}
+		} else if (referenceCount_ < 0) {
+			assert false;
+		}
 	}
 	public void add(final RTObject element) {
 		theList_.add(element);
+		element.incrementReferenceCount();
 	}
 	public void ctor() {
 	}

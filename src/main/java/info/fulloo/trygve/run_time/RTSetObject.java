@@ -135,10 +135,38 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 		return i < theSet_.size() && i >= 0;
 	}
 	public boolean remove(final RTObject o) {
+		o.decrementReferenceCount();
 		return theSet_.remove(o);
 	}
+	@Override public void decrementReferenceCount() {
+		super.decrementReferenceCount();
+		if (referenceCount_ == 0) {
+			for (final RTObject o : theSet_) {
+				o.decrementReferenceCount();
+			}
+		} else if (referenceCount_ < 0) {
+			assert false;
+		}
+	}
 	public void add(final RTObject element) {
+		// We could be adding an element that's already in the set
+		// The new one will overwrite the old one. We need to
+		// decrement the reference count of the one in the set
+		// (if it is there)
+		if (theSet_.contains(element)) {
+			for (final RTObject o : theSet_) {
+				if (o.equals(element)) {
+					o.decrementReferenceCount();
+					break;
+				}
+			}
+		}
+		
+		// Now just continue as normal
 		theSet_.add(element);
+		
+		// ...and the Set holds the element so increment its reference count
+		element.incrementReferenceCount();
 	}
 	public void ctor() {
 	}

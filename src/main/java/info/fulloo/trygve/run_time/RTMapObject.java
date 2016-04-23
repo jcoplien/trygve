@@ -137,26 +137,38 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 	
 	public RTObject remove(final RTObject key) {
 		RTObject retval = theMap_.remove(key);
-		if (null == retval) {
-			retval = new RTNullObject();
-		}
+		assert (null != retval);
+		// reference count decremented in caller
 		return retval;
 	}
 	public RTObject get(final RTObject element) {
-		RTObject retval = theMap_.get(element);
-		if (null == retval) {
-			retval = new RTNullObject();
-		}
+		final RTObject retval = theMap_.get(element);
+		assert (null != retval);
 		return retval;
 	}
-	public void ctor() {
+	public void ctor() { }
+	@Override public void decrementReferenceCount() {
+		super.decrementReferenceCount();
+		if (referenceCount_ == 0) {
+			for (final RTObject o : theMap_.keySet()) {
+				theMap_.get(o).decrementReferenceCount();
+				o.decrementReferenceCount();
+			}
+		} else if (referenceCount_ < 0) {
+			assert false;
+		}
 	}
 	public void put(final RTObject key, final RTObject value) {
 		theMap_.put(key, value);
+		key.incrementReferenceCount();
+		value.incrementReferenceCount();
 	}
-	public void putAll(final RTObject map) {
-		assert map instanceof RTMapObject;
-		theMap_.putAll(((RTMapObject)map).theMap_);
+	public void putAll(final RTObject rawMap) {
+		assert rawMap instanceof RTMapObject;
+		final RTMapObject map = (RTMapObject) rawMap;
+		for (final RTObject key : map.theMap_.keySet()) {
+			this.put(key, map.get(key));
+		}
 	}
 	public RTObject containsKey(final RTObject key) {
 		final boolean rawRetval = theMap_.containsKey(key);
