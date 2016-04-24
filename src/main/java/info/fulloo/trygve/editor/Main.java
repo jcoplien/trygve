@@ -25,13 +25,14 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "2.4";
+	public static final String TRYGVE_VERSION = "2.5";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
 		// to get platform independence in the output. Many thanks to
 		// Egon Elbre!
 		System.setProperty("line.separator", "\n");
+		
 		if (args.length == 0 || args[0].startsWith("-g")) {
 			printUsage();
 			java.awt.EventQueue.invokeLater(new Runnable() {

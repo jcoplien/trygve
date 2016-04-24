@@ -42,14 +42,6 @@ class MyPanel extends Panel {
    private EventHandler eventHandler_
 }
 
-class Point {
-   public Point(int x, int y) { setXY(x, y) }
-   public void setXY(int x, int y)  { x_ = x.clone; y_ = y.clone }
-   public int x() const { return x_ }
-   public int y() const { return y_ }
-   int x_, y_;
-}
-
 class BallObject extends Point {
    public BallObject(int x, int y) {
       Point(x, y);

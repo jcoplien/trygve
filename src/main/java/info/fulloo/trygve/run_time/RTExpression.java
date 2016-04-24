@@ -936,7 +936,7 @@ public abstract class RTExpression extends RTCode {
 			return isStatic_;
 		}
 		
-		protected static void printMiniStackStatus() {
+		public static void printMiniStackStatus() {
 			// Experiment: Pop down stack looking for information about the method
 			RTStackable topOfStack;
 			while (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {

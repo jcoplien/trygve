@@ -68,9 +68,9 @@ context Arena implements EventHandler {
          ThePanel.clearObjects();
          Paddle.erase();
          Paddle.draw();
-         Ball.draw()
+         //Ball.erase()
          Ball.velocityAdjust();
-         Ball.erase();
+         Ball.draw();
          Ball.step();
          Thread.sleep(20)
       } while (true)

@@ -40,6 +40,7 @@ import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
 import info.fulloo.trygve.run_time.RTExpression;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTWindowRegistryEntry;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
@@ -740,7 +741,17 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    	setInterruptButtonState(RunButtonState.Running);
 	    	parseButton.setEnabled(false);
 	    	testButton.setEnabled(false);
-	    	simpleRun();
+	    	try {
+	    		simpleRun();
+	    	} catch (Exception e) {
+	    		System.err.format("Exception: User process died because of internal trygve error: %s\n", e.toString());
+	    		RTMessage.printMiniStackStatus();
+	    		e.printStackTrace(System.err);
+	    	} catch (Error e) {
+	    		System.err.format("Error: User process died because of internal trygve error: %s\n", e.toString());
+	    		RTMessage.printMiniStackStatus();
+	    		e.printStackTrace(System.err);
+	    	}
 	    	parseButton.setEnabled(true);
 	    	testButton.setEnabled(true);
 	    	setRunButtonState(RunButtonState.Idle);
