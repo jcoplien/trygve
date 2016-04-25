@@ -417,7 +417,16 @@ public class StaticScope {
 		methodDecl.addParameterList(formalsWithInt);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl);
-
+		
+		formals = new FormalParameterList();
+		formals.addFormalParameter(self);
+		methodScope = new StaticScope(doubleScope);
+		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, 0, false);
+		methodDecl.addParameterList(formals);
+		methodDecl.setHasConstModifier(true);
+		methodScope.setDeclaration(methodDecl);
+		doubleScope.declareMethod(methodDecl);
+		
 		
 		globalScope_.declareType(doubleType);
 		globalScope_.declareClass(doubleDeclaration);

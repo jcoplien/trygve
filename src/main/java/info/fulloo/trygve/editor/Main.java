@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "2.5";
+	public static final String TRYGVE_VERSION = "2.6";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
@@ -33,8 +33,14 @@ public class Main {
 		// Egon Elbre!
 		System.setProperty("line.separator", "\n");
 		
-		if (args.length == 0 || args[0].startsWith("-g")) {
+		if (args.length == 0) {
 			printUsage();
+			java.awt.EventQueue.invokeLater(new Runnable() {
+				public void run() {
+					new TextEditorGUI().setVisible(true);
+				}
+			});
+		} else if (args[0].startsWith("-g")) {
 			java.awt.EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					new TextEditorGUI().setVisible(true);

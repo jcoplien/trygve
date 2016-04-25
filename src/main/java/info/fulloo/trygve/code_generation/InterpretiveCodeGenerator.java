@@ -1213,16 +1213,21 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		if (formalParameterList.count() == 1) {
 			final RTType rtTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
 			assert null != rtTypeDeclaration;
+			RetvalTypes retvalType = RetvalTypes.none;
 			final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			final List<RTCode> code = new ArrayList<RTCode>();
-			if (methodDeclaration.name().equals("toString")) {
+			if (methodDeclaration.name().equals("toInteger")) {
+				code.add(new RTDoubleClass.RTToIntegerCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingInt;
+			} else if (methodDeclaration.name().equals("toString")) {
 				code.add(new RTDoubleClass.RTToStringCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingString;
 			} else {
 				assert false;
 			}
 			
-			addReturn(methodDeclaration, RetvalTypes.usingString, code);
+			addReturn(methodDeclaration, retvalType, code);
 			
 			assert code.size() > 0;
 			
