@@ -29,46 +29,37 @@ class Vector {
 }
 
 class Mouse {
-	public Vector position;
-	public Mouse(){ position = new Vector(0.0, 0.0); }
-}
-
-class MousePanel extends Panel {
-	public Mouse mouse;
-
-	public MousePanel(){
-		Panel();
-		mouse = new Mouse();
-	}
-
-	public boolean handleEvent(Event event) {
-		if (event.id == Event.MOUSE_MOVE) {
-			if(event.x != null){
-				mouse.position.setxy(event.x, event.y);
-			}
-		}
-		return false;
+	Vector position(){
+		Point xy = MouseInfo.getPointerInfo().getLocation();
+		return new Vector(xy.x, xy.y);
 	}
 }
 
 context Display {
-	private MousePanel panel_;
+	private Panel panel_;
 	private Frame frame_;
 	private Vector size_;
+	private Mouse mouse_;
+
+	private Vector offset_;
 
 	public Display(){
+		mouse_ = new Mouse();
+
 		size_ = new Vector(640.0, 480.0);
-		panel_ = new MousePanel();
+		offset_ = new Vector(0.0, 0.0);
+		panel_ = new Panel();
 
 		frame_ = new Frame("");
 		frame_.add("Center", panel_);
-		frame_.resize(floor(size_.x) + 20, floor(size_.y) + 20);
+		frame_.resize(floor(size_.x) + 20, floor(size_.y) + 40);
 
 		frame_.setVisible(true);
 	}
 
 	public Vector size() { return size_; }
-	public Mouse mouse() { return panel_.mouse; }
+	public Vector offset() { return offset_; }
+	public Mouse mouse() { return mouse_; }
 
 	public void clear()   { panel_.removeAll(); }
 	public void repaint() { panel_.repaint(); }
@@ -80,24 +71,24 @@ context Display {
 	public void rect(Vector center, Vector halfsize) {
 		//BUG: should be fillRect, doesn't work as intended for some reason
 		panel_.drawRect(
-			floor(center.x - halfsize.x),
-			floor(center.y - halfsize.y),
+			floor(center.x - halfsize.x + offset_.x),
+			floor(center.y - halfsize.y + offset_.y),
 			floor(2.0*halfsize.x),
 			floor(2.0*halfsize.y));
 	}
 	public void oval(Vector center, Vector halfsize) {
 		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x - 2.0*halfsize.x),
-			floor(center.y - 2.0*halfsize.y),
+			floor(center.x - 2.0*halfsize.x + offset_.x),
+			floor(center.y - 2.0*halfsize.y + offset_.y),
 			floor(2.0*halfsize.x),
 			floor(2.0*halfsize.y));
 	}
 	public void circle(Vector center, double radius) {
 		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x-2.0*radius),
-			floor(center.y-2.0*radius),
+			floor(center.x-2.0*radius + offset_.x),
+			floor(center.y-2.0*radius + offset_.y),
 			floor(2.0*radius),
 			floor(2.0*radius));
 	}
@@ -105,279 +96,369 @@ context Display {
 
 // Game implementation
 
-// State defintion
-class Ball {
-	public Vector position;
-	public Vector velocity;
-	public double radius;
-	public double mass;
-	public boolean dead;
+interface Entity {
+	public Body body();
 
-	public Ball(){
-		dead = false;
-
-		position = new Vector(320.0, 320.0);
-		velocity = new Vector(
-			(Math.random()*2.0-1.0)*50.0,
-			(Math.random()*2.0-1.0)*50.0
-		);
-		radius = 10.0;
-		mass = 1.0;
-	}
-
-	public double x() const { return position.x; }
-	public double y() const { return position.y; }
+	public void trigger_collision(World world, Entity e);
+	public void trigger_Ball(World world, Ball e);
+	public void trigger_Wall(World world, Wall e);
+	public void trigger_Block(World world, Block e);
+	public void trigger_Paddle(World world, Paddle e);
 }
 
-class Block {
-	public Vector position;
+class Body {
+	public Vector center;
 	public Vector halfsize;
-	public boolean dead;
+	public Vector velocity;
+	public double mass;
+	public int shape; // 0 = circle, 1 = rectangle
+	public boolean static;
 
-	public Block(Vector center){
-		dead = false;
-
-		position = center;
-		halfsize = new Vector(30.0, 10.0);
+	public Body(){
+		center = new Vector(0.0, 0.0);
+		halfsize = new Vector(1.0, 1.0);
+		velocity = new Vector(0.0, 0.0);
+		mass = halfsize.x * halfsize.y * 4;
+		shape = 1;
+		static = false;
 	}
+
+	// only valid when shape == 0
+	public double radius() const { return halfsize.x; }
+
+	public double x() const { return center.x; }
+	public double y() const { return center.y; }
 
 	public double width()  const { return 2.0 * halfsize.x; }
-	public double height() const { return 2.0 * halfsize.x; }
+	public double height() const { return 2.0 * halfsize.y; }
 
-	public double left()   const { return position.x - halfsize.x; }
-	public double right()  const { return position.x + halfsize.x; }
-	public double top()    const { return position.y - halfsize.y; }
-	public double bottom() const { return position.y + halfsize.y; }
+	public double left()   const { return center.x - halfsize.x; }
+	public double right()  const { return center.x + halfsize.x; }
+	public double top()    const { return center.y - halfsize.y; }
+	public double bottom() const { return center.y + halfsize.y; }
 }
 
-class Wall {
-	public Vector position;
-	public Vector halfsize;
+class Ball implements Entity {
+	public Ball(){
+		body_ = new Body();
+		body_.shape = 0;
+		body_.static = false;
+		body_.halfsize.setxy(10.0, 10.0);
+	}
+
+	private Body body_;
+	public Body body(){ return body_; }
+
+	public void trigger_collision(World world, Entity e) {     e.trigger_Ball(world, this);    }
+	public void trigger_Ball(World world, Ball e)        { world.trigger_Ball_Ball(this, e);   }
+	public void trigger_Wall(World world, Wall e)        { world.trigger_Ball_Wall(this, e);   }
+	public void trigger_Block(World world, Block e)      { world.trigger_Ball_Block(this, e);  }
+	public void trigger_Paddle(World world, Paddle e)    { world.trigger_Ball_Paddle(this, e); }
+}
+
+class Block implements Entity {
+	public Block(){
+		body_ = new Body();
+		body_.shape = 1;
+		body_.static = true;
+		body_.halfsize.setxy(30.0, 10.0);
+	}
+
+	private Body body_;
+	public Body body(){ return body_; }
+
+	public void trigger_collision(World world, Entity e) {     e.trigger_Block(world, this);    }
+	public void trigger_Ball(World world, Ball e)        { world.trigger_Block_Ball(this, e);   }
+	public void trigger_Wall(World world, Wall e)        { world.trigger_Block_Wall(this, e);   }
+	public void trigger_Block(World world, Block e)      { world.trigger_Block_Block(this, e);  }
+	public void trigger_Paddle(World world, Paddle e)    { world.trigger_Block_Paddle(this, e); }
+}
+
+class Wall implements Entity {
 	public boolean deadly;
 
-	public Wall(Vector center, Vector hsize){
-		position = center;
-		halfsize = hsize;
+	public Wall(){
+		body_ = new Body();
+		body_.shape = 1;
+		body_.static = true;
+		body_.halfsize.setxy(10.0, 10.0);
+
 		deadly = false;
 	}
 
-	public double width()  const { return 2.0 * halfsize.x; }
-	public double height() const { return 2.0 * halfsize.x; }
+	private Body body_;
+	public Body body(){ return body_; }
 
-	public double left()   const { return position.x - halfsize.x; }
-	public double right()  const { return position.x + halfsize.x; }
-	public double top()    const { return position.y - halfsize.y; }
-	public double bottom() const { return position.y + halfsize.y; }
+	public void trigger_collision(World world, Entity e) {     e.trigger_Wall(world, this);    }
+	public void trigger_Ball(World world, Ball e)        { world.trigger_Wall_Ball(this, e);   }
+	public void trigger_Wall(World world, Wall e)        { world.trigger_Wall_Wall(this, e);   }
+	public void trigger_Block(World world, Block e)      { world.trigger_Wall_Block(this, e);  }
+	public void trigger_Paddle(World world, Paddle e)    { world.trigger_Wall_Paddle(this, e); }
 }
 
-class Paddle {
-	public Vector position;
-	public Vector halfsize;
-
+class Paddle implements Entity {
 	public Paddle(){
-		position = new Vector(0.0, 0.0);
-		halfsize = new Vector(30.0, 10.0);
+		body_ = new Body();
+		body_.shape = 1;
+		body_.static = true;
+		body_.halfsize.setxy(30.0, 10.0);
 	}
 
-	public double width()  const { return 2.0 * halfsize.x; }
-	public double height() const { return 2.0 * halfsize.x; }
+	private Body body_;
+	public Body body(){ return body_; }
 
-	public double left()   const { return position.x - halfsize.x; }
-	public double right()  const { return position.x + halfsize.x; }
-	public double top()    const { return position.y - halfsize.y; }
-	public double bottom() const { return position.y + halfsize.y; }
+	public void trigger_collision(World world, Entity e) {     e.trigger_Paddle(world, this);    }
+	public void trigger_Ball(World world, Ball e)        { world.trigger_Paddle_Ball(this, e);   }
+	public void trigger_Wall(World world, Wall e)        { world.trigger_Paddle_Wall(this, e);   }
+	public void trigger_Block(World world, Block e)      { world.trigger_Paddle_Block(this, e);  }
+	public void trigger_Paddle(World world, Paddle e)    { world.trigger_Paddle_Paddle(this, e); }
 }
 
 context State {
-	public Paddle paddle;
+	private Paddle       paddle_;
+	private List<Ball>   balls_;
+	private List<Block>  blocks_;
+	private List<Wall>   walls_;
+	private List<Entity> all_;
 
-	public List<Ball>  balls;
-	public List<Block> blocks;
-	public List<Wall>  walls;
-
-	public Paddle getPaddle() const { return paddle; }
-	public List<Ball> getBalls() const { return balls; }
-	public List<Wall> getWalls() const { return walls; }
-	public List<Block> getBlocks() const { return blocks; }
-
+	public Paddle       paddle() const { return paddle_; }
+	public List<Ball>   balls()  const { return balls_; }
+	public List<Block>  blocks() const { return blocks_; }
+	public List<Wall>   walls()  const { return walls_; }
+	public List<Entity> all()    const { return all_; }
 
 	public State(){
-		paddle = new Paddle();
-		balls = new List<Ball>();
-		blocks = new List<Block>();
-		walls = new List<Wall>();
+		balls_  = new List<Ball>();
+		blocks_ = new List<Block>();
+		walls_  = new List<Wall>();
+		all_    = new List<Entity>();
+
+		paddle_ = new Paddle();
+		paddle_.body.static = true;
+		all_.add(paddle_);
+	}
+
+	public void spawn_ball(Vector center, Vector velocity){
+		Ball ball = new Ball();
+		ball.body.center = center;
+		ball.body.velocity = velocity;
+		balls_.add(ball);
+		all_.add(ball);
+	}
+
+	public void spawn_block(Vector center, Vector halfsize){
+		Block block = new Block();
+		block.body.center = center;
+		block.body.halfsize = halfsize;
+		blocks_.add(block);
+		all_.add(block);
+	}
+
+	public void spawn_wall(Vector center, Vector halfsize, boolean deadly){
+		Wall wall = new Wall();
+		wall.body.center = center;
+		wall.body.halfsize = halfsize;
+		wall.deadly = deadly;
+		walls_.add(wall);
+		all_.add(wall);
+	}
+
+	public void remove_Ball(Ball entity){
+		balls_.remove(entity);
+		all_.remove(entity);
+	}
+
+	public void remove_Wall(Wall entity){
+		walls_.remove(entity);
+		all_.remove(entity);
+	}
+
+	public void remove_Block(Block entity){
+		blocks_.remove(entity);
+		all_.remove(entity);
 	}
 }
 
 // Physics system
+interface CollisionHandler {
+	public void onCollision(Entity A, Entity B);
+}
+
+class Collision {
+	public Entity A;
+	public Entity B;
+
+	public Collision(Entity a, Entity b){
+		A = a;
+		B = b;
+	}
+}
 
 context Physics {
-	public Physics(State state, Display display){
-		StateRole = state;
+	public Physics(State state, CollisionHandler handler, Display display){
+		Entities = state;
 		Debug = display;
+		Handler = handler;
 	}
 
-	role StateRole {
-		public void integrate(double dt) {
-			List<Ball> balls = getBalls();
-			for(Ball A: balls){
-				Integrator.integrate(dt, A.position, A.velocity);
-			}
-		}
-		public void collide(double dt) {
-			List<Ball> balls = getBalls();
-			List<Wall> walls = getWalls();
-			List<Block> blocks = getBlocks();
+	public void update(double dt){
+		Entities.integrate(dt * 0.5);
+		Entities.collide(dt);
+		Entities.integrate(dt * 0.5);
+	}
 
-			for(int i = 0; i < balls.size; i++){
-				Ball A = balls.get(i);
-
-				for(int k = 0; k < blocks.size; k++){
-					Collider.ball_block(dt, A, blocks.get(k));
+	stageprop Entities {
+		public void integrate(double dt){
+			List<Entity> entities = all();
+			for(Entity entity: entities){
+				Body body = entity.body();
+				if(!body.static){
+					Integrator.step(dt, body.center, body.velocity);
 				}
-
-				for(int k = i.clone + 1; k < balls.size; k++){
-					Collider.ball_ball(dt, A, balls.get(k));
-				}
-
-				for(int k = 0; k < walls.size; k++){
-					Collider.ball_wall(dt, A, walls.get(k));
-				}
-
-				Collider.ball_paddle(dt, A, getPaddle());
 			}
 		}
 
-		public void collect(){
-			List<Ball> balls = getBalls();
-			int i = 0;
-			while(i < balls.size){
-				Ball ball = balls.get(i);
-				if(ball.dead){
-					balls.remove(ball);
-				} else {
-					i++;
+		public void collide(double dt){
+			List<Collision> collisions = new List<Collision>();
+
+			List<Entity> entities = all();
+			for(int i = 0; i < entities.size; i++){
+				Entity A = entities.get(i);
+				Body a = A.body();
+				for(int k = i + 1; k < entities.size; k++){
+					Entity B = entities.get(k);
+					Body b = B.body();
+
+					if(Resolve.collision(a, b)){
+						collisions.add(new Collision(A, B));
+					}
 				}
 			}
 
-			List<Block> blocks = getBlocks();
-			while(i < blocks.size){
-				Block block = blocks.get(i);
-				if(block.dead){
-					blocks.remove(block);
-				} else {
-					i++;
-				}
+			for(Collision collision: collisions){
+				Handler.collide(collision.A, collision.B);
 			}
 		}
 	} requires {
-		public Paddle getPaddle() const;
-		public List<Ball> getBalls() const;
-		public List<Wall> getWalls() const;
-		public List<Block> getBlocks() const;
+		public List<Entity> all() const;
 	}
 
-	role Integrator {
-		public void integrate(double dt, Vector position, Vector velocity){
-			position.x = position.x + velocity.x * dt;
-			position.y = position.y + velocity.y * dt;
+	role Handler {
+		public void collide(Entity A, Entity B){
+			onCollision(A, B);
 		}
+	} requires {
+		public void onCollision(Entity A, Entity B);
 	}
 
-	role Collider {
+	role Resolve {
+		public boolean collision(Body a, Body b){
+			if(a.static && b.static){
+				return false;
+			}
+
+			if(!aabb_intersect(a, b)){
+				return false;
+			}
+
+			if(a.shape == 0){ // circle
+				if(b.shape == 0){
+					return circle_circle(a, b);
+				}
+				return circle_aabb(a, b);
+			} else {
+				if(b.shape == 0){
+					return circle_aabb(b, a);
+				}
+			}
+
+			return aabb_aabb(a, b);
+		}
+
+		public boolean aabb_intersect(Body a, Body b){
+			return (Math.abs(a.center.x - b.center.x) < (a.halfsize.x + b.halfsize.x)) &&
+				(Math.abs(a.center.y - b.center.y) < (a.halfsize.y + b.halfsize.y));
+		}
+
+		public boolean circle_circle(Body a, Body b){
+			Vector delta = a.center.sub(b.center);
+			if(delta.length >= a.radius + b.radius){
+				return false;
+			}
+
+			Debug.point(a.center.add(b.center).scale(0.5));
+
+			// remove penetration
+			Vector penetration = delta.normal.scale(a.radius + b.radius - delta.length);
+
+			double ra = a.mass / (a.mass + b.mass);
+			double rb = b.mass / (a.mass + b.mass);
+
+			if(a.static){
+				ra = 1.0;
+				rb = 0.0;
+			} else if (b.static) {
+				ra = 0.0;
+				rb = 1.0;
+			}
+
+			a.center = a.center.add(penetration.scale(rb));
+			b.center = b.center.add(penetration.scale(ra));
+
+			// momentum transfer
+			Vector normal = delta.normal;
+			double p = 2.0 * (a.velocity.dot(normal) - b.velocity.dot(normal)) / (a.mass + b.mass);
+
+			Vector av = a.velocity.sub(normal.scale(p * a.mass));
+			Vector bv = b.velocity.add(normal.scale(p * b.mass));
+
+			a.velocity.set(av);
+			b.velocity.set(bv);
+
+			return true;
+		}
+
+		public boolean circle_aabb(Body circle, Body rect){
+			// circle is circle, rect is rect
+			if(circle.static || !rect.static){
+				// TODO: implement properly
+				return true;
+			}
+
+			Vector closest = new Vector(
+				clamp(circle.x, rect.left, rect.right),
+				clamp(circle.y, rect.top, rect.bottom));
+
+			Vector delta = circle.center.sub(closest);
+			if(delta.length >= circle.radius){
+				return false;
+			}
+
+			Debug.point(closest);
+			Vector penetration = delta.normal.scale(circle.radius - delta.length);
+			circle.center = circle.center.add(penetration);
+			circle.velocity.reflect(delta.normal);
+
+			return true;
+		}
+
+		public boolean aabb_aabb(Body a, Body b){
+			// TODO: implement
+			return true
+		}
+
 		private double clamp(double v, double min, double max){
 			if(v < min){ return min; }
 			if(v > max){ return max; }
 			return v;
 		}
-
-		public void ball_ball(double dt, Ball a, Ball b) {
-			Vector delta = a.position.sub(b.position);
-			if(delta.length < a.radius + b.radius){
-				Debug.point(a.position.add(b.position).scale(0.5));
-
-				// separate based on mass
-				Vector pen = delta.normal.scale(a.radius + b.radius - delta.length);
-
-				double ra = a.mass / (a.mass + b.mass);
-				double rb = b.mass / (a.mass + b.mass);
-				a.position = a.position.add(pen.scale(rb));
-				b.position = b.position.add(pen.scale(-ra));
-
-				// momentum transfer
-				Vector normal = delta.normal;
-				double p = 2.0 * (a.velocity.dot(normal) - b.velocity.dot(normal)) / (a.mass + b.mass);
-
-				Vector av = a.velocity.sub(normal.scale(p * a.mass));
-				Vector bv = b.velocity.add(normal.scale(p * b.mass));
-
-				a.velocity.set(av);
-				b.velocity.set(bv);
-			}
-		}
-
-		public void ball_block(double dt, Ball a, Block b) {
-			double cx = clamp(a.x, b.left, b.right);
-			double cy = clamp(a.y, b.top, b.bottom);
-			Vector closest = new Vector(cx, cy);
-
-
-			Vector delta = a.position.sub(closest);
-			if(delta.length < a.radius){
-				Debug.point(closest);
-				Vector pen = delta.normal.scale(a.radius - delta.length);
-				a.position = a.position.sub(pen);
-				a.velocity.reflect(delta.normal);
-
-				//TODO: trigger a collision handler
-				b.dead = true;
-			}
-		}
-
-		public void ball_wall(double dt, Ball a, Wall b) {
-			double cx = clamp(a.x, b.left, b.right);
-			double cy = clamp(a.y, b.top, b.bottom);
-			Vector closest = new Vector(cx, cy);
-
-			Vector delta = a.position.sub(closest);
-			if(delta.length < a.radius){
-				Debug.point(closest);
-				Vector pen = delta.normal.scale(a.radius - delta.length);
-				a.position = a.position.add(pen);
-				a.velocity.reflect(delta.normal);
-
-				//TODO: trigger a collision handler
-				if(b.deadly){
-					a.dead = true;
-				}
-			}
-		}
-
-		public void ball_paddle(double dt, Ball a, Paddle b) {
-			double cx = clamp(a.x, b.left, b.right);
-			double cy = clamp(a.y, b.top, b.bottom);
-			Vector closest = new Vector(cx, cy);
-
-			Vector delta = a.position.sub(closest);
-			if(delta.length < a.radius){
-				Debug.point(closest);
-				Vector pen = delta.normal.scale(a.radius - delta.length);
-				a.position = a.position.add(pen);
-				a.velocity.reflect(delta.normal);
-			}
-		}
 	}
 
-	//role CollisionHandler {} requires {
-	//	void hit_block(Ball ball, Block block);
-	//	void hit_wall(Ball ball, Wall wall);
-	//}
-
-	public void update(double dt){
-		StateRole.integrate(dt*0.5);
-		StateRole.collide(dt);
-		StateRole.integrate(dt*0.5);
-		StateRole.collect();
+	role Integrator {
+		public void step(double dt, Vector position, Vector velocity){
+			position.x = position.x + velocity.x * dt;
+			position.y = position.y + velocity.y * dt;
+		}
 	}
 
 	role Debug {
@@ -394,54 +475,59 @@ context Physics {
 // Render system
 context Render {
 	public Render(State state, Display display){
-		StateRole = state;
-		UI = display;
+		Entities = state;
+		Canvas = display;
 	}
 
-	stageprop StateRole {
+	stageprop Entities {
 		public void render(){
-			for(Ball ball : getBalls()){
-				UI.ball(ball);
+			for(Wall wall: walls()){
+				Canvas.wall(wall);
 			}
-			for(Wall wall : getWalls()){
-				UI.wall(wall);
+			for(Block block: blocks()){
+				Canvas.block(block);
 			}
-			for(Block block : getBlocks()){
-				UI.block(block);
+			for(Ball ball: balls()){
+				Canvas.ball(ball);
 			}
 
-			UI.paddle(getPaddle());
+			Canvas.paddle(paddle());
 		}
 	} requires {
-		public Paddle getPaddle() const;
-		public List<Ball> getBalls() const;
-		public List<Wall> getWalls() const;
-		public List<Block> getBlocks() const;
+		public Paddle paddle() const;
+		public List<Ball> balls() const;
+		public List<Wall> walls() const;
+		public List<Block> blocks() const;
 	}
 
-	role UI {
+	role Canvas {
 		public void ball(Ball ball){
-			fg(new Color(144, 195, 212));
-			circle(ball.position, ball.radius);
+			body(new Color(144, 195, 212), ball.body);
 		}
 
 		public void block(Block block){
-			fg(new Color(212, 195, 144));
-			rect(block.position, block.halfsize);
+			body(new Color(212, 195, 144), block.body);
 		}
 
 		public void wall(Wall wall){
 			if(wall.deadly) {
-				fg(new Color(255, 0, 0));
+				body(new Color(255, 0, 0), wall.body);
 			} else {
-				fg(new Color(212, 144, 195));
+				body(new Color(212, 144, 195), wall.body);
 			}
-			rect(wall.position, wall.halfsize);
 		}
 
 		public void paddle(Paddle paddle){
-			fg(new Color(144, 212, 195));
-			rect(paddle.position, paddle.halfsize);
+			body(new Color(144, 212, 195), paddle.body);
+		}
+
+		private void body(Color color, Body body){
+			fg(color);
+			if(body.shape == 0){
+				circle(body.center, body.radius);
+			} else {
+				rect(body.center, body.halfsize);
+			}
 		}
 	} requires {
 		public Vector size();
@@ -451,98 +537,153 @@ context Render {
 	}
 
 	public void render(){
-		StateRole.render();
+		Entities.render();
 	}
 }
 
-context Breakout {
-	private State state_;
-	private Physics physics_;
-
+context World implements CollisionHandler {
+	private State   state_;
 	private Display display_;
-	private Render render_;
+	private Physics physics_;
+	private Render  render_;
 
-	public Breakout(){
+	private double shake;
+
+	public World(Display display){
+		display_ = display;
+
 		state_ = new State();
-
-		display_ = new Display();
-
-		physics_ = new Physics(state_, display_);
+		//TODO: this should use debug layer instead of display
+		physics_ = new Physics(state_, this, display_);
 		render_ = new Render(state_, display_);
 
-		setup_level1();
+		shake = 0.0;
 	}
 
-	/*
-	public void hit_block(Ball ball, Block block){
-		//TODO: add counting
-		state_.blocks.remove(block);
-	}
+	public void step(double dt){
+		display_.clear();
 
-	public void hit_wall(Ball ball, Wall wall){
-		//TODO: restart when zero balls
-		if(wall.deadly){
-			state_.balls.remove(ball);
-		}
-	}
-	*/
-
-	public void setup_level1(){
-		state_.balls.add(new Ball());
-		state_.balls.add(new Ball());
-		state_.balls.add(new Ball());
-
-		double wallsize = 20.0 / 2.0;
-
-		state_.walls.add(new Wall(
-			new Vector(0.0, display_.size.y/2.0),
-			new Vector(wallsize, display_.size.y/2.0)
-		));
-
-		state_.walls.add(new Wall(
-			new Vector(display_.size.x, display_.size.y/2.0),
-			new Vector(wallsize, display_.size.y/2.0)
-		));
-
-		state_.walls.add(new Wall(
-			new Vector(display_.size.x/2.0, 0.0),
-			new Vector(display_.size.x/2.0, wallsize)
-		));
-
-		Wall zone = new Wall(
-			new Vector(display_.size.x/2.0, display_.size.y),
-			new Vector(display_.size.x/2.0, wallsize)
-		);
-		zone.deadly = true;
-		state_.walls.add(zone);
-
-		Block block = new Block(new Vector(0.0, 0.0));
-
-		for(double yi = 0.0; yi < 3.0; yi = yi + 1.0){
-			double y = yi * (block.height + 10.0) + wallsize * 3.0;
-			for(double x = wallsize * 2.0; x < display_.size.x - wallsize * 2.0; x = x + block.width + 10.0){
-				state_.blocks.add(new Block(new Vector(x, y)));
-			}
+		if(shake > 0){
+			display_.offset.set(display_.offset.scale(0.1).add(
+				new Vector(
+					shake * Math.random() * 10.0,
+					shake * Math.random() * 10.0
+				)));
+			shake = shake - dt;
+		} else {
+			display_.offset.setxy(0.0, 0.0);
 		}
 
-		state_.paddle.position.setxy(
+		state_.paddle.body.center.x = display_.mouse.position.x.clone;
+
+		render_.render();
+		physics_.update(dt);
+
+		display_.repaint();
+	}
+
+	public void load(/* level */){
+		//TODO: load from file
+		double wallsize = 20.0;
+
+		// setup paddle
+		state_.paddle.body.center.setxy(
 			display_.size.x/2.0,
-			display_.size.y - wallsize - state_.paddle.halfsize.y);
+			display_.size.y - wallsize - state_.paddle.body.halfsize.y);
+
+		// setup ball
+		double cx = state_.paddle.body.center.x.clone;
+		double cy = state_.paddle.body.center.y - 20.0;
+
+		state_.spawn_ball(new Vector(cx+10.0,cy), new Vector(100.0, -100.0));
+		state_.spawn_ball(new Vector(cx-10.0,cy), new Vector(-90.0, -100.0));
+
+		// spawn walls
+		state_.spawn_wall(
+			new Vector(0.0, display_.size.y/2.0),
+			new Vector(wallsize, display_.size.y/2.0),
+			false
+		);
+		state_.spawn_wall(
+			new Vector(display_.size.x, display_.size.y/2.0),
+			new Vector(wallsize, display_.size.y/2.0),
+			false
+		);
+		state_.spawn_wall(
+			new Vector(display_.size.x/2.0, 0.0),
+			new Vector(display_.size.x/2.0, wallsize),
+			false
+		);
+		state_.spawn_wall(
+			new Vector(display_.size.x/2.0, display_.size.y),
+			new Vector(display_.size.x/2.0, wallsize),
+			true
+		);
+
+		// setup blocks
+		Vector blocksize = new Vector(30.0, 10.0);
+
+		double left = wallsize + 10.0;
+		double right = display_.size.x - wallsize - 10.0;
+
+		int count = ((right - left) / (blocksize.x * 2)).toInteger();
+		double width = (right - left) / count;
+
+		double y = wallsize * 3.0;
+		for(int row = 0; row < 3; row++){
+			double x = left + width / 2;
+			for(int i = 0; i < count; i++){
+				state_.spawn_block(
+					new Vector(x, y),
+					blocksize
+				);
+				x = x + width;
+			}
+			y = y + blocksize.y * 2 + 10.0;
+		}
+	}
+
+	public void onCollision(Entity A, Entity B){
+		shake = shake + 0.2;
+		if(shake > 1.0){
+			shake = 1.0;
+		}
+		A.trigger_collision(this, B);
+	}
+
+	public void trigger_Ball_Ball(Ball a, Ball b){}
+	public void trigger_Ball_Wall(Ball a, Wall b){ if(b.deadly){ state_.remove_Ball(a); } }
+	public void trigger_Ball_Block(Ball a, Block b){ state_.remove_Block(b); }
+	public void trigger_Ball_Paddle(Ball a, Paddle b){ }
+	public void trigger_Block_Ball(Block a, Ball b){ trigger_Ball_Block(b, a) }
+	public void trigger_Block_Wall(Block a, Wall b){}
+	public void trigger_Block_Block(Block a, Block b){}
+	public void trigger_Block_Paddle(Block a, Paddle b){}
+	public void trigger_Wall_Ball(Wall a, Ball b){ trigger_Ball_Wall(b, a) }
+	public void trigger_Wall_Wall(Wall a, Wall b){}
+	public void trigger_Wall_Block(Wall a, Block b){}
+	public void trigger_Wall_Paddle(Wall a, Paddle b){}
+	public void trigger_Paddle_Ball(Paddle a, Ball b){ trigger_Ball_Paddle(b, a); }
+	public void trigger_Paddle_Wall(Paddle a, Wall b){}
+	public void trigger_Paddle_Block(Paddle a, Block b){}
+	public void trigger_Paddle_Paddle(Paddle a, Paddle b){}
+
+}
+
+context Breakout {
+	private Display display_;
+	private World world_;
+
+	public Breakout(){
+		display_ = new Display();
+		world_ = new World(display_);
 	}
 
 	public void run(){
+		world_.load();
 		while(true){
 			double dt = 0.033;
-
-			display_.clear();
-
-			state_.paddle.position.x = display_.mouse.position.x.clone;
-
-			render_.render();
-			physics_.update(dt);
-
-			display_.repaint();
-
+			world_.step(dt);
 			Thread.sleep(13);
 		}
 	}
