@@ -547,6 +547,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("sqrt")) {
 			mathCode.add(new MathClass.RTSqrtCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("sin")) {
+			mathCode.add(new MathClass.RTSinCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("cos")) {
+			mathCode.add(new MathClass.RTCosCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("atan2")) {
+			mathCode.add(new MathClass.RTAtan2Code(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.usingDouble;
 		} else {
 			retvalType = RetvalTypes.none;
 			assert false;	// error message instead? Should be caught earlier
@@ -789,6 +798,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			if (methodDeclaration.name().equals("show")) {
 				readCode.add(new FrameClass.RTShowCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("Frame")) {
+					readCode.add(new FrameClass.RTFrameCtor0Code(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -796,7 +807,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			
 			if (methodDeclaration.name().equals("Frame")) {
-				readCode.add(new FrameClass.RTFrameCtorCode(methodDeclaration.enclosedScope()));
+				readCode.add(new FrameClass.RTFrameCtor1Code(methodDeclaration.enclosedScope()));
 			} else if (methodDeclaration.name().equals("setVisible")) {
 				readCode.add(new FrameClass.RTSetVisibleCode(methodDeclaration.enclosedScope()));
 			} else {

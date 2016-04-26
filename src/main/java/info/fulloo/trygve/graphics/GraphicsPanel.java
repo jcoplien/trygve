@@ -139,7 +139,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			// (if it's a keystroke event)
 			//
 			// Note that this shouldn't affect blocked reads...
-			final RTObject retval = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+			RTStackable retval = RunTimeEnvironment.runTimeEnvironment_.peekStack();
+			if (retval instanceof RTPostReturnProcessing == false) {
+				retval = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			}
 			RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
 				assert false;

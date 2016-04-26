@@ -136,6 +136,12 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			frameObject_ = frameObject;
 			RunTimeEnvironment.runTimeEnvironment_.gui().windowCreate(this);
 		}
+		public MyFrame(final RTFrameObject frameObject) {
+			super();
+			assert null != frameObject;
+			frameObject_ = frameObject;
+			RunTimeEnvironment.runTimeEnvironment_.gui().windowCreate(this);
+		}
 		@Override public boolean handleEvent(final Event e) {
 			if (e.id == WindowEvent.WINDOW_CLOSING) {
 				handleCloseProgrammatically(e);
@@ -239,6 +245,11 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 		
 		private final static long serialVersionUID = 438492109;
 		private RTFrameObject frameObject_;
+	}
+	
+	public void ctor0() {
+		theFrame_ = new MyFrame(this);
+		theFrame_.setLayout(new BorderLayout());
 	}
 	
 	public void ctor1(final String name) {

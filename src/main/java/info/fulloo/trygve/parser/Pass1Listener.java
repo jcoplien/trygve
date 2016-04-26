@@ -320,6 +320,24 @@ public class Pass1Listener extends Pass0Listener {
 		return newClass;
 	}
 	
+	private void insertDefaultCtor(final StaticScope scope, final TypeDeclaration decl) {
+		// Let's make one
+		final FormalParameterList parameterList = new FormalParameterList();
+		final ObjectDeclaration selfDecl = new ObjectDeclaration("this", decl.type(), decl.lineNumber());
+		parameterList.addFormalParameter(selfDecl);
+		final StaticScope constructorScope = new StaticScope(scope);
+		final MethodDeclaration newCtor = new MethodDeclaration(decl.name(),
+				constructorScope, null, AccessQualifier.PublicAccess, decl.lineNumber(), false);
+		constructorScope.setDeclaration(newCtor);
+		newCtor.addParameterList(parameterList);
+		scope.declareMethod(newCtor);
+		final Expression returnStatement = new ReturnExpression(decl.name(),
+				null, decl.lineNumber(), decl.type(), constructorScope);
+		final ExprAndDeclList ctorBody = new ExprAndDeclList(decl.lineNumber());
+		ctorBody.addBodyPart(returnStatement);
+		newCtor.setBody(ctorBody);
+	}
+	
 	private void checkNeedsCtor(final TypeDeclaration decl) {
 		// All classes and Context should have a default constructor.
 		// If someone invokes "new Foo()" we want to enact a constructor,
@@ -333,20 +351,7 @@ public class Pass1Listener extends Pass0Listener {
 		final MethodDeclaration theConstructor = scope.lookupMethodDeclaration(decl.name(), argumentList, false);
 		if (null == theConstructor) {
 			// Let's make one
-			final FormalParameterList parameterList = new FormalParameterList();
-			final ObjectDeclaration selfDecl = new ObjectDeclaration("this", decl.type(), decl.lineNumber());
-			parameterList.addFormalParameter(selfDecl);
-			final StaticScope constructorScope = new StaticScope(scope);
-			final MethodDeclaration newCtor = new MethodDeclaration(decl.name(),
-					constructorScope, null, AccessQualifier.PublicAccess, decl.lineNumber(), false);
-			constructorScope.setDeclaration(newCtor);
-			newCtor.addParameterList(parameterList);
-			scope.declareMethod(newCtor);
-			final Expression returnStatement = new ReturnExpression(decl.name(),
-					null, decl.lineNumber(), decl.type(), constructorScope);
-			final ExprAndDeclList ctorBody = new ExprAndDeclList(decl.lineNumber());
-			ctorBody.addBodyPart(returnStatement);
-			newCtor.setBody(ctorBody);
+			insertDefaultCtor(scope, decl);
 		}
 	}
 	

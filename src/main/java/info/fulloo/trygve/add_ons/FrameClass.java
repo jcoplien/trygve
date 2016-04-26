@@ -101,6 +101,7 @@ public final class FrameClass {
 			typeDeclarationList_.add(classDecl);
 
 			// arguments are in reverse order
+			declareFrameMethod("Frame", null, null, null, false);
 			declareFrameMethod("Frame", null, asList("name"), asList(stringType), false);
 			declareFrameMethod("add", voidType, asList("panel", "name"), asList(panelType, stringType), false);
 			declareFrameMethod("resize", voidType, asList("height", "width"), asList(intType, intType), false);
@@ -254,8 +255,8 @@ public final class FrameClass {
 		}
 	}
 	
-	public static class RTFrameCtorCode extends RTFrameCommon {
-		public RTFrameCtorCode(final StaticScope enclosingMethodScope) {
+	public static class RTFrameCtor1Code extends RTFrameCommon {
+		public RTFrameCtor1Code(final StaticScope enclosingMethodScope) {
 			super("Frame", "Frame", asList("name"), asList("String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
@@ -270,7 +271,7 @@ public final class FrameClass {
 			try {
 				theFrameObjectHelper.ctor1(name.stringValue());
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame (1) constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -280,6 +281,30 @@ public final class FrameClass {
 		}
 	}
 	
+	public static class RTFrameCtor0Code extends RTFrameCommon {
+		public RTFrameCtor0Code(final StaticScope enclosingMethodScope) {
+			super("Frame", "Frame", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject theFrameObject = (RTObject)activationRecord.getObject("this");
+			
+			theFrameObject.addObjectDeclaration("frame$object", theFrameObject.rTType());
+			final RTFrameObject theFrameObjectHelper = new RTFrameObject(theFrameObject.rTType());
+			theFrameObject.setObject("frame$object", theFrameObjectHelper);
+
+			try {
+				theFrameObjectHelper.ctor0();
+			} catch (final Exception e) {
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame (0) constructor.", "", "", "");
+				RTMessage.printMiniStackStatus();
+				return null;
+			}
+			
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(theFrameObject);
+			return super.nextCode();
+		}
+	}
 
 	public static List<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;

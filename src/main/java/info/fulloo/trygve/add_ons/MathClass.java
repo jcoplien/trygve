@@ -102,6 +102,9 @@ public final class MathClass {
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(intType, intType), intType);
 			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(doubleType, doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(intType, intType), intType);
+			addSimpleStaticMethodDeclaration("sin", asList("x"), asList(doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("cos", asList("x"), asList(doubleType), doubleType);
+			addSimpleStaticMethodDeclaration("atan2", asList("y", "x"), asList(doubleType, doubleType), doubleType);
 
 			// Declare the type
 			globalScope.declareType(mathType_);
@@ -401,6 +404,80 @@ public final class MathClass {
 			return nextPC;
 		}
 	}
+	public static class RTSinCode extends RTMathCommon {
+		public RTSinCode(final StaticScope enclosingMethodScope) {
+			super("Math", "sin", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			
+			RTObject result = null;
+			assert (rawXElement instanceof RTDoubleObject);
+			final double xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+			final double rawResult = Math.sin(xArgument);
+			result = new RTDoubleObject(rawResult);
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	
+	public static class RTCosCode extends RTMathCommon {
+		public RTCosCode(final StaticScope enclosingMethodScope) {
+			super("Math", "cos", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			
+			RTObject result = null;
+			assert (rawXElement instanceof RTDoubleObject);
+			final double xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+			final double rawResult = Math.cos(xArgument);
+			result = new RTDoubleObject(rawResult);
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	
+	public static class RTAtan2Code extends RTMathCommon {
+		public RTAtan2Code(final StaticScope enclosingMethodScope) {
+			super("Math", "atan2", asList("x", "y"), asList("double", "double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			final RTObject rawYElement = activationRecord.getObject("y");
+			
+			RTObject result = null;
+			assert (rawXElement instanceof RTDoubleObject);
+			final double xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+			final double yArgument = ((RTDoubleObject)rawYElement).doubleValue();
+			final double rawResult = Math.atan2(xArgument, yArgument);
+			result = new RTDoubleObject(rawResult);
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	
 	public static List<TypeDeclaration> typeDeclarationList() {
 		return typeDeclarationList_;
 	}
