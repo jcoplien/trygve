@@ -1442,8 +1442,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				return;
 			} else if (lhsType.canBeConvertedFrom(rhsType)) {
 				rhs_ = rhs_.promoteTo(lhsType);
+				setType(lhsType);
 			} else if (rhsType.canBeConvertedFrom(lhsType)) {
 				lhs_ = lhs_.promoteTo(rhsType);
+				setType(rhsType);
 			} else {
 				// eventually want to seek promoting both to a higher-order
 				// type (like Complex) but for now, we just punt. The
@@ -1499,6 +1501,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				return;
 			} else if (lhsType.name().equals("int")) {
 				lhs_ = lhs_.promoteTo(rhsType);
+				setType(rhsType);
 			} else {
 				// eventually want to seek promoting both to a higher-order
 				// type (like Complex) but for now, we just punt. The

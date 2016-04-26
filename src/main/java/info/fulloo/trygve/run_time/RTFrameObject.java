@@ -22,6 +22,7 @@ package info.fulloo.trygve.run_time;
  *  Jim Coplien at jcoplien@gmail.com
  * 
  */
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Event;
@@ -33,9 +34,20 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import info.fulloo.trygve.add_ons.PanelClass.RTEventClass;
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
+import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.FormalParameterList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
+import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
+import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class RTFrameObject extends RTObjectCommon implements RTObject {
 	public RTFrameObject(final RTType frameType) {
@@ -120,11 +132,13 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 	private static class MyFrame extends Frame implements RTWindowRegistryEntry {
 		public MyFrame(final String loc, final RTFrameObject frameObject) {
 			super(loc);
+			assert null != frameObject;
 			frameObject_ = frameObject;
 			RunTimeEnvironment.runTimeEnvironment_.gui().windowCreate(this);
 		}
 		@Override public boolean handleEvent(final Event e) {
 			if (e.id == WindowEvent.WINDOW_CLOSING) {
+				handleCloseProgrammatically(e);
 				shutDown();
 				return true;
 			}
@@ -137,9 +151,94 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			RunTimeEnvironment.runTimeEnvironment_.gui().windowCloseDown(this);
 			frameObject_ = null;
 		}
+		public void handleCloseProgrammatically(final Event e) {
+			final RTType rTType = frameObject_.rTType();
+			assert rTType instanceof RTClass;
+			final info.fulloo.trygve.declarations.Type type = StaticScope.globalScope().lookupTypeDeclaration(rTType.name());
+			final info.fulloo.trygve.declarations.Type eventType = StaticScope.globalScope().lookupTypeDeclaration("Event");
+			final FormalParameterList pl = new FormalParameterList();
+			final ObjectDeclaration self = new ObjectDeclaration("this", type, type.lineNumber());
+			final ObjectDeclaration event = new ObjectDeclaration("e", eventType, 0);
+
+			pl.addFormalParameter(event);
+			pl.addFormalParameter(self);
+			
+			final RTMethod hE = rTType.lookupMethod("windowClosing", pl);
+			if (null != hE) {
+				final int preStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+				this.dispatchCloseCall(hE, e);
+				
+				// Get the return value from the user function telling whether they
+				// handled the interrupt or not. If not, we should handle it ourselves
+				// (if it's a keystroke event)
+				//
+				// Note that this shouldn't affect blocked reads...
+				RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
+					assert false;
+				}
+				
+				int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+
+				if (postStackDepth != preStackDepth) {
+					// assert postStackDepth == preStackDepth;
+					assert (postStackDepth > preStackDepth);
+					
+					// Dunno what's going on but just try to recover
+					while (postStackDepth > preStackDepth) {
+						RunTimeEnvironment.runTimeEnvironment_.popStack();
+						postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+					}
+					
+					return;
+				}
+			}
+		}
+		private void dispatchCloseCall(final RTMethod method, final Event e) {
+			// Just do a method call into the user space
+			final RTCode halt = null;
+			final ClassType eventType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Event");
+			final RTType rTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(eventType.enclosedScope());
+			final MethodDeclaration methodDecl = method.methodDeclaration();
+			final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
+			final String debugName = null == methodParentScope? "???": methodParentScope.name();
+			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
+			retInst.setResultIsConsumed(true);
+			final RTObject event = RTEventObject.ctor1(e);
+
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(event);
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
+			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
+			
+			final RTDynamicScope activationRecord = new RTDynamicScope(
+					method.name(),
+					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
+					true);
+			
+			if (null != methodDecl) {
+				// Get formal parameter name that the user used for the "event" parameter
+				final MethodSignature signature = methodDecl.signature();
+				final FormalParameterList formalParameters = signature.formalParameterList();
+				final Declaration eventParameter = formalParameters.parameterAtPosition(1);
+				assert eventParameter instanceof ObjectDeclaration;
+				final String eventName = eventParameter.name();
+				
+				activationRecord.addObjectDeclaration(eventName, rTType);
+				activationRecord.addObjectDeclaration("this", null);
+				activationRecord.setObject(eventName, event);
+				activationRecord.setObject("this", frameObject_);
+				RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
+				activationRecord.incrementReferenceCount();
+				
+				RTCode pc = method;
+				do {
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
+				} while (null != pc && pc instanceof RTHalt == false);
+			}
+		}
 		
 		private final static long serialVersionUID = 438492109;
-		RTFrameObject frameObject_;
+		private RTFrameObject frameObject_;
 	}
 	
 	public void ctor1(final String name) {

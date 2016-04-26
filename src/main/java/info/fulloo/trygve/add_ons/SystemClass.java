@@ -25,6 +25,7 @@ package info.fulloo.trygve.add_ons;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.IllegalFormatException;
+import java.util.Iterator;
 import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
@@ -55,6 +56,48 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 public final class SystemClass {
+	private static void declareSystemMethod(final String methodSelector,
+			final Type returnType,
+			final List<String> paramNames,
+			final List<Type> paramTypes,
+			final boolean isConst,
+			final boolean isStatic) {
+		final AccessQualifier Public = AccessQualifier.PublicAccess;
+		
+		final Iterator<Type> typeIterator = null == paramTypes? null: paramTypes.iterator();
+		final FormalParameterList formals = new FormalParameterList();
+		if (null != paramNames) {
+			for (final String paramName : paramNames) {
+				if (null != paramName) {
+					final Type paramType = typeIterator.next();
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					formals.addFormalParameter(formalParameter);
+				}
+			}
+		}
+		final StaticScope methodScope = new StaticScope(systemType_.enclosedScope());
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, isStatic);
+		methodDecl.addParameterList(formals);
+		methodDecl.setReturnType(returnType);
+		methodDecl.setHasConstModifier(isConst);
+		systemType_.enclosedScope().declareMethod(methodDecl);
+	}
+	public static class RTExitCode extends RTMessage {
+		public RTExitCode(final StaticScope enclosingMethodScope) {
+			super("exit",
+					RTMessage.buildArguments("System", "exit",
+							asList("status"),
+							asList("int"),
+							new StaticScope(enclosingMethodScope),
+							true),
+					systemType_, Expression.nearestEnclosingMegaTypeOf(enclosingMethodScope), true);
+		}
+		@Override public RTCode run() {
+			RunTimeEnvironment runTimeEnvironment = RunTimeEnvironment.runTimeEnvironment_;
+			runTimeEnvironment.stopAllThreads();
+			return new RTHalt();
+		}
+	}
 	private static void addTypedPrintStreamPrintDeclaration(final String methodName, final Type argumentType) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration formalParameter = null;
@@ -72,6 +115,7 @@ public final class SystemClass {
 		printStreamType_.enclosedScope().declareMethod(methodDecl);
 		methodDecl.setReturnType(printStreamType_);
 	}
+	
 	private static void addGeneralPrintStreamDeclaration(final String methodName, List<String> parameterNames, final List<Type> argumentTypes) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		ObjectDeclaration formalParameter = null;
@@ -104,6 +148,7 @@ public final class SystemClass {
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
+			
 
 			StaticScope newScope = new StaticScope(globalScope);
 			ClassDeclaration classDecl = new ClassDeclaration("PrintStream", newScope, objectBaseClass, 0);
@@ -158,18 +203,20 @@ public final class SystemClass {
 			newScope = new StaticScope(globalScope);
 			classDecl = new ClassDeclaration("System", newScope, objectBaseClass, 0);
 			newScope.setDeclaration(classDecl);
-			final Type systemClassType = new ClassType("System", newScope, null);
-			classDecl.setType(systemClassType);
+			systemType_ = new ClassType("System", newScope, null);
+			classDecl.setType(systemType_);
 			typeDeclarationList_.add(classDecl);
 			
+			declareSystemMethod("exit", null, asList("status"), asList(integerType), true, true);
+			
 			final ObjectDeclaration outDeclaration = new ObjectDeclaration("out", printStreamType_, 0);
-			systemClassType.enclosedScope().declareStaticObject(outDeclaration);
-			systemClassType.declareStaticObject(outDeclaration);
+			systemType_.enclosedScope().declareStaticObject(outDeclaration);
+			systemType_.declareStaticObject(outDeclaration);
 			
 			assert null != printStreamType_;
 			final ObjectDeclaration errDeclaration = new ObjectDeclaration("err", printStreamType_, 0);
-			systemClassType.enclosedScope().declareStaticObject(errDeclaration);
-			systemClassType.declareStaticObject(errDeclaration);
+			systemType_.enclosedScope().declareStaticObject(errDeclaration);
+			systemType_.declareStaticObject(errDeclaration);
 			
 			// This code belongs here, but reciprocal precedence means that
 			// we're stuck because System depends on InputStream and InputStream
@@ -180,7 +227,7 @@ public final class SystemClass {
 			// systemClassType.declareStaticObject(inputDeclaration);
 			
 			// Declare the type
-			globalScope.declareType(systemClassType);
+			globalScope.declareType(systemType_);
 			globalScope.declareClass(classDecl);
 		}
 	}
@@ -439,7 +486,6 @@ public final class SystemClass {
 			return super.nextCode();
 		}
 	}
-
 	
 	public static class RTFormatCode extends RTPrintCommon {
 		public RTFormatCode(final StaticScope enclosingMethodScope) {
@@ -558,5 +604,5 @@ public final class SystemClass {
 		}
 	}
 	
-	private static Type printStreamType_ = null;
+	private static Type printStreamType_ = null, systemType_ = null;
 }

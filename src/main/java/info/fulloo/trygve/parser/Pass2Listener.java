@@ -1051,9 +1051,11 @@ public class Pass2Listener extends Pass1Listener {
 				// Mainly for error recovery (bad argument to method / method not declared)
 				final String methodSelectorName = message.selectorName();
 				if (argumentList.isntError()) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Method `",
-							methodSelectorName + "(" + argumentList.getText() + ")",
-						"' not declared in interface `", classObjectType.name() + "'.");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+							"Script `",
+							methodSelectorName + argumentList.getText(),
+							"' not declared in Interface `",
+							classObjectType.name() + "'.");
 				}
 			} else {
 				isOKMethodSignature = true;
@@ -1121,7 +1123,8 @@ public class Pass2Listener extends Pass1Listener {
 		final StaticScope classScope = classDecl.enclosedScope();
 		return classScope.lookupMethodDeclarationIgnoringRoleStuff(methodSelectorName, parameterList);
 	}
-	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
+	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationUpInheritanceHierarchy(final TypeDeclaration classDecl,
+			final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
 		// Pass 2 / 3 version turns on signature checking
 		StaticScope classScope = classDecl.enclosedScope();
 		MethodDeclaration retval = classScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this", true);

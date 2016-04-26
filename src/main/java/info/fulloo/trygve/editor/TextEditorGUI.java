@@ -54,7 +54,7 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "tests/mouse_info_test.k";
+	private final static String defaultFile = "examples/breakout.k";
     
     private File fileName = new File("noname");
     
@@ -729,6 +729,16 @@ private void setInterruptButtonState(final RunButtonState state) {
 	}
 }
 
+private void cancelAllThreads() {
+	RunTimeEnvironment.runTimeEnvironment_.stopAllThreads();
+	final int nthreads = Thread.activeCount();
+	final Thread [] threads = new Thread[nthreads];
+	Thread.enumerate(threads);
+	for (final Thread aThread : threads) {
+		aThread.interrupt();
+	}
+}
+
 public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
 	if (null != worker_) {
 		worker_.cancel(true);
@@ -751,6 +761,8 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	    		System.err.format("Error: User process died because of internal trygve error: %s\n", e.toString());
 	    		RTMessage.printMiniStackStatus();
 	    		e.printStackTrace(System.err);
+	    	} finally {
+	    		cancelAllThreads();
 	    	}
 	    	parseButton.setEnabled(true);
 	    	testButton.setEnabled(true);
@@ -790,6 +802,7 @@ public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt)
 		}
 	}
 	worker_ = null;
+	cancelAllThreads();
 }//GEN-LAST:event_interruptButtonActionPerformed
 
 public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed

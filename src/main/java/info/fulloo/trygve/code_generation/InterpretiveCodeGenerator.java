@@ -155,7 +155,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		List<TypeDeclaration> typeDeclarationList = InputStreamClass.typeDeclarationList();	// "InputStream". Must come before System
 		compileDeclarations(typeDeclarationList);
 		
-		typeDeclarationList = SystemClass.typeDeclarationList();
+		typeDeclarationList = SystemClass.typeDeclarationList();	// "System"
 		compileDeclarations(typeDeclarationList);
 		
 		typeDeclarationList = StaticScope.typeDeclarationList();	// "String", others
@@ -348,6 +348,26 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		last.setNextCode(returnStatement);
 		codeVector.add(returnStatement);
 	}
+	private void processSystemMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
+		RetvalTypes retvalType;
+		
+		final RTType rtListTypeDeclaration = convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+		assert null != rtListTypeDeclaration;
+		final RTMethod rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration);
+		rtListTypeDeclaration.addMethod(rtMethod.name(), rtMethod);
+		final List<RTCode> listCode = new ArrayList<RTCode>();
+		if (methodDeclaration.name().equals("exit")) {
+			listCode.add(new SystemClass.RTExitCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+		} else {
+			assert false;	// error message instead? Should be caught earlier
+			retvalType = RetvalTypes.undefined;
+		}
+		
+		addReturn(methodDeclaration, retvalType, listCode);
+		
+		rtMethod.addCode(listCode);
+	}
 	private void processListMethodDefinition(final MethodDeclaration methodDeclaration, final TypeDeclaration typeDeclaration) {
 		RetvalTypes retvalType;
 		
@@ -505,6 +525,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				mathCode.add(new MathClass.RTRealAbsCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingDouble;
 			}
+		} else if (methodDeclaration.name().equals("round")) {
+			retvalType = RetvalTypes.usingInt;
+			mathCode.add(new MathClass.RTRoundCode(methodDeclaration.enclosedScope()));
 		} else if (methodDeclaration.name().equals("max")) {
 			if (firstParameterIsInteger) {
 				mathCode.add(new MathClass.RTIntMaxCode(methodDeclaration.enclosedScope()));
@@ -1531,7 +1554,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
 					if (methodDeclaration.hasManualBaseClassConstructorInvocations() == false) {
 						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
-							"Constructor `", methodDeclaration.name(),
+							"Constructor `", methodDeclaration.signature().getText(),
 							"' has no valid means to ensure that the base class part of the object is initialized.", "");
 					}
 				}
@@ -1558,7 +1581,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (RoleDeclaration)roleOrContextOrClass;
 		} else if (roleOrContextOrClass instanceof ClassDeclaration) {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
-			if (typeDeclaration.name().equals("PrintStream")) {
+			if (typeDeclaration.name().equals("System")) {
+				processSystemMethodDefinition(methodDeclaration, typeDeclaration);
+				return;
+			} else if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
 				return;
 			} else if (typeDeclaration.name().equals("InputStream")) {

@@ -131,8 +131,8 @@ public final class FrameClass {
 			// activation record
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject self = (RTObject)activationRecord.getObject("this");
-			assert self instanceof RTFrameObject;
-			final RTCode retval = this.runDetails(activationRecord, (RTFrameObject)self);
+			assert self instanceof RTObject;
+			final RTCode retval = this.runDetails(activationRecord, self);
 			
 			// All dogs go to heaven, and all return statements that
 			// have something to return do it. We deal with consumption
@@ -141,7 +141,7 @@ public final class FrameClass {
 			
 			return retval;
 		}
-		public RTCode runDetails(final RTObject scope, final RTFrameObject thePanel) {
+		public RTCode runDetails(final RTObject scope, final RTObject thePanel) {
 			// Effectively a pure virtual method, but Java screws us again...
 			ErrorLogger.error(ErrorIncidenceType.Internal, "call of pure virtual method runDetails", "", "", "");
 			return null;	// halt the machine
@@ -151,7 +151,7 @@ public final class FrameClass {
 		public RTAddCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "add", asList("name", "panel"), asList("String", "Panel"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject nameArg = (RTObject)activationRecord.getObject("name");
@@ -160,7 +160,8 @@ public final class FrameClass {
 			final GraphicsPanel panel = (GraphicsPanel)panelArg.getObject("panelObject");
 			
 			try {
-				theFrame.add(name, panel);
+				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
+				theFrameObjectHelper.add(name, panel);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.add.", "", "", "");
 				RTMessage.printMiniStackStatus();
@@ -174,7 +175,7 @@ public final class FrameClass {
 		public RTResizeCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "resize", asList("width", "height"), asList("int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject widthArg = (RTObject)activationRecord.getObject("width");
@@ -183,7 +184,8 @@ public final class FrameClass {
 			final int height = (int) ((RTIntegerObject)heightArg).intValue();
 			
 			try {
-				theFrame.resize(width, height);
+				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
+				theFrameObjectHelper.resize(width, height);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.resize.", "", "", "");
 				RTMessage.printMiniStackStatus();
@@ -197,7 +199,7 @@ public final class FrameClass {
 		public RTSetSizeCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "setSize", asList("width", "height"), asList("int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject widthArg = (RTObject)activationRecord.getObject("width");
@@ -206,7 +208,8 @@ public final class FrameClass {
 			final int height = (int) ((RTIntegerObject)heightArg).intValue();
 
 			try {
-				theFrame.resize(width, height);
+				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
+				theFrameObjectHelper.resize(width, height);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setSize.", "", "", "");
 				RTMessage.printMiniStackStatus();
@@ -220,9 +223,10 @@ public final class FrameClass {
 		public RTShowCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "show", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			assert null != theFrame;
-			theFrame.show();
+			final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
+			theFrameObjectHelper.show();
 			
 			return super.nextCode();
 		}
@@ -231,14 +235,15 @@ public final class FrameClass {
 		public RTSetVisibleCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "setVisible", asList("tf"), asList("boolean"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			assert null != theFrame;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject tfArg = (RTObject)activationRecord.getObject("tf");
 			final boolean tf = ((RTBooleanObject)tfArg).value();
 
 			try {
-				theFrame.setVisible(tf);
+				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
+				theFrameObjectHelper.setVisible(tf);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setVisible.", "", "", "");
 				RTMessage.printMiniStackStatus();
@@ -253,13 +258,17 @@ public final class FrameClass {
 		public RTFrameCtorCode(final StaticScope enclosingMethodScope) {
 			super("Frame", "Frame", asList("name"), asList("String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTFrameObject theFrame) {
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject theFrame) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTStringObject name = (RTStringObject)activationRecord.getObject("name");
-			final RTFrameObject theFrameObject = (RTFrameObject)activationRecord.getObject("this");
+			final RTObject theFrameObject = (RTObject)activationRecord.getObject("this");
+			
+			theFrameObject.addObjectDeclaration("frame$object", theFrameObject.rTType());
+			final RTFrameObject theFrameObjectHelper = new RTFrameObject(theFrameObject.rTType());
+			theFrameObject.setObject("frame$object", theFrameObjectHelper);
 
 			try {
-				theFrameObject.ctor1(name.stringValue());
+				theFrameObjectHelper.ctor1(name.stringValue());
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();

@@ -2681,7 +2681,6 @@ public class Pass1Listener extends Pass0Listener {
 				expression = new ErrorExpression(null);
 			}
 			
-			
 			if (printProductionsDebug) {
 				System.err.print("abelian_product : abelian_unary_op ");
 				for (int i = 0; i < ctx.ABELIAN_MULOP().size(); i++) {
@@ -4997,7 +4996,7 @@ public class Pass1Listener extends Pass0Listener {
 			if (null == methodSignature) {
 				if (actualArgumentList.isntError()) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
-						"' not declared in interface `", interfaceDecl.name() + "'.");
+						"' not declared in Interface `", interfaceDecl.name() + "'.");
 				}
 				returnType = new ErrorType();
 			} else {

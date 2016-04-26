@@ -2,6 +2,12 @@ interface EventHandler {
    public boolean handleEvent(Event e);
 }
 
+class MyFrame extends Frame {
+   private MyFrame() { Frame("") }
+   public MyFrame(String s) { Frame(s) }
+   public void windowClosing (Event e) { System.exit(0) }
+}
+
 class MyPanel extends Panel {
    int XSIZE = 1000;
    int YSIZE = 600;
@@ -12,7 +18,7 @@ class MyPanel extends Panel {
    public MyPanel() {
       Panel();
       eventHandler_ = null;
-      frame_  = new Frame("Bouncy");
+      frame_  = new MyFrame("Bouncy");
       frame_.add("Center", this);
       frame_.resize(XSIZE, YSIZE);
       frame_.setVisible(true);

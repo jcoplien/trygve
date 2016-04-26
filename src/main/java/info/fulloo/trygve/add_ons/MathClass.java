@@ -97,6 +97,7 @@ public final class MathClass {
 			addSimpleStaticMethodDeclaration("sqrt", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(intType), intType);
+			addSimpleStaticMethodDeclaration("round", asList("x"), asList(intType), intType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(doubleType, doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(intType, intType), intType);
 			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(doubleType, doubleType), doubleType);
@@ -358,6 +359,36 @@ public final class MathClass {
 				xArgument = (int)((RTIntegerObject)rawXElement).intValue();
 				final int rawResult = Math.abs(xArgument);
 				result = new RTIntegerObject((long)rawResult);
+			} else {
+				assert false;
+			}
+
+			nextPC = super.nextCode();
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", result);
+			
+			return nextPC;
+		}
+	}
+	public static class RTRoundCode extends RTMathCommon {
+		public RTRoundCode(final StaticScope enclosingMethodScope) {
+			super("Math", "round", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode nextPC = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawXElement = activationRecord.getObject("x");
+			
+			RTObject result = null;
+			if (rawXElement instanceof RTIntegerObject) {
+				final int xArgument = (int)((RTIntegerObject)rawXElement).intValue();
+				final int rawResult = xArgument;
+				result = new RTIntegerObject(rawResult);
+			} else if (rawXElement instanceof RTDoubleObject) {
+				final double xArgument = ((RTDoubleObject)rawXElement).doubleValue();
+				final int rawResult = (int)Math.round(xArgument);
+				result = new RTIntegerObject(rawResult);
 			} else {
 				assert false;
 			}

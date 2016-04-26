@@ -105,6 +105,30 @@ public class RunTimeEnvironment {
 			return swingWorkerThreadStack_;
 		}
 	}
+	public void stopCurrentThread() {
+		final String threadName = Thread.currentThread().getName();
+		if (threadName.startsWith("AWT-EventQueue")) {
+			awtIsRunning_ = false;
+		} else {
+			swingWorkerIsRunning_ = false;
+		}
+	}
+	public void stopAllThreads() {
+		awtIsRunning_ = swingWorkerIsRunning_ = false;
+	}
+	public boolean isRunning() {
+		boolean retval = true;
+		final String threadName = Thread.currentThread().getName();
+		if (threadName.startsWith("AWT-EventQueue")) {
+			retval = awtIsRunning_;
+		} else {
+			retval = swingWorkerIsRunning_;
+		}
+		return retval;
+	}
+	public void resetIsRunningForAll() {
+		awtIsRunning_ = swingWorkerIsRunning_ = true;
+	}
 	private Stack<Integer> framePointerStack() {
 		final String threadName = Thread.currentThread().getName();
 		if (threadName.startsWith("AWT-EventQueue")) {
@@ -173,6 +197,8 @@ public class RunTimeEnvironment {
 		return retval;
 	}
 	public void run(final RTExpression mainExpr) {
+		resetIsRunningForAll();
+		
 		// Set up an activation record. We even need one for
 		// main so it can declare t$his, if there's an
 		// argument to the constructor
@@ -416,7 +442,7 @@ public class RunTimeEnvironment {
 	}
 	public RTCode runner(final RTCode code) {
 		runnerPrefix(code);
-		final RTCode retval = code.run();
+		final RTCode retval = isRunning()? code.run(): null;
 		return retval;
 	}
 	
@@ -473,6 +499,8 @@ public class RunTimeEnvironment {
 	private       Stack<RTStackable> awtEventQueueStack_;
 	private       Stack<Integer> swingWorkerFramePointerStack_;
 	private       Stack<Integer> awtEventFramePointerStack_;
+	
+	private       boolean awtIsRunning_, swingWorkerIsRunning_;
 	
 	private       Stack<RTDynamicScope> swingWorkerDynamicScopes_;
 	private       Stack<RTDynamicScope> awtEventDynamicScopes_;

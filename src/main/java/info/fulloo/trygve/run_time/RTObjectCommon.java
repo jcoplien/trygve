@@ -242,8 +242,10 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				stringBuffer.append("\tIn Context `");
 				stringBuffer.append(contextName);
 				stringBuffer.append("':");
+				boolean first = true;
 				for (final String aRoleName : roleNames) {
-					stringBuffer.append(", ");
+					if (first == false) stringBuffer.append(","); else first = false;
+					stringBuffer.append(" ");
 					stringBuffer.append(aRoleName);
 				}
 				final String message = stringBuffer.toString();

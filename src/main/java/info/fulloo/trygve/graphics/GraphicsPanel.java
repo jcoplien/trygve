@@ -45,7 +45,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rTPanel_ = rTPanel;
 		makeVectors();
 	}
-	
 	public void setBackground(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
@@ -529,7 +528,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;
 	
 	private static final long serialVersionUID = 238269472;
-	private int referenceCount_ = 0;
+	private               int referenceCount_ = 0;
 
 	// Junk so that we fit into the RTObject framework
 	@Override public RTObject getObject(String name) { assert false; return null; }
