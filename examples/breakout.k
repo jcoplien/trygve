@@ -77,18 +77,16 @@ context Display {
 			floor(2.0*halfsize.y));
 	}
 	public void oval(Vector center, Vector halfsize) {
-		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x - 2.0*halfsize.x + offset_.x),
-			floor(center.y - 2.0*halfsize.y + offset_.y),
+			floor(center.x - halfsize.x + offset_.x),
+			floor(center.y - halfsize.y + offset_.y),
 			floor(2.0*halfsize.x),
 			floor(2.0*halfsize.y));
 	}
 	public void circle(Vector center, double radius) {
-		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x-2.0*radius + offset_.x),
-			floor(center.y-2.0*radius + offset_.y),
+			floor(center.x-radius + offset_.x),
+			floor(center.y-radius + offset_.y),
 			floor(2.0*radius),
 			floor(2.0*radius));
 	}

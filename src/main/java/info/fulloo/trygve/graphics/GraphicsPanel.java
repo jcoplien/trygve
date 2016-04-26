@@ -343,7 +343,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			for (int i = 0; i < ellipses_.size(); i++) {
 			    final Ellipse2D p = ellipses_.elementAt(i);
 			    g.setColor((Color)ellipseColors_.elementAt(i));
-			    g.drawOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+			    g.drawOval((int)p.getX(), (int)p.getY(), (int)p.getWidth(), (int)p.getHeight());
 			}
 		} catch (ArrayIndexOutOfBoundsException exception) {
 			;
@@ -355,7 +355,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			for (int i = 0; i < filledEllipses_.size(); i++) {
 				final Ellipse2D p = filledEllipses_.elementAt(i);
 				g.setColor((Color)filledEllipseColors_.elementAt(i));
-				g.fillOval((int)p.getCenterX(), (int)p.getCenterY(), (int)p.getWidth(), (int)p.getHeight());
+				g.fillOval((int)p.getX(), (int)p.getY(), (int)p.getWidth(), (int)p.getHeight());
 			}
 		} catch (ArrayIndexOutOfBoundsException exception) {
 			;
