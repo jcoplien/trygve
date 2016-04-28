@@ -42,13 +42,27 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rTPanel_ = rTPanel;
 	}
 
+	public boolean candraw(){
+		if(back.g == null){
+			back.reset();
+		}
+		return back.g != null;
+	}
+
 	public void setColor(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.setColor(color);
 		}
+	}
+
+	public Color getColor() {
+		if(candraw()) {
+			return back.g.getColor();
+		}
+		return Color.white;
 	}
 	public void drawLine(final RTObject fromXArg, final RTObject fromYArg, final RTObject toXArg, final RTObject toYArg) {
 		assert fromXArg instanceof RTIntegerObject;
@@ -60,12 +74,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int toX = (int)((RTIntegerObject)toXArg).intValue();
 		final int toY = (int)((RTIntegerObject)toYArg).intValue();
 
-		if(back.g != null) {
+		if(candraw()){
 			back.g.drawLine(fromX, fromY, toX, toY);
 		}
 	}
 	public void clear(){
-		if(back.g != null){
+		if(candraw()){
 			back.g.clearRect(0, 0, back.width, back.height);
 		}
 	}
@@ -79,7 +93,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.drawRect(fromX, fromY, width, height);
 		}
 	}
@@ -94,7 +108,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.fillRect(x, y, width, height);
 		}
 	}
@@ -108,7 +122,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.drawOval(x, y, width, height);
 		}
 	}
@@ -122,7 +136,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.fillOval(x, y, width, height);
 		}
 	}
@@ -134,7 +148,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final String string = ((RTStringObject)stringArg).stringValue();
 
-		if(back.g != null){
+		if(candraw()){
 			back.g.drawString(string, x, y);
 		}
 	}
@@ -370,7 +384,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			System.gc();
 
 			if(width == 0 || height == 0){
-				return;
+				width = 640;
+				height = 480;
 			}
 
 			image = createImage(width, height);

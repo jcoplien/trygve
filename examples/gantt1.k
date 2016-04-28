@@ -5,10 +5,10 @@ class MyPanel extends Panel {
       frame_.add("Center", this);
       frame_.resize(600, 400);
       repaint();
-      setForeground(Color.blue);
+      setColor(Color.blue);
       buttons_ = new List<Button>()
    }
-  
+
    public void addButton(Button button) { buttons_.add(button) }
 
    public boolean handleEvent(Event event) {
@@ -37,7 +37,7 @@ class MyPanel extends Panel {
    }
 
    public Frame frame() { return frame_ }
- 
+
    private List<Button> buttons_;
    private Frame frame_
 }
@@ -67,7 +67,7 @@ class Button {
       // In case of a drag that started inside a button
       state_="up"; draw()
    }
- 
+
    public boolean contains(int x, int y) {
       int centerX = x_ + radius_;
       int centerY = y_ + radius_;
@@ -80,15 +80,15 @@ class Button {
       panel_.drawOval(x_, y_, radius_, radius_);
       panel_.drawString(x_ + radius_ - ((label_.length() * 6) / 2),
                         y_+ radius_ + 6 , label_)
-      Color saveColor = panel_.getForeground();
+      Color saveColor = panel_.getColor();
       if (state_ == "down") {
-         panel_.setForeground(Color.blue);
+         panel_.setColor(Color.blue);
          panel_.fillOval(x_, y_, radius_, radius_)
       } else {
-         panel_.setForeground(new Color(0, 255, 255));
+         panel_.setColor(new Color(0, 255, 255));
          panel_.fillOval(x_+2, y_+1, radius_-2, radius_-1)
       }
-      panel_.setForeground(saveColor)
+      panel_.setColor(saveColor)
    }
 
    public int x() { return x_ }

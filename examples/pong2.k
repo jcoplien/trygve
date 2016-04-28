@@ -7,7 +7,7 @@ interface EventHandler {
 class MyPanel extends Panel {
    int XSIZE = 1000;
    int YSIZE = 600;
-   
+
    public int xsize() const { return XSIZE }
    public int ysize() const { return YSIZE }
 
@@ -37,7 +37,7 @@ class MyPanel extends Panel {
    }
 
    public Frame frame() { return frame_ }
- 
+
    private Frame frame_;
    private EventHandler eventHandler_
 }
@@ -67,13 +67,12 @@ context Arena implements EventHandler {
    }
    public void run() {
       do {
-         THE_PANEL.clearObjects();
-         PADDLE.erase();
+         THE_PANEL.clear();
          PADDLE.draw();
          BALL.draw()
          BALL.velocityAdjust();
-         BALL.erase();
          BALL.step();
+         THE_PANEL.flush();
          Thread.sleep(20)
       } while (true)
    }
@@ -88,8 +87,7 @@ context Arena implements EventHandler {
       }
       public int maxX() const { return xsize() }
       public int maxY() const { return ysize() }
-      public void setColor(Color c) { setForeground(c) }
-      public void clearObjects() { removeAll() }
+      public void flush() { repaint(); }
       public void clear() {
          setColor(new Color(227, 221, 240));
          fillRect(0, 0, maxX()-1, maxY()-1)
@@ -100,8 +98,8 @@ context Arena implements EventHandler {
       void fillRect(int x, int y, int h, int w);
       int xsize() const;
       int ysize() const;
-      void removeAll();
-      void setForeground(Color color)
+      void setColor(Color color);
+      void repaint();
    }
    role PADDLE {
       public int thickness() const { return 10 }

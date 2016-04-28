@@ -34,15 +34,22 @@ class PanelTest {
       Frame frame = new Frame("First Frame");
       frame.add("Center", panel);
       frame.resize(300, 300);
-      panel.setForeground(Color.black);
-      panel.drawString(120, 120, "Hello world");
-      panel.setForeground(Color.green);
-      panel.drawLine(120, 122, 190, 122);
-      panel.setForeground(Color.blue);
-      panel.drawRect(20, 20, 70, 100);
-      panel.setForeground(Color.red);
-      panel.drawOval(45, 100, 80, 80);
       frame.setVisible(true)
+
+      while(true){
+        panel.clear();
+        panel.setColor(Color.black);
+        panel.drawString(120, 120, "Hello world");
+        panel.setColor(Color.green);
+        panel.drawLine(120, 122, 190, 122);
+        panel.setColor(Color.blue);
+        panel.drawRect(20, 20, 70, 100);
+        panel.setColor(Color.red);
+        panel.drawOval(45, 100, 80, 80);
+        panel.repaint();
+
+        Thread.sleep(1000);
+      }
    }
 }
 

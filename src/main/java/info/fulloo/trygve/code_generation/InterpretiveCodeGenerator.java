@@ -724,6 +724,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (methodDeclaration.name().equals("clear")) {
 				panelCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
+			} else if (methodDeclaration.name().equals("getColor")) {
+				panelCode.add(new PanelClass.RTGetColorCode(methodDeclaration.enclosedScope()));
+				retvalType = RetvalTypes.usingColor;
 			} else {
 				assert false;
 			}
