@@ -64,7 +64,7 @@ context Display {
 	public void clear()   { panel_.clear(); }
 	public void repaint() { panel_.repaint(); }
 
-	public void fg(Color color) { panel_.setForeground(color); }
+	public void fg(Color color) { panel_.setColor(color); }
 
 	private int floor(double v){ return v.toInteger(); }
 

@@ -15,7 +15,6 @@ import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTColorObject;
-import info.fulloo.trygve.run_time.RTCookieObject;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTEventObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
@@ -34,9 +33,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Ellipse2D;
 import java.util.Map;
-import java.util.Vector;
 
 // From DrawText.java
 
@@ -45,19 +42,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rTPanel_ = rTPanel;
 	}
 
-	public void setBackground(final RTObject colorArg) {
+	public void setColor(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
 
 		if(back.g != null){
-			back.g.setColor(color);
-		}
-	}
-	public void setForeground(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
-
-		if(back.g != null) {
 			back.g.setColor(color);
 		}
 	}
@@ -132,13 +121,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		final Color currentColor = getForeground();
 
 		if(back.g != null){
 			back.g.fillOval(x, y, width, height);
 		}
 	}
-	public RTObject drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
+	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
 		assert stringArg instanceof RTStringObject;
@@ -149,10 +137,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		if(back.g != null){
 			back.g.drawString(string, x, y);
 		}
-
-		final Color currentColor = getForeground();
-		final RTObject retval = this.addString(x, y, string, currentColor);
-		return retval;
 	}
 	
 	public void handleEventProgrammatically(final Event e) {
@@ -269,30 +253,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	// ------------------ Internal stuff ------------------------------
 
-	private static class StringRecord {
-		public StringRecord(final int x, final int y, final String string, final Color color) {
-			x_ = x;
-			y_ = y;
-			string_ = string;
-			color_ = color;
-			if (null == color_) {
-				color_ = Color.black;
-			}
-		}
-		
-		@Override public String toString() {
-			return string_;
-		}
-		
-		public int x() { return x_; }
-		public int y() { return y_; }
-		public Color color() { return color_; }
-		
-		private final int x_, y_;
-		private String string_;
-		private Color color_;
-	}
-	
 	@Override public void actionPerformed(final ActionEvent event) {
 		assert false;
 	}
@@ -380,22 +340,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	@Override public void removeAll() {
 		super.removeAll();
 	}
-	
-	public void remove(final RTObject thingToRemoveRTObject) {
-		assert thingToRemoveRTObject instanceof RTCookieObject;
-		final Object thingToRemove = ((RTCookieObject)thingToRemoveRTObject).cookie();
-	}
-	
-	public synchronized RTObject addString(final int x, final int y, final String string, final Color color) {
-		final StringRecord stringRecord = new StringRecord(x, y, string, color);
-		final RTObject retval = new RTCookieObject(stringRecord);
-		return retval;
-	}
-	
+
 	public void setGraphicsEventHandler(final GraphicsEventHandler eventsAreBeingHijacked) {
 		eventsAreBeingHijacked_ = eventsAreBeingHijacked;
 	}
-
 
 	class Buffer {
 		Image image;

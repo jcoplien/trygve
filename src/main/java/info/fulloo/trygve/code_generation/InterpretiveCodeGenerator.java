@@ -718,33 +718,20 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			if (methodDeclaration.name().equals("Panel")) {
 				panelCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
-			} else if (methodDeclaration.name().equals("removeAll")) {
-				panelCode.add(new PanelClass.RTRemoveAllCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("repaint")) {
 				panelCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("clear")) {
 				panelCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.none;
-			} else if (methodDeclaration.name().equals("getBackground")) {
-				panelCode.add(new PanelClass.RTGetBackgroundCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingColor;
-			} else if (methodDeclaration.name().equals("getForeground")) {
-				panelCode.add(new PanelClass.RTGetForegroundCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingColor;
 			} else {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 2) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		
-			if (methodDeclaration.name().equals("setBackground")) {
-				panelCode.add(new PanelClass.RTSetBackgroundCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("setForeground")) {
-				panelCode.add(new PanelClass.RTSetForegroundCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("remove")) {
-				panelCode.add(new PanelClass.RTRemoveCode(methodDeclaration.enclosedScope()));
+			if (methodDeclaration.name().equals("setColor")) {
+				panelCode.add(new PanelClass.RTSetColorCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
@@ -755,7 +742,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			
 			if (methodDeclaration.name().equals("drawString")) {
 				panelCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingString;
 			} else {
 				assert false;
 			}
