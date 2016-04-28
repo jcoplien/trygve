@@ -196,7 +196,7 @@ public final class PanelClass {
 			try {
 				thePanel.setColor(color);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -219,7 +219,7 @@ public final class PanelClass {
 				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
 				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}

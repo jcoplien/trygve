@@ -5,9 +5,9 @@ class MyPanel extends Panel {
       frame_.add("Center", this);
       frame_.resize(600, 400);
       repaint();
-      setForeground(Color.blue);
+      setColor(Color.blue);
    }
-  
+
 
 /*
    public void handleEvent(Event event) {
@@ -33,7 +33,7 @@ class MyPanel extends Panel {
    public Frame frame() {
       return frame_
    }
- 
+
    private Frame frame_
 }
 
@@ -65,12 +65,12 @@ class TextListView implements View {
       int listCounter = 1;
       for (String item : items_) {
          String toPrint = listCounter.toString() + ". " + item;
-         panel_.setForeground(Color.black);
+         panel_.setColor(Color.black);
          panel_.drawString(x, y, toPrint);
          y = y + LineHeight;
          listCounter++
       }
-      panel_.setForeground(Color.blue);
+      panel_.setColor(Color.blue);
    }
    public void removeAll() { items_ = new List<String>() }
    public void addItem(String item) { items_.add(item) }
@@ -100,7 +100,6 @@ class TextLogView implements View {
 
    public TextLogView(MyPanel panel, int xOffset, int yOffset) {
       text_ = new List<ALine>();
-      dynamicStringCookies_ = new List<Object>();
       panel_ = panel;
       frame_ = panel.frame();
       xOffset_ = xOffset.clone;
@@ -124,7 +123,7 @@ class TextLogView implements View {
    }
 
    public void print(String text) {
-      text_.add(new ALine(text.clone, panel_.getForeground()));
+      text_.add(new ALine(text.clone, panel_.getColor()));
       this.notifyChanged()
    }
    public void println(String text) {
@@ -137,11 +136,7 @@ class TextLogView implements View {
    public void notifyChanged() {
       int y = yOffset_ + TopMargin, x = xOffset_ + TextIndent;
       int currentLine = 1;
-      //panel_.removeAll();
-      for (Object a : dynamicStringCookies_) {
-         panel_.remove(a);
-      }
-      dynamicStringCookies_ = new List<Object>();
+      panel_.clear();
       reframe();
 
       int numberOfLinesInText = numberOfLinesIn(text_);
@@ -151,16 +146,15 @@ class TextLogView implements View {
                x = xOffset_ + TextIndent;
                y = y + LineHeight
             } else {
-               panel_.setForeground(aLine.color());
-               Object cookie = panel_.drawString(x, y, aLine.text());
-               dynamicStringCookies_.add(cookie)
+               panel_.setColor(aLine.color());
+               panel_.drawString(x, y, aLine.text());
                x = x + widthOf(aLine.text())
             }
          } else if (aLine.text() == "\n") {
             currentLine++;
          }
       }
-      panel_.setForeground(Color.blue);
+      panel_.setColor(Color.blue);
       panel_.repaint();
       frame_.setVisible(true)
    }
@@ -170,13 +164,12 @@ class TextLogView implements View {
          if (aLine.text() == "\n") retval++;
       return retval
    }
-   
+
    public void flush() {
       this.notifyChanged()
    }
 
    private List<ALine> text_;
-   private List<Object> dynamicStringCookies_;
    private MyPanel panel_
    private Frame frame_;
    private int xOffset_, yOffset_
@@ -188,8 +181,8 @@ interface ItemRecord {
 }
 
 class Book implements ItemRecord {
-    public Book(String name) { 
-        name_ = name.clone; 
+    public Book(String name) {
+        name_ = name.clone;
         id_ = Math.random();
     }
 
@@ -224,7 +217,7 @@ class MockBookScanner {
     }
 
     public List<ItemRecord> scannedItems() { return scannedItems_ }
-    
+
     List<ItemRecord> scannedItems_;
     List<ItemRecord> books_;
 }
@@ -275,7 +268,7 @@ context BorrowLibraryItems {
                 Accountant.displayScannedItems();
             }
         }
-    
+
         public List<ItemRecord> currentScannedItems() {
             return scannedItems()
         }
@@ -285,10 +278,10 @@ context BorrowLibraryItems {
     }
 
     role ColorHandler {
-       public void setForegroundColor(Color c) { setForeground(c) }
+       public void setForegroundColor(Color c) { setColor(c) }
        public Color inputColor() { return new Color(50, 200, 5) }
     } requires {
-       void setForeground(Color c)
+       void setColor(Color c)
     }
 
     role TranscriptView {
@@ -371,7 +364,7 @@ context BorrowLibraryItems {
             Menu.selectOptions();
         }
     }
-    
+
     stageprop Printer {
         public void printReceiptOfScannedItems() {
             cutPaper();

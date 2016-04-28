@@ -14,7 +14,7 @@ class MyPanel extends Panel {
       frame_.resize(600, 400);
       text_ = new List<ALine>();
       repaint();
-      setForeground(Color.blue);
+      setColor(Color.blue);
       reframe()
    }
    private void reframe() {
@@ -44,7 +44,7 @@ class MyPanel extends Panel {
    }
 */
    public void print(String text) {
-      text_.add(new ALine(text.clone, this.getForeground()));
+      text_.add(new ALine(text.clone, this.getColor()));
       redisplayTextBuffer()
    }
    public void println(String text) {
@@ -63,7 +63,7 @@ class MyPanel extends Panel {
    public void redisplayTextBuffer() {
       int y = 100, x = 25;
       int numberOfLinesInFrame = 9, currentLine = 1;
-      removeAll(); //repaint();
+      clear();
       fillRect(20, 85, 550, 150);
       drawRect(20, 85, 550, 150);
 
@@ -74,7 +74,7 @@ class MyPanel extends Panel {
                x = 25;
                y = y + 14
             } else {
-               this.setForeground(aLine.color());
+               this.setColor(aLine.color());
                this.drawString(x, y, aLine.text());
 System.err.print("last output to screen: ").println(aLine.text())
                x = x + width(aLine.text())
@@ -83,14 +83,14 @@ System.err.print("last output to screen: ").println(aLine.text())
             currentLine++;
          }
       }
-      this.setForeground(Color.blue);
+      this.setColor(Color.blue);
       repaint();
       frame_.setVisible(true);
    }
    public void flush() {
       redisplayTextBuffer()
    }
- 
+
    private List<ALine> text_;
    private Frame frame_
 }
@@ -106,13 +106,13 @@ System.err.print("last output to screen: ").println(aLine.text())
       Frame frame = new Frame("First Frame");
       frame.add("Center", panel);
       frame.resize(300, 300);
-      panel.setForeground(Color.black);
+      panel.setColor(Color.black);
       panel.drawString(120, 120, "Hello world");
-      panel.setForeground(Color.green);
+      panel.setColor(Color.green);
       panel.drawLine(120, 122, 190, 122);
-      panel.setForeground(Color.blue);
+      panel.setColor(Color.blue);
       panel.drawRect(20, 20, 70, 100);
-      panel.setForeground(Color.red);
+      panel.setColor(Color.red);
       panel.drawOval(45, 100, 80, 80);
       frame.setVisible(true)
    }
@@ -124,8 +124,8 @@ interface ItemRecord {
 }
 
 class Book implements ItemRecord {
-    public Book(String name) { 
-        name_ = name.clone; 
+    public Book(String name) {
+        name_ = name.clone;
         id_ = Math.random();
     }
 
@@ -160,7 +160,7 @@ class MockBookScanner {
     }
 
     public List<ItemRecord> scannedItems() { return scannedItems_ }
-    
+
     List<ItemRecord> scannedItems_;
     List<ItemRecord> books_;
 }
@@ -211,7 +211,7 @@ context BorrowLibraryItems {
                 Screen.displayScannedItems();
             }
         }
-    
+
         public List<ItemRecord> currentScannedItems() {
             return scannedItems()
         }
@@ -228,16 +228,16 @@ context BorrowLibraryItems {
         public void displayScannedItems() {
             println("Borrowed items:");
             for(ItemRecord item : BookScanner.currentScannedItems()) {
-                setForeground(Color.magenta);
+                setColor(Color.magenta);
                 println(item.name());
-                setForeground(Color.blue);
+                setColor(Color.blue);
             }
             selectOptions();
         }
         public void displayItemAlreadyScanned(ItemRecord item) {
-            setForeground(Color.red);
+            setColor(Color.red);
             println("Item '"+item.name()+"' has already been scanned.");
-            setForeground(Color.blue);
+            setColor(Color.blue);
             selectOptions();
         }
         public void displayEnterPin() {
@@ -248,19 +248,19 @@ context BorrowLibraryItems {
            print(text);
         }
         public void displayInvalidPinAttempts() {
-            setForeground(Color.red);
+            setColor(Color.red);
             println("Three invalid attempts, please remove your card.")
-            setForeground(Color.blue);
+            setColor(Color.blue);
         }
         public void displayInvalidPin() {
-            setForeground(Color.red);
+            setColor(Color.red);
             println("Invalid PIN code.")
-            setForeground(Color.blue);
+            setColor(Color.blue);
         }
         public void echoInvisibleChar() {
-            setForeground(new Color(52, 200, 5));
+            setColor(new Color(52, 200, 5));
             print("*")
-            setForeground(Color.blue);
+            setColor(Color.blue);
         }
         public void closeLine() {
             println("")
@@ -283,7 +283,7 @@ context BorrowLibraryItems {
             print("Select option: ");
 
             String choice = Keypad.readChar();
-            Screen.setForeground(new Color(52, 200, 5));
+            Screen.setColor(new Color(52, 200, 5));
             Screen.println(choice);
             switch(choice) {
                 case "2":
@@ -307,12 +307,12 @@ context BorrowLibraryItems {
         void println(String text) const;
         void flush();
         void repaint();
-        void removeAll();
+        void clear();
         void redisplayTextBuffer();
-        void setForeground(Color color);
-        Color getForeground()	// temporary
+        void setColor(Color color);
+        Color getColor()	// temporary
     }
-    
+
     stageprop Printer {
         public void printReceiptOfScannedItems() {
             cutPaper();

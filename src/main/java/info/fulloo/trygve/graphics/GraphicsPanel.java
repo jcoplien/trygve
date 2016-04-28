@@ -388,8 +388,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 				height = 480;
 			}
 
+			// when the panel isn't put on the screen this can fail
 			image = createImage(width, height);
-			g = image.getGraphics();
+			if(image != null){
+				g = image.getGraphics();
+			}
 		}
 	}
 
