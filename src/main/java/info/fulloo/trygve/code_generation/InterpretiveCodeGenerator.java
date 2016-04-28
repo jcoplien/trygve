@@ -2059,6 +2059,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		do {
 			scopeStack.push(scope);
 			scope = scope.parentScope();
+			if (null == scope) {
+				ErrorLogger.error(ErrorIncidenceType.Internal,
+						"Encountered null scope trying to find `",
+						scope != null? scope.name(): "<null>", "'.", "");
+				return null;
+			}
 		} while (scope != StaticScope.globalScope());
 		
 		// Pop the top one back off (the one at the top of the declaration

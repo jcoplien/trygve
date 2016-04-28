@@ -316,7 +316,7 @@ public final class PanelClass {
 	}
 	public static class RTDrawRectCode extends RTPanelCommon {
 		public RTDrawRectCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawRect", asList("height", "width", "fromY", "fromX"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Panel", "drawRect", asList("fromX", "fromY", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
@@ -339,18 +339,23 @@ public final class PanelClass {
 	}
 	public static class RTFillRectCode extends RTPanelCommon {
 		public RTFillRectCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "fillRect", asList("height", "width", "fromY", "fromX"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+			super("Panel", "fillRect", asList("fromX", "fromY", "width", "height"), asList("int", "int", "int", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject fromX = (RTObject)activationRecord.getObject("fromX");
-			final RTObject fromY = (RTObject)activationRecord.getObject("fromY");
-			final RTObject width = (RTObject)activationRecord.getObject("width");
-			final RTObject height = (RTObject)activationRecord.getObject("height");
+			final RTObject fromXObject = (RTObject)activationRecord.getObject("fromX");
+			final RTObject fromYObject = (RTObject)activationRecord.getObject("fromY");
+			final RTObject widthObject = (RTObject)activationRecord.getObject("width");
+			final RTObject heightObject = (RTObject)activationRecord.getObject("height");
+			
+			assert fromXObject instanceof RTIntegerObject;
+			assert fromYObject instanceof RTIntegerObject;
+			assert widthObject instanceof RTIntegerObject;
+			assert heightObject instanceof RTIntegerObject;
 			
 			try {
-				thePanel.fillRectangle(fromX, fromY, width, height);
+				thePanel.fillRect(fromXObject, fromYObject, widthObject, heightObject);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.fillRect.", "", "", "");
 				RTMessage.printMiniStackStatus();

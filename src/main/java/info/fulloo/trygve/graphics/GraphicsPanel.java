@@ -81,6 +81,19 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Color currentColor = getForeground();
 		this.addRectangle(newRect, currentColor);
 	}
+	public void fillRect(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
+		assert xArg instanceof RTIntegerObject;
+		assert yArg instanceof RTIntegerObject;
+		assert widthArg instanceof RTIntegerObject;
+		assert heightArg instanceof RTIntegerObject;
+		
+		final int x = (int)((RTIntegerObject)xArg).intValue();
+		final int y = (int)((RTIntegerObject)yArg).intValue();
+		final int width = (int)((RTIntegerObject)widthArg).intValue();
+		final int height = (int)((RTIntegerObject)heightArg).intValue();
+		final Color currentColor = getForeground();
+		this.addFilledRectangle(x, y, width, height, currentColor);
+	}
 	public void drawOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
 		assert yArg instanceof RTIntegerObject;
@@ -235,6 +248,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rectangles_ = new Vector<Rectangle>();
 		rectColors_ = new Vector<Color>();
 		
+		filledRectangles_ = new Vector<Rectangle>();
+		filledRectangleColors_ = new Vector<Color>();
+		
 		// A line is a funny kind of Rectangle (Javathink)
 		lines_ = new Vector<Rectangle>();
 		lineColors_ = new Vector<Color>();
@@ -364,7 +380,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		}
 	}
 	
-	@Override public void paint(final Graphics g) {
+	@Override synchronized public void paint(final Graphics g) {
 		if (inDrawing_++ > 0) {
 			--inDrawing_;
 			return;
@@ -376,10 +392,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		
 		// Copies, just in case we get interrupted
 		@SuppressWarnings("unchecked")
-		Vector<Rectangle> rectanglesCopy = (Vector<Rectangle>) rectangles_.clone();
+		final Vector<Rectangle> rectanglesCopy = (Vector<Rectangle>) rectangles_.clone();
 		
 		@SuppressWarnings("unchecked")
-		Vector<Color> rectColorsCopy = (Vector<Color>) rectColors_.clone();
+		final Vector<Color> rectColorsCopy = (Vector<Color>) rectColors_.clone();
 		
 		try {
 			for (int i = 0; i < rectanglesCopy.size(); i++) {
@@ -391,7 +407,29 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			    	g.drawLine(p.x, p.y, p.width, p.height);
 			    }
 			}
-		} catch (ArrayIndexOutOfBoundsException exception) {
+		} catch (final ArrayIndexOutOfBoundsException exception) {
+			;
+		}
+		
+		// filled rectangles
+		@SuppressWarnings("unchecked")
+		final Vector<Rectangle> filledRectanglesCopy = (Vector<Rectangle>) filledRectangles_.clone();
+		
+		@SuppressWarnings("unchecked")
+		final Vector<Color> filledRectColorsCopy = (Vector<Color>) filledRectangleColors_.clone();
+		
+		try {
+			for (int i = 0; i < filledRectanglesCopy.size(); i++) {
+			    final Rectangle p = filledRectanglesCopy.elementAt(i);
+			    g.setColor((Color)filledRectColorsCopy.elementAt(i));
+			    if (p.width != -1) {
+			    	g.fillRect(p.x, p.y, p.width, p.height);
+			    } else {
+			    	// ???
+			    	g.drawLine(p.x, p.y, p.width, p.height);
+			    }
+			}
+		} catch (final ArrayIndexOutOfBoundsException exception) {
 			;
 		}
 		
@@ -473,16 +511,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		rectColors_.addElement(color);
 	}
 	
-	public synchronized void fillRectangle(final RTObject xObject, final RTObject yObject, 
-			final RTObject widthObject, final RTObject heightObject) {
-		final int x = (int)((RTIntegerObject)yObject).intValue();
-		final int y = (int)((RTIntegerObject)widthObject).intValue();
-		final int width = (int)((RTIntegerObject)xObject).intValue();
-		final int height = (int)((RTIntegerObject)heightObject).intValue();
-		final Graphics g = this.getGraphics();
-		if (null != g) {
-			g.fillRect(x, y, width, height);
-		}
+	public synchronized void addFilledRectangle(final int x, final int y, final int width, final int height, final Color color) {
+		final Rectangle rect = new Rectangle(x, y, width, height);
+		filledRectangles_.addElement(rect);
+		filledRectangleColors_.addElement(color);
 	}
 	
 	public synchronized void addLine(final Rectangle line, final Color color) {
@@ -515,6 +547,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	
 	private       volatile Vector<Rectangle> rectangles_;
 	private       volatile Vector<Color> rectColors_;
+	
+	private       volatile Vector<Rectangle> filledRectangles_;
+	private       volatile Vector<Color> filledRectangleColors_;
 	
 	private       volatile Vector<Rectangle> lines_;
 	private       volatile Vector<Color> lineColors_;

@@ -69,8 +69,7 @@ context Display {
 	private int floor(double v){ return v.toInteger(); }
 
 	public void rect(Vector center, Vector halfsize) {
-		//BUG: should be fillRect, doesn't work as intended for some reason
-		panel_.drawRect(
+		panel_.fillRect(
 			floor(center.x - halfsize.x + offset_.x),
 			floor(center.y - halfsize.y + offset_.y),
 			floor(2.0*halfsize.x),

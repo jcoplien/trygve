@@ -26,7 +26,6 @@ package info.fulloo.trygve.lntextpane;
 // http://www.developer.com/java/other/article.php/3318421/Add-Line-Numbering-in-the-JEditorPane.htm
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
 import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
 import javax.swing.text.PlainDocument;
@@ -41,13 +40,17 @@ public class LNTextPane extends JFrame {
         if (doc instanceof PlainDocument) {
             doc.putProperty(PlainDocument.tabSizeAttribute, 8);
         } else if (doc instanceof DefaultStyledDocument) {
-        	TabStop[] tabs = new TabStop[20];
-        	for (int i = 0; i < 20; i++) tabs[i] = new TabStop((i+1) * 20);
-        	TabSet tabSet = new TabSet(tabs);
-            SimpleAttributeSet attributes = new SimpleAttributeSet();
+        	final TabStop[] tabs = new TabStop[20];
+        	for (int i = 0; i < tabs.length; i++) {
+        		tabs[i] = new TabStop((i+1) * 20);
+        	}
+        	final TabSet tabSet = new TabSet(tabs);
+            final SimpleAttributeSet attributes = new SimpleAttributeSet();
             StyleConstants.setTabSet(attributes, tabSet);
-            int length = doc.getLength();
+            final int length = doc.getLength();
             ((DefaultStyledDocument) doc).setParagraphAttributes(0, length, attributes, false);
+        } else {
+        	;	// do nothing - don't know how to do it
         }
 	}
     public LNTextPane() {
