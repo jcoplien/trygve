@@ -43,17 +43,23 @@ import java.util.Vector;
 public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public GraphicsPanel(final RTObjectCommon rTPanel) {
 		rTPanel_ = rTPanel;
-		makeVectors();
 	}
+
 	public void setBackground(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
-		this.setBackground(color);
+
+		if(back.g != null){
+			back.g.setColor(color);
+		}
 	}
 	public void setForeground(final RTObject colorArg) {
 		assert colorArg instanceof RTColorObject;
 		final Color color = ((RTColorObject)colorArg).color();
-		this.setForeground(color);
+
+		if(back.g != null) {
+			back.g.setColor(color);
+		}
 	}
 	public void drawLine(final RTObject fromXArg, final RTObject fromYArg, final RTObject toXArg, final RTObject toYArg) {
 		assert fromXArg instanceof RTIntegerObject;
@@ -64,9 +70,15 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int fromY = (int)((RTIntegerObject)fromYArg).intValue();
 		final int toX = (int)((RTIntegerObject)toXArg).intValue();
 		final int toY = (int)((RTIntegerObject)toYArg).intValue();
-		final Rectangle newRect = new Rectangle(fromX, fromY, Math.abs(toX-fromX), Math.abs(toY-fromY));
-		final Color currentColor = getForeground();
-		this.addLine(newRect, currentColor);
+
+		if(back.g != null) {
+			back.g.drawLine(fromX, fromY, toX, toY);
+		}
+	}
+	public void clear(){
+		if(back.g != null){
+			back.g.clearRect(0, 0, back.width, back.height);
+		}
 	}
 	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject widthArg, final RTObject heightArg) {
 		assert fromXArg instanceof RTIntegerObject;
@@ -77,9 +89,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int fromY = (int)((RTIntegerObject)fromYArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		final Rectangle newRect = new Rectangle(fromX, fromY, width, height);
-		final Color currentColor = getForeground();
-		this.addRectangle(newRect, currentColor);
+
+		if(back.g != null){
+			back.g.drawRect(fromX, fromY, width, height);
+		}
 	}
 	public void fillRect(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -91,8 +104,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		final Color currentColor = getForeground();
-		this.addFilledRectangle(x, y, width, height, currentColor);
+
+		if(back.g != null){
+			back.g.fillRect(x, y, width, height);
+		}
 	}
 	public void drawOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -103,8 +118,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
-		final Color currentColor = getForeground();
-		this.addOval(x, y, width, height, currentColor);
+
+		if(back.g != null){
+			back.g.drawOval(x, y, width, height);
+		}
 	}
 	public void fillOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -116,7 +133,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 		final Color currentColor = getForeground();
-		this.addFilledOval(x, y, width, height, currentColor);
+
+		if(back.g != null){
+			back.g.fillOval(x, y, width, height);
+		}
 	}
 	public RTObject drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
 		assert xArg instanceof RTIntegerObject;
@@ -125,6 +145,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int x = (int)((RTIntegerObject)xArg).intValue();
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final String string = ((RTStringObject)stringArg).stringValue();
+
+		if(back.g != null){
+			back.g.drawString(string, x, y);
+		}
+
 		final Color currentColor = getForeground();
 		final RTObject retval = this.addString(x, y, string, currentColor);
 		return retval;
@@ -243,27 +268,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	
 	// ------------------ Internal stuff ------------------------------
-	
-	private void makeVectors() {
-		rectangles_ = new Vector<Rectangle>();
-		rectColors_ = new Vector<Color>();
-		
-		filledRectangles_ = new Vector<Rectangle>();
-		filledRectangleColors_ = new Vector<Color>();
-		
-		// A line is a funny kind of Rectangle (Javathink)
-		lines_ = new Vector<Rectangle>();
-		lineColors_ = new Vector<Color>();
-		
-		ellipses_ = new Vector<Ellipse2D>();
-		ellipseColors_ = new Vector<Color>();
-		
-		filledEllipses_ = new Vector<Ellipse2D>();
-		filledEllipseColors_ = new Vector<Color>();
-		
-		strings_ = new Vector<StringRecord>();
-	}
-	
+
 	private static class StringRecord {
 		public StringRecord(final int x, final int y, final String string, final Color color) {
 			x_ = x;
@@ -318,12 +323,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			  case Event.MOUSE_UP:
 				startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 				this.handleEventProgrammatically(e);
-				// final Graphics g = this.getGraphics();
-				// if (null != g) {
-				// 	paint(g);
-				// 	repaint();
-				// }
-				
+
 				assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
 				
 				// Desperate attempt to fix up something that we don't know the reason for
@@ -352,191 +352,42 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		}
 		return retval;
 	}
-	
-	private synchronized void drawEllipses(final Graphics g) {
-		try {
-			/* draw the current ellipses */
-			g.setColor(getForeground());
-			g.setPaintMode();
-			for (int i = 0; i < ellipses_.size(); i++) {
-			    final Ellipse2D p = ellipses_.elementAt(i);
-			    g.setColor((Color)ellipseColors_.elementAt(i));
-			    g.drawOval((int)p.getX(), (int)p.getY(), (int)p.getWidth(), (int)p.getHeight());
+
+	@Override public void update(Graphics g){
+		paint(g);
+	}
+	@Override public void paint(final Graphics g) {
+		synchronized (this){
+			if(front == null || front.g == null){
+				front.reset();
 			}
-		} catch (ArrayIndexOutOfBoundsException exception) {
-			;
+
+			if(front != null && front.g != null){
+				g.drawImage(front.image, 0, 0, this);
+			}
 		}
 	}
-	private synchronized void drawFilledEllipses(final Graphics g) {
-		/* same, only filled ellipses */
-		try {
-			for (int i = 0; i < filledEllipses_.size(); i++) {
-				final Ellipse2D p = filledEllipses_.elementAt(i);
-				g.setColor((Color)filledEllipseColors_.elementAt(i));
-				g.fillOval((int)p.getX(), (int)p.getY(), (int)p.getWidth(), (int)p.getHeight());
-			}
-		} catch (ArrayIndexOutOfBoundsException exception) {
-			;
+
+	public void flipBuffers(){
+		synchronized (this){
+			Buffer temp = back;
+			back = front;
+			front = back;
 		}
+		back.updateSize();
 	}
-	
-	@Override synchronized public void paint(final Graphics g) {
-		if (inDrawing_++ > 0) {
-			--inDrawing_;
-			return;
-		}
-		
-		/* draw the current rectangles */
-		g.setColor(getForeground());
-		g.setPaintMode();
-		
-		// Copies, just in case we get interrupted
-		@SuppressWarnings("unchecked")
-		final Vector<Rectangle> rectanglesCopy = (Vector<Rectangle>) rectangles_.clone();
-		
-		@SuppressWarnings("unchecked")
-		final Vector<Color> rectColorsCopy = (Vector<Color>) rectColors_.clone();
-		
-		try {
-			for (int i = 0; i < rectanglesCopy.size(); i++) {
-			    final Rectangle p = rectanglesCopy.elementAt(i);
-			    g.setColor((Color)rectColorsCopy.elementAt(i));
-			    if (p.width != -1) {
-			    	g.drawRect(p.x, p.y, p.width, p.height);
-			    } else {
-			    	g.drawLine(p.x, p.y, p.width, p.height);
-			    }
-			}
-		} catch (final ArrayIndexOutOfBoundsException exception) {
-			;
-		}
-		
-		// filled rectangles
-		@SuppressWarnings("unchecked")
-		final Vector<Rectangle> filledRectanglesCopy = (Vector<Rectangle>) filledRectangles_.clone();
-		
-		@SuppressWarnings("unchecked")
-		final Vector<Color> filledRectColorsCopy = (Vector<Color>) filledRectangleColors_.clone();
-		
-		try {
-			for (int i = 0; i < filledRectanglesCopy.size(); i++) {
-			    final Rectangle p = filledRectanglesCopy.elementAt(i);
-			    g.setColor((Color)filledRectColorsCopy.elementAt(i));
-			    if (p.width != -1) {
-			    	g.fillRect(p.x, p.y, p.width, p.height);
-			    } else {
-			    	// ???
-			    	g.drawLine(p.x, p.y, p.width, p.height);
-			    }
-			}
-		} catch (final ArrayIndexOutOfBoundsException exception) {
-			;
-		}
-		
-		/* draw the current lines */
-		g.setColor(getForeground());
-		g.setPaintMode();
-		for (int i = 0; i < lines_.size(); i++) {
-		    final Rectangle p = lines_.elementAt(i);
-		    g.setColor((Color)lineColors_.elementAt(i));
-		    g.drawLine(p.x, p.y, p.x+p.width, p.y+p.height);
-		}
-		
-		drawEllipses(g);
-		drawFilledEllipses(g);
-		
-		/* draw the current texts */
-		g.setColor(getForeground());
-		g.setPaintMode();
-		for (int i = 0; i < strings_.size(); i++) {
-		    final StringRecord p = strings_.elementAt(i);
-		    g.setColor(p.color());
-		    g.drawString(p.toString(), p.x(), p.y());
-		}
-		
-		inDrawing_ = 0;
-	}
-	
+
 	@Override public void removeAll() {
-		makeVectors();
 		super.removeAll();
 	}
 	
 	public void remove(final RTObject thingToRemoveRTObject) {
 		assert thingToRemoveRTObject instanceof RTCookieObject;
 		final Object thingToRemove = ((RTCookieObject)thingToRemoveRTObject).cookie();
-
-		boolean removed = false;
-		for (int i = 0; i < strings_.size(); i++) {
-			if (strings_.get(i) == thingToRemove) {
-				strings_.remove(i);
-				removed = true;
-				break;
-			}
-		}
-		if (removed == false) {
-			for (int i = 0; i < ellipses_.size(); i++) {
-				if (ellipses_.get(i) == thingToRemove) {
-					ellipses_.remove(i);
-					ellipseColors_.remove(i);
-					removed = true;
-					break;
-				}
-			}
-			if (removed == false) {
-				for (int i = 0; i < rectangles_.size(); i++) {
-					if (rectangles_.get(i) == thingToRemove) {
-						rectangles_.remove(i);
-						rectColors_.remove(i);
-						removed = true;
-						break;
-					}
-				}
-				if (removed == false) {
-					for (int i = 0; i < lines_.size(); i++) {
-						if (lines_.get(i) == thingToRemove) {
-							lines_.remove(i);
-							lineColors_.remove(i);
-							removed = true;
-							break;
-						}
-					}
-				}
-			}
-		}
-	}
-	
-	public synchronized void addRectangle(final Rectangle rect, final Color color) {
-		rectangles_.addElement(rect);
-		rectColors_.addElement(color);
-	}
-	
-	public synchronized void addFilledRectangle(final int x, final int y, final int width, final int height, final Color color) {
-		final Rectangle rect = new Rectangle(x, y, width, height);
-		filledRectangles_.addElement(rect);
-		filledRectangleColors_.addElement(color);
-	}
-	
-	public synchronized void addLine(final Rectangle line, final Color color) {
-		lines_.addElement(line);
-		lineColors_.addElement(color);
-	}
-	
-	public synchronized void addOval(final int x, final int y, final int width, final int height, final Color color) {
-		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
-		ellipses_.addElement(ellipse);
-		ellipseColors_.addElement(color);
-	}
-	
-	public synchronized void addFilledOval(final int x, final int y, final int width, final int height, final Color color) {
-		final Ellipse2D ellipse = new Ellipse2D.Float(x, y, width, height);
-		filledEllipses_.addElement(ellipse);
-		filledEllipseColors_.addElement(color);
 	}
 	
 	public synchronized RTObject addString(final int x, final int y, final String string, final Color color) {
 		final StringRecord stringRecord = new StringRecord(x, y, string, color);
-		strings_.addElement(stringRecord);
 		final RTObject retval = new RTCookieObject(stringRecord);
 		return retval;
 	}
@@ -544,23 +395,44 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	public void setGraphicsEventHandler(final GraphicsEventHandler eventsAreBeingHijacked) {
 		eventsAreBeingHijacked_ = eventsAreBeingHijacked;
 	}
-	
-	private       volatile Vector<Rectangle> rectangles_;
-	private       volatile Vector<Color> rectColors_;
-	
-	private       volatile Vector<Rectangle> filledRectangles_;
-	private       volatile Vector<Color> filledRectangleColors_;
-	
-	private       volatile Vector<Rectangle> lines_;
-	private       volatile Vector<Color> lineColors_;
-	
-	private       volatile Vector<Ellipse2D> ellipses_;
-	private       volatile Vector<Color> ellipseColors_;
-	
-	private       volatile Vector<Ellipse2D> filledEllipses_;
-	private       volatile Vector<Color> filledEllipseColors_;
-	
-	private       volatile Vector<StringRecord> strings_;
+
+
+	class Buffer {
+		Image image;
+		Graphics g;
+		int width, height;
+
+		public void updateSize(){
+			if(height != getSize().height || width != getSize().width){
+				reset();
+			}
+		}
+
+		public void reset(){
+			height = getSize().height;
+			width = getSize().width;
+			if(g != null){
+				g.dispose();
+				g = null;
+			}
+			if(image != null){
+				image.flush();
+				image = null;
+			}
+			System.gc();
+
+			if(width == 0 || height == 0){
+				return;
+			}
+
+			image = createImage(width, height);
+			g = image.getGraphics();
+		}
+	}
+
+	private volatile Buffer back = new Buffer();
+	private volatile Buffer front = new Buffer();
+
 	private       RTObjectCommon rTPanel_;
 	
 	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;

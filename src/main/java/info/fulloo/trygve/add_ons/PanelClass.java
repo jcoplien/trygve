@@ -483,15 +483,7 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			try{
-				final Graphics g = thePanel.getGraphics();
-				final int w = thePanel.getWidth(), h = thePanel.getHeight();
-				if (null != g && w > 0 && h > 0) {
-					g.clearRect(0, 0, w, h);
-					g.setColor(Color.white);
-				    g.fillRect(0, 0, w, h);
-				    g.setColor(Color.black);
-				}
-				
+				thePanel.clear();
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.clear()", ".", "", "");
 				RTMessage.printMiniStackStatus();
@@ -508,22 +500,8 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			try{
-				// Re-validate call suggested by: http://stackoverflow.com/questions/18001087/jpanel-removeall-doesnt-get-rid-of-previous-components
-				thePanel.revalidate();
-				
-				// AWT repaint() just schedules a future task on the GUI thread.
-				// Because some of our graphics activities (like erasure) are done
-				// directly, this sometimes leads to interleaving and messed-up
-				// windows. So, concrete advice to the contrary not withstanding,
-				// we call paint directly.
-				//
-				// See: http://www.scs.ryerson.ca/mes/courses/cps530/programs/threads/Repaint/
-				//
-				final Graphics g = thePanel.getGraphics();
-				if (null != g) {
-					// thePanel.paint(g);
-					thePanel.repaint();
-				}
+				thePanel.flipBuffers();
+				thePanel.repaint();
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
 				RTMessage.printMiniStackStatus();
