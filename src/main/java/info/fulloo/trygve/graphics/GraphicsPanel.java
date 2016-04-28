@@ -102,7 +102,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		assert yArg instanceof RTIntegerObject;
 		assert widthArg instanceof RTIntegerObject;
 		assert heightArg instanceof RTIntegerObject;
-		
+
 		final int x = (int)((RTIntegerObject)xArg).intValue();
 		final int y = (int)((RTIntegerObject)yArg).intValue();
 		final int width = (int)((RTIntegerObject)widthArg).intValue();
@@ -152,7 +152,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			back.g.drawString(string, x, y);
 		}
 	}
-	
+
 	public void handleEventProgrammatically(final Event e) {
 		final RTType rTType = rTPanel_.rTType();
 		assert rTType instanceof RTClass;
@@ -164,12 +164,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 
 		pl.addFormalParameter(event);
 		pl.addFormalParameter(self);
-		
+
 		final RTMethod hE = rTType.lookupMethod("handleEvent", pl);
 		if (null != hE) {
 			final int preStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			this.dispatchInterrupt(hE, e);
-			
+
 			// Get the return value from the user function telling whether they
 			// handled the interrupt or not. If not, we should handle it ourselves
 			// (if it's a keystroke event)
@@ -183,22 +183,22 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
 				assert false;
 			}
-			
+
 			int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 
 			if (postStackDepth != preStackDepth) {
 				// assert postStackDepth == preStackDepth;
 				assert (postStackDepth > preStackDepth);
-				
+
 				// Dunno what's going on but just try to recover
 				while (postStackDepth > preStackDepth) {
 					RunTimeEnvironment.runTimeEnvironment_.popStack();
 					postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 				}
-				
+
 				return;
 			}
-			
+
 			if (retval instanceof RTBooleanObject) {
 				final boolean interruptWasHandled = ((RTBooleanObject)retval).value();
 				if (interruptWasHandled == false) {
@@ -215,13 +215,13 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			}
 		}
 	}
-	
+
 	protected void checkIOIntegration(final Event e) {
 		if (null != eventsAreBeingHijacked_) {
 			eventsAreBeingHijacked_.checkIOIntegration(e);
 		}
 	}
-	
+
 	private void dispatchInterrupt(final RTMethod method, final Event e) {
 		// Just do a method call into the user space
 		final RTCode halt = null;
@@ -237,12 +237,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(event);
 		RunTimeEnvironment.runTimeEnvironment_.pushStack(retInst);
 		RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
-		
+
 		final RTDynamicScope activationRecord = new RTDynamicScope(
 				method.name(),
 				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
 				true);
-		
+
 		if (null != methodDecl) {
 			// Get formal parameter name that the user used for the "event" parameter
 			final MethodSignature signature = methodDecl.signature();
@@ -250,27 +250,27 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			final Declaration eventParameter = formalParameters.parameterAtPosition(1);
 			assert eventParameter instanceof ObjectDeclaration;
 			final String eventName = eventParameter.name();
-			
+
 			activationRecord.addObjectDeclaration(eventName, rTType);
 			activationRecord.addObjectDeclaration("this", null);
 			activationRecord.setObject(eventName, event);
 			activationRecord.setObject("this", rTPanel_);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
-			
+
 			RTCode pc = method;
 			do {
 				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 			} while (null != pc && pc instanceof RTHalt == false);
 		}
 	}
-	
+
 	// ------------------ Internal stuff ------------------------------
 
 	@Override public void actionPerformed(final ActionEvent event) {
 		assert false;
 	}
-	
+
 	@Override public synchronized boolean handleEvent(final Event e) {
 		// These constants need to be coordinated only with stuff in the
 		// setup and postSetupInitialization methods in PanelClass.java
@@ -278,12 +278,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			--inInterrupt_;
 			return false;
 		}
-		
+
 		boolean retval = false;
-		
+
 		try {
 			int startingStackSize = 0;
-			
+
 			switch (e.id) {
 			  case Event.KEY_PRESS:
 			  case Event.KEY_RELEASE:
@@ -299,12 +299,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 				this.handleEventProgrammatically(e);
 
 				assert RunTimeEnvironment.runTimeEnvironment_.stackSize() <= startingStackSize;
-				
+
 				// Desperate attempt to fix up something that we don't know the reason for
 				while (RunTimeEnvironment.runTimeEnvironment_.stackSize() != startingStackSize) {
 					RunTimeEnvironment.runTimeEnvironment_.popStack();
 				}
-			
+
 				retval = true;
 				break;
 			  case Event.WINDOW_DESTROY:
@@ -346,7 +346,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		synchronized (this){
 			Buffer temp = back;
 			back = front;
-			front = back;
+			front = temp;
 		}
 		back.updateSize();
 	}
@@ -400,9 +400,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	private volatile Buffer front = new Buffer();
 
 	private       RTObjectCommon rTPanel_;
-	
+
 	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;
-	
+
 	private static final long serialVersionUID = 238269472;
 	private               int referenceCount_ = 0;
 
@@ -447,6 +447,6 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	@Override public void unenlistAsStagePropPlayerForContext(String stagePropName,
 			RTContextObject contextInstance) { assert false; }
 	@Override public String getText() { assert false; return null; }
-	
+
 	private GraphicsEventHandler eventsAreBeingHijacked_;
 }
