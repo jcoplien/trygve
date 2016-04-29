@@ -152,6 +152,16 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			back.g.drawString(string, x, y);
 		}
 	}
+	public Point measureString(final RTObject stringArg) {
+		assert stringArg instanceof RTStringObject;
+		final String string = ((RTStringObject)stringArg).stringValue();
+
+		if(candraw()){
+			final FontMetrics m = back.g.getFontMetrics();
+			return new Point(m.stringWidth(string), m.getHeight());
+		}
+		return new Point(string.length(), 10);
+	}
 
 	public void handleEventProgrammatically(final Event e) {
 		final RTType rTType = rTPanel_.rTType();

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import info.fulloo.trygve.add_ons.PointClass.RTPointObject;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -86,7 +87,8 @@ public final class PanelClass {
 			final Type colorType = globalScope.lookupTypeDeclaration("Color");
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
 			final Type objectType = globalScope.lookupTypeDeclaration("Object");
-			
+			final Type pointType = globalScope.lookupTypeDeclaration("Point");
+
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
 
@@ -107,6 +109,7 @@ public final class PanelClass {
 			declarePanelMethod("drawOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("fillOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
+			declarePanelMethod("measureString", pointType, asList("text"), asList(stringType), false);
 			declarePanelMethod("repaint", voidType, null, null, false);
 			declarePanelMethod("clear", voidType, null, null, false);
 			
@@ -352,7 +355,7 @@ public final class PanelClass {
 	}
 	public static class RTDrawStringCode extends RTPanelCommon {
 		public RTDrawStringCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Object"));
+			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
@@ -360,7 +363,6 @@ public final class PanelClass {
 			final RTObject x = (RTObject)activationRecord.getObject("x");
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject text = (RTObject)activationRecord.getObject("text");
-			RTObject value = null;
 			try {
 				thePanel.drawString(x, y, text);
 			} catch (final Exception e) {
@@ -368,6 +370,24 @@ public final class PanelClass {
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
+
+			return super.nextCode();
+		}
+	}
+	public static class RTMeasureString extends RTPanelCommon {
+		public RTMeasureString(final StaticScope enclosingMethodScope) {
+			super("Panel", "measureString", asList("text"), asList("String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Point"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
+			assert null != thePanel;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject text = (RTObject)activationRecord.getObject("text");
+
+			final Point rawRetval = thePanel.measureString(text);
+			final RTPointObject retval = new RTPointObject(rawRetval);
+
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", retval);
 
 			return super.nextCode();
 		}

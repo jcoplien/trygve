@@ -114,7 +114,8 @@ context BasicUI {
 		panel_.fillRect(r.x, r.y, r.w, r.h);
 	}
 	public void text(String s, Rect r){
-		panel_.drawString(r.x + 8 + 10, r.cy + 5, s);
+		Point sz = panel_.measureString(s);
+		panel_.drawString(r.cx - sz.x / 2, r.cy + sz.y / 2, s);
 	}
 	public boolean button(String s, Rect r){
 		if(r.contains(mouse().position)){

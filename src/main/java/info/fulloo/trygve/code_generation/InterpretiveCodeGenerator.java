@@ -714,16 +714,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		if (formalParameterList.count() == 1) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("Panel")) {
 				panelCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("repaint")) {
 				panelCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("clear")) {
 				panelCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("getColor")) {
 				panelCode.add(new PanelClass.RTGetColorCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingColor;
@@ -732,13 +730,16 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			}
 		} else if (formalParameterList.count() == 2) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-		
+			retvalType = RetvalTypes.none;
+
 			if (methodDeclaration.name().equals("setColor")) {
 				panelCode.add(new PanelClass.RTSetColorCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("measureString")) {
+				retvalType = RetvalTypes.usingPoint;
+				panelCode.add(new PanelClass.RTMeasureString(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
-			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 4) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			retvalType = RetvalTypes.none;
@@ -750,6 +751,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			}
 		} else if (formalParameterList.count() == 5) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("drawLine")) {
 				panelCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
@@ -764,7 +766,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
-			retvalType = RetvalTypes.none;
 		} else {
 			assert false;
 		}
