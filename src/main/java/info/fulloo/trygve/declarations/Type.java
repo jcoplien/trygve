@@ -788,6 +788,13 @@ public abstract class Type implements ExpressionStackAPI
 									"' needed by Role `", name(),
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Role.");
+						} else if (rolesSignature.hasConstModifier()) {
+							if (signatureForMethodSelector.hasConstModifier() == false) {
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+										"' needed by Role `", name(),
+										"' is missing a const modifier.", "");
+							}
 						}
 					}
 				}
@@ -833,6 +840,12 @@ public abstract class Type implements ExpressionStackAPI
 									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
 									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList, true)) {
+										if (rolesSignature.hasConstModifier()) {
+											if (possibleMatchinSignature.hasConstModifier() == false) {
+												// const doesn't match — isn't this one
+												continue;
+											}
+										}
 										found = true;
 										break;
 									}
@@ -849,7 +862,12 @@ public abstract class Type implements ExpressionStackAPI
 								// if Role scripts could invoke private scripts of their Role-player
 								retval = false;
 							} else {
-								retval = true;
+								if (rolesSignature.hasConstModifier()) {
+									if (signatureForMethodSelector.hasConstModifier() == false) {
+										retval = false;
+										break;
+									}
+								}
 							}
 							break;
 						}
@@ -962,6 +980,13 @@ public abstract class Type implements ExpressionStackAPI
 									"' needed by Stage Prop `", name(),
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Stage Prop.");
+						} else if (rolesSignature.hasConstModifier()) {
+							if (signatureForMethodSelector.hasConstModifier() == false) {
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
+										"' needed by Stage Prop `", name(),
+										"' is missing a const modifier.", "");
+							}
 						}
 					}
 				}
