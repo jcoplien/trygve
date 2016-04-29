@@ -1195,7 +1195,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		return retval;
 	}
 	@Override public String getText() {
-		return "<object of type " + classOrContext_.name() + ">";
+		return "<object of type " + (null == classOrContext_?
+				"<null>": classOrContext_.name()) + ">";
 	}
 	
 	private final RTType classOrContext_;

@@ -1602,26 +1602,42 @@ public abstract class RTExpression extends RTCode {
 				} else if (operator_.equals("-")) {
 					value = lhs.unaryMinus();
 				} else if (operator_.equals("++")) {
-					switch (preOrPost_) {
-					case Pre:
-						value = lhs.preIncrement();
-						break;
-					case Post:
-						value = lhs.postIncrement();
-						break;
-					default:
-						assert false;
+					if (lhs instanceof RTNullObject) {
+						ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+								(preOrPost_ == PreOrPost.Pre? "FATAL: Pre": "FATAL: Post"),
+								"-increment of unitialized identifier `",
+								lhs.getText(), "'.");
+						return new RTHalt();
+					} else {
+						switch (preOrPost_) {
+						case Pre:
+							value = lhs.preIncrement();
+							break;
+						case Post:
+							value = lhs.postIncrement();
+							break;
+						default:
+							assert false;
+						}
 					}
 				} else if (operator_.equals("--")) {
-					switch (preOrPost_) {
-					case Pre:
-						value = lhs.preDecrement();
-						break;
-					case Post:
-						value = lhs.postDecrement();
-						break;
-					default:
-						assert false;
+					if (lhs instanceof RTNullObject) {
+						ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+								(preOrPost_ == PreOrPost.Pre? "FATAL: Pre": "FATAL: Post"),
+								"-decrement of unitialized identifier `",
+								lhs.getText(), "'.");
+						return new RTHalt();
+					} else {
+						switch (preOrPost_) {
+						case Pre:
+							value = lhs.preDecrement();
+							break;
+						case Post:
+							value = lhs.postDecrement();
+							break;
+						default:
+							assert false;
+						}
 					}
 				} else {
 					assert false;
