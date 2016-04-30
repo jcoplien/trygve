@@ -43,10 +43,10 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 
 	public boolean candraw(){
-		if(back.g == null){
-			back.reset();
+		if(back_.g == null){
+			back_.reset();
 		}
-		return back.g != null;
+		return back_.g != null;
 	}
 
 	public void setColor(final RTObject colorArg) {
@@ -54,13 +54,13 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final Color color = ((RTColorObject)colorArg).color();
 
 		if(candraw()){
-			back.g.setColor(color);
+			back_.g.setColor(color);
 		}
 	}
 
 	public Color getColor() {
 		if(candraw()) {
-			return back.g.getColor();
+			return back_.g.getColor();
 		}
 		return Color.white;
 	}
@@ -75,12 +75,12 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int toY = (int)((RTIntegerObject)toYArg).intValue();
 
 		if(candraw()){
-			back.g.drawLine(fromX, fromY, toX, toY);
+			back_.g.drawLine(fromX, fromY, toX, toY);
 		}
 	}
 	public void clear(){
 		if(candraw()){
-			back.g.clearRect(0, 0, back.width, back.height);
+			back_.g.clearRect(0, 0, back_.width, back_.height);
 		}
 	}
 	public void drawRect(final RTObject fromXArg, final RTObject fromYArg, final RTObject widthArg, final RTObject heightArg) {
@@ -94,7 +94,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
 		if(candraw()){
-			back.g.drawRect(fromX, fromY, width, height);
+			back_.g.drawRect(fromX, fromY, width, height);
 		}
 	}
 	public void fillRect(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
@@ -109,7 +109,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
 		if(candraw()){
-			back.g.fillRect(x, y, width, height);
+			back_.g.fillRect(x, y, width, height);
 		}
 	}
 	public void drawOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
@@ -123,7 +123,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
 		if(candraw()){
-			back.g.drawOval(x, y, width, height);
+			back_.g.drawOval(x, y, width, height);
 		}
 	}
 	public void fillOval(final RTObject xArg, final RTObject yArg, final RTObject widthArg, final RTObject heightArg) {
@@ -137,7 +137,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final int height = (int)((RTIntegerObject)heightArg).intValue();
 
 		if(candraw()){
-			back.g.fillOval(x, y, width, height);
+			back_.g.fillOval(x, y, width, height);
 		}
 	}
 	public void drawString(final RTObject xArg, final RTObject yArg, final RTObject stringArg) {
@@ -149,7 +149,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final String string = ((RTStringObject)stringArg).stringValue();
 
 		if(candraw()){
-			back.g.drawString(string, x, y);
+			back_.g.drawString(string, x, y);
 		}
 	}
 	public Point measureString(final RTObject stringArg) {
@@ -157,7 +157,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final String string = ((RTStringObject)stringArg).stringValue();
 
 		if(candraw()){
-			final FontMetrics m = back.g.getFontMetrics();
+			final FontMetrics m = back_.g.getFontMetrics();
 			return new Point(m.stringWidth(string), m.getHeight());
 		}
 		return new Point(string.length(), 10);
@@ -342,32 +342,28 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 	}
 	@Override public void paint(final Graphics g) {
 		synchronized (this){
-			if(front == null || front.g == null){
-				front.reset();
+			if(front_ == null || front_.g == null){
+				front_.reset();
 			}
 
-			if(front != null && front.g != null){
-				g.drawImage(front.image, 0, 0, this);
+			if(front_ != null && front_.g != null){
+				g.drawImage(front_.image, 0, 0, this);
 			}
 		}
 	}
 
 	public void flipBuffers(){
 		synchronized (this){
-			Buffer temp = back;
-			back = front;
-			front = temp;
+			Buffer temp = back_;
+			back_ = front_;
+			front_ = temp;
 
-			back.updateSize();
+			back_.updateSize();
 			// This hides the usage of the double-buffer at the cost of performance
-			if(front.image != null && back.g != null){
-				back.g.drawImage(front.image, 0, 0, this);
+			if(front_.image != null && back_.g != null){
+				back_.g.drawImage(front_.image, 0, 0, this);
 			}
 		}
-	}
-
-	@Override public void removeAll() {
-		super.removeAll();
 	}
 
 	public void setGraphicsEventHandler(final GraphicsEventHandler eventsAreBeingHijacked) {
@@ -411,15 +407,15 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		}
 	}
 
-	private volatile Buffer back = new Buffer();
-	private volatile Buffer front = new Buffer();
+	private volatile Buffer back_ = new Buffer();
+	private volatile Buffer front_ = new Buffer();
 
 	private       RTObjectCommon rTPanel_;
 
-	private       static volatile int inInterrupt_ = 0, inDrawing_ = 0;
+	private       static volatile int inInterrupt_ = 0;
 
 	private static final long serialVersionUID = 238269472;
-	private               int referenceCount_ = 0;
+	private              int referenceCount_ = 0;
 
 	// Junk so that we fit into the RTObject framework
 	@Override public RTObject getObject(String name) { assert false; return null; }

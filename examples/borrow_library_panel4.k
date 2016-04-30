@@ -454,7 +454,7 @@ context BorrowLibraryItems implements ButtonHandler {
             Transcript.displayRemoveLibraryCard();
         }
     } requires {
-        void println(String text) const;
+        void println(String text);
         void cutPaper() const;
     }
 
