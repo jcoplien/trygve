@@ -11,7 +11,7 @@ class MyFrame extends Frame {
 class MyPanel extends Panel {
    int XSIZE = 1000;
    int YSIZE = 600;
-   
+
    public int xsize() { return XSIZE }
    public int ysize() { return YSIZE }
 
@@ -41,7 +41,7 @@ class MyPanel extends Panel {
    }
 
    public Frame frame() { return frame_ }
- 
+
    private Frame frame_;
    private EventHandler eventHandler_
 }
@@ -64,19 +64,18 @@ context Arena implements EventHandler {
    public Arena() {
       MyPanel panel = new MyPanel();
       ThePanel = panel;
-      ThePanel.clear();
       Ball = new BallObject(50, 50);
       Paddle = new Point(450, 560);
       panel.setEventHandler(this)
    }
    public void run() {
       do {
-         ThePanel.clearObjects();
-         Paddle.erase();
+         ThePanel.clear();
          Paddle.draw();
-         //Ball.erase()
          Ball.velocityAdjust();
-         Ball.draw();
+         Ball.draw()
+         ThePanel.flush();
+
          Ball.step();
          Thread.sleep(20)
       } while (true)
@@ -90,8 +89,7 @@ context Arena implements EventHandler {
       }
       public int maxX() { return xsize() }
       public int maxY() { return ysize() }
-      public void setColor(Color c) { setForeground(c) }
-      public void clearObjects() { removeAll() }
+      public void flush() { repaint() }
       public void clear() {
          setColor(new Color(227, 221, 240));
          fillRect(0, 0, maxX()-1, maxY()-1)
@@ -102,8 +100,8 @@ context Arena implements EventHandler {
       void fillRect(int x, int y, int h, int w);
       int xsize();
       int ysize();
-      void removeAll();
-      void setForeground(Color color)
+      void setColor(Color color);
+      void repaint();
    }
    role Paddle {
       public int thickness() const { return 10 }

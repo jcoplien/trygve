@@ -5,10 +5,10 @@ class MyPanel extends Panel {
       frame_.add("Center", this);
       frame_.resize(600, 400);
       repaint();
-      setForeground(Color.blue);
+      setColor(Color.blue);
       buttons_ = new List<Button>()
    }
-  
+
    public void addButton(Button button) { buttons_.add(button) }
 
    public boolean handleEvent(Event event) {
@@ -37,7 +37,7 @@ class MyPanel extends Panel {
    }
 
    public Frame frame() { return frame_ }
- 
+
    private List<Button> buttons_;
    private Frame frame_
 }
@@ -67,7 +67,7 @@ class Button {
       // In case of a drag that started inside a button
       state_="up"; draw()
    }
- 
+
    public boolean contains(int x, int y) {
       int centerX = x_ + radius_;
       int centerY = y_ + radius_;
@@ -77,19 +77,21 @@ class Button {
    }
 
    public void draw() {
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.black);
       panel_.drawOval(x_, y_, radius_, radius_);
       panel_.drawString(x_ + radius_ - ((label_.length() * 6) / 2),
                         y_+ radius_ + 6 , label_)
-      Color saveColor = panel_.getForeground();
+
       if (state_ == "down") {
-         panel_.setForeground(Color.blue);
+         panel_.setColor(Color.blue);
          panel_.fillOval(x_, y_, radius_, radius_)
       } else {
-         panel_.setForeground(new Color(0, 255, 255));
+         panel_.setColor(new Color(0, 255, 255));
          panel_.fillOval(x_+2, y_+1, radius_-2, radius_-1);
          panel_.drawOval(x_, y_, radius_, radius_)
       }
-      panel_.setForeground(saveColor)
+      panel_.setColor(saveColor)
    }
 
    public int x() { return x_ }
@@ -121,7 +123,6 @@ class TextListView implements View {
       yOffset_ = yOffset.clone;
       frame_ = panel.frame();
       title_ = title.clone;
-      clearList_ = new List<Object>();
       reframe()
    }
    public void notifyChanged() {
@@ -131,34 +132,31 @@ class TextListView implements View {
       int listCounter = 1;
       for (String item : items_) {
          String toPrint = listCounter.toString() + ". " + item;
-         panel_.setForeground(Color.black);
-         Object cookie = panel_.drawString(x, y, toPrint);
-         clearList_.add(cookie);
+         panel_.setColor(Color.black);
+         panel_.drawString(x, y, toPrint);
          y = y + LineHeight;
          listCounter++
       }
-      panel_.setForeground(Color.blue);
+      panel_.setColor(Color.blue);
    }
    public void removeAll() {
       items_ = new List<String>();
-      for (Object o : clearList_) {
-         panel_.remove(o)
-      }
-      clearList_ = new List<Object>();
       this.notifyChanged();
       this.reframe()
    }
    public void addItem(String item) { items_.add(item) }
    private void reframe() {
       // Text outline
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.white)
       panel_.fillRect(xOffset_, yOffset_ + TitleHeight,
-                      FrameWidth, FrameHeight);
+                      FrameWidth, FrameHeight)
+      panel_.setColor(saveColor)
       panel_.drawRect(xOffset_, yOffset_ + TitleHeight,
                       FrameWidth, FrameHeight)
    }
 
    private List<String> items_;
-   private List<Object> clearList_
    private MyPanel panel_;
    private int xOffset_, yOffset_;
    private Frame frame_;
@@ -175,7 +173,6 @@ class TextLogView implements View {
 
    public TextLogView(MyPanel panel, int xOffset, int yOffset) {
       text_ = new List<ALine>();
-      dynamicStringCookies_ = new List<Object>();
       panel_ = panel;
       frame_ = panel.frame();
       xOffset_ = xOffset.clone;
@@ -183,10 +180,12 @@ class TextLogView implements View {
       reframe()
    }
    private void reframe() {
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.white)
+      panel_.fillRect(xOffset_, yOffset_, FrameWidth, FrameHeight)
+      panel_.setColor(saveColor)
       // Text outline
-      panel_.fillRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
       panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
-      panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight)
    }
 
    class ALine {
@@ -199,7 +198,7 @@ class TextLogView implements View {
    }
 
    public void print(String text) {
-      text_.add(new ALine(text.clone, panel_.getForeground()));
+      text_.add(new ALine(text.clone, panel_.getColor()));
       this.notifyChanged()
    }
    public void println(String text) {
@@ -210,8 +209,6 @@ class TextLogView implements View {
    public void notifyChanged() {
       int y = yOffset_ + TopMargin, x = xOffset_ + TextIndent;
       int currentLine = 1;
-      for (Object a : dynamicStringCookies_) panel_.remove(a);
-      dynamicStringCookies_ = new List<Object>();
       reframe();
 
       int numberOfLinesInText = numberOfLinesIn(text_);
@@ -221,16 +218,15 @@ class TextLogView implements View {
                x = xOffset_ + TextIndent;
                y = y + LineHeight
             } else {
-               panel_.setForeground(aLine.color());
-               Object cookie = panel_.drawString(x, y, aLine.text());
-               dynamicStringCookies_.add(cookie)
+               panel_.setColor(aLine.color());
+               panel_.drawString(x, y, aLine.text());
                x = x + widthOf(aLine.text())
             }
          } else if (aLine.text() == "\n") {
             currentLine++;
          }
       }
-      panel_.setForeground(Color.blue);
+      panel_.setColor(Color.blue);
       panel_.repaint();
       frame_.setVisible(true)
    }
@@ -246,7 +242,6 @@ class TextLogView implements View {
    }
 
    private List<ALine> text_;
-   private List<Object> dynamicStringCookies_;
    private MyPanel panel_
    private Frame frame_;
    private int xOffset_, yOffset_
@@ -258,8 +253,8 @@ interface ItemRecord {
 }
 
 class Book implements ItemRecord {
-    public Book(String name) { 
-        name_ = name.clone; 
+    public Book(String name) {
+        name_ = name.clone;
         id_ = Math.random()
     }
 
@@ -294,7 +289,7 @@ class MockBookScanner {
     }
 
     public List<ItemRecord> scannedItems() { return scannedItems_ }
-    
+
     public void removeItem(ItemRecord item) { scannedItems_.remove(item) }
 
     List<ItemRecord> scannedItems_;
@@ -353,7 +348,7 @@ context BorrowLibraryItems implements ButtonHandler {
            int theIndex = items.size() - 1;
            while (theIndex >= 0) { removeItem(items.get(theIndex--)) }
         }
-    
+
         public List<ItemRecord> currentScannedItems() { return scannedItems() }
 
         public int numberOfScannedItems() { return scannedItems().size() }
@@ -364,10 +359,10 @@ context BorrowLibraryItems implements ButtonHandler {
     }
 
     role ColorHandler {
-       public void setForegroundColor(Color c) { setForeground(c) }
+       public void setForegroundColor(Color c) { setColor(c) }
        public Color inputColor() { return new Color(50, 200, 5) }
     } requires {
-       void setForeground(Color c)
+       void setColor(Color c)
     }
 
     role TranscriptView {
@@ -391,8 +386,8 @@ context BorrowLibraryItems implements ButtonHandler {
         public void closeLine() { println("") }
         public void changed() { notifyChanged() }
     } requires {
-        void print(String text) const;
-        void println(String text) const;
+        void print(String text);
+        void println(String text);
         void notifyChanged()
     }
 
@@ -446,7 +441,7 @@ context BorrowLibraryItems implements ButtonHandler {
             Menu.selectOptions();
         }
     }
-    
+
     stageprop Printer {
         public void printReceiptOfScannedItems() {
             cutPaper();

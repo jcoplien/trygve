@@ -61,10 +61,10 @@ context Display {
 	public Vector offset() { return offset_; }
 	public Mouse mouse() { return mouse_; }
 
-	public void clear()   { panel_.removeAll(); }
+	public void clear()   { panel_.clear(); }
 	public void repaint() { panel_.repaint(); }
 
-	public void fg(Color color) { panel_.setForeground(color); }
+	public void fg(Color color) { panel_.setColor(color); }
 
 	private int floor(double v){ return v.toInteger(); }
 
@@ -679,9 +679,10 @@ context Breakout {
 	public void run(){
 		world_.load();
 		while(true){
+			//TODO: use wall clock for timing
 			double dt = 0.033;
 			world_.step(dt);
-			Thread.sleep(13);
+			Thread.sleep(16);
 		}
 	}
 }

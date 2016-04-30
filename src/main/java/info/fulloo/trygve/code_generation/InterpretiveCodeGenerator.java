@@ -714,53 +714,44 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		if (formalParameterList.count() == 1) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("Panel")) {
 				panelCode.add(new PanelClass.RTPanelCtorCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
-			} else if (methodDeclaration.name().equals("removeAll")) {
-				panelCode.add(new PanelClass.RTRemoveAllCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("repaint")) {
 				panelCode.add(new PanelClass.RTRepaintCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
 			} else if (methodDeclaration.name().equals("clear")) {
 				panelCode.add(new PanelClass.RTClearCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.none;
-			} else if (methodDeclaration.name().equals("getBackground")) {
-				panelCode.add(new PanelClass.RTGetBackgroundCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingColor;
-			} else if (methodDeclaration.name().equals("getForeground")) {
-				panelCode.add(new PanelClass.RTGetForegroundCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getColor")) {
+				panelCode.add(new PanelClass.RTGetColorCode(methodDeclaration.enclosedScope()));
 				retvalType = RetvalTypes.usingColor;
 			} else {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 2) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
-		
-			if (methodDeclaration.name().equals("setBackground")) {
-				panelCode.add(new PanelClass.RTSetBackgroundCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("setForeground")) {
-				panelCode.add(new PanelClass.RTSetForegroundCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("remove")) {
-				panelCode.add(new PanelClass.RTRemoveCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
+
+			if (methodDeclaration.name().equals("setColor")) {
+				panelCode.add(new PanelClass.RTSetColorCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("measureString")) {
+				retvalType = RetvalTypes.usingPoint;
+				panelCode.add(new PanelClass.RTMeasureString(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}
-			retvalType = RetvalTypes.none;
 		} else if (formalParameterList.count() == 4) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("drawString")) {
 				panelCode.add(new PanelClass.RTDrawStringCode(methodDeclaration.enclosedScope()));
-				retvalType = RetvalTypes.usingString;
 			} else {
 				assert false;
 			}
 		} else if (formalParameterList.count() == 5) {
 			rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
+			retvalType = RetvalTypes.none;
 			
 			if (methodDeclaration.name().equals("drawLine")) {
 				panelCode.add(new PanelClass.RTDrawLineCode(methodDeclaration.enclosedScope()));
@@ -775,7 +766,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else {
 				assert false;
 			}
-			retvalType = RetvalTypes.none;
 		} else {
 			assert false;
 		}

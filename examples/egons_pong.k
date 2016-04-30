@@ -75,10 +75,10 @@ context Display {
 	public Vector size() { return size_; }
 	public Mouse mouse() { return panel_.mouse; }
 
-	public void clear()   { panel_.removeAll(); }
+	public void clear()   { panel_.clear(); }
 	public void repaint() { panel_.repaint(); }
 
-	public void fg(Color color) { panel_.setForeground(color); }
+	public void fg(Color color) { panel_.setColor(color); }
 
 	private int floor(double v){ return v.toInteger(); }
 
@@ -91,18 +91,16 @@ context Display {
 			floor(2.0*halfsize.y));
 	}
 	public void oval(Vector center, Vector halfsize) {
-		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x - 2.0*halfsize.x),
-			floor(center.y - 2.0*halfsize.y),
+			floor(center.x - 1.0*halfsize.x),
+			floor(center.y - 1.0*halfsize.y),
 			floor(2.0*halfsize.x),
 			floor(2.0*halfsize.y));
 	}
 	public void circle(Vector center, double radius) {
-		//BUG: fillOval x0, y0 are wrong, currently need to offset them
 		panel_.fillOval(
-			floor(center.x-2.0*radius),
-			floor(center.y-2.0*radius),
+			floor(center.x-1.0*radius),
+			floor(center.y-1.0*radius),
 			floor(2.0*radius),
 			floor(2.0*radius));
 	}

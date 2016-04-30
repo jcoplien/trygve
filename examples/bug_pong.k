@@ -1,7 +1,7 @@
 class MyPanel extends Panel {
    int XSIZE = 600;
    int YSIZE = 400;
-   
+
    public int xsize() { return XSIZE }
    public int ysize() { return YSIZE }
 
@@ -19,15 +19,15 @@ class MyPanel extends Panel {
       boolean retval = false;
 
       if (eventId == Event.MOUSE_DOWN) {
-          
+
       } else if (eventId == Event.MOUSE_UP) {
-         
+
       }
       return retval
    }
 
    public Frame frame() { return frame_ }
- 
+
    private Frame frame_
 }
 
@@ -76,17 +76,16 @@ context Arena {
    }
    role ThePanel {
       public void drawCircle(int x, int y, int r) {
-S         setForeground(Color.blue);
+         setColor(Color.blue);
          drawOval(x+r, y+r, r, r)
       }
       public int maxX() { return xsize() }
       public int maxY() { return ysize() }
       public void refresh() { repaint() }
       public void clear() {
-         removeAll();
-         setForeground(Color.white);
+         setColor(Color.white);
          drawRect(0, 0, xsize(), ysize());
-         setForeground(Color.white)
+         setColor(Color.white)
       }
    } requires {
       void drawOval(int x, int y, int h, int w);
@@ -94,8 +93,7 @@ S         setForeground(Color.blue);
       int xsize();
       int ysize();
       void repaint();
-      void removeAll();
-      void setForeground(Color color)
+      void setColor(Color color)
    }
    role Ball {
       public void draw() {

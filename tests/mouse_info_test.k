@@ -3,7 +3,7 @@
 class MyPanel extends Panel {
    int XSIZE = 1000;
    int YSIZE = 600;
-   
+
    public int xsize() const { return XSIZE }
    public int ysize() const { return YSIZE }
 
@@ -18,7 +18,7 @@ class MyPanel extends Panel {
    }
 
    public Frame frame() { return frame_ }
- 
+
    private Frame frame_
 }
 
@@ -33,7 +33,7 @@ context Arena {
    }
    public void run() {
       do {
-         THE_PANEL.clearObjects();
+         THE_PANEL.clear();
          System.err.println(MouseInfo.getPointerInfo().getLocation().x)
          Thread.sleep(20)
       } while (true)
@@ -43,8 +43,6 @@ context Arena {
    role THE_PANEL {
       public int maxX() const { return xsize() }
       public int maxY() const { return ysize() }
-      public void setColor(Color c) { setForeground(c) }
-      public void clearObjects() { removeAll() }
       public void clear() {
          setColor(new Color(227, 221, 240));
          fillRect(0, 0, maxX()-1, maxY()-1)
@@ -55,8 +53,7 @@ context Arena {
       void fillRect(int x, int y, int h, int w);
       int xsize() const;
       int ysize() const;
-      void removeAll();
-      void setForeground(Color color)
+      void setColor(Color color)
    }
 }
 

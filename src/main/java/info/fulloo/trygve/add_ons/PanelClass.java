@@ -1,12 +1,11 @@
 package info.fulloo.trygve.add_ons;
 
-import java.awt.Color;
-import java.awt.Event;
-import java.awt.Graphics;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import info.fulloo.trygve.add_ons.PointClass.RTPointObject;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -20,21 +19,12 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.graphics.GraphicsPanel;
+import info.fulloo.trygve.run_time.*;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass;
-import info.fulloo.trygve.run_time.RTCode;
-import info.fulloo.trygve.run_time.RTColorObject;
-import info.fulloo.trygve.run_time.RTDynamicScope;
-import info.fulloo.trygve.run_time.RTClass;
-import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;   
-import info.fulloo.trygve.run_time.RTEventObject;
-import info.fulloo.trygve.run_time.RTObjectCommon;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
-import info.fulloo.trygve.run_time.RTPanelObject;
-import info.fulloo.trygve.run_time.RTObject;
-import info.fulloo.trygve.run_time.RTType;
-import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
@@ -97,7 +87,8 @@ public final class PanelClass {
 			final Type colorType = globalScope.lookupTypeDeclaration("Color");
 			final Type stringType = globalScope.lookupTypeDeclaration("String");
 			final Type objectType = globalScope.lookupTypeDeclaration("Object");
-			
+			final Type pointType = globalScope.lookupTypeDeclaration("Point");
+
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
 
@@ -110,18 +101,15 @@ public final class PanelClass {
 
 			// arguments are in reverse order
 			declarePanelMethod("Panel", null, null, null, false);
-			declarePanelMethod("setBackground", voidType, asList("color"), asList(colorType), false);
-			declarePanelMethod("getBackground", colorType, null, null, true);
-			declarePanelMethod("setForeground", voidType, asList("color"), asList(colorType), false);
-			declarePanelMethod("getForeground", colorType, null, null, true);
+			declarePanelMethod("setColor", voidType, asList("color"), asList(colorType), false);
+			declarePanelMethod("getColor", colorType, null, null, false);
 			declarePanelMethod("drawLine", voidType, asList("toY", "toX", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("fillRect", voidType, asList("height", "width", "fromY", "fromX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("drawOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
 			declarePanelMethod("fillOval", voidType, asList("height", "width", "topY", "leftX"), asList(intType, intType, intType, intType), false);
-			declarePanelMethod("drawString", objectType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
-			declarePanelMethod("removeAll", voidType, null, null, false);
-			declarePanelMethod("remove", voidType, asList("component"), asList(objectType), false);
+			declarePanelMethod("drawString", voidType, asList("text", "y", "x"), asList(stringType, intType, intType), false);
+			declarePanelMethod("measureString", pointType, asList("text"), asList(stringType), false);
 			declarePanelMethod("repaint", voidType, null, null, false);
 			declarePanelMethod("clear", voidType, null, null, false);
 			
@@ -199,9 +187,9 @@ public final class PanelClass {
 			return null;	// halt the machine
 		}
 	}
-	public static class RTSetBackgroundCode extends RTPanelCommon {
-		public RTSetBackgroundCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "setBackground", asList("color"), asList("Color"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTSetColorCode extends RTPanelCommon {
+		public RTSetColorCode(final StaticScope enclosingMethodScope) {
+			super("Panel", "setColor", asList("color"), asList("Color"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
@@ -209,9 +197,9 @@ public final class PanelClass {
 			final RTObject color = (RTObject)activationRecord.getObject("color");
 			
 			try {
-				thePanel.setBackground(color);
+				thePanel.setColor(color);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -219,75 +207,29 @@ public final class PanelClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTGetBackgroundCode extends RTPanelCommon {
-		public RTGetBackgroundCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "getBackground", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Color"));
+	public static class RTGetColorCode extends RTPanelCommon {
+		public RTGetColorCode(final StaticScope enclosingMethodScope) {
+			super("Panel", "getColor", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Color"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			RTObject value = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			
+
 			try {
-				final Color cRetval = thePanel.getForeground();
+				final Color cRetval = thePanel.getColor();
 				final Type colorType = StaticScope.globalScope().lookupTypeDeclaration("Color");
 				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
 				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getBackground.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
-			
+
 			this.addRetvalTo(activationRecord);
 			activationRecord.setNamedSlotToValue("ret$val", value);
-			
-			return super.nextCode();
-		}
-	}
-	public static class RTSetForegroundCode extends RTPanelCommon {
-		public RTSetForegroundCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "setForeground", asList("color"), asList("Color"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
-			assert null != thePanel;
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject color = (RTObject)activationRecord.getObject("color");
-			
-			try {
-				thePanel.setForeground(color);
-			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setForeground.", "", "", "");
-				RTMessage.printMiniStackStatus();
-				return null;
-			}
-			
-			return super.nextCode();
-		}
-	}
-	public static class RTGetForegroundCode extends RTPanelCommon {
-		public RTGetForegroundCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "getForeground", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Color"));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
-			assert null != thePanel;
-			RTObject value = null;
-			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			
-			try {
-				final Color cRetval = thePanel.getForeground();
-				final Type colorType = StaticScope.globalScope().lookupTypeDeclaration("Color");
-				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
-				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
-			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getForeground.", "", "", "");
-				RTMessage.printMiniStackStatus();
-				return null;
-			}
-			
-			this.addRetvalTo(activationRecord);
-			activationRecord.setNamedSlotToValue("ret$val", value);
-			
+
 			return super.nextCode();
 		}
 	}
@@ -413,7 +355,7 @@ public final class PanelClass {
 	}
 	public static class RTDrawStringCode extends RTPanelCommon {
 		public RTDrawStringCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Object"));
+			super("Panel", "drawString", asList("x", "y", "text"), asList("int", "int", "String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
@@ -421,58 +363,32 @@ public final class PanelClass {
 			final RTObject x = (RTObject)activationRecord.getObject("x");
 			final RTObject y = (RTObject)activationRecord.getObject("y");
 			final RTObject text = (RTObject)activationRecord.getObject("text");
-			RTObject value = null;
 			try {
-				// Returns a magic cookie that later can be used to
-				// remove the String from the container
-				value = thePanel.drawString(x, y, text);
+				thePanel.drawString(x, y, text);
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
-			
-			this.addRetvalTo(activationRecord);
-			activationRecord.setNamedSlotToValue("ret$val", value);
-			
+
 			return super.nextCode();
 		}
 	}
-	public static class RTRemoveAllCode extends RTPanelCommon {
-		public RTRemoveAllCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "removeAll", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
+	public static class RTMeasureString extends RTPanelCommon {
+		public RTMeasureString(final StaticScope enclosingMethodScope) {
+			super("Panel", "measureString", asList("text"), asList("String"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("Point"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
-			try {
-				thePanel.removeAll();
-				thePanel.revalidate();
-			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.removeAll()", ".", "", "");
-				RTMessage.printMiniStackStatus();
-				return null;
-			}
-			
-			return super.nextCode();
-		}
-	}
-	public static class RTRemoveCode extends RTPanelCommon {
-		public RTRemoveCode(final StaticScope enclosingMethodScope) {
-			super("Panel", "remove", asList("component"), asList("Object"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
-		}
-		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
-			assert null != thePanel;
-			try {
-				final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-				final RTObject component = (RTObject)activationRecord.getObject("component");
-				thePanel.remove(component);
-				thePanel.revalidate();
-			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.remove(Object)", ".", "", "");
-				RTMessage.printMiniStackStatus();
-				return null;
-			}
-			
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject text = (RTObject)activationRecord.getObject("text");
+
+			final Point rawRetval = thePanel.measureString(text);
+			final RTPointObject retval = new RTPointObject(rawRetval);
+
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", retval);
+
 			return super.nextCode();
 		}
 	}
@@ -483,15 +399,7 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			try{
-				final Graphics g = thePanel.getGraphics();
-				final int w = thePanel.getWidth(), h = thePanel.getHeight();
-				if (null != g && w > 0 && h > 0) {
-					g.clearRect(0, 0, w, h);
-					g.setColor(Color.white);
-				    g.fillRect(0, 0, w, h);
-				    g.setColor(Color.black);
-				}
-				
+				thePanel.clear();
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.clear()", ".", "", "");
 				RTMessage.printMiniStackStatus();
@@ -508,22 +416,8 @@ public final class PanelClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final GraphicsPanel thePanel) {
 			assert null != thePanel;
 			try{
-				// Re-validate call suggested by: http://stackoverflow.com/questions/18001087/jpanel-removeall-doesnt-get-rid-of-previous-components
-				thePanel.revalidate();
-				
-				// AWT repaint() just schedules a future task on the GUI thread.
-				// Because some of our graphics activities (like erasure) are done
-				// directly, this sometimes leads to interleaving and messed-up
-				// windows. So, concrete advice to the contrary not withstanding,
-				// we call paint directly.
-				//
-				// See: http://www.scs.ryerson.ca/mes/courses/cps530/programs/threads/Repaint/
-				//
-				final Graphics g = thePanel.getGraphics();
-				if (null != g) {
-					// thePanel.paint(g);
-					thePanel.repaint();
-				}
+				thePanel.flipBuffers();
+				thePanel.repaint();
 			} catch (final Exception e) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
 				RTMessage.printMiniStackStatus();

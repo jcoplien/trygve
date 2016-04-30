@@ -51,20 +51,19 @@ context Arena implements EventHandler {
 		BALL = new BallObject(50, 50);
 		PADDLE = new Point(450, 560);
 		panel.setEventHandler(this)
-	} 
+	}
 	private boolean handleEvent(Event e) {
 		if (e.id == Event.MOUSE_MOVE) {PADDLE.moveTo(new Point(e.x, e.y))}
 		return true
 	}
 	public void run() {
 		do {
-			THE_PANEL.clearObjects();
-			PADDLE.erase();
+			THE_PANEL.clear();
 			PADDLE.draw();
-			BALL.erase()
 			BALL.velocityAdjust();
 			BALL.draw();
 			BALL.step();
+			THE_PANEL.flush();
 			Thread.sleep(20)
 		}while (true)
 	}
@@ -74,8 +73,7 @@ context Arena implements EventHandler {
 			public void drawPADDLE(int xs, int ys, int h, int w) { drawRect(xs, ys, h, w) }
 			public int maxX() const { return xsize() }
 			public int maxY() const { return ysize() }
-			public void setColor(Color c) { setForeground(c) }
-			public void clearObjects() { removeAll() }
+			public void flush(){ repaint() }
 			public void clear() {
 			setColor(new Color(227, 221, 240));
 			fillRect(0, 0, maxX()-1, maxY()-1)
@@ -86,8 +84,8 @@ context Arena implements EventHandler {
 		void fillRect(int x, int y, int h, int w);
 		int xsize() const;
 		int ysize() const;
-		void removeAll();
-		void setForeground(Color color)
+		void setColor(Color color);
+		void repaint();
 	}
 	role PADDLE {
 			public int thickness() const { return 10 }
