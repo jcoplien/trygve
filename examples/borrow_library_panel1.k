@@ -64,7 +64,6 @@ class MyPanel extends Panel {
       int y = 100, x = 25;
       int numberOfLinesInFrame = 9, currentLine = 1;
       clear();
-      fillRect(20, 85, 550, 150);
       drawRect(20, 85, 550, 150);
 
       int numberOfLinesInText = numberOfLinesIn(text_);
@@ -303,8 +302,8 @@ context BorrowLibraryItems {
         }
         public void update() { redisplayTextBuffer(); }
     } requires {
-        void print(String text) const;
-        void println(String text) const;
+        void print(String text);
+        void println(String text);
         void flush();
         void repaint();
         void clear();

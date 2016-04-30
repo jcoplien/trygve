@@ -145,8 +145,6 @@ class TextListView implements View {
    public void addItem(String item) { items_.add(item) }
    private void reframe() {
       // Text outline
-      panel_.fillRect(xOffset_, yOffset_ + TitleHeight,
-                      FrameWidth, FrameHeight);
       panel_.drawRect(xOffset_, yOffset_ + TitleHeight,
                       FrameWidth, FrameHeight)
    }
@@ -176,9 +174,7 @@ class TextLogView implements View {
    }
    private void reframe() {
       // Text outline
-      panel_.fillRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
       panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight);
-      panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight)
    }
 
    class ALine {
@@ -380,8 +376,8 @@ context BorrowLibraryItems implements ButtonHandler {
         public void closeLine() { println("") }
         public void changed() { notifyChanged() }
     } requires {
-        void print(String text) const;
-        void println(String text) const;
+        void print(String text);
+        void println(String text);
         void notifyChanged()
     }
 
