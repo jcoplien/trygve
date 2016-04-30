@@ -75,6 +75,12 @@ class TextListView implements View {
    public void removeAll() { items_ = new List<String>() }
    public void addItem(String item) { items_.add(item) }
    private void reframe() {
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.white)
+      panel_.fillRect(xOffset_, yOffset_ + TitleHeight,
+                      FrameWidth, FrameHeight)
+      panel_.setColor(saveColor)
+
       // Text outline
       panel_.drawString(xOffset_, yOffset_ + LineHeight, title_);
       panel_.drawRect(xOffset_, yOffset_ + TitleHeight,
@@ -105,6 +111,11 @@ class TextLogView implements View {
       reframe()
    }
    private void reframe() {
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.white)
+      panel_.fillRect(xOffset_, yOffset_, FrameWidth, FrameHeight)
+      panel_.setColor(saveColor)
+
       // Text outline
       panel_.drawRect(xOffset_, yOffset_, FrameWidth, FrameHeight)
    }
@@ -132,7 +143,6 @@ class TextLogView implements View {
    public void notifyChanged() {
       int y = yOffset_ + TopMargin, x = xOffset_ + TextIndent;
       int currentLine = 1;
-      panel_.clear();
       reframe();
 
       int numberOfLinesInText = numberOfLinesIn(text_);

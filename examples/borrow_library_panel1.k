@@ -19,6 +19,11 @@ class MyPanel extends Panel {
    }
    private void reframe() {
       // Text outline
+      Color saveColor = panel_.getColor();
+      panel_.setColor(Color.white)
+      panel_.fillRect(20, 85, 550, 150)
+      panel_.setColor(saveColor)
+
       drawRect(20, 85, 550, 150);
    }
 
