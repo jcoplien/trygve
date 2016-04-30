@@ -357,8 +357,13 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			Buffer temp = back;
 			back = front;
 			front = temp;
+
+			back.updateSize();
+			// This hides the usage of the double-buffer at the cost of performance
+			if(front.image != null && back.g != null){
+				back.g.drawImage(front.image, 0, 0, this);
+			}
 		}
-		back.updateSize();
 	}
 
 	@Override public void removeAll() {
