@@ -190,9 +190,13 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			if (retval instanceof RTPostReturnProcessing == false) {
 				retval = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			}
-			RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
-			if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
-				assert false;
+			
+			// > 0 check is just empirical - shouldn't happen but does
+			if (RunTimeEnvironment.runTimeEnvironment_.stackSize() > 0) {
+				RTStackable oldEventArg = RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if ((oldEventArg instanceof RTObjectCommon) && ((RTObjectCommon)oldEventArg).rTType() instanceof RTEventClass == false) {
+					assert false;
+				}
 			}
 
 			int postStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();

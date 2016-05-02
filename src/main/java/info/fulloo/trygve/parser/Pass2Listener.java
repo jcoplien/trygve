@@ -53,7 +53,6 @@ import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
-import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.ClassType;
@@ -112,16 +111,16 @@ public class Pass2Listener extends Pass1Listener {
 
 	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		// Return value is through currentRole_
-		currentRole_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
-		if (null == currentRole_) {
-			assert null != currentRole_;
+		currentRoleOrStageProp_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
+		if (null == currentRoleOrStageProp_) {
+			assert null != currentRoleOrStageProp_;
 		}
 	}
 	@Override protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
 		// Return value is through currentRole_
-		currentRole_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(stagePropName);
-		if (null == currentRole_) {
-			assert null != currentRole_;
+		currentRoleOrStageProp_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(stagePropName);
+		if (null == currentRoleOrStageProp_) {
+			assert null != currentRoleOrStageProp_;
 		}
 	}
 	
@@ -325,7 +324,7 @@ public class Pass2Listener extends Pass1Listener {
 	
 	protected void processRequiredDeclarations(int lineNumber)
 	{
-		currentRole_.processRequiredDeclarations(lineNumber);
+		currentRoleOrStageProp_.processRequiredDeclarations(lineNumber);
 	}
 	
 	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
@@ -636,7 +635,7 @@ public class Pass2Listener extends Pass1Listener {
 		// Don't allow Role methods directly to invoke
 		// the "requires" methods of other Roles in the same Context.
 		// But first we can say it's O.K. if it's within the same Role.
-		if (currentRole_.type().pathName().equals(objectType.pathName())) {
+		if (currentRoleOrStageProp_.type().pathName().equals(objectType.pathName())) {
 			;	// is within the same Role; it's cool
 		} else {
 			MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
@@ -1735,15 +1734,15 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	private void processDeclareRoleArrayAlias(final int lineNumber) {
 		// Declare an actual object for the Role, if the Role is a RoleArray type
-		if (currentRole_.isArray()) {
-			final String roleName = currentRole_.type().getText();
+		if (currentRoleOrStageProp_.isArray()) {
+			final String roleName = currentRoleOrStageProp_.type().getText();
 			
 			// Then declare an array base handle for it as well
 			final String compoundName = roleName + "_$array";
 			Type newType = currentScope_.lookupTypeDeclarationRecursive(compoundName);
 			if (null == newType) {
-				newType = new ArrayType(compoundName, currentRole_.type());
-				final ContextDeclaration contextDeclaration = currentRole_.contextDeclaration();
+				newType = new ArrayType(compoundName, currentRoleOrStageProp_.type());
+				final ContextDeclaration contextDeclaration = currentRoleOrStageProp_.contextDeclaration();
 				final StaticScope contextScope = contextDeclaration.type().enclosedScope();
 				contextScope.declareType(newType);
 				
@@ -1753,6 +1752,5 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 
-	protected StagePropDeclaration currentStageProp_;
 	protected ActualArgumentList currentArgumentList() { return parsingData_.currentArgumentList(); }
 }

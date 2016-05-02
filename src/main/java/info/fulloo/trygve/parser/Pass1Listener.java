@@ -156,7 +156,6 @@ import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
-import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public class Pass1Listener extends Pass0Listener {
@@ -400,7 +399,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		currentInterface_ = null;
-		currentRole_ = null;
+		currentRoleOrStageProp_ = null;
 	}
 		
 	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
@@ -703,10 +702,10 @@ public class Pass1Listener extends Pass0Listener {
 		if (stackSnapshotDebug) stackSnapshotDebug();
 	}
 	
-	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
+	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		if (null != requestedRole) {
-			currentRole_ = requestedRole;
+			currentRoleOrStageProp_ = requestedRole;
 			
 			// The way parsing is designed, these things should
 			// be defined once on pass 0 and then referenced only
@@ -778,11 +777,11 @@ public class Pass1Listener extends Pass0Listener {
 		
 			// Add a declaration of "this." These are class instance methods, never
 			// role methods, so there is no need to add a current$context argument
-			final ObjectDeclaration self = new ObjectDeclaration("this", currentRole_.type(), ctx.getStart().getLine());
+			final ObjectDeclaration self = new ObjectDeclaration("this", currentRoleOrStageProp_.type(), ctx.getStart().getLine());
 			plInProgress.addFormalParameter(self);
 		
 			signature.addParameterList(plInProgress);
-			currentRole_.addRequiredSignatureOnSelf(signature, this);
+			currentRoleOrStageProp_.addRequiredSignatureOnSelf(signature, this);
 		}
 		
 		if (printProductionsDebug) {
@@ -833,9 +832,9 @@ public class Pass1Listener extends Pass0Listener {
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
 				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Stageprop ", stagePropName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
-			currentScope_ = currentRole_.enclosedScope();
+			currentScope_ = currentRoleOrStageProp_.enclosedScope();
 		} else {
-			currentRole_ = null;
+			currentRoleOrStageProp_ = null;
 		}
 	}
 
@@ -854,32 +853,32 @@ public class Pass1Listener extends Pass0Listener {
 		final String vecText = ctx.role_vec_modifier().getText();
 		final boolean isStagePropArray = vecText.length() > 0;	// "[]"
 		
-		if (null != currentRole_) {
+		if (null != currentRoleOrStageProp_) {
 			// The IF statement is just to recover from bad
 			// behaviour elicited by syntax errors. See comment
 			// elsewhere (in exitRole_decl?)
-			final Type rawType = currentRole_.type();
+			final Type rawType = currentRoleOrStageProp_.type();
 			assert rawType instanceof StagePropType;
 			final StagePropType type = (StagePropType)rawType;
-			type.setBacklinkToRoleDecl(currentRole_);
+			type.setBacklinkToRoleDecl(currentRoleOrStageProp_);
 			
 			// Make sure self_methods are const
-			if (currentRole_.requiresConstMethods()) {
-				final Map<String, List<MethodSignature>> requiredSelfSignatures = currentRole_.requiredSelfSignatures();
+			if (currentRoleOrStageProp_.requiresConstMethods()) {
+				final Map<String, List<MethodSignature>> requiredSelfSignatures = currentRoleOrStageProp_.requiredSelfSignatures();
 				for (Map.Entry<String, List<MethodSignature>> iter : requiredSelfSignatures.entrySet()) {
 					final String methodName = iter.getKey();
 					final List<MethodSignature> signatures = iter.getValue();
 					for (final MethodSignature signature : signatures) {
 						if (signature.hasConstModifier() == false) {
 							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
-									"WARNING: Signatures for functions required by stageprops like ", currentRole_.name(),
+									"WARNING: Signatures for functions required by stageprops like ", currentRoleOrStageProp_.name(),
 									" should have a const modifier: method ", methodName, " does not.", "");
 						}
 					}
 				}
 			}
 
-			currentRole_ = null;
+			currentRoleOrStageProp_ = null;
 			currentScope_ = currentScope_.parentScope();
 		}
 
@@ -3989,32 +3988,14 @@ public class Pass1Listener extends Pass0Listener {
 	
 	// --------------------------------------------------------------------------------------
 	
-	protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
-		final Declaration rawDeclaration = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
-		assert null == rawDeclaration || rawDeclaration instanceof StagePropDeclaration;
-		final StagePropDeclaration requestedStageProp = (StagePropDeclaration)rawDeclaration;
+	@Override protected void lookupOrCreateStagePropDeclaration(final String roleName, final int lineNumber, final boolean isStagePropArray) {
+		final RoleDeclaration requestedStageProp = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		if (null != requestedStageProp) {
-			currentRole_ = requestedStageProp;
+			currentRoleOrStageProp_ = requestedStageProp;
 			
 			// The way parsing is designed, these things should
-			// be defined once on pass 1 and then referenced only
+			// be defined once on pass 0 and then referenced only
 			// on subsequent passes.
-			assert false;
-		} else {
-			final StaticScope stagePropScope = new StaticRoleScope(currentScope_);
-			final StagePropDeclaration stagePropDecl =
-					isStagePropArray
-					   ? new StagePropArrayDeclaration(roleName, stagePropScope, currentContext_, lineNumber)
-					   : new StagePropDeclaration(roleName, stagePropScope, currentContext_, lineNumber);
-			stagePropScope.setDeclaration(stagePropDecl);
-			declareRoleOrStageProp(currentScope_, stagePropDecl, lineNumber);
-			
-			final StagePropType stagePropType = new StagePropType(roleName, stagePropScope);
-			currentScope_.declareType(stagePropType);
-			
-			currentRole_ = stagePropDecl;
-			assert null != currentRole_;
-			currentRole_.setType(stagePropType);
 		}
 		// caller may reset currentScope - NOT us
 	}
@@ -5181,19 +5162,19 @@ public class Pass1Listener extends Pass0Listener {
 			// vector type
 			type = StaticScope.globalScope().lookupTypeDeclaration("void");	// default/error value
 			expression = new NullExpression();
-			if (null == currentRole_) {
+			if (null == currentRoleOrStageProp_) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 						"Symbol `", idName, "' may be used only within certain Role methods.", "");
 				type = new ErrorType();
 			} else {
-				if (currentRole_.isArray()) {
+				if (currentRoleOrStageProp_.isArray()) {
 					expression = idName.equals("index")?
-							new IndexExpression(currentRole_, currentContext_):
-								new LastIndexExpression(currentRole_, currentContext_);
+							new IndexExpression(currentRoleOrStageProp_, currentContext_):
+								new LastIndexExpression(currentRoleOrStageProp_, currentContext_);
 				} else {
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
 							"Symbol `", idName, "' may be used only within a Role vector method. The Role ",
-							currentRole_.name(), " is a not a vector.", "");
+							currentRoleOrStageProp_.name(), " is a not a vector.", "");
 					type = new ErrorType();
 				}
 			}

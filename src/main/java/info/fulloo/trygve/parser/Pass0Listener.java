@@ -26,7 +26,10 @@ package info.fulloo.trygve.parser;
 
 import info.fulloo.trygve.declarations.Declaration;
 import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
+import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Type;
+import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
@@ -57,7 +60,7 @@ public class Pass0Listener extends KantBaseListener {
 		currentScope_ = parsingData_.globalScope();
 		currentContext_ = null;
 		
-		currentRole_ = null;
+		currentRoleOrStageProp_ = null;
 		currentInterface_ = null;
 		
 		printProductionsDebug = false;
@@ -251,7 +254,7 @@ public class Pass0Listener extends KantBaseListener {
 		}
 		
 		currentInterface_ = null;
-		currentRole_ = null;
+		currentRoleOrStageProp_ = null;
 	}
 	
 	@Override public void exitType_declaration(KantParser.Type_declarationContext ctx)
@@ -311,15 +314,15 @@ public class Pass0Listener extends KantBaseListener {
 			// Return value is through currentRole_
 			lookupOrCreateRoleDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
 		
-			assert null != currentRole_;
+			assert null != currentRoleOrStageProp_;
 		
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
 				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
-			currentScope_ = currentRole_.enclosedScope();
+			currentScope_ = currentRoleOrStageProp_.enclosedScope();
 		} else {
-			currentRole_ = null;
+			currentRoleOrStageProp_ = null;
 		}
 	}
 	
@@ -338,17 +341,96 @@ public class Pass0Listener extends KantBaseListener {
 		// declaration. Just tell the type about the declaration so
 		// that type checking can track it back.
 		
-		if (null != currentRole_) {
+		if (null != currentRoleOrStageProp_) {
 			// The IF statement is just to recover from bad
 			// behaviour elicited by syntax errors. See
 			// the comment above on entry to the production.
 
-			final Type rawRoleType = currentRole_.type();
+			final Type rawRoleType = currentRoleOrStageProp_.type();
 			assert rawRoleType instanceof RoleType;
 			final RoleType type = (RoleType)rawRoleType;
-			type.setBacklinkToRoleDecl(currentRole_);
+			type.setBacklinkToRoleDecl(currentRoleOrStageProp_);
 
-			currentRole_ = null;
+			currentRoleOrStageProp_ = null;
+			currentScope_ = currentScope_.parentScope();
+		}
+	}
+	
+	@Override public void enterStageprop_decl(KantParser.Stageprop_declContext ctx)
+	{
+		// : 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{'  '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		//
+		// Pass1 logic. INVOKED BY CORRESPONDING PASS2 RULE
+		
+		final String vecText = ctx.role_vec_modifier().getText();
+		final boolean isRoleArray = vecText.length() > 0;	// "[]"
+		
+		if (null != ctx.access_qualifier()) {
+			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+					ctx.access_qualifier().getText(), "' ignored", ".");
+		}
+		
+		final TerminalNode JAVA_ID = ctx.JAVA_ID();
+		
+		if (null != JAVA_ID) {
+			// It *can* be null. Once had an object declaration inside
+			// a role - resulting grammar error got here with that
+			// null condition. Not much to do but to punt
+
+			final String roleName = JAVA_ID.getText();
+		
+			// Return value is through currentRole_
+			lookupOrCreateStagePropDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
+		
+			assert null != currentRoleOrStageProp_;
+		
+			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
+			if (!(currentScopesDecl instanceof ContextDeclaration)) {
+				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
+			}
+			currentScope_ = currentRoleOrStageProp_.enclosedScope();
+		} else {
+			currentRoleOrStageProp_ = null;
+		}
+	}
+	
+	@Override public void exitStageprop_decl(KantParser.Stageprop_declContext ctx)
+	{
+		// : 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' stageprop_body '}' REQUIRES '{' self_methods '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | 'stageprop' role_vec_modifier JAVA_ID '{'  '}' REQUIRES '{' self_methods '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}'
+		// | access_qualifier 'stageprop' role_vec_modifier JAVA_ID '{' '}' REQUIRES '{' self_methods '}'
+		
+		// All three passes. INVOKED BY PASS 2 VERSION (probably shouldn't
+		// be, as it does nothing in pass 2. FIXME)
+		
+		// In the self_methods rule we've been gathering signatures
+		// in the "requires" section and storing them in the Role
+		// declaration. Just tell the type about the declaration so
+		// that type checking can track it back.
+		
+		if (null != currentRoleOrStageProp_) {
+			// The IF statement is just to recover from bad
+			// behaviour elicited by syntax errors. See
+			// the comment above on entry to the production.
+
+			final Type rawRoleType = currentRoleOrStageProp_.type();
+			assert rawRoleType instanceof StagePropType;
+			final StagePropType type = (StagePropType)rawRoleType;
+			type.setBacklinkToRoleDecl(currentRoleOrStageProp_);
+
+			currentRoleOrStageProp_ = null;
 			currentScope_ = currentScope_.parentScope();
 		}
 	}
@@ -414,7 +496,7 @@ public class Pass0Listener extends KantBaseListener {
 	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		if (null != requestedRole) {
-			currentRole_ = requestedRole;
+			currentRoleOrStageProp_ = requestedRole;
 			
 			// Something wrong
 			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber,
@@ -435,9 +517,40 @@ public class Pass0Listener extends KantBaseListener {
 			final RoleType roleType = new RoleType(roleName, rolesScope);
 			currentScope_.declareType(roleType);
 			
-			currentRole_ = roleDecl;
-			assert null != currentRole_;
-			currentRole_.setType(roleType);
+			currentRoleOrStageProp_ = roleDecl;
+			assert null != currentRoleOrStageProp_;
+			currentRoleOrStageProp_.setType(roleType);
+		}
+		// caller may reset currentScope - NOT us
+	}
+	
+	protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
+		final RoleDeclaration requestedStageProp = currentScope_.lookupRoleOrStagePropDeclaration(stagePropName);
+		if (null != requestedStageProp) {
+			currentRoleOrStageProp_ = requestedStageProp;
+			
+			// Something wrong
+			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber,
+					"Duplicate declaration of Stage Prop `",  stagePropName, "´ (original at line ",
+					requestedStageProp.lineNumber() + ").");
+		} else {
+			final StaticScope stagePropsScope = new StaticRoleScope(currentScope_);
+			final StagePropDeclaration stagePropDecl =
+					isStagePropArray
+					   ? new StagePropArrayDeclaration(stagePropName, stagePropsScope, currentContext_, lineNumber)
+					   : new StagePropDeclaration(stagePropName, stagePropsScope, currentContext_, lineNumber);
+			stagePropsScope.setDeclaration(stagePropDecl);
+			
+			// declareRoleOrStageProp will also declare the name as an array handle
+			// if isRoleArray was set (in pass 2)
+			declareRoleOrStageProp(currentScope_, stagePropDecl, lineNumber);
+			
+			final RoleType roleType = new StagePropType(stagePropName, stagePropsScope);
+			currentScope_.declareType(roleType);
+			
+			currentRoleOrStageProp_ = stagePropDecl;
+			assert null != currentRoleOrStageProp_;
+			currentRoleOrStageProp_.setType(roleType);
 		}
 		// caller may reset currentScope - NOT us
 	}
@@ -517,7 +630,7 @@ public class Pass0Listener extends KantBaseListener {
 	protected ContextDeclaration currentContext_;	// should probably be a stack for generality. FIXME
 	protected ParsingData parsingData_;
 	protected StaticScope currentScope_;
-	protected RoleDeclaration currentRole_;
+	protected RoleDeclaration currentRoleOrStageProp_;
 	protected InterfaceDeclaration currentInterface_;
 	protected boolean printProductionsDebug;
 	protected boolean stackSnapshotDebug;
