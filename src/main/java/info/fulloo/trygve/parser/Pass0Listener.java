@@ -417,7 +417,9 @@ public class Pass0Listener extends KantBaseListener {
 			currentRole_ = requestedRole;
 			
 			// Something wrong
-			assert false;
+			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber,
+					"Duplicate declaration of Role `",  roleName, "´ (original at line ",
+					requestedRole.lineNumber() + ").");
 		} else {
 			final StaticScope rolesScope = new StaticRoleScope(currentScope_);
 			final RoleDeclaration roleDecl =

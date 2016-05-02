@@ -3608,8 +3608,10 @@ public class Pass1Listener extends Pass0Listener {
 					typeIncrementingOver.name().startsWith("List<") == false &&
 					typeIncrementingOver.name().startsWith("Set<") == false &&
 					typeIncrementingOver.name().startsWith("Map<") == false) {
-				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
-						"' is not iterable", "");
+				if (thingToIncrementOver.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
+							"' is not iterable", "");
+				}
 			}
 			
 			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);
@@ -3647,8 +3649,10 @@ public class Pass1Listener extends Pass0Listener {
 					typeIncrementingOver.name().startsWith("List<") == false &&
 					typeIncrementingOver.name().startsWith("Set<") == false &&
 					typeIncrementingOver.name().startsWith("Map<") == false) {
-				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
+				if (thingToIncrementOver.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Expression `", thingToIncrementOver.getText(),
 						"' is not iterable", "");
+				}
 			}
 					
 			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);

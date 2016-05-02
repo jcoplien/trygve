@@ -446,7 +446,7 @@ context BorrowLibraryItems implements ButtonHandler {
         public void printReceiptOfScannedItems() {
             cutPaper();
             println("Borrowed items:");
-            for(ItemRecord item : BookScanner.currentScannedItems()) {
+            for (ItemRecord item : BookScanner.currentScannedItems()) {
                 println(item.name());
             }
             cutPaper();
@@ -462,8 +462,8 @@ context BorrowLibraryItems implements ButtonHandler {
         public String readChar() {
            int a = read();
            assert (a isnot null);
-           TranscriptView.changed();
-           CheckoutList.changed();
+
+           WholeDisplay.paint;
            return a.to1CharString()
         }
         public String readPin() {
@@ -472,7 +472,8 @@ context BorrowLibraryItems implements ButtonHandler {
                 String theChar = readChar();
                 retval = retval + theChar;
                 TranscriptView.echoInvisibleChar();
-                TranscriptView.changed();
+
+                WholeDisplay.paint;
             }
             TranscriptView.closeLine();
             return retval
@@ -522,21 +523,39 @@ context BorrowLibraryItems implements ButtonHandler {
        void removeAll()
     }
 
-    stageprop ClearButton {
+    role ClearButton {
        public void buttonWasPushed(Object buttonID) {
           if (BookScanner.numberOfScannedItems() > 0) {
              BookScanner.removeCheckoutItems();
              Transcript.addTextLineColored("\nAll checkouts removed!", Color.red);
              Transcript.addText("Select option: ")
           }
-          CheckoutList.reset()
+          CheckoutList.reset();
+          WholeDisplay.paint
        }
+       public void redraw() {
+         draw()
+       }
+    } requires {
+       void draw()
+    }
+
+    role WholeDisplay {
+       public void paint() {
+          TranscriptView.changed;
+          CheckoutList.changed;
+          ClearButton.redraw;
+          repaint()
+       }
+    } requires {
+       void repaint()
     }
 
     ///////////////////////////////////////////////////////////
 
     public BorrowLibraryItems() {
         MyPanel panel = new MyPanel();
+        WholeDisplay = panel;
         ColorHandler = panel;
         CardReader = new MockCardReader();
         BookScanner = new MockBookScanner();
@@ -546,7 +565,8 @@ context BorrowLibraryItems implements ButtonHandler {
         CheckoutList = new TextListView("Checkout List", panel, 20, 250)
         Printer = new ScreenPrinter();
         Keypad = new InputStream(panel);
-        ClearButton = new Button(panel, "Clear", 35, 20, 40, this)
+        ClearButton = new Button(panel, "Clear", 35, 20, 40, this);
+        WholeDisplay.paint
     }
 
     public void buttonWasReleased(Object buttonID) {

@@ -176,7 +176,8 @@ public class TestRunner {
 		"panel1.k",
 		"pong.k",
 		"pong2.k",
-		"breakout.k",	
+		"breakout.k",
+		"keypad.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
