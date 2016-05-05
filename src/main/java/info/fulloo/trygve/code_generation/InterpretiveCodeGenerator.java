@@ -892,6 +892,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (methodDeclaration.name().equals("getBlue")) {
 				retvalType = RetvalTypes.usingInt;
 				colorMethodCode.add(new ColorClass.RTGetBlueCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("toString")) {
+				retvalType = RetvalTypes.usingString;
+				colorMethodCode.add(new ColorClass.RTToStringCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}

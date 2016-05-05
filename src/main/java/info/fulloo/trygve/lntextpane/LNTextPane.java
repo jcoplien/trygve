@@ -53,8 +53,15 @@ public class LNTextPane extends JFrame {
         	;	// do nothing - don't know how to do it
         }
 	}
+	
+	public static class MyJEditorPane extends JEditorPane {
+		// For potential later hooks (esp. those that need protected methods)
+		public MyJEditorPane() { }
+		private static final long serialVersionUID = -923489314;
+	}
+	
     public LNTextPane() {
-        edit_ = new JEditorPane();
+        edit_ = new MyJEditorPane();
         edit_.setEditorKit(new NumberedEditorKit());
 
         setTabStops();
@@ -69,12 +76,12 @@ public class LNTextPane extends JFrame {
     {
     	return scroll_;
     }
-    public JEditorPane editPane()
+    public MyJEditorPane editPane()
     {
     	return edit_;
     }
     private JScrollPane scroll_;
-    private JEditorPane edit_;
+    private MyJEditorPane edit_;
     
     static final long serialVersionUID = 991540;
 }

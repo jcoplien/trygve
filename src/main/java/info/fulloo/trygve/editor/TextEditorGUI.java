@@ -29,6 +29,13 @@ package info.fulloo.trygve.editor;
  */
 
 import java.awt.Color;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.*;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,10 +51,17 @@ import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTWindowRegistryEntry;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
 
 enum RunButtonState { Idle, Running, Disabled } ;
 
@@ -95,6 +109,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private javax.swing.JScrollPane errorScrollPane = null;
 	private javax.swing.text.JTextComponent errorPanel = null;
+	private javax.swing.text.JTextComponent searchPane = null;
 	
 	public String errorPanelContents() {
 		return errorPanel.getText();
@@ -102,6 +117,254 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	public String editPanelContents() {
 		return editPane.getText();
 	}
+	
+	private class MouseKeyListener implements MouseListener {
+		public MouseKeyListener(final SearchCommandProcessor ekListener) {
+			ekListener_ = ekListener;
+		}
+		@Override public void mousePressed(MouseEvent e) {
+			commonMouseEvent(e);
+		}
+		@Override public void mouseReleased(MouseEvent e) {
+			commonMouseEvent(e);
+		}
+		@Override public void mouseClicked(MouseEvent e) {
+		}
+		@Override public void mouseEntered(MouseEvent e) {
+			commonMouseEvent(e);
+		}
+		@Override public void mouseExited(MouseEvent e) {
+			commonMouseEvent(e);
+		}
+		private void commonMouseEvent(MouseEvent e) {
+			ekListener_.mouseEventHappened();
+		}
+		private final SearchCommandProcessor ekListener_;
+	}
+	
+	private class SearchCommandProcessor implements KeyListener {
+		public SearchCommandProcessor(final TextEditorGUI gui) {
+			searchPane.setText("Search: ");
+			reverseDirection_ = false;
+			caretPositionAtSearchStart_ = 0;
+			gui_ = gui;
+			first_ = true;
+		}
+		public void mouseEventHappened() {
+			int caretPosition = editPane.getCaretPosition();
+			editPane.setCaretPosition(caretPosition);
+			editPane.moveCaretPosition(caretPosition);
+			editPane.removeKeyListener(this);
+			searchPane.setText("");
+		}
+		@Override public void keyPressed(final KeyEvent keyEvent) {
+			keyEvent.consume();
+		}
+		@Override public void keyReleased(final KeyEvent keyEvent) {
+			boolean isRepeat = false;
+			char c = '\0';
+			int keyCode = keyEvent.getKeyCode();
+			String currentSearchText = searchPane.getText();
+			int l = currentSearchText.length();
+			final int modifiers = keyEvent.getModifiers();
+			final boolean isControlDown = keyEvent.isControlDown(), isMetaDown = keyEvent.isMetaDown();
+			if ((keyCode == KeyEvent.VK_S && modifiers + KeyEvent.KEY_FIRST == KeyEvent.KEY_RELEASED && isControlDown) ||
+					(keyCode == KeyEvent.VK_F && modifiers == 4 && isMetaDown)) {
+				// If no search text, then we're just getting the upkey
+				// from the original command. Otherwise it's a re-search
+				reverseDirection_ = false;
+				if (false == first_) {
+					// This is a CTRL-S CTRL-S sequence
+					final String lastMatch = gui_.lastMatch();
+					searchPane.setText("Search: " + lastMatch);
+					currentSearchText = searchPane.getText();
+					l = currentSearchText.length();
+					keyCode = c = 023;
+				} else if (l == "Search: ".length()) {
+					caretPositionAtSearchStart_ = editPane.getCaretPosition();
+					first_ = false;
+					return;
+				} else {
+					keyCode = c = 023;
+					isRepeat = true;
+				}
+				keyEvent.consume();
+				first_ = false;
+			} else if (keyCode == KeyEvent.VK_R && modifiers + KeyEvent.KEY_FIRST == KeyEvent.KEY_RELEASED && isControlDown) {
+				// If no search text, then we're just getting the upkey
+				// from the original command. Otherwise it's a re-search
+				reverseDirection_ = true;
+				if (false == first_) {
+					// This is a CTRL-R CTRL-R sequence
+					final String lastMatch = gui_.lastMatch();
+					searchPane.setText("Search: " + lastMatch);
+					currentSearchText = searchPane.getText();
+					l = currentSearchText.length();
+					keyCode = c = 022;
+					isRepeat = true;
+				} else if (l == "Search: ".length()) {
+					caretPositionAtSearchStart_ = editPane.getCaretPosition();
+					first_ = false;
+					return;
+				} else {
+					keyCode = c = 022;
+					isRepeat = true;
+				}
+				keyEvent.consume();
+				first_ = false;
+			} else if (keyCode == KeyEvent.VK_SHIFT) {
+				return;
+			} else if (keyCode == KeyEvent.VK_CONTROL) {
+				return;
+			} else if (keyCode == KeyEvent.VK_ALT) {
+				return;
+			} else if (keyCode == KeyEvent.VK_CAPS_LOCK) {
+				return;
+			} else if (keyCode == KeyEvent.VK_META) {
+				return;
+			} else {
+				c = keyEvent.getKeyChar();
+			}
+			
+			final int caretPosition = editPane.getCaretPosition();
+			int currentOffset = caretPosition + "Search: ".length() - currentSearchText.length();
+			switch (c) {
+			case 023: case 65535:
+				// aliased to CTRL-S - repeating search
+				reverseDirection_ = false;
+				currentOffset++;
+				break;
+			case 022:
+				// aliased to CTRL-R - repeating search
+				reverseDirection_ = true;
+				currentOffset--;
+				if (currentOffset < 0) {
+					currentOffset = editPane.getDocument().getLength() - l - 1;
+				}
+				break;
+			case 010:
+				// backspace
+				l = l - 1;
+				if (l < "Search: ".length()) l = "Search: ".length();
+				currentSearchText = currentSearchText.substring(0, l);
+				break;
+			case 033:
+				// escape (end-of-search)
+				final int newCaretPosition = caretPosition - l + "Search: ".length();
+				editPane.setCaretPosition(newCaretPosition);
+				editPane.moveCaretPosition(newCaretPosition);
+				editPane.removeKeyListener(this);
+				searchPane.setText("");
+				return;
+			default:
+				currentSearchText = currentSearchText + c;
+				break;
+			}
+			searchPane.setText(currentSearchText);
+			final String realSearchString = currentSearchText.length() > "Search: ".length()?
+					currentSearchText.substring("Search: ".length()): "";
+			doSearch(isRepeat, caretPosition, currentOffset, realSearchString);
+		}
+		private void doSearch(final boolean repeat, final int caretPosition, final int currentOffsetArg, final String searchText) {
+			int currentOffset = currentOffsetArg;
+			final Document document = editPane.getDocument();
+			final int docLength = document.getLength();
+			final int searchTextLength = searchText.length();
+			boolean ok = true;
+			String text = "";
+			try {
+				int temp = currentOffset;
+				if (repeat == false) {
+					temp += searchTextLength;
+					
+					// Allow it to match the next character typed if indeed
+					// the right character follows
+					if (temp < document.getLength()) temp++;
+				}
+				text = reverseDirection_?
+						document.getText(0, temp):
+						document.getText(currentOffset, docLength - currentOffset);
+			} catch (final BadLocationException ble) {
+				ok = false;
+			}
+			if (ok) {
+				if (searchTextLength > 0) {
+					int nextLocation = 0, nextLocationDelta = reverseDirection_? text.lastIndexOf(searchText): text.indexOf(searchText);
+					if (nextLocationDelta < 0) {
+						// wrap handling
+						try {
+							text = reverseDirection_? document.getText(currentOffset, docLength - currentOffset): document.getText(0, currentOffset);
+							nextLocationDelta = reverseDirection_? text.lastIndexOf(searchText): text.indexOf(searchText);
+							nextLocation = reverseDirection_? currentOffset + nextLocationDelta: nextLocationDelta;
+						} catch (BadLocationException ble) {
+							ok = false;
+						}
+					} else {
+						nextLocation = reverseDirection_? nextLocationDelta: nextLocationDelta + currentOffset;
+					}
+					if (ok) {
+						if (nextLocationDelta >= 0) {
+							currentOffset = nextLocation;
+							try {
+								final Rectangle viewArea = editPane.modelToView(nextLocation);
+								editPane.scrollRectToVisible(viewArea);
+								editPane.setCaretPosition(nextLocation);
+								editPane.moveCaretPosition(nextLocation + searchText.length());
+								gui_.setLastMatch(searchText);
+								caretPositionAtSearchStart_ = nextLocation;
+							} catch (final BadLocationException ble) {
+								;
+							} catch (final IllegalArgumentException iae) {
+								;
+							}
+						} else {
+							// Not found
+							editPane.setCaretPosition(caretPositionAtSearchStart_);
+						}
+					}
+				} else {
+					;
+				}
+			}
+		}
+		@Override public void keyTyped(final KeyEvent keyEvent) {
+			keyEvent.consume();
+		}
+		
+		private boolean reverseDirection_;
+		private int caretPositionAtSearchStart_;
+		private final TextEditorGUI gui_;
+		private boolean first_;
+	}
+		
+	private class EscapeCommandProcessor implements KeyListener {
+		public EscapeCommandProcessor() { }
+		@Override public void keyPressed(final KeyEvent keyEvent) { keyEvent.consume(); }
+		@Override public void keyReleased(final KeyEvent keyEvent) {
+			char c = keyEvent.getKeyChar();
+			int nextLocation = 0;
+			if (c != KeyEvent.VK_ESCAPE) {
+				editPane.removeKeyListener(this);
+			}
+			
+			switch (c) {
+			case KeyEvent.VK_ESCAPE: return;
+			case '<': nextLocation = 0; break;
+			case '>': nextLocation = editPane.getDocument().getLength() - 1; break;
+			default: return;
+			}
+			
+			try {
+				final Rectangle viewArea = editPane.modelToView(nextLocation);
+				editPane.scrollRectToVisible(viewArea);
+				editPane.setCaretPosition(nextLocation);
+			} catch (final BadLocationException ble) {
+				;
+			}
+		}
+		@Override public void keyTyped(final KeyEvent keyEvent) { keyEvent.consume(); }
+	}
+	
 	
     private void initComponents() {
     	worker_ = null;
@@ -115,6 +378,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         	errorPanel.setBackground(new java.awt.Color(233, 228, 242));
         	errorScrollPane = new javax.swing.JScrollPane(errorPanel);
         	javax.swing.JFrame.setDefaultLookAndFeelDecorated(true);
+        	
+        	searchPane = new javax.swing.JTextPane();
+        	searchPane.setMargin(new java.awt.Insets(3, 3, 3, 3));
+        	searchPane.setBackground(new java.awt.Color(233, 228, 242));
+        	searchPane.setBorder(BorderFactory.createLineBorder(Color.black));
         	
         	/*
         	javax.swing.JFrame frame = new javax.swing.JFrame("Message Console");
@@ -138,7 +406,40 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         if (OLD) {
         	editPane2 = new javax.swing.JEditorPane();
         } else {
-        	;
+        	final TextEditorGUI self = this;
+        	final Action search = new AbstractAction() {
+        		 @Override public void actionPerformed(final ActionEvent e) {
+        			 final SearchCommandProcessor searchKeyListener = new SearchCommandProcessor(self);
+        			 editPane.addKeyListener(searchKeyListener);
+        			 final MouseListener mouseListener = new MouseKeyListener(searchKeyListener);
+        			 editPane.addMouseListener(mouseListener);
+        		 }
+        		 private static final long serialVersionUID = -329124812;
+        	};
+        	lastMatch_ = "";
+        	
+        	final Action save = new AbstractAction() {
+        		@Override public void actionPerformed(final ActionEvent e) {
+        			saveFileButtonActionPerformed(e);
+        		}
+        		private static final long serialVersionUID = -229124812;
+        	};
+        	final Action escape = new AbstractAction() {
+        		@Override public void actionPerformed(final ActionEvent e) {
+        			final EscapeCommandProcessor escapeCommandProcessor = new EscapeCommandProcessor();
+        			editPane.addKeyListener(escapeCommandProcessor);
+        		}
+        		private static final long serialVersionUID = -129124812;
+        	};
+        	
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "search");
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke("control S"), "search");
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke("control R"), "search");
+        	editPane.getActionMap().put("search", search);
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "save");
+        	editPane.getActionMap().put("save", save);
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
+        	editPane.getActionMap().put("escape", escape);
         }
         
         cutButton = new javax.swing.JButton();
@@ -409,7 +710,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
+                	.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                			.addComponent(searchPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 15, Short.MAX_VALUE)
+                			.addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE))
                     .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                             .addComponent(wwwButton)
@@ -473,8 +776,10 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 	.addComponent(testButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                	.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)
-                	.addComponent(errorScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE))
+                	.addGroup(layout.createSequentialGroup()
+                		.addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE)
+                		.addComponent(searchPane, javax.swing.GroupLayout.DEFAULT_SIZE, 15, 20))
+                .addComponent(errorScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 323, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -1029,9 +1334,13 @@ private void killAppWindows() {
 	}
 }
 
+public String lastMatch() { return lastMatch_; }
+public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch; }
+
 // ------------- Private data ----------------------
 
 	private Map<RTWindowRegistryEntry, Boolean> appWindowsExtantMap_;
+	private String lastMatch_;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton clearButton;
@@ -1046,7 +1355,7 @@ private void killAppWindows() {
     private javax.swing.JMenuItem copyMenu;
     private javax.swing.JButton cutButton;
     private javax.swing.JMenuItem cutMenu;
-    private javax.swing.JEditorPane editPane;
+    private info.fulloo.trygve.lntextpane.LNTextPane.MyJEditorPane editPane;
     private javax.swing.JEditorPane editPane2;
     private javax.swing.JMenuItem exampleTextMenu;
     private javax.swing.JMenu jMenu1;

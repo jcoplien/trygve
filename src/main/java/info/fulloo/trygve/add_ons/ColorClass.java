@@ -24,6 +24,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -86,6 +87,7 @@ public final class ColorClass {
 			typeDeclarationList_ = new ArrayList<TypeDeclaration>();
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			final Type doubleType = globalScope.lookupTypeDeclaration("double");
+			final Type stringType = globalScope.lookupTypeDeclaration("String");
 			
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
@@ -104,6 +106,7 @@ public final class ColorClass {
 			declareColorMethod("getRed", intType, null, null, false);
 			declareColorMethod("getBlue", intType, null, null, false);
 			declareColorMethod("getGreen", intType, null, null, false);
+			declareColorMethod("toString", stringType, null, null, false);
 			
 			// These need to be coordinated only with what is in the postSetupInitialization
 			// method below.
@@ -203,6 +206,24 @@ public final class ColorClass {
 			assert theColor instanceof RTColorObject;
 			final int rgbComponent = ((RTColorObject)theColor).getBlue();
 			final RTIntegerObject retval = new RTIntegerObject(rgbComponent);
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", retval);
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTToStringCode extends RTColorCommon {
+		public RTToStringCode(final StaticScope enclosingMethodScope) {
+			super("Color", "toString", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("String"));
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTColorObject color) {
+			assert null != color;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject theColor = activationRecord.getObject("this");
+			assert theColor instanceof RTColorObject;
+			final String name = ((RTColorObject)theColor).toString();
+			final RTStringObject retval = new RTStringObject(name);
 			
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", retval);
@@ -315,31 +336,31 @@ public final class ColorClass {
 			// These need to be coordinated only with what is in the setup
 			// method above
 			RTType rTColorType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType_.enclosedScope());
-			final RTColorObject blackValue = new RTColorObject(0, 0, 0, rTColorType);
+			final RTColorObject blackValue = new RTColorObject(0, 0, 0, "black", rTColorType);
 			nameToStaticObjectMap_.put("black", blackValue);
-			final RTColorObject blueValue = new RTColorObject(0, 0, 255, rTColorType);
+			final RTColorObject blueValue = new RTColorObject(0, 0, 255, "blue", rTColorType);
 			nameToStaticObjectMap_.put("blue", blueValue);
-			final RTColorObject cyanValue = new RTColorObject(0, 255, 255, rTColorType);
+			final RTColorObject cyanValue = new RTColorObject(0, 255, 255, "cyan", rTColorType);
 			nameToStaticObjectMap_.put("cyan", cyanValue);
-			final RTColorObject darkGrayValue = new RTColorObject(64, 64, 64, rTColorType);
+			final RTColorObject darkGrayValue = new RTColorObject(64, 64, 64, "dark grey", rTColorType);
 			nameToStaticObjectMap_.put("darkGray", darkGrayValue);
-			final RTColorObject grayValue = new RTColorObject(128, 128, 128, rTColorType);
+			final RTColorObject grayValue = new RTColorObject(128, 128, 128, "gray", rTColorType);
 			nameToStaticObjectMap_.put("gray", grayValue);
-			final RTColorObject lightGrayValue = new RTColorObject(192, 192, 192, rTColorType);
+			final RTColorObject lightGrayValue = new RTColorObject(192, 192, 192, "light gray", rTColorType);
 			nameToStaticObjectMap_.put("lightGray", lightGrayValue);
-			final RTColorObject magentaValue = new RTColorObject(255, 0, 255, rTColorType);
+			final RTColorObject magentaValue = new RTColorObject(255, 0, 255, "magenta", rTColorType);
 			nameToStaticObjectMap_.put("magenta", magentaValue);
-			final RTColorObject orangeValue = new RTColorObject(255, 200, 0, rTColorType);
+			final RTColorObject orangeValue = new RTColorObject(255, 200, 0, "orange", rTColorType);
 			nameToStaticObjectMap_.put("orange", orangeValue);
-			final RTColorObject redValue = new RTColorObject(255, 0, 0, rTColorType);
+			final RTColorObject redValue = new RTColorObject(255, 0, 0, "red", rTColorType);
 			nameToStaticObjectMap_.put("red", redValue);
-			final RTColorObject pinkValue = new RTColorObject(255, 175, 175, rTColorType);
+			final RTColorObject pinkValue = new RTColorObject(255, 175, 175, "pink", rTColorType);
 			nameToStaticObjectMap_.put("pink", pinkValue);
-			final RTColorObject whiteValue = new RTColorObject(255, 255, 255, rTColorType);
+			final RTColorObject whiteValue = new RTColorObject(255, 255, 255, "white", rTColorType);
 			nameToStaticObjectMap_.put("white", whiteValue);
-			final RTColorObject greenValue = new RTColorObject(0, 255, 0, rTColorType);
+			final RTColorObject greenValue = new RTColorObject(0, 255, 0, "green", rTColorType);
 			nameToStaticObjectMap_.put("green", greenValue);
-			final RTColorObject yellowValue = new RTColorObject(255, 255, 0, rTColorType);
+			final RTColorObject yellowValue = new RTColorObject(255, 255, 0, "yellow", rTColorType);
 			nameToStaticObjectMap_.put("yellow", yellowValue);
 		}
 	}

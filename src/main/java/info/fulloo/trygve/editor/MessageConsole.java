@@ -114,7 +114,7 @@ public class MessageConsole
         
         // Make sure there are no other listeners
         final EventListener[] els = textComponent.getListeners(EventListener.class);
-        for (EventListener listener : els) {
+        for (final EventListener listener : els) {
         	if (listener instanceof KeyListener) {
         		textComponent.removeKeyListener((KeyListener)listener);
         	}
