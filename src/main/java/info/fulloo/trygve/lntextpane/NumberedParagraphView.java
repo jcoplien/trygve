@@ -52,11 +52,18 @@ class NumberedParagraphView extends ParagraphView {
     public void paintChild(Graphics g, Rectangle r, int n) {
         super.paintChild(g, r, n);
         int previousLineCount = getPreviousLineCount();
-        int numberX = r.x - getLeftInset();
-        int numberY = r.y + r.height - 3;	// was 5
-        String formattedNumber = Integer.toString(previousLineCount + n + 1);
-        while (formattedNumber.length() < 3) {
-        	formattedNumber = " " + formattedNumber;
+        String formattedNumber;
+        final int numberX = r.x - getLeftInset();
+        final int numberY = r.y + r.height - 3;	// was 5
+        if (n > 0) {
+        	// This seems to set n > 0 if there is wrapping. Don't put out
+        	// a bogus line number
+        	formattedNumber = "     ";
+        } else {
+        	formattedNumber = Integer.toString(previousLineCount + n + 1);
+	        while (formattedNumber.length() < 3) {
+	        	formattedNumber = " " + formattedNumber;
+	        }
         }
         g.drawString(formattedNumber, numberX, numberY);
     }
@@ -70,7 +77,8 @@ class NumberedParagraphView extends ParagraphView {
                 break;
             }
             else {
-                lineCount += parent.getView(i).getViewCount();
+            	// Count source number lines rather than display lines...
+                lineCount += 1; // Old (display lines): parent.getView(i).getViewCount();
             }
         }
         return lineCount;
