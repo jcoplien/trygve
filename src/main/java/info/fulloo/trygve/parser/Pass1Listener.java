@@ -722,9 +722,14 @@ public class Pass1Listener extends Pass0Listener {
 	    //	| role_body method_decl
 	    //	| object_decl				// illegal
 	    //	| role_body object_decl		// illegal - for better error messages only
+		//	| method_signature ';'*
+		//	| role_body method_signature ';'*
 		//  | /* null */
 		
-		/* nothing */
+		if (null != ctx.method_signature()) {
+			final FormalParameterList formalParameterList = new FormalParameterList();
+			parsingData_.pushFormalParameterList(formalParameterList);
+		}
 	}
 	
 	@Override public void exitRole_body(KantParser.Role_bodyContext ctx)
@@ -733,12 +738,38 @@ public class Pass1Listener extends Pass0Listener {
         // | role_body method_decl
         // | object_decl				// illegal
         // | role_body object_decl		// illegal - for better error messages only
+		// | method_signature ';'*
+		// | role_body method_signature ';'*
 		// | /* null */
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
 			final DeclarationList objectDecl = parsingData_.popDeclarationList();
 			// We have issued an error message about this already elsewhere
+		}
+		
+		if (null != ctx.method_signature()) {
+			final MethodSignature signature = parsingData_.popMethodSignature();
+			final FormalParameterList plInProgress = parsingData_.popFormalParameterList();
+		
+			// Add a declaration of "this." These are class instance methods, never
+			// role methods, so there is no need to add a current$context argument
+			final ObjectDeclaration self = new ObjectDeclaration("this", currentRoleOrStageProp_.type(), ctx.getStart().getLine());
+			plInProgress.addFormalParameter(self);
+		
+			signature.addParameterList(plInProgress);
+			currentRoleOrStageProp_.addPublishedSignature(signature);
+			
+			// It should also exist in the "requires" section!
+			final MethodSignature requiresSignature = currentRoleOrStageProp_.lookupRequiredMethodSignatureDeclaration(signature.name());
+			if (null == requiresSignature) {
+				// Silent error on pass1; O.K. to gripe on pass 2
+				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
+						"Published signature must also be in `requires' section",
+						"", "", "", "", "");
+			} else {
+				// Make sure signature matches. TODO.
+			}
 		}
 		
 		if (printProductionsDebug) {
@@ -908,8 +939,13 @@ public class Pass1Listener extends Pass0Listener {
 		// stageprop_body
 	    //	: method_decl
 	    //	| stageprop_body method_decl
+		//	| method_signature ';'*
+		//	| role_body method_signature ';'*
 	    
-		/* nothing */
+		if (null != ctx.method_signature()) {
+			final FormalParameterList formalParameterList = new FormalParameterList();
+			parsingData_.pushFormalParameterList(formalParameterList);
+		}
 	}
 	
 	@Override public void exitStageprop_body(KantParser.Stageprop_bodyContext ctx) {
@@ -918,11 +954,37 @@ public class Pass1Listener extends Pass0Listener {
 	    //	| stageprop_body method_decl
 		//  | object_decl
 		//  | stageprop_body object_decl
+		//	| method_signature ';'*
+		//	| role_body method_signature ';'*
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
 			final DeclarationList objectDecl = parsingData_.popDeclarationList();
 			// We have issued an error message about this already elsewhere
+		}
+		
+		if (null != ctx.method_signature()) {
+			final MethodSignature signature = parsingData_.popMethodSignature();
+			final FormalParameterList plInProgress = parsingData_.popFormalParameterList();
+		
+			// Add a declaration of "this." These are class instance methods, never
+			// role methods, so there is no need to add a current$context argument
+			final ObjectDeclaration self = new ObjectDeclaration("this", currentRoleOrStageProp_.type(), ctx.getStart().getLine());
+			plInProgress.addFormalParameter(self);
+		
+			signature.addParameterList(plInProgress);
+			currentRoleOrStageProp_.addPublishedSignature(signature);
+			
+			// It should also exist in the "requires" section!
+			final MethodSignature requiresSignature = currentRoleOrStageProp_.lookupRequiredMethodSignatureDeclaration(signature.name());
+			if (null == requiresSignature) {
+				// Silent error on pass1; O.K. to gripe on pass 2
+				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
+						"Published signature must also be in `requires' section",
+						"", "", "", "", "");
+			} else {
+				// Make sure signature matches. TODO
+			}
 		}
 		
 		if (printProductionsDebug) {

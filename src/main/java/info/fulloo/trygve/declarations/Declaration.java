@@ -441,6 +441,7 @@ public abstract class Declaration implements BodyPart {
 			super(name, lineNumber, myEnclosedScope);
 			context_ = context;
 			requiredSelfSignatures_ = new Hashtable<String, MethodSignature>();
+			publishedSignatures_ = new Hashtable<String, MethodSignature>();
 		}
 		public ContextDeclaration contextDeclaration() {
 			return context_;
@@ -451,8 +452,23 @@ public abstract class Declaration implements BodyPart {
 		public void setType(RoleType t) {
 			type_ = t;
 		}
-		public MethodSignature lookupMethodSignatureDeclaration(final String name) {
+		public MethodSignature lookupRequiredMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
+		}
+		public void addPublishedSignature(final MethodSignature signature) {
+			publishedSignatures_.put(signature.name(), signature);
+		}
+		public MethodSignature lookupPublishedSignatureDeclaration(final String name) {
+			return publishedSignatures_.get(name);
+		}
+		public MethodSignature lookupPublishedSignatureDeclaration(final MethodSignature otherSignature) {
+			MethodSignature publishedSignature = publishedSignatures_.get(otherSignature.name());
+				if ( null != publishedSignature) {
+					if (publishedSignature.formalParameterList().alignsWith(otherSignature.formalParameterList()) == false) {
+						publishedSignature = null;
+				}
+			}
+			return publishedSignature;
 		}
 		private boolean checkParameterConcretenessOf(final FormalParameterList pl,
 				final Pass0Listener parserPass, final int lineNumber) {
@@ -507,6 +523,7 @@ public abstract class Declaration implements BodyPart {
 		
 		protected final ContextDeclaration context_;
 		protected final Map<String, MethodSignature> requiredSelfSignatures_;
+		protected final Map<String, MethodSignature> publishedSignatures_;
 	}
 	
 	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {

@@ -914,7 +914,7 @@ public abstract class Type implements ExpressionStackAPI
 			return this.enclosedScope().parentScope();
 		}
 		public MethodSignature lookupMethodSignatureDeclaration(final String methodName) {
-			return associatedDeclaration_.lookupMethodSignatureDeclaration(methodName);
+			return associatedDeclaration_.lookupRequiredMethodSignatureDeclaration(methodName);
 		}
 		public Declaration contextDeclaration() {
 			return associatedDeclaration_.contextDeclaration();

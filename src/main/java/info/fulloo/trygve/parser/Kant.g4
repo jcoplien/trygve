@@ -116,6 +116,8 @@ role_body
         | role_body method_decl
         | object_decl				// illegal
         | role_body object_decl		// illegal - for better error messages only
+        | method_signature ';'*
+        | role_body method_signature ';'*
         | /* null */
         ;
 
@@ -141,6 +143,8 @@ stageprop_body
         | stageprop_body method_decl
         | object_decl				// illegal
         | stageprop_body object_decl		// illegal - for better error messages only
+        | method_signature ';'*
+        | stageprop_body method_signature ';'*
         ;
 
 class_body

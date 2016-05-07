@@ -638,7 +638,7 @@ public class Pass2Listener extends Pass1Listener {
 		if (currentRoleOrStageProp_.type().pathName().equals(objectType.pathName())) {
 			;	// is within the same Role; it's cool
 		} else {
-			MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
+			final MethodDeclaration testDecl = nearestEnclosingMegaType.enclosedScope().lookupMethodDeclarationIgnoringParameter(message.selectorName(),
 					message.argumentList(), "this", true);
 			if (null != testDecl) {
 				;	// is a regular Role method — is O.K.
@@ -649,10 +649,21 @@ public class Pass2Listener extends Pass1Listener {
 				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
 						message, roleDecl);
 				if (null != signatureInRequiresSection) {
-					errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
+					// It's O.K. if the signature has been pulled into the Role interface
+					
+					final MethodSignature publishedSignature = roleDecl.lookupPublishedSignatureDeclaration(signatureInRequiresSection);
+					if (null != publishedSignature) {
+						// Is it public?
+						if (publishedSignature.accessQualifier() != AccessQualifier.PublicAccess) {
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", message.selectorName(),
+									"' is not public and so is not accessible to `", nearestEnclosingMegaType.name(), "'.", "");
+						}
+					} else {
+						errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
 							"NONCOMPLIANT: Trying to enact object script `", message.selectorName() + message.argumentList().selflessGetText(),
 							"' without using the interface of the Role it is playing: `" + roleDecl.name(),
 							"'.");
+					}
 				}
 			}
 		}

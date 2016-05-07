@@ -27,6 +27,7 @@ import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
@@ -601,6 +602,26 @@ public abstract class RTMessageDispatcher {
 						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
 					}
 				}
+				
+				RTType selfType = rTTypeOfSelf;
+				if (null == methodDecl && selfType instanceof RTClass) {
+					// Try the base classes
+				
+					ClassDeclaration baseClassDecl = null;
+					do {
+						final RTClass rTTypeOfSelfAsClass = (RTClass) selfType;
+						baseClassDecl = rTTypeOfSelfAsClass.baseClassDeclaration();
+						if (null != baseClassDecl) {
+							final RTType rTBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(baseClassDecl);
+							assert rTBaseClassType instanceof RTClass;
+							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+							if (null == methodDecl) {
+								selfType = rTBaseClassType;
+							}
+						}
+					} while (null == methodDecl && null != baseClassDecl);
+				}
+				
 				if (null == methodDecl) {
 					// One last try - look it up in Object.
 					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);

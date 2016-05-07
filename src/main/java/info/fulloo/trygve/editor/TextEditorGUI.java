@@ -254,6 +254,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 				editPane.setCaretPosition(newCaretPosition);
 				editPane.moveCaretPosition(newCaretPosition);
 				editPane.removeKeyListener(this);
+				editPane.removeMouseListener(mouseListener_);
 				searchPane.setText("");
 				return;
 			default:
@@ -330,7 +331,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		@Override public void keyTyped(final KeyEvent keyEvent) {
 			keyEvent.consume();
 		}
+		public void setMouseListener(final MouseListener mouseListener) {
+			mouseListener_ = mouseListener;
+		}
 		
+		private MouseListener mouseListener_;
 		private boolean reverseDirection_;
 		private int caretPositionAtSearchStart_;
 		private final TextEditorGUI gui_;
@@ -413,6 +418,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         			 editPane.addKeyListener(searchKeyListener);
         			 final MouseListener mouseListener = new MouseKeyListener(searchKeyListener);
         			 editPane.addMouseListener(mouseListener);
+        			 searchKeyListener.setMouseListener(mouseListener);
         		 }
         		 private static final long serialVersionUID = -329124812;
         	};
