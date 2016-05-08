@@ -764,11 +764,19 @@ public class Pass1Listener extends Pass0Listener {
 			final MethodSignature requiresSignature = currentRoleOrStageProp_.lookupRequiredMethodSignatureDeclaration(signature.name());
 			if (null == requiresSignature) {
 				// Silent error on pass1; O.K. to gripe on pass 2
-				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
-						"Published signature must also be in `requires' section",
-						"", "", "", "", "");
+				errorHook6p2(ErrorIncidenceType.Fatal, signature.lineNumber(),
+						"Published signature for `",
+						signature.getText(),
+						"' must also be in `requires' section.",
+						"", "", "");
 			} else {
-				// Make sure signature matches. TODO.
+				if (requiresSignature.formalParameterList().alignsWith(plInProgress) == false) {
+					errorHook6p2(ErrorIncidenceType.Fatal, signature.lineNumber(),
+							"Published signature for `",
+							signature.getText(),
+							"' doesn't match that in the `requires' section (line ",
+							String.format("%d", requiresSignature.lineNumber()), ").", "");
+				}
 			}
 		}
 		
@@ -979,11 +987,19 @@ public class Pass1Listener extends Pass0Listener {
 			final MethodSignature requiresSignature = currentRoleOrStageProp_.lookupRequiredMethodSignatureDeclaration(signature.name());
 			if (null == requiresSignature) {
 				// Silent error on pass1; O.K. to gripe on pass 2
-				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(),
-						"Published signature must also be in `requires' section",
-						"", "", "", "", "");
+				errorHook6p2(ErrorIncidenceType.Fatal, signature.lineNumber(),
+						"Published signature for `",
+						signature.getText(),
+						"' must also be in `requires' section.",
+						"", "", "");
 			} else {
-				// Make sure signature matches. TODO
+				if (requiresSignature.formalParameterList().alignsWith(plInProgress) == false) {
+					errorHook6p2(ErrorIncidenceType.Fatal, signature.lineNumber(),
+							"Published signature for `",
+							signature.getText(),
+							"' doesn't match that in the `requires' section (line ",
+							String.format("%d", requiresSignature.lineNumber()), ").", "");
+				}
 			}
 		}
 		

@@ -155,6 +155,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 			editPane.setCaretPosition(caretPosition);
 			editPane.moveCaretPosition(caretPosition);
 			editPane.removeKeyListener(this);
+			editPane.removeMouseListener(mouseListener_);
 			searchPane.setText("");
 		}
 		@Override public void keyPressed(final KeyEvent keyEvent) {

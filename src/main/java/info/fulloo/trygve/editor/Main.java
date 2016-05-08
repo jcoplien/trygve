@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "2.16";
+	public static final String TRYGVE_VERSION = "2.17";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
@@ -42,7 +42,7 @@ public class Main {
 			});
 		} else if (args[0].startsWith("-g")) {
 			java.awt.EventQueue.invokeLater(new Runnable() {
-				public void run() {
+				@Override public void run() {
 					new TextEditorGUI().setVisible(true);
 				}
 			});

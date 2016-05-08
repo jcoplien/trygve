@@ -256,13 +256,15 @@ public class Pass2Listener extends Pass1Listener {
 		final StaticScope currentScope = currentMethod.enclosedScope();
 		final StaticScope parentScope = currentScope.parentScope();
 		final Declaration otherAssociatedDeclaration = parentScope.associatedDeclaration();
+		final Type derivedClassReturnType = currentMethod.returnType();
+		
 		if (otherAssociatedDeclaration instanceof ClassDeclaration) {
 			ClassDeclaration baseClass = ((ClassDeclaration) otherAssociatedDeclaration).baseClassDeclaration();
 			while (null != baseClass) {
 				final StaticScope baseClassScope = baseClass.enclosedScope();
 				final MethodDeclaration baseClassVersionOfMethod =
 						baseClassScope.lookupMethodDeclarationIgnoringParameter(currentMethod.name(), currentMethod.formalParameterList(), "this",
-								/* conversionAllowed = */ false);
+								/* conversionAllowed = */ true);
 				if (null != baseClassVersionOfMethod) {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
@@ -272,7 +274,25 @@ public class Pass2Listener extends Pass1Listener {
 								baseClass.name(), "'.", "");
 						break;	// don't cascade errors
 					}
+					
+					// Check Liskov
+					final Type baseClassReturnType = baseClassVersionOfMethod.returnType();
+					if (baseClassReturnType.isntError() && derivedClassReturnType.isntError() &&
+							derivedClassReturnType.canBeConvertedFrom(baseClassReturnType,
+									lineNumber, this) == false) {
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+								"Return type `",
+								baseClassReturnType.getText(),
+								"' of `" + currentMethod.signature().getText(),
+								"' in class `" + baseClass.name(),
+								"' must be no less restrictive than `",
+								derivedClassReturnType.getText() +
+								"' in the derived class."
+								);
+					}
 				}
+				
+				// Next
 				baseClass = baseClass.baseClassDeclaration();
 			}
 		}
@@ -438,7 +458,6 @@ public class Pass2Listener extends Pass1Listener {
 			executionContext = executionContext.parent;
 		}
 	}
-
 	
 	@Override public void binopTypeCheck(final Expression leftExpr, final String operationAsString,
 			final Expression rightExpr, final Token ctxGetStart) {
