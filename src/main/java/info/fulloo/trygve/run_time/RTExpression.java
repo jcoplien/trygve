@@ -857,7 +857,7 @@ public abstract class RTExpression extends RTCode {
 		// to the debugging empire in RunTimeEnvironment
 		
 		public static class RTPostReturnProcessing extends RTExpression {
-			public RTPostReturnProcessing(final RTCode nextCode, final String name, String debugName) {
+			public RTPostReturnProcessing(final RTCode nextCode, final String name, final String debugName) {
 				super();
 				super.setNextCode(nextCode);
 				name_ = name;
@@ -865,7 +865,14 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public RTCode run() {
 				if (false == resultIsConsumed()) {
-					RunTimeEnvironment.runTimeEnvironment_.popStack();
+					if (RunTimeEnvironment.runTimeEnvironment_.stackSize() < 1) {
+						ErrorLogger.error(ErrorIncidenceType.Internal, 0,
+								"FATAL: Run-time error: In post-return processing, return value not found on the stack",
+								": `", debugName_, "', `", name_, "'.");
+						return new RTHalt();
+					} else {
+						RunTimeEnvironment.runTimeEnvironment_.popStack();
+					}
 				}
 				return super.nextCode();
 			}
@@ -3955,7 +3962,6 @@ public abstract class RTExpression extends RTCode {
 		public RTReturn(final String methodName, final List<RTCode> returnExpression,
 				final RTType nearestEnclosingType, final int nestingLevelInsideMethod) {
 			super();
-			
 			rTRe_ = returnExpression;
 
 			lineNumber_ = 0;
@@ -3971,6 +3977,7 @@ public abstract class RTExpression extends RTCode {
 			// If returnExpr isn't null, then there's a return value. It's the
 			// responsibility of the return statement to evaluate it and put
 			// it on the stack, and to get it back to the caller
+
 			if (null != returnExpression) {
 				rTRe_ = new ArrayList<RTCode>();
 				
@@ -4000,13 +4007,12 @@ public abstract class RTExpression extends RTCode {
 				returnExpressionList = rTRe_;
 				if (returnExpressionList.size() == 1) {
 					final RTCode returnExpression = returnExpressionList.get(0);
-					if (returnExpression instanceof RTNullExpression == true) {
-						// In the old days we didn't handle return expressions
-						// so religiously, and all it took was a non-null
-						// rTRe_ list here to constitute a return expression. Now
-						// with real ReturnExpression processing we actually evaluate
-						// the expression explicitly. This makes a problem for the
-						// print empire, which takes a shortcut.
+					if (null == returnExpression) {
+						// This used to use NullExpression as a flag. It is probably
+						// deprecated, and testing found that this was dead code on a test
+						// of NullExpression. We leave the code here in case we find we
+						// really need it, but the null check should probably be replaced
+						// with some kind of sentinel check.
 						thereIsAReturnExpression = false;
 					} else {
 						thereIsAReturnExpression = true;

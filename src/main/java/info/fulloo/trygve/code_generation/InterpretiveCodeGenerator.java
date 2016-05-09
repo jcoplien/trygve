@@ -94,7 +94,6 @@ import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NewArrayExpression;
 import info.fulloo.trygve.expressions.Expression.NewExpression;
-import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.PowerExpression;
 import info.fulloo.trygve.expressions.Expression.ProductExpression;
 import info.fulloo.trygve.expressions.Expression.PromoteToDoubleExpr;
@@ -1959,10 +1958,22 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		List<RTCode> rTExpr = null;
 		if (null != expr) {
 			final Expression returnExpression = expr.returnExpression();
-			if (null != returnExpression && returnExpression instanceof NullExpression == false) {
+			if (null != returnExpression) {
 				rTExpr = this.compileExpressionForMethodOfTypeInScope(returnExpression, methodDeclaration, rtTypeDeclaration, scope);
 				if (null == rTExpr) {
 					assert null != rTExpr;
+				}
+				if (returnExpression.resultIsConsumed()) {
+					if (rTExpr instanceof List) {
+						for (final RTCode enclosedCode : rTExpr) {
+							if (enclosedCode instanceof RTExpression) {
+								final RTExpression enclosedExpr = (RTExpression)enclosedCode;
+								enclosedExpr.setResultIsConsumed(true);
+							}
+						}
+					} else if (rTExpr instanceof RTExpression) {
+						((RTExpression)rTExpr).setResultIsConsumed(true);
+					}
 				}
 			}
 		}
