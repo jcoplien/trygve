@@ -285,7 +285,7 @@ public class Pass2Listener extends Pass1Listener {
 								"Return type `",
 								derivedClassReturnType.getText(),
 								"' of `" + currentMethod.signature().getText(),
-								"' in class `" + baseClass.name(),
+								"' in class `" + otherAssociatedDeclaration.name(),
 								"' must be no less restrictive than `",
 								baseClassReturnType.getText() +
 								"' in the base class."
