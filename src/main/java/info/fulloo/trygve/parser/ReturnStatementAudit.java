@@ -80,18 +80,18 @@ public class ReturnStatementAudit {
 	public void wrapup() {
 		for (final ReturnExpression retExpr : returnExpressions_) {
 			if (null == returnType_) {
-				if (null != retExpr.returnExpression()) {
+				if (null != retExpr.returnExpression() && retExpr.isntError()) {
 					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
 							null == retExpr.type()? "unknown": retExpr.type().name(), " when no return value was expected.", "");
 				}
-			} else if (null == retExpr.type()) {
+			} else if (null == retExpr.type() && retExpr.isntError()) {
 				pass_.errorHook5p2(ErrorIncidenceType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",
 						"Please read nearby error messages carefully.", "", "");
 			} else if (returnType_.canBeConvertedFrom(retExpr.type()) == false) {
-				if (null == retExpr.returnExpression()) {
+				if (null == retExpr.returnExpression() && returnType_.isntError()) {
 					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with no return type cannot be converted to expected type of ",
 							returnType_.getText(), "", "");
-				} else {
+				} else if (retExpr.isntError() && returnType_.isntError()) {
 					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with return type of ",
 							retExpr.type().getText(), " cannot be converted to expected type of ",
 							returnType_.getText());

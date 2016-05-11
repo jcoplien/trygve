@@ -100,6 +100,12 @@ public class RTArrayType implements RTType {
 		return null;
 	}
 	
+	@Override public RTMethod lookupBaseClassMethodLiskovCompliantTo(final String methodName,
+			final ActualOrFormalParameterList pl) {
+		assert false;
+		return null;
+	}
+	
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName,
 			final ActualOrFormalParameterList pl, final int paramToIgnore) {
 		assert false;

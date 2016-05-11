@@ -1256,11 +1256,41 @@ public class StaticScope {
 		return retval;
 	}
 	
+	public MethodDeclaration lookupBaseClassMethodLiskovCompliantTo(final MethodDeclaration derivedClassDecl) {
+		MethodDeclaration retval = null;
+		final MethodSignature derivedClassMethodSignature = derivedClassDecl.signature();
+		final String methodSelectorName = derivedClassMethodSignature.name();
+		final ActualOrFormalParameterList derivedClassParameterList = derivedClassMethodSignature.formalParameterList();
+		if (methodDeclarationDictionary_.containsKey(methodSelectorName)) {
+			final ArrayList<MethodDeclaration> baseClassMethodsForThisSelector = methodDeclarationDictionary_.get(methodSelectorName);
+			for (final MethodDeclaration aBaseClassDeclaration : baseClassMethodsForThisSelector) {
+				final FormalParameterList aBaseClassParameterList = aBaseClassDeclaration.formalParameterList();
+				final ActualOrFormalParameterList mappedBaseClassParameterList = null == aBaseClassParameterList? null:
+					aBaseClassParameterList.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedDerivedClassParameterList = null == derivedClassParameterList? null:
+					(ActualOrFormalParameterList)derivedClassParameterList.mapTemplateParameters(templateInstantiationInfo_);
+				if (null == mappedBaseClassParameterList && null == mappedDerivedClassParameterList) {
+					retval = aBaseClassDeclaration; break;
+				} else if (null != mappedBaseClassParameterList &&
+						
+						// Returns true if mappedDerivedClassParameterList is a base class of,
+						// or can be converted from, mappedBaseClassParameterList
+						FormalParameterList.alignsWithParameterListIgnoringParamNamed(
+								mappedDerivedClassParameterList,
+								mappedBaseClassParameterList,
+								"this", true)) {
+					retval = aBaseClassDeclaration; break;
+				}
+			}
+		}
+		return retval;
+	}
+	
 	public MethodDeclaration lookupMethodDeclarationIgnoringRoleStuff(final String methodSelector, final ActualOrFormalParameterList parameterList) {
 		MethodDeclaration retval = null;
 		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
 			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
-			for (MethodDeclaration aDecl : oldEntry) {
+			for (final MethodDeclaration aDecl : oldEntry) {
 				final FormalParameterList loggedSignature = aDecl.formalParameterList();
 				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
 					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);

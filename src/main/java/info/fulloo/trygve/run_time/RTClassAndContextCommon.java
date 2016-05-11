@@ -172,6 +172,40 @@ public abstract class RTClassAndContextCommon implements RTType {
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
 		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true, -1);
 	}
+	@Override public RTMethod lookupBaseClassMethodLiskovCompliantTo(final String methodName,
+			final ActualOrFormalParameterList pl) {
+		RTMethod retval = null;
+		if (stringToMethodDeclMap_.containsKey(methodName)) {
+			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
+			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
+				final FormalParameterList baseClassMethodSignature = aPair.getKey();
+				
+				ActualOrFormalParameterList potentialBaseClassMethodSignature = baseClassMethodSignature,
+				                            mappedDerivedClassParameters = pl;
+				if (null != templateInstantiationInfo_) {
+					potentialBaseClassMethodSignature = baseClassMethodSignature.mapTemplateParameters(templateInstantiationInfo_);
+					mappedDerivedClassParameters = mappedDerivedClassParameters.mapTemplateParameters(templateInstantiationInfo_);
+				}
+				
+				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(
+						mappedDerivedClassParameters,
+						potentialBaseClassMethodSignature,
+						"this", true)) {
+					retval = aPair.getValue();
+					break;
+				}
+			}
+		} else if (null != this.baseClassDeclaration()) {
+			// We inherit base class methods. Recur.
+			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
+			assert (runTimeBaseClassType instanceof RTClass);
+			retval = runTimeBaseClassType.lookupBaseClassMethodLiskovCompliantTo(methodName, pl);
+		} else {
+			retval = null;
+		}
+		return retval;
+	}
+	
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName, final ActualOrFormalParameterList suppliedParameters, final int ignoreName) {
 		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, null, true, ignoreName);
 	}

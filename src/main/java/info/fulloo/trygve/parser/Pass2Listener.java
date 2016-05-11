@@ -263,8 +263,7 @@ public class Pass2Listener extends Pass1Listener {
 			while (null != baseClass) {
 				final StaticScope baseClassScope = baseClass.enclosedScope();
 				final MethodDeclaration baseClassVersionOfMethod =
-						baseClassScope.lookupMethodDeclarationIgnoringParameter(currentMethod.name(), currentMethod.formalParameterList(), "this",
-								/* conversionAllowed = */ true);
+						baseClassScope.lookupBaseClassMethodLiskovCompliantTo(currentMethod);
 				if (null != baseClassVersionOfMethod) {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
@@ -277,17 +276,19 @@ public class Pass2Listener extends Pass1Listener {
 					
 					// Check Liskov
 					final Type baseClassReturnType = baseClassVersionOfMethod.returnType();
-					if (baseClassReturnType.isntError() && derivedClassReturnType.isntError() &&
-							derivedClassReturnType.canBeConvertedFrom(baseClassReturnType,
+					if (null != baseClassReturnType && null != derivedClassReturnType &&
+							baseClassReturnType.isntError() &&
+							derivedClassReturnType.isntError() &&
+							baseClassReturnType.canBeConvertedFrom(derivedClassReturnType,
 									lineNumber, this) == false) {
 						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
 								"Return type `",
-								baseClassReturnType.getText(),
+								derivedClassReturnType.getText(),
 								"' of `" + currentMethod.signature().getText(),
 								"' in class `" + baseClass.name(),
 								"' must be no less restrictive than `",
-								derivedClassReturnType.getText() +
-								"' in the derived class."
+								baseClassReturnType.getText() +
+								"' in the base class."
 								);
 					}
 				}
