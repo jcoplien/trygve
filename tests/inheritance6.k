@@ -45,8 +45,8 @@ class Derived2d extends Base2 {
 new Derived2().test()
 
 /* GOLD:
-line 18: Return type `Base' of `func4(int,Base)' in class `Base2' must be no less restrictive than `Derived' in the base class.
-line 24: Return type `Base' of `func(int,Base)' in class `Base2' must be no less restrictive than `Derived' in the base class.
-line 41: Return type `Base' of `func4(int,Derived)' in class `Base2' must be no less restrictive than `Derived' in the base class.
+line 18: Return type `Base' of `func4(int,Base)' in class `Derived2' must be no less restrictive than `Derived' in the base class.
+line 24: Return type `Base' of `func(int,Base)' in class `Derived2b' must be no less restrictive than `Derived' in the base class.
+line 41: Return type `Base' of `func4(int,Derived)' in class `Derived2d' must be no less restrictive than `Derived' in the base class.
 ___________________________________________________________
 */

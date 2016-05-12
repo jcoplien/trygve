@@ -189,10 +189,10 @@ expr_and_decl_list
         ;
  
 type_and_expr_and_decl_list
- 		: expr_and_decl_list
- 		| expr_and_decl_list type_declaration
- 		| type_declaration expr_and_decl_list
- 		;
+        : expr_and_decl_list
+        | expr_and_decl_list type_declaration
+        | type_declaration expr_and_decl_list
+        ;
 
 return_type
         : type_name '[' ']'
@@ -203,7 +203,7 @@ return_type
 method_name
         : JAVA_ID
         | ABELIAN_SUMOP
-		| ABELIAN_MULOP
+        | ABELIAN_MULOP
         ;
 
 access_qualifier

@@ -48,6 +48,7 @@ public class TestRunner {
 		"inheritance4.k",
 		"inheritance5.k",
 		"inheritance6.k",
+		"derived1.k",
 		"inhertest.k",
 		"inhertest2.k",
 		"roletest.k",

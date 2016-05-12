@@ -614,7 +614,8 @@ public abstract class RTMessageDispatcher {
 						if (null != baseClassDecl) {
 							final RTType rTBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(baseClassDecl);
 							assert rTBaseClassType instanceof RTClass;
-							methodDecl = rTBaseClassType.lookupBaseClassMethodLiskovCompliantTo(methodSelectorName, actualParameters);
+							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+							// No. methodDecl = rTBaseClassType.lookupBaseClassMethodLiskovCompliantTo(methodSelectorName, actualParameters);
 							if (null == methodDecl) {
 								selfType = rTBaseClassType;
 							}

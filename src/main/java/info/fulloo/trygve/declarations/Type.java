@@ -235,7 +235,7 @@ public abstract class Type implements ExpressionStackAPI
 						// Base class check
 						final ClassOrContextType classyT = (ClassOrContextType)t;
 						for (ClassType aBase = classyT.baseClass(); null != aBase; aBase = aBase.baseClass()) {
-							if (aBase.name().equals(name())) {
+							if (aBase.pathName().equals(pathName())) {
 								retval = true;
 								break;
 							}

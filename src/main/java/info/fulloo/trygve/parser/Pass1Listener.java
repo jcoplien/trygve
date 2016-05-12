@@ -5451,7 +5451,7 @@ public class Pass1Listener extends Pass0Listener {
 				// includes stage props
 				final String ofWhatThisIsAList = rhsType.name().substring(5, rhsType.name().length() - 1);
 				final Type rhsBaseType = currentScope_.lookupTypeDeclarationRecursive(ofWhatThisIsAList);
-				if (null != rhsBaseType) {	// error stumbling check
+				if (null != rhsBaseType && rhsBaseType.isntError()) {	// error stumbling check
 					tf = lhsType.canBeConvertedFrom(rhsBaseType, lineNumber, this);
 					if (false == tf && lhs.isntError() && rhs.isntError()) {
 						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Roles in `", lhsType.name(),
