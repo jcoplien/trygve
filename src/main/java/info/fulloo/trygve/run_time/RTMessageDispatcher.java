@@ -669,8 +669,8 @@ public abstract class RTMessageDispatcher {
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 
 		if (self instanceof RTNullObject) {
-			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
-					methodSelectorName_, " on a null object", "");
+			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method `",
+					methodSelectorName_, "' on a null object", "");
 			RTMessage.printMiniStackStatus();
 			
 			// Halt the machine

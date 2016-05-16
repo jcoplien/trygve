@@ -10,6 +10,8 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
@@ -178,6 +180,14 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 
 		final RTMethod hE = rTType.lookupMethod("handleEvent", pl);
 		if (null != hE) {
+			final MethodDeclaration methodDecl = hE.methodDeclaration();
+			final Type returnType = methodDecl.returnType();
+			final String returnTypePathName = returnType.pathName();
+			if (returnTypePathName.equals("boolean.") == false) {
+				ErrorLogger.error(ErrorIncidenceType.Internal, "Return type of `handleEvent' is not boolean in class `",
+						methodDecl.enclosingScope().name() + "' at line ", Integer.toString(methodDecl.lineNumber()), ".");
+				// not sure what else to do here...
+			}
 			final int preStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			this.dispatchInterrupt(hE, e);
 

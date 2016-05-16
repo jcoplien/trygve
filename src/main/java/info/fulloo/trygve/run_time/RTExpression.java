@@ -1440,10 +1440,19 @@ public abstract class RTExpression extends RTCode {
 
 				boolean value = false;
 				if (operator_.equals("is") || operator_.equals("Is")) {
-					value = lhs == rhs;
+					if (lhs instanceof RTNullObject) {
+						value = rhs instanceof RTNullObject;
+					} else {
+						value = lhs == rhs;
+					}
 				} else if (operator_.equals("isnot") || operator_.equals("IsNot") ||
 						operator_.equals("is not") || operator_.equals("Is Not")) {
-					value = lhs == rhs == false == true;
+					if (lhs instanceof RTNullObject) {
+						value = rhs instanceof RTNullObject;
+					} else {
+						value = lhs == rhs;
+					}
+					value = !value;
 				} else {
 					assert false;
 				}

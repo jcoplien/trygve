@@ -91,8 +91,8 @@ class Range {
       start_ = a.clone;
       end_ = b.clone
    }
-   public int start() { return start_ }
-   public int end() { return end_ }
+   public int start() const { return start_ }
+   public int end() const { return end_ }
 
    private int start_, end_
 }

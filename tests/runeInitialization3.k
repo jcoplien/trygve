@@ -74,7 +74,7 @@ ___________________________________________________________
 Base constructor
 -------
 Blah
-line 45: FATAL: TERMINATED: Attempting to invoke method toString on a null object
+line 45: FATAL: TERMINATED: Attempting to invoke method `toString' on a null object
 popping stack: type is RTNullObject
 	In script `int.toString'
 	Called from script `String.+'

@@ -2,7 +2,7 @@ class MyPanel extends Panel {
    public MyPanel() {
       Panel()
    }
-   public void handleEvent(Event event) {
+   public boolean handleEvent(Event event) {
       int eventId = event.id.clone;
       if (eventId == Event.MOUSE_DOWN) {
           System.out.print("MOUSE_DOWN event: ")
@@ -19,7 +19,8 @@ class MyPanel extends Panel {
       }
       System.out.print("handled event at (")
                 .print(event.x).print(", ")
-                .print(event.y).println(")")
+                .print(event.y).println(")");
+      return true
    }
 }
 
