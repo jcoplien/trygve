@@ -1828,11 +1828,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		Type retval = type;
 		if (type instanceof ArrayType) {
 			final String typeName = type.name();
-			StaticScope scopeOfType = null;
-			if (null == type.enclosedScope()) {
+			StaticScope scopeOfType = type.enclosedScope();
+			if (null == scopeOfType) {
 				scopeOfType = StaticScope.globalScope();
 			} else {
-				scopeOfType = type.enclosedScope().parentScope();
+				scopeOfType = scopeOfType.parentScope();
 			}
 			final Type lookedUpType = scopeOfType.lookupTypeDeclaration(typeName);
 			if (null != lookedUpType) {

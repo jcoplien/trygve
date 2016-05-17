@@ -40,6 +40,8 @@ public class RTArrayType implements RTType {
 		baseType_ = baseType;
 		arrayType_ = arrayType;
 		rTSizeMethod_ = new RTSizeMethod(arrayType.sizeMethodDeclaration(StaticScope.globalScope()));
+		rTAtMethod_ = new RTAtMethod(arrayType.atMethodDeclaration(StaticScope.globalScope()));
+		rTAtPutMethod_ = new RTAtPutMethod(arrayType.atPutMethodDeclaration(StaticScope.globalScope()));
 	}
 
 	@Override public void addClass(final String typeName, final RTClass classDecl) {
@@ -83,6 +85,14 @@ public class RTArrayType implements RTType {
 			// This is part of the kludge to give naked array appearances
 			// their own methods
 			retval = rTSizeMethod_;
+		} else if (methodName.equals("at") && pl.count() == 2) {
+			// This is part of the kludge to give naked array appearances
+			// their own methods
+			retval = rTAtMethod_;
+		} else if (methodName.equals("atPut") && pl.count() == 3) {
+			// This is part of the kludge to give naked array appearances
+			// their own methods
+			retval = rTAtPutMethod_;
 		} else {
 			retval = null;
 		}
@@ -188,6 +198,91 @@ public class RTArrayType implements RTType {
 		}
 	}
 	
+	private static class RTAtPutMethod extends RTMethod {
+		public RTAtPutMethod(final MethodDeclaration methodDecl) {
+			super("atPut", methodDecl);
+		}
+		@Override public RTCode run() {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTStackable theArrayObject = activationRecord.getObject("this");
+			final RTStackable theIndex = activationRecord.getObject("theIndex");
+			final RTStackable object = activationRecord.getObject("object");
+			if (theArrayObject instanceof RTNullObject) {
+				assert false;
+			} else if (theArrayObject instanceof RTArrayObject) {
+				((RTArrayObject)theArrayObject).atPut(theIndex, object);
+			}
+			
+			// This is a VERY tightly integrated function. It
+			// does not use an RTReturn functor but handles
+			// return processing riiiiight here. The only thing
+			// that follows is RTPostReturnProcessing, which
+			// is where the return address takes us.
+			
+			// This does nothing but pop the frame pointer stack, really
+			RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();	// is this right?
+			
+			final RTStackable rawReturnAddress = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawReturnAddress instanceof RTCode;
+			RTCode returnAddress = (RTCode) rawReturnAddress;
+			
+			final RTDynamicScope lastPoppedScope = RunTimeEnvironment.runTimeEnvironment_.popDynamicScope();
+			lastPoppedScope.decrementReferenceCount();
+			
+			// No one else should have a handle to the activation record
+			assert lastPoppedScope.referenceCount() == 0;
+			
+			lastPoppedScope.closeScope();
+
+			return returnAddress;
+			
+			// ignore returnInstruction_;
+		}
+	}
+	
+	private static class RTAtMethod extends RTMethod {
+		public RTAtMethod(final MethodDeclaration methodDecl) {
+			super("at", methodDecl);
+		}
+		@Override public RTCode run() {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTStackable theArrayObject = activationRecord.getObject("this");
+			final RTStackable theIndex = activationRecord.getObject("theIndex");
+			if (theArrayObject instanceof RTNullObject) {
+				assert false;
+			} else if (theArrayObject instanceof RTArrayObject == false) {
+				assert false;
+			}
+			final RTStackable result = ((RTArrayObject)theArrayObject).at(theIndex);
+			
+			// This is a VERY tightly integrated function. It
+			// does not use an RTReturn functor but handles
+			// return processing riiiiight here. The only thing
+			// that follows is RTPostReturnProcessing, which
+			// is where the return address takes us.
+			
+			// This does nothing but pop the frame pointer stack, really
+			RunTimeEnvironment.runTimeEnvironment_.popDownToFramePointer();	// is this right?
+			
+			final RTStackable rawReturnAddress = RunTimeEnvironment.runTimeEnvironment_.popStack();
+			assert rawReturnAddress instanceof RTCode;
+			RTCode returnAddress = (RTCode) rawReturnAddress;
+			
+			final RTDynamicScope lastPoppedScope = RunTimeEnvironment.runTimeEnvironment_.popDynamicScope();
+			lastPoppedScope.decrementReferenceCount();
+			
+			// No one else should have a handle to the activation record
+			assert lastPoppedScope.referenceCount() == 0;
+			
+			lastPoppedScope.closeScope();
+
+			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
+			return returnAddress;
+			
+			// ignore returnInstruction_;
+		}
+	}
+	
 	public Type baseType() {
 		return baseType_;
 	}
@@ -196,7 +291,7 @@ public class RTArrayType implements RTType {
 		return arrayType_;
 	}
 	
-	private final RTMethod rTSizeMethod_;
+	private final RTMethod rTSizeMethod_, rTAtMethod_, rTAtPutMethod_;
 	private final Type baseType_;
 	private final ArrayType arrayType_;
 }

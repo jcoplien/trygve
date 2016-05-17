@@ -443,7 +443,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 				}
 			}
 			
-			for (Map.Entry<String, String> iter : isRoleArrayMap_.entrySet()) {
+			for (final Map.Entry<String, String> iter : isRoleArrayMap_.entrySet()) {
 				contextInfo.designateRoleAsArray(iter.getKey());
 			}
 			
@@ -997,6 +997,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			} else {
 				retval = false;
 			}
+			return retval;
+		}
+		public RTObject toInteger() {
+			// Cheesy. Only decimal
+			final Integer iRetval = Integer.valueOf(foobar_);
+			RTIntegerObject retval = new RTIntegerObject(iRetval);
 			return retval;
 		}
 		@Override public String getText() {

@@ -384,7 +384,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("add")) {
 			listCode.add(new ListClass.RTAddCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
-		} else if (methodDeclaration.name().equals("get")) {
+		} else if (methodDeclaration.name().equals("get") || methodDeclaration.name().equals("at")) {
 			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope(),
 					methodDeclaration.lineNumber()));
 			retvalType = RetvalTypes.usingTemplate;
@@ -465,13 +465,13 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("size")) {
 			mapCode.add(new MapClass.RTSizeCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingInt;
-		} else if (methodDeclaration.name().equals("put")) {
+		} else if (methodDeclaration.name().equals("put") || methodDeclaration.name().equals("atPut")) {
 			mapCode.add(new MapClass.RTPutCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("putAll")) {
 			mapCode.add(new MapClass.RTPutAllCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
-		} else if (methodDeclaration.name().equals("get")) {
+		} else if (methodDeclaration.name().equals("get") || methodDeclaration.name().equals("at")) {
 			mapCode.add(new MapClass.RTGetCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("remove")) {
@@ -1175,6 +1175,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			} else if (methodDeclaration.name().equals("toString")) {
 				retvalType = RetvalTypes.usingString;
 				code.add(new RTStringClass.RTToStringCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("toInteger")) {
+				retvalType = RetvalTypes.usingString;
+				code.add(new RTStringClass.RTToIntegerCode(methodDeclaration.enclosedScope()));
 			} else {
 				retvalType = RetvalTypes.undefined;
 				assert false;

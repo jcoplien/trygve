@@ -1093,10 +1093,22 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (objectType.name().endsWith("_$array") && objectType instanceof ArrayType) {
 			// This is part of the endeavor to add method invocations to
 			// naked array object appearances (e.g., size())
-			methodSignature = new MethodSignature(message.selectorName(), 
-					StaticScope.globalScope().lookupTypeDeclaration("int"),
-					AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
-			methodSignature.setHasConstModifier(true);
+			if (message.selectorName().equals("size")) {
+				methodSignature = new MethodSignature(message.selectorName(), 
+						StaticScope.globalScope().lookupTypeDeclaration("int"),
+						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+				methodSignature.setHasConstModifier(true);
+			} else if (message.selectorName().equals("at")) {
+				methodSignature = new MethodSignature(message.selectorName(), 
+						message.returnType(),
+						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+				methodSignature.setHasConstModifier(true);
+			} else if (message.selectorName().equals("atPut")) {
+				methodSignature = new MethodSignature(message.selectorName(), 
+						StaticScope.globalScope().lookupTypeDeclaration("void"),
+						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+				methodSignature.setHasConstModifier(false);
+			}
 			isOKMethodSignature = true;
 		}
 		
@@ -1255,7 +1267,7 @@ public class Pass2Listener extends Pass1Listener {
 					}
 				}
 					
-				if (false == parametersMatch) {
+				if (false == parametersMatch && actualParameter.isntError() && formalParameter.isntError()) {
 					final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 					final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
@@ -1344,7 +1356,7 @@ public class Pass2Listener extends Pass1Listener {
 								}
 							}
 						}
-						if (false == isOK) {
+						if (false == isOK && actualParameter.isntError() && formalParameter.isntError()) {
 							final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 							final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
 							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,

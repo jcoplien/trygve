@@ -1169,6 +1169,8 @@ public abstract class Type implements ExpressionStackAPI
 			super(null);
 			name_ = name;
 			sizeMethodDeclaration_ = null;
+			atMethodDeclaration_ = null;
+			atPutMethodDeclaration_ = null;
 			baseType_ = baseType;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
@@ -1184,6 +1186,21 @@ public abstract class Type implements ExpressionStackAPI
 			} else {
 				final ArrayType tAsArray = (ArrayType) t;
 				retval = baseType_.canBeConvertedFrom(tAsArray.baseType());
+			}
+			return retval;
+		}
+		public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
+				final String paramToIgnore, final HierarchySelector baseClassSearch) {
+			final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
+			MethodSignature retval = null;
+			// NEEDS MAJOR WORK TO CHECK ARGUMENTS
+			final StaticScope scope = StaticScope.globalScope();
+			if (methodSelector.equals("at")) {
+				retval = atMethodDeclaration(scope).signature();
+			} else if (methodSelector.equals("atPut")) {
+				retval = atPutMethodDeclaration(scope).signature();
+			} else if (methodSelector.equals("size")) {
+				retval = sizeMethodDeclaration(scope).signature();
 			}
 			return retval;
 		}
@@ -1215,10 +1232,55 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return sizeMethodDeclaration_;
 		}
+		public MethodDeclaration atMethodDeclaration(final StaticScope enclosingScope) {
+			if (null == atMethodDeclaration_) {
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final FormalParameterList formalParameterList = new FormalParameterList();
+				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
+				
+				formalParameterList.addFormalParameter(theIndex);
+				formalParameterList.addFormalParameter(self);
+				
+				final MethodSignature signature = new MethodSignature("at",
+						baseType_,
+						AccessQualifier.PublicAccess, 0, false);
+				signature.addParameterList(formalParameterList);
+				dummyScope_ = new StaticScope(enclosingScope);
+				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				dummyScope_.declareMethod(atMethodDeclaration_);
+			}
+			return atMethodDeclaration_;
+		}
+		public MethodDeclaration atPutMethodDeclaration(final StaticScope enclosingScope) {
+			if (null == atPutMethodDeclaration_) {
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final FormalParameterList formalParameterList = new FormalParameterList();
+				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
+				final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
+				final ObjectDeclaration object = new ObjectDeclaration("object", intType, 0);
+				
+				formalParameterList.addFormalParameter(object);
+				formalParameterList.addFormalParameter(theIndex);
+				formalParameterList.addFormalParameter(self);
+				
+				final MethodSignature signature = new MethodSignature("atPut",
+						voidType,
+						AccessQualifier.PublicAccess, 0, false);
+				signature.addParameterList(formalParameterList);
+				dummyScope_ = new StaticScope(enclosingScope);
+				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				dummyScope_.declareMethod(atPutMethodDeclaration_);
+			}
+			return atPutMethodDeclaration_;
+		}
 		
 		private final Type baseType_;
 		private final String name_;
 		private MethodDeclaration sizeMethodDeclaration_;
+		private MethodDeclaration atMethodDeclaration_;
+		private MethodDeclaration atPutMethodDeclaration_;
 		private StaticScope dummyScope_;
 	}
 	

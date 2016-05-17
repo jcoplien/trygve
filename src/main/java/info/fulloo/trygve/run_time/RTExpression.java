@@ -660,6 +660,16 @@ public abstract class RTExpression extends RTCode {
 				// add others here (clone?). If the number of methods we add gets
 				// too large we should explore another architectural alternative.
 				retval = ((ArrayType)typeOfReceiver).sizeMethodDeclaration(StaticScope.globalScope());
+			} else if (typeOfReceiver instanceof ArrayType && methodSelectorName.equals("at")) {
+				// Special kludge for method invocation on array "object." Can
+				// add others here (clone?). If the number of methods we add gets
+				// too large we should explore another architectural alternative.
+				retval = ((ArrayType)typeOfReceiver).atMethodDeclaration(StaticScope.globalScope());
+			} else if (typeOfReceiver instanceof ArrayType && methodSelectorName.equals("atPut")) {
+				// Special kludge for method invocation on array "object." Can
+				// add others here (clone?). If the number of methods we add gets
+				// too large we should explore another architectural alternative.
+				retval = ((ArrayType)typeOfReceiver).atPutMethodDeclaration(StaticScope.globalScope());
 			} else {
 				if (null == receiverScope) {
 					assert null != receiverScope;

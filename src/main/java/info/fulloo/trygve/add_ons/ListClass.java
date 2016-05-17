@@ -149,6 +149,8 @@ public final class ListClass {
 			
 			declareListMethod("get", T, "theIndex", integerType, true);
 			
+			declareListMethod("at", T, "theIndex", integerType, true);
+			
 			declareListMethod("indexOf", intType, "element", T, true);
 			
 			declareListMethod("remove", booleanType, "element", T, false);
@@ -338,6 +340,43 @@ public final class ListClass {
 				} else {
 					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
 							"List.get(): List index out-of-range: ",
+							Integer.toString((int)argument.intValue()),
+							" on list of size ", Integer.toString(theListObject.size()));
+					pc = new RTHalt();
+				}
+			}
+			return pc;
+		}
+		
+		private final int lineNumber_;
+	}
+	
+	public static class RTAtCode extends RTListCommon {
+		public RTAtCode(final StaticScope enclosingMethodScope, final int lineNumber) {
+			super("List", "at", "theIndex", "int", enclosingMethodScope, new TemplateParameterType("T", null));
+			lineNumber_ = lineNumber;
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			RTCode pc = null;
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
+			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			if (null == argument) {
+				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+						"Use of uninitialized list value, or index out of range.", "", "", "");
+				pc = new RTHalt();	// halt instruction
+			} else {
+				RTObject result = null;
+				if (theListObject.isValidIndex((int)argument.intValue())) {
+					result = theListObject.get((int)argument.intValue());
+
+					addRetvalTo(activationRecord);
+					activationRecord.setObject("ret$val", result);
+					
+					pc = super.nextCode();
+				} else {
+					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+							"List.at(): List index out-of-range: ",
 							Integer.toString((int)argument.intValue()),
 							" on list of size ", Integer.toString(theListObject.size()));
 					pc = new RTHalt();

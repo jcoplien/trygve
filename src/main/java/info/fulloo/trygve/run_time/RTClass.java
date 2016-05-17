@@ -959,6 +959,23 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				return super.nextCode();
 			}
 		}
+		public static class RTToIntegerCode extends RTStringCommon {
+			public RTToIntegerCode(final StaticScope methodEnclosedScope) {
+				super("String", "toInteger", null, null, methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+			}
+			@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+				assert myEnclosedScope instanceof RTDynamicScope;
+				final RTDynamicScope dynamicScope = (RTDynamicScope)myEnclosedScope;
+				final RTStackable self = dynamicScope.getObject("this");
+				assert self instanceof RTStringObject;
+				final RTObject retval = ((RTStringObject)self).toInteger();
+
+				addRetvalTo(dynamicScope);
+				dynamicScope.setObject("ret$val", retval);
+				
+				return super.nextCode();
+			}
+		}
 		public static class RTPlusCode extends RTStringCommon {
 			public RTPlusCode(final StaticScope methodEnclosedScope) {
 				super("String", "+", asList("rhs"), asList("String"), methodEnclosedScope, StaticScope.globalScope().lookupTypeDeclaration("int"));

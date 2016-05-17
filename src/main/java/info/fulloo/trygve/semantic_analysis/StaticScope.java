@@ -482,6 +482,8 @@ public class StaticScope {
 		
 		addStringMethod(stringType, "toString", stringType, null, null, false);
 		
+		addStringMethod(stringType, "toInteger", intType, null, null, false);
+		
 		addStringMethod(stringType, "compareTo", intType, asList("other"), asList(stringType), false);
 		
 		globalScope_.declareType(stringType);
@@ -879,6 +881,9 @@ public class StaticScope {
 	}
 	
 	public void declareMethod(final MethodDeclaration decl) {
+		if (null == decl) {
+			assert null != decl;
+		}
 		final String methodName = decl.name();
 			
 		if (methodDeclarationDictionary_.containsKey(methodName)) {

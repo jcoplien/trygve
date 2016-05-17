@@ -57,6 +57,25 @@ public class RTArrayObject implements RTObject, RTIterable {
 		return null;
 	}
 	
+	public void atPut(final RTStackable theIndexParam, final RTStackable objectParam) {
+		assert theIndexParam instanceof RTObject;
+		assert objectParam instanceof RTObject;
+		final RTObject theIndex = (RTObject) theIndexParam;
+		final RTObject object = (RTObject) objectParam;
+		final int primitiveIndex = calculateIndexFrom(theIndex);
+		object.incrementReferenceCount();
+		theArray_[primitiveIndex].decrementReferenceCount();
+		theArray_[primitiveIndex] = object;
+	}
+	
+	public RTObject at(final RTStackable theIndexParam) {
+		assert theIndexParam instanceof RTObject;
+		final RTObject theIndex = (RTObject) theIndexParam;
+		final int primitiveIndex = calculateIndexFrom(theIndex);
+		final RTObject retval = theArray_[primitiveIndex];
+		return retval;
+	}
+	
 	@Override public String getText() {
 		return "<array>";
 	}

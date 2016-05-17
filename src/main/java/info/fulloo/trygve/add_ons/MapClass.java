@@ -128,9 +128,13 @@ public final class MapClass {
 			
 			declareMapMethod("put", voidType, asList("value", "key"), asList(V, K), false);
 			
+			declareMapMethod("atPut", voidType, asList("value", "key"), asList(V, K), false);
+			
 			declarePutAllMethod();
 			
 			declareMapMethod("get", V, asList("key"), asList(K), true);
+			
+			declareMapMethod("at", V, asList("key"), asList(K), true);
 			
 			declareMapMethod("containsKey", booleanType, asList("key"), asList(K), true);
 			

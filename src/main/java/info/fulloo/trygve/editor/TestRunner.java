@@ -181,6 +181,7 @@ public class TestRunner {
 		"pong2.k",
 		"breakout.k",
 		"keypad.k",
+		"simple_list.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

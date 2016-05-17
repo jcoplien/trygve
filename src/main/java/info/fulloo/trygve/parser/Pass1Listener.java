@@ -5093,6 +5093,10 @@ public class Pass1Listener extends Pass0Listener {
 		} else if (objectTypeName.endsWith("_$array")) {
 			if (methodSelectorName.equals("size") && actualArgumentList.count() == 1) {
 				returnType = StaticScope.globalScope().lookupTypeDeclaration("int");	// is O.K.
+			} else if (methodSelectorName.equals("at") && actualArgumentList.count() == 2) {
+				returnType = ((ArrayType)objectType).baseType();						// is O.K.
+			} else if (methodSelectorName.equals("atPut") && actualArgumentList.count() == 3) {
+				returnType = StaticScope.globalScope().lookupTypeDeclaration("void");	// is O.K.
 			} else {
 				if (object.name().length() > 0) {
 					if (object.isntError()) {
@@ -5415,9 +5419,16 @@ public class Pass1Listener extends Pass0Listener {
 		if (lhsType instanceof RoleType && rhsType instanceof ArrayType) {
 			if (((RoleType)lhsType).isArray()) {
 				tf = lhsType.canBeConvertedFrom(((ArrayType)rhsType).baseType(), lineNumber, this);
-			} else if (lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
-				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
-						"' is incompatible with expression type `", rhsType.name(), "'.", "");
+			} else {
+				// Maybe the Role just wants to be played by an array, building on
+				// its at and atPut interface
+				tf = lhsType.canBeConvertedFrom(rhsType, lineNumber, this);
+				if (tf == false) {
+					if (lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
+						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Type of `", lhs.getText(),
+							"' is incompatible with expression type `", rhsType.name(), "'.", "");
+					}
+				}
 			}
 		} else if (null != lhsType && null != rhsType) {
 			tf = lhsType.canBeConvertedFrom(rhsType, lineNumber, this);
@@ -5436,12 +5447,19 @@ public class Pass1Listener extends Pass0Listener {
 					" and may not be assigned.", "", "");
 		} else if (lhsType instanceof RoleType && null != rhsType && rhsType instanceof ArrayType) {
 			final Type baseType = ((ArrayType)rhsType).baseType();
-			if (lhsType.canBeConvertedFrom(baseType) == false) {
-				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role vector elements of type ", lhsType.name(),
-						" cannot be played by objects of type ",
-						((ArrayType)rhsType).baseType().name(), ":", "");
+			if (lhsType.canBeConvertedFrom(baseType)) {
+				this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
+			} else {
+				// Maybe the Role is trying to be an array, using the at and atPut
+				// facilities...
+				if (lhsType.canBeConvertedFrom(rhsType)) {
+					this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, ctxGetStart.getLine());
+				} else {
+					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role vector elements of type `", lhsType.name(),
+							"' cannot be played by objects of type `",
+							((ArrayType)rhsType).baseType().name(), "':", "");
+				}
 			}
-			this.checkRoleClassNameCollision((RoleType)lhsType, baseType, ctxGetStart.getLine());
 		} else if (lhsType instanceof RoleType && null != rhsType) {
 			final boolean isRoleArray = lhsType instanceof RoleType &&
 					((RoleType)lhsType).associatedDeclaration() instanceof RoleArrayDeclaration;
