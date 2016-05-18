@@ -12,7 +12,7 @@ context Context {
 		}
 		private int translateIndex(int i) { return i + 1 }
 		private int incrementIndex() {
-			String theIndex = at(0);
+			String theIndex = if (size() > 0) at(0) else null;
 			int rawIndex = 1;
 			if (theIndex is null) {
 				atPut(0, "1")
@@ -28,7 +28,7 @@ context Context {
 		String at(int theIndex);
 		void atPut(int theIndex, String object)
 	}
-	public Context() { list = new String [16]}
+	public Context() { list = new String [16] }
 	public void trigger() {
 		list.add("123");
 		list.add("456");

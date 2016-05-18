@@ -1193,14 +1193,22 @@ public abstract class Type implements ExpressionStackAPI
 				final String paramToIgnore, final HierarchySelector baseClassSearch) {
 			final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 			MethodSignature retval = null;
-			// NEEDS MAJOR WORK TO CHECK ARGUMENTS
 			final StaticScope scope = StaticScope.globalScope();
 			if (methodSelector.equals("at")) {
 				retval = atMethodDeclaration(scope).signature();
+				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+					retval = null;
+				}
 			} else if (methodSelector.equals("atPut")) {
 				retval = atPutMethodDeclaration(scope).signature();
+				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+					retval = null;
+				}
 			} else if (methodSelector.equals("size")) {
 				retval = sizeMethodDeclaration(scope).signature();
+				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+					retval = null;
+				}
 			}
 			return retval;
 		}
@@ -1259,7 +1267,7 @@ public abstract class Type implements ExpressionStackAPI
 				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
 				final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
 				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
-				final ObjectDeclaration object = new ObjectDeclaration("object", intType, 0);
+				final ObjectDeclaration object = new ObjectDeclaration("object", baseType_, 0);
 				
 				formalParameterList.addFormalParameter(object);
 				formalParameterList.addFormalParameter(theIndex);
