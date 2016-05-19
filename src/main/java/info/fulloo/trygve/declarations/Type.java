@@ -1236,6 +1236,7 @@ public abstract class Type implements ExpressionStackAPI
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
 				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				sizeMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(sizeMethodDeclaration_);
 			}
 			return sizeMethodDeclaration_;
@@ -1256,6 +1257,7 @@ public abstract class Type implements ExpressionStackAPI
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
 				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(atMethodDeclaration_);
 			}
 			return atMethodDeclaration_;
@@ -1279,6 +1281,7 @@ public abstract class Type implements ExpressionStackAPI
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
 				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atPutMethodDeclaration_.setHasConstModifier(false);
 				dummyScope_.declareMethod(atPutMethodDeclaration_);
 			}
 			return atPutMethodDeclaration_;

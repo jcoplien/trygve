@@ -180,8 +180,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		return retval;
 	}
 	@Override public void setObject(final String name, final RTObject object) {
-		assert null != object;
-		if (objectMembers_.containsKey(name)) {
+		if (null == object) {
+			ErrorLogger.error(ErrorIncidenceType.Internal, 0,
+					"Internal error: attempt to set ",
+					name,
+					" to a Java NULL.", "");
+		} else if (objectMembers_.containsKey(name)) {
 			final RTObject oldObject = objectMembers_.get(name);
 			objectMembers_.put(name, object);
 			object.incrementReferenceCount();

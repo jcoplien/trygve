@@ -908,7 +908,7 @@ public class Pass1Listener extends Pass0Listener {
 					final String methodName = iter.getKey();
 					final List<MethodSignature> signatures = iter.getValue();
 					for (final MethodSignature signature : signatures) {
-						if (signature.hasConstModifier() == false) {
+						if (false == signature.hasConstModifier()) {
 							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
 									"WARNING: Signatures for functions required by stageprops like ", currentRoleOrStageProp_.name(),
 									" should have a const modifier: method ", methodName, " does not.", "");

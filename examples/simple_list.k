@@ -24,12 +24,19 @@ context Context {
 		}
 		public int size()
 	} requires {
-		int size();
-		String at(int theIndex);
+		int size() const;
+		String at(int theIndex) const;
 		void atPut(int theIndex, String object)
+	}
+	role Test {
+		public void access() {
+			String k = list.at(0);
+			System.out.println(k)
+		}
 	}
 	public Context() { list = new String [16] }
 	public void trigger() {
+		Test.access();
 		list.add("123");
 		list.add("456");
 		auditor.audit();

@@ -156,9 +156,9 @@ public final class ListClass {
 			
 			declareListMethod("at", T, asList("theIndex"), asList(integerType), true);
 			
-			declareListMethod("set", voidType, asList("object", "theIndex"), asList(T, integerType), true);
+			declareListMethod("set", voidType, asList("object", "theIndex"), asList(T, integerType), false);
 			
-			declareListMethod("atPut", voidType, asList("object", "theIndex"), asList(T, integerType), true);
+			declareListMethod("atPut", voidType, asList("object", "theIndex"), asList(T, integerType), false);
 			
 			declareListMethod("indexOf", intType, asList("element"), asList(T), true);
 			

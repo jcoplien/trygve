@@ -142,8 +142,17 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		return retval;
 	}
 	public RTObject get(final RTObject element) {
-		final RTObject retval = theMap_.get(element);
-		assert (null != retval);
+		RTObject retval = theMap_.get(element);
+		if (null == retval) {
+			ErrorLogger.error(ErrorIncidenceType.Runtime,
+					0,
+					"ERROR: Map object <",
+					null == keyType_? "null": keyType_.toString(), " -> " + element.getText(),
+					",",
+					null == valueType_? "null": valueType_.toString(),
+					"> used before initialized. Further execution may exhibit undefined behavior.");
+			retval = new RTNullObject();
+		}
 		return retval;
 	}
 	public void ctor() { }
