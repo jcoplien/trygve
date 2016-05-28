@@ -22,6 +22,7 @@ class SeaPlane extends Vehicle implements Plane, Boat {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 fly
 */

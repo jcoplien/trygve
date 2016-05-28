@@ -39,5 +39,6 @@ context Activity {
 
 /* GOLD:
 line 38: Missing main expression.
+0 warnings, 1 error.
 ___________________________________________________________
 */

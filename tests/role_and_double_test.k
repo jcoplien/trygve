@@ -26,6 +26,7 @@ context C1 {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 fiftyLessThan10=false
 fiftyLessThan10=-1

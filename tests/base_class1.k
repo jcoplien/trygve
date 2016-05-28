@@ -16,6 +16,7 @@ class B extends A {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 A
 back from new A()

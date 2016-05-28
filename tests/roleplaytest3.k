@@ -12,6 +12,7 @@ class Test {
 { Test t = new Test(); t.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
  a = 123
  b = 123

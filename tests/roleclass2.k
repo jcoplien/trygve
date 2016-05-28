@@ -19,5 +19,6 @@ context Context {
 
 /* GOLD:
 line 3: Multiple declarations of `roleMethod1(boolean)' in scope `Class1'.
+0 warnings, 1 error.
 ___________________________________________________________
 */

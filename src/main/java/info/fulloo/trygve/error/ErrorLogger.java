@@ -35,14 +35,13 @@ public class ErrorLogger {
 		System.err.print(s4);
 		System.err.println();
 	}
-	public static void error(final ErrorIncidenceType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4) {
-		updateCounts(errorType);
+	public static void error(final ErrorIncidenceType errorType, final long lineNumber, final String s1, final String s2, final String s3, final String s4) {
 		System.err.print("line ");
 		System.err.print(lineNumber);
 		System.err.print(": ");
 		ErrorLogger.error(errorType, s1, s2, s3, s4);
 	}
-	public static void error(final ErrorIncidenceType errorType, long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	public static void error(final ErrorIncidenceType errorType, final long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		updateCounts(errorType);
 		System.err.print("line ");
 		System.err.print(lineNumber);
@@ -74,6 +73,7 @@ public class ErrorLogger {
 		default: assert false;
 		}
 	}
+	public static int numberOfWarnings() { return numberOfWarnings_; }
 	public static int numberOfFatalErrors() { return numberOfFatalErrors_ + numberOfInternalErrors_ + numberOfUnimplementedErrors_; }
 	public enum ErrorIncidenceType { Warning, Fatal, Noncompliant, Internal, Runtime, Unimplemented };
 	

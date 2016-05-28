@@ -24,6 +24,7 @@ class Test {
 /* GOLD:
 line 3: WARNING: Assignment / initialization does not create a new instance. Both `i_' and `i' will refer to the same object. Use `i.clone' to create a separate instance.
 line 8: WARNING: Assignment / initialization does not create a new instance. Both `s_' and `s' will refer to the same object. Use `s.clone' to create a separate instance.
+2 warnings, 0 errors.
 ___________________________________________________________
 hello world
 */

@@ -7,5 +7,6 @@ class C {
 
 /* GOLD:
 line 6: Missing main expression.
+0 warnings, 1 error.
 ___________________________________________________________
 */

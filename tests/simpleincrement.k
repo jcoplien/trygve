@@ -11,6 +11,7 @@ class SimpleIncrTest {
 { SimpleIncrTest simpleIncrement = new SimpleIncrTest()   simpleIncrement.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 1
 2

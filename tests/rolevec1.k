@@ -60,6 +60,7 @@ class Test {
 (new Test()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Test::test1
 Context1::doSomething on index 0

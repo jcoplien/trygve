@@ -93,6 +93,7 @@ class Class2 {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Outer.Outer
 Outer.test()

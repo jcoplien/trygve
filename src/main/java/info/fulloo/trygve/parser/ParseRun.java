@@ -135,7 +135,7 @@ public class ParseRun {
 	        }
 		    finally {
 		    	gui.console().redirectErr(java.awt.Color.BLUE, null);
-		    	System.err.println("___________________________________________________________");
+		    	gui.printParseDoneBreak();
 		    	gui.console().redirectErr(java.awt.Color.RED, null);
 		    }
 		}

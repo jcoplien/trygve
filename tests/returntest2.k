@@ -22,6 +22,7 @@ class ReturnTester {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 returnConstant: 1
 returnSum:      2

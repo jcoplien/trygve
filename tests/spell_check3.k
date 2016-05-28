@@ -306,5 +306,6 @@ if(suggestions.size() == 0) assert(false, "theoretically unreachable")
 /* GOLD:
 line 239: Script `setPosition' is not public and so is not accessible to `Dictionary'.
 line 254: Script `setPosition' is not public and so is not accessible to `Dictionary'.
+0 warnings, 2 errors.
 ___________________________________________________________
 */

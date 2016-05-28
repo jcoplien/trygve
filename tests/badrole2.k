@@ -25,5 +25,6 @@ context Context {
 
 /* GOLD:
 line 16: Trying to access a Role method `rvf1' on the vector ID `RoleVec'.
+0 warnings, 1 error.
 ___________________________________________________________
 */

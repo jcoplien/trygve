@@ -13,6 +13,7 @@ class Derived extends Base {
 (new Derived()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 i_ = 789
 */

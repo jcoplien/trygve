@@ -10,6 +10,7 @@
 
 /* GOLD:
 line 2: WARNING: Substituting double object for `i' in assignment to `d'.
+1 warning, 0 errors.
 ___________________________________________________________
 3
 3.0

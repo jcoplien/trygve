@@ -14,6 +14,7 @@ class Derived extends Base {
 (new Derived(789)).hello()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Base::Base
 Derived::Derived(789)

@@ -64,6 +64,7 @@ class MoreDerived extends Derived {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Base constructor
 base 7

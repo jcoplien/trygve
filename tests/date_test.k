@@ -22,6 +22,7 @@ class DateTest {
 (new DateTest()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 year=2015, month=12, date=25
 year=2016, month=1, date=1

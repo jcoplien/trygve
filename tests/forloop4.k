@@ -19,6 +19,7 @@ class ForLoopInitTest {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Started.
 1  o 2  o 3  o 4  o 5  o 

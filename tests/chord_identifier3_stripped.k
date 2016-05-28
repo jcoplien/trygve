@@ -48,6 +48,7 @@ context Chord {
 
 /* GOLD:
 line 8: WARNING: substituting object of type `double' for `this.position()'.
+1 warning, 0 errors.
 ___________________________________________________________
 Interval.Interval(10.0)
 0

@@ -15,6 +15,7 @@ class Derived2 extends Base2 {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Base2.func
 */

@@ -52,5 +52,6 @@ line 26: Cannot access expression `cl1o.cl1o1' with `private' access qualifier.
 line 28: Cannot access expression `cl1o.cl1o1' with `private' access qualifier.
 line 39: Cannot access constructor `cl1' with `private' access qualifier.
 line 41: Cannot access method `trigger' with `default' access qualifier.
+2 warnings, 7 errors.
 ___________________________________________________________
 */

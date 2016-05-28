@@ -19,6 +19,7 @@ class ArraySizeTest {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Size of array is 5, and j=123
 */

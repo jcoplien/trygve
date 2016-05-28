@@ -15,6 +15,7 @@ class TestDriver {
 (new TestDriver()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 TestDriver.test
 AnObject::AnObject

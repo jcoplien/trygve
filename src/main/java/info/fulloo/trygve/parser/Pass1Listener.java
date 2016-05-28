@@ -156,6 +156,7 @@ import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public class Pass1Listener extends Pass0Listener {
@@ -4589,24 +4590,42 @@ public class Pass1Listener extends Pass0Listener {
 	}
 	
 	private Expression degenerateProcedureCheck(final ExpressionStackAPI object, final Type objectType,
-			final String methodSelector, final int lineNumber) {
+			final String methodSelectorName, final int lineNumber) {
 		// Eiffel-style feature invocation
 		Expression retval = null;
+
 		if (object instanceof Expression && null != objectType) {
-			final ActualArgumentList parameterList = new ActualArgumentList();
+			final ActualArgumentList argumentList = new ActualArgumentList();
 			
 			if (objectType instanceof RoleType) {
 				IdentifierExpression currentContext = new IdentifierExpression("current$context", currentContext_.type(),
 						currentScope_, lineNumber);
-				parameterList.addFirstActualParameter(currentContext);
-				parameterList.addActualArgument((Expression)object);
+				if (((RoleType)objectType).isAParameterlessRequiresMethod(methodSelectorName) == false) {
+					argumentList.addFirstActualParameter(currentContext);
+				}
+				argumentList.addActualArgument((Expression)object);
 			} else {
-				parameterList.addFirstActualParameter((Expression)object);
+				argumentList.addFirstActualParameter((Expression)object);
 			}
-			final MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclarationRecursive(
-					methodSelector, parameterList, false);
+			MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclarationRecursive(
+					methodSelectorName, argumentList, false);
+			if (null == methodDecl) {
+				if (objectType instanceof RoleType) {
+					// Check "requires" methods.
+					
+					final RoleDeclaration roleDeclaration = ((RoleType)objectType).associatedDeclaration();
+					final MethodSignature roleMethodSignature = roleDeclaration.lookupRequiredMethodSignatureDeclaration(methodSelectorName);
+					if (null != roleMethodSignature) {
+						if (roleMethodSignature.formalParameterList().count() <= 2) {
+							// o.k.
+							methodDecl = new MethodDeclaration(roleMethodSignature, currentScope_, lineNumber);
+							methodDecl.setReturnType(roleMethodSignature.returnType());
+						}
+					}
+				}
+			}
 			if (null != methodDecl) {
-				final Message message = new Message(methodSelector, parameterList, lineNumber, methodDecl.returnType());
+				final Message message = new Message(methodSelectorName, argumentList, lineNumber, Expression.nearestEnclosingMegaTypeOf(currentScope_));
 				MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
 				if (null != currentScope_.associatedDeclaration()) {
 					originMethodClass = currentScope_.methodInvocationEnvironmentClass();

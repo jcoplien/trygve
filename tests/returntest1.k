@@ -18,6 +18,7 @@ class ArraySizeTest {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 made it into size
 made it into size2

@@ -15,6 +15,7 @@ context Context {
 (new Context()).trigger()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Line 4: Assertion failed: 1 == 2
 	In script `Object.assert'

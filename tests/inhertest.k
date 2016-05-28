@@ -30,6 +30,7 @@ class Test {
 { Test baseDerived = new Test()  baseDerived.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 You have called Base.report()
 You have called Derived.report()

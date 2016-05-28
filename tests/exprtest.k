@@ -11,6 +11,7 @@ class ExprTest {
 { ExprTest math = new ExprTest()  math.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 0.785
 */

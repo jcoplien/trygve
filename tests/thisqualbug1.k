@@ -22,6 +22,7 @@ return b_ ** 2 - (this.four_a_c());
 { System.out.println(new Polynomial(1.0, 2.0, 1.0).root()) }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 -1.0
 */

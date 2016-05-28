@@ -23,6 +23,7 @@ class InSituInitTest2 {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Hello world!
 */

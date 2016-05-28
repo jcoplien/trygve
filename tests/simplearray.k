@@ -37,6 +37,7 @@ class ArrayTest {
 { ArrayTest arrayTest = new ArrayTest()  arrayTest.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 123
 AClass (0)

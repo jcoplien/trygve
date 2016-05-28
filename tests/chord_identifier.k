@@ -97,6 +97,7 @@ Object of type Note playing too many roles, including HighNote
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 A to C: 1.5 semitones.
 C to A: 4.5 semitones.

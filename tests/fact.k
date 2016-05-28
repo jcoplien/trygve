@@ -20,6 +20,7 @@ class Fact {
 (new Fact()).factRunner()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 1 factorial is 1.
 3 factorial is 6.

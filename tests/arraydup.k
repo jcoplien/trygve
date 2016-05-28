@@ -15,6 +15,7 @@ class ArrayDupTest {
 { ArrayDupTest adt = new ArrayDupTest() adt.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 0
 1

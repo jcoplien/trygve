@@ -328,6 +328,7 @@ context SpellCheck {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 On the twelveth day of Christmas my true love gave to me
 twelve drummers drumming, eleven pipers piping, ten lords a-leaping,

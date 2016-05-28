@@ -35,5 +35,6 @@ class AClass {
 /* GOLD:
 line 3: Roles in `CollectionRole' cannot be played by objects of type `AClass':
 line 3: 	`size()' needed by Role `CollectionRole' does not appear in interface of `AClass'.
+0 warnings, 2 errors.
 ___________________________________________________________
 */

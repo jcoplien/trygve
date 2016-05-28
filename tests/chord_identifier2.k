@@ -155,5 +155,6 @@ Object of type Note playing too many roles, including HighNote
 
 /* GOLD:
 line 61: Context script `semitones' may enact only Role scripts. Script `position()' is an instance script from a class and is inaccessible to Context `Interval'.
+0 warnings, 1 error.
 ___________________________________________________________
 */

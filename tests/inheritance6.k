@@ -48,5 +48,6 @@ new Derived2().test()
 line 18: Return type `Base' of `func4(int,Base)' in class `Derived2' must be no less restrictive than `Derived' in the base class.
 line 24: Return type `Base' of `func(int,Base)' in class `Derived2b' must be no less restrictive than `Derived' in the base class.
 line 41: Return type `Base' of `func4(int,Derived)' in class `Derived2d' must be no less restrictive than `Derived' in the base class.
+0 warnings, 3 errors.
 ___________________________________________________________
 */

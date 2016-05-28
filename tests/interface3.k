@@ -24,5 +24,6 @@ class SeaPlane extends Vehicle implements Plane, Boat {
 /* GOLD:
 line 14: Interface Boat is not declared.
 line 14: Class `SeaPlane' is using an undeclared interface: see other error messages
+0 warnings, 2 errors.
 ___________________________________________________________
 */

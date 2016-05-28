@@ -44,12 +44,11 @@ public class BatchRunner {
 			virtualMachine_ = parseRun_.virtualMachine();
 			final int errorCount = ErrorLogger.numberOfFatalErrors();
 			compiledWithoutError_ = errorCount == 0;
+			System.err.format("%d errors\n", errorCount);
 			if (compiledWithoutError_) {
 				if (runFlag_) {
 					simpleRun();
 				}
-			} else {
-				System.err.format("%d fatal errors\n", errorCount);
 			}
 		} else {
 			System.err.format("No program source.\n");

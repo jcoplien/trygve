@@ -28,6 +28,7 @@ class UnaryOp {
 { UnaryOp u = new UnaryOp()  u.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 k = 6
 j = 7

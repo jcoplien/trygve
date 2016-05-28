@@ -34,6 +34,7 @@ class Letter {
 
 /* GOLD:
 line 21: WARNING: Assignment / initialization does not create a new instance. Both `letter_' and `l' will refer to the same object. Use `l.clone' to create a separate instance.
+1 warning, 0 errors.
 ___________________________________________________________
 A
 */

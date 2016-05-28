@@ -27,5 +27,6 @@ context FrontloadActivities
 line 12: Role `Activities' cannot be played by object of type `ActivityList':
 line 12: 	`size()' needed by Role `Activities' is declared as private in interface of `ActivityList' and is therefore inaccessible to the Role.
 line 24: Missing main expression.
+0 warnings, 3 errors.
 ___________________________________________________________
 */

@@ -25,6 +25,7 @@ new Test().test()
 /* GOLD:
 line 7: WARNING: Assignment / initialization does not create a new instance. Both `s3' and `s1' will refer to the same object. Use `s1.clone' to create a separate instance.
 line 8: WARNING: Assignment / initialization does not create a new instance. Both `s4' and `s2' will refer to the same object. Use `s2.clone' to create a separate instance.
+2 warnings, 0 errors.
 ___________________________________________________________
 true
 false

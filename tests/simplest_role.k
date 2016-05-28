@@ -15,6 +15,7 @@ context Context {
 (new Context(new Class1()))
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 success
 */

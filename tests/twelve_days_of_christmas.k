@@ -184,6 +184,7 @@ context TwelveDaysOfChristmas {
 line 7: WARNING: Assignment / initialization does not create a new instance. Both `name_' and `name' will refer to the same object. Use `name.clone' to create a separate instance.
 line 22: WARNING: Assignment / initialization does not create a new instance. Both `order_' and `order' will refer to the same object. Use `order.clone' to create a separate instance.
 line 168: WARNING: Assignment / initialization does not create a new instance. Both `i' and `day' will refer to the same object. Use `day.clone' to create a separate instance.
+3 warnings, 0 errors.
 ___________________________________________________________
 On the first day of Christmas my true love gave to me
 a partridge in a pear tree.

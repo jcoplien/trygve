@@ -20,6 +20,7 @@ class Derived extends Base {
 { Derived d = new Derived()  d.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Base::Base: explicit!
 Derived::Derived

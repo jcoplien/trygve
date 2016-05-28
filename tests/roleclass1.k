@@ -19,5 +19,6 @@ context Context {
 
 /* GOLD:
 line 13: WARNING: Both class `Class1' and Role `Role1' contain the same method signature `roleMethod2(boolean)'. This results in several methods of the same name in the same object and may not behave as you expected.
+1 warning, 0 errors.
 ___________________________________________________________
 */

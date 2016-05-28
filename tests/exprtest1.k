@@ -10,6 +10,7 @@ class Test {
 { new Test().test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 s=max
 */

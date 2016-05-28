@@ -27,6 +27,7 @@ class Test {
 (new Test()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 b1=false, b2=true, b3=false, b4=true
 nb1=true, nb2=false, nb3=true, nb4=false

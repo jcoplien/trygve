@@ -553,7 +553,6 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			lineNumber_ = messageExpr.lineNumber();
-
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
 			final StaticScope parentScope = methodDecl == null? null: methodDecl.enclosingScope();
 			final String debugName = parentScope == null? "???": parentScope.name();
@@ -616,6 +615,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
+			assert null != argPush_;
 			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
 			final boolean resultNeedsToBePopped = null != returnType && (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);

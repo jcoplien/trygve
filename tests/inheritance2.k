@@ -48,6 +48,7 @@ context AContext {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 ABaseClass.bar("hello world") is called
 */

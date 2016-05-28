@@ -29,6 +29,7 @@ context Context {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 toString is 123
 Last digit is 3

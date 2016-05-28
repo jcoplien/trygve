@@ -92,6 +92,7 @@ import info.fulloo.trygve.parser.KantParser.Stageprop_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Stageprop_declContext;
 import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public class Pass2Listener extends Pass1Listener {
@@ -1382,6 +1383,44 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 
+	private Expression canBeAScriptEnactment(final StaticScope roleEnclosedScope, final String scriptName,
+			final int lineNumber) {
+		Expression retval = null;
+		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+		if (null != roleEnclosedScope) {
+			assert roleEnclosedScope instanceof StaticRoleScope;
+			final RoleDeclaration roleDecl = (RoleDeclaration) roleEnclosedScope.associatedDeclaration();
+			MethodSignature methodSignature = roleDecl.lookupRequiredMethodSignatureDeclaration(scriptName);
+			if (null == methodSignature) {
+				methodSignature = roleDecl.lookupPublishedSignatureDeclaration(scriptName);
+			}
+			if (null != methodSignature) {
+				if (methodSignature.formalParameterList().count() <= 2) {
+					// o.k.
+					final ActualArgumentList argumentList = new ActualArgumentList();
+					
+					// There is no current$context for a published method declaration or a requires declaration.
+					/*
+					final Expression currentContext = new IdentifierExpression("current$context", roleDecl.contextDeclaration().type(),
+							currentContext_.enclosedScope(), lineNumber);
+					argumentList.addActualArgument(currentContext);
+					*/
+					final Expression self = new IdentifierExpression(roleDecl.name(), roleDecl.type(),
+							currentContext_.enclosedScope(), lineNumber);
+					argumentList.addActualArgument(self);
+					
+					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
+					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();
+					retval = new MessageExpression(self, message, methodSignature.returnType(),
+							lineNumber, /*isStatic*/ false, originMethodClass, targetMethodClass,
+							true);
+				}
+			}
+		}
+		return retval;
+	}
+	
 	@Override public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// | JAVA_ID
 		// Special version for pass 2 and 3
@@ -1476,8 +1515,8 @@ public class Pass2Listener extends Pass1Listener {
 			currentContext.setResultIsConsumed(true);
 			retval = new QualifiedIdentifierExpression(currentContext, idText, aRoleDecl.type());
 		} else {
-			final StaticScope possibleMethodName = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-			final StaticScope possibleRoleScope = null == possibleMethodName? null: possibleMethodName.parentScope();
+			final StaticScope possibleMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+			final StaticScope possibleRoleScope = null == possibleMethodScope? null: possibleMethodScope.parentScope();
 			final StaticScope possibleContextScope = null ==  possibleRoleScope? null: possibleRoleScope.parentScope();
 			final Declaration associatedDeclaration = null == possibleContextScope? null: possibleContextScope.associatedDeclaration();
 			
@@ -1497,10 +1536,13 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != possibleContextScope) {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleOrStagePropDeclaration(idText);
 					if (null == roleDecl) {
-						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
-								"' is not declared in scope `", currentScope_.name(), "'.", "");
-						type = new ErrorType();
-						retval = new ErrorExpression(null);
+						// Check to see if it is a script invocation
+						if (null == (retval = canBeAScriptEnactment(possibleRoleScope, idText, ctxGetStart.getLine()))) {
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+									"' is not declared in scope `", currentScope_.name(), "'.", "");
+							type = new ErrorType();
+							retval = new ErrorExpression(null);
+						}
 					} else {
 						// it's O.K. - maybe. Can be used as an L-value in an assignment. R-value, too, I guess
 						type = possibleContextScope.lookupTypeDeclaration(idText);

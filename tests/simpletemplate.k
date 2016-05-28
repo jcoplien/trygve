@@ -38,6 +38,7 @@ class Test {
 (new Test()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Test::test entered, evaluated k = 0
 About to call li_.add(123)

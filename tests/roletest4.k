@@ -45,6 +45,7 @@ class Consumer {
 (new Context1(new Maker(), new Consumer())).run()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Context1::Context1
 Context1.Role1.make()

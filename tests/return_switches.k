@@ -38,6 +38,7 @@ class Ordinal {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 first
 second

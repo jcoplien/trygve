@@ -16,6 +16,7 @@ class JoinTest {
 (new JoinTest()).test()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 1+2+3+4
 */

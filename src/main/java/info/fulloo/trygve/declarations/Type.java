@@ -916,6 +916,9 @@ public abstract class Type implements ExpressionStackAPI
 		public MethodSignature lookupMethodSignatureDeclaration(final String methodName) {
 			return associatedDeclaration_.lookupRequiredMethodSignatureDeclaration(methodName);
 		}
+		public boolean isAParameterlessRequiresMethod(final String methodSelectorName) {
+			return associatedDeclaration_.isAParameterlessRequiresMethod(methodSelectorName);
+		}
 		public Declaration contextDeclaration() {
 			return associatedDeclaration_.contextDeclaration();
 		}
@@ -1399,31 +1402,31 @@ public abstract class Type implements ExpressionStackAPI
 	public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
 			final String paramToIgnore, final HierarchySelector baseClassSearch) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
-		if (null == enclosedScope_) {
-			assert null != enclosedScope_;
-		}
-		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector, methodSignatureFormalParameterList, paramToIgnore,
-				/* conversionAllowed = */ false);
+		MethodSignature retval = null;
+		if (null != enclosedScope_) {
+			final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector, methodSignatureFormalParameterList, paramToIgnore,
+					/* conversionAllowed = */ false);
+			
+			// mDecl can be null under error conditions
+			retval = null == mDecl? null: mDecl.signature();
 		
-		// mDecl can be null under error conditions
-		MethodSignature retval = null == mDecl? null: mDecl.signature();
-	
-		// See if we need to explore base class signatures
-		if (null == retval && baseClassSearch == HierarchySelector.AlsoSearchBaseClass) {
-			if (this instanceof ClassType) {
-				final ClassType classType = (ClassType) this;
-				if (null != classType.baseClass()) {
-					// Recur. Good code reuse.
-					retval = classType.baseClass().signatureForMethodSelectorCommon(methodSelector, methodSignature,
-							paramToIgnore, baseClassSearch);
+			// See if we need to explore base class signatures
+			if (null == retval && baseClassSearch == HierarchySelector.AlsoSearchBaseClass) {
+				if (this instanceof ClassType) {
+					final ClassType classType = (ClassType) this;
+					if (null != classType.baseClass()) {
+						// Recur. Good code reuse.
+						retval = classType.baseClass().signatureForMethodSelectorCommon(methodSelector, methodSignature,
+								paramToIgnore, baseClassSearch);
+					} else {
+						retval = null;	// redundant
+					}
 				} else {
 					retval = null;	// redundant
 				}
 			} else {
-				retval = null;	// redundant
+				;	// is O.K.
 			}
-		} else {
-			;	// is O.K.
 		}
 		
 		return retval;

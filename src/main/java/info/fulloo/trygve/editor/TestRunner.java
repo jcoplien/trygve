@@ -203,7 +203,6 @@ public class TestRunner {
 	}
 	public TestRunner(final TextEditorGUI gui) {
 		gui_ = gui;
-		underscores_ = "___________________________________________________________";
 		plusses_ = " +  +  +  ";
 		passCounter_ = failCounter_ = 0;
 		testSource_ = TestSource.UseLocalFile;
@@ -233,7 +232,7 @@ public class TestRunner {
 		}
 		
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
-		System.err.println(underscores_);
+		gui_.printBreak();
 		
 		if (failCounter_ > 0) {
 			gui_.console().redirectErr(java.awt.Color.RED, null);
@@ -277,7 +276,7 @@ public class TestRunner {
 		}
 		
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
-		System.err.println(underscores_);
+		gui_.printBreak();
 		System.err.print(plusses_); System.err.print(url); System.err.println(plusses_);
 		gui_.console().redirectErr(java.awt.Color.RED, null);
 		gui_.resetCompiledWithoutError();
@@ -357,7 +356,8 @@ public class TestRunner {
 
 	private String thisTestResults(final String lastTestResults, final String rawTestResults) {
 		final int lastTestResultsLength = lastTestResults.length();
-		String testResults = rawTestResults.substring(lastTestResultsLength + underscores_.length() + 1);
+		String testResults = rawTestResults.substring(lastTestResultsLength +
+				gui_.underscoresLength() + 1);
 		while (testResults.substring(0,1).equals("\n") || testResults.substring(0,1).equals("\r")) {
 			testResults = testResults.substring(1);
 		}
@@ -391,7 +391,7 @@ public class TestRunner {
 	}
 
 	private final TextEditorGUI gui_;
-	private final String underscores_, plusses_;
+	private final String plusses_;
 	private int passCounter_, failCounter_;
 	private String currentTestName_;
 	private List<String> failures_;

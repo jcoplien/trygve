@@ -55,6 +55,7 @@ class Consumer {
 { Context1 context1 = new Context1(new Maker(), new Consumer())  context1.run() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Context1::Context1
 strings abc and abc are equal

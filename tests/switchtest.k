@@ -36,6 +36,7 @@ class SwitchTest {
 { SwitchTest switchTest = new SwitchTest()  switchTest.test() }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 0
 is something else

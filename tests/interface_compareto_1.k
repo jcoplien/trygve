@@ -25,6 +25,7 @@ class Number implements Countable {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 true
 true

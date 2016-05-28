@@ -79,6 +79,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     /** Creates new form TextEditorGUI */
     public TextEditorGUI() {
     	super();
+    	underscores_ = "___________________________________________________________";
     	worker_ = null;
     	parseRun_ = null;
     	compiledWithoutError_ = false;
@@ -1122,7 +1123,8 @@ public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//
     parseRun_  = new GuiParseRun(program, this);
     assert parseRun_ != null;
 	virtualMachine_ = parseRun_.virtualMachine();
-	compiledWithoutError_ = ErrorLogger.numberOfFatalErrors() == 0;
+	final int numberOfErrors = ErrorLogger.numberOfFatalErrors();
+	compiledWithoutError_ = numberOfErrors == 0;
 	updateButtons();
 }//GEN-LAST:event_parseButtonActionPerformed
 
@@ -1341,6 +1343,26 @@ private void killAppWindows() {
 	}
 }
 
+public void printBreak() {
+	System.err.println(underscores_);
+}
+
+public void printParseDoneBreak() {
+	final int errorCount = ErrorLogger.numberOfFatalErrors();
+	final int warningCount = ErrorLogger.numberOfWarnings();
+	final String warning = 1 == warningCount?
+			"warning": "warnings";
+	final String errorMessage = 1 == errorCount?
+			String.format("%d %s, %d error.", warningCount, warning, errorCount):
+			String.format("%d %s, %d errors.", warningCount, warning, errorCount);
+	System.err.println(errorMessage);
+	printBreak();
+}
+
+public int underscoresLength() {
+	return underscores_.length();
+}
+
 public String lastMatch() { return lastMatch_; }
 public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch; }
 
@@ -1398,6 +1420,7 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     
     @SuppressWarnings("unused")
     private String lastFileLoaded_;
+    private final String underscores_;
     
     MessageConsole console_;
 

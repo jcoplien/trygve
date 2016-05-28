@@ -309,6 +309,7 @@ line 236: NONCOMPLIANT: Trying to enact object script `setPosition(int)' without
 line 246: NONCOMPLIANT: Trying to enact object script `currentPosition()' without using the interface of the Role it is playing: `SpellChecker'.
 line 250: NONCOMPLIANT: Trying to enact object script `splice(int, int, String)' without using the interface of the Role it is playing: `Text'.
 line 251: NONCOMPLIANT: Trying to enact object script `setPosition(int)' without using the interface of the Role it is playing: `SpellChecker'.
+0 warnings, 0 errors.
 ___________________________________________________________
 On the twelveth day of Christmas my true love gave to me
 twelve drummers drumming, eleven pipers piping, ten lords a-leaping,

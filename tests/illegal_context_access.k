@@ -34,6 +34,7 @@ context Ctx {
 }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 Ctx enter
 roleScript1 enter

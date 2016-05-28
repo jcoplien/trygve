@@ -1947,6 +1947,5 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	protected Type type_;
 	private static long labelCounter_ = 0;
 	private boolean resultIsConsumed_;
-	final Type enclosingMegaType_;
-	
+	final private Type enclosingMegaType_;
 }

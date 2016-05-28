@@ -109,6 +109,7 @@ class TowerOfHanoi {
 /* GOLD:
 line 3: WARNING: Assignment / initialization does not create a new instance. Both `size_' and `size' will refer to the same object. Use `size.clone' to create a separate instance.
 line 67: WARNING: Assignment / initialization does not create a new instance. Both `i' and `disks' will refer to the same object. Use `disks.clone' to create a separate instance.
+2 warnings, 0 errors.
 ___________________________________________________________
 |321
 |

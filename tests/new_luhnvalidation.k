@@ -101,6 +101,7 @@ context LuhnValidation {
 
 /* GOLD:
 line 30: NONCOMPLIANT: Trying to enact object script `toString()' without using the interface of the Role it is playing: `CheckDigit'.
+0 warnings, 0 errors.
 ___________________________________________________________
 Validating credit card
 CheckDigit: 2

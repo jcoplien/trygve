@@ -60,5 +60,6 @@ class Consumer {
 /* GOLD:
 line 2: Declaration of `manufacture' in Role1 would create multiple methods of the same name in the same object.
 line 34: WARNING: Both class `Maker' and Role `Role1' contain the same method signature `manufacture()'. This results in several methods of the same name in the same object and may not behave as you expected.
+1 warning, 1 error.
 ___________________________________________________________
 */

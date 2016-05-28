@@ -13,6 +13,7 @@ class Digit {
 { int i = (new Digit(1)).digit() System.out.println(i) }
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 1
 */

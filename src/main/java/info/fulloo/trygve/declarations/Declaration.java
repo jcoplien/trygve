@@ -455,6 +455,16 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupRequiredMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
 		}
+		public boolean isAParameterlessRequiresMethod(final String methodSelectorName) {
+			boolean retval = false;
+			final MethodSignature methodSignature = this.lookupRequiredMethodSignatureDeclaration(methodSelectorName);
+			if (null != methodSignature) {
+				final FormalParameterList parameterList = methodSignature.formalParameterList();
+				final int numberOfParameters = parameterList.count();
+				retval = numberOfParameters == 1;
+			}
+			return retval;
+		}
 		public void addPublishedSignature(final MethodSignature signature) {
 			publishedSignatures_.put(signature.name(), signature);
 		}

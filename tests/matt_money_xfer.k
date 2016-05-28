@@ -87,5 +87,6 @@ line 27: NONCOMPLIANT: Trying to enact object script `value()' without using the
 line 30: Type of actual parameter `current$context.Amount' (Amount) in call of `decreaseBalance' does not match type of formal parameter `amt' (Currency amt)
 line 39: Type of actual parameter `current$context.Amount' (Amount) in call of `increaseBalance' does not match type of formal parameter `amt' (Currency amt)
 line 70: WARNING: Assignment / initialization does not create a new instance. Both `value_' and `val' will refer to the same object. Use `val.clone' to create a separate instance.
+1 warning, 2 errors.
 ___________________________________________________________
 */

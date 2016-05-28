@@ -29,6 +29,7 @@ context Chainer {
 (new Chainer()).chainIt().chainIt()
 
 /* GOLD:
+0 warnings, 0 errors.
 ___________________________________________________________
 chain
 chain
