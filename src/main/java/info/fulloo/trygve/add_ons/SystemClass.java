@@ -80,7 +80,7 @@ public final class SystemClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		systemType_.enclosedScope().declareMethod(methodDecl);
+		systemType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static class RTExitCode extends RTMessage {
 		public RTExitCode(final StaticScope enclosingMethodScope) {
@@ -112,7 +112,7 @@ public final class SystemClass {
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
-		printStreamType_.enclosedScope().declareMethod(methodDecl);
+		printStreamType_.enclosedScope().declareMethod(methodDecl, null);
 		methodDecl.setReturnType(printStreamType_);
 	}
 	
@@ -132,7 +132,7 @@ public final class SystemClass {
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
-		printStreamType_.enclosedScope().declareMethod(methodDecl);
+		printStreamType_.enclosedScope().declareMethod(methodDecl, null);
 		methodDecl.setReturnType(printStreamType_);
 	}
 	

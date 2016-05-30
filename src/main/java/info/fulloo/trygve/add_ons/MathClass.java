@@ -72,7 +72,7 @@ public final class MathClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(true);
-		mathType_.enclosedScope().declareMethod(methodDecl);
+		mathType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 
 	public static void setup() {

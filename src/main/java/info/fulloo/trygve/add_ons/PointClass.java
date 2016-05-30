@@ -76,7 +76,7 @@ public final class PointClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		pointType_.enclosedScope().declareMethod(methodDecl);
+		pointType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	public static void setup() {
@@ -98,8 +98,8 @@ public final class PointClass {
 
 			declarePointMethod("Point", null, asList("y", "x"), asList(intType, intType), false);
 			declarePointMethod("Point", null, null, null, false);
-			declarePointMethod("x", intType, null, null, true);
-			declarePointMethod("y", intType, null, null, true);
+			declarePointMethod("getX", intType, null, null, true);
+			declarePointMethod("getY", intType, null, null, true);
 			declarePointMethod("setXY", voidType, asList("y", "x"), asList(intType, intType), false);
 			
 			// These need to be coordinated only with what is in the postSetupInitialization
@@ -107,7 +107,7 @@ public final class PointClass {
 			for (final String attributeName : asList("x", "y")) {
 				final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, 0);
 				attributeDeclaration.setAccess(AccessQualifier.PublicAccess, pointType_.enclosedScope(), 0);
-				pointType_.enclosedScope().declareObject(attributeDeclaration);
+				pointType_.enclosedScope().declareObject(attributeDeclaration, null);
 			}
 			
 			globalScope.declareType(pointType_);
@@ -182,9 +182,9 @@ public final class PointClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTPointYCode extends RTPointCode {
-		public RTPointYCode(final StaticScope enclosingMethodScope) {
-			super("Point", "y", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+	public static class RTPointGetYCode extends RTPointCode {
+		public RTPointGetYCode(final StaticScope enclosingMethodScope) {
+			super("Point", "getY", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject thePointObject) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
@@ -195,9 +195,9 @@ public final class PointClass {
 			return super.nextCode();
 		}
 	}
-	public static class RTPointXCode extends RTPointCode {
-		public RTPointXCode(final StaticScope enclosingMethodScope) {
-			super("Point", "x", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
+	public static class RTPointGetXCode extends RTPointCode {
+		public RTPointGetXCode(final StaticScope enclosingMethodScope) {
+			super("Point", "getX", null, null, enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("int"));
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope, final RTObject thePointObject) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();

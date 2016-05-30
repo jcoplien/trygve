@@ -76,7 +76,7 @@ public final class PanelClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		panelType_.enclosedScope().declareMethod(methodDecl);
+		panelType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		final StaticScope globalScope = StaticScope.globalScope();
@@ -116,7 +116,7 @@ public final class PanelClass {
 			// add the pointer to the GraphicsPanel object
 			// that contains all the goodies
 			final ObjectDeclaration objectDecl = new ObjectDeclaration("panelObject", objectType, 0);
-			newScope.declareObject(objectDecl);
+			newScope.declareObject(objectDecl, null);
 			
 			// standard wrap-up
 			globalScope.declareType(panelType_);
@@ -481,7 +481,7 @@ public final class PanelClass {
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(returnType);
 			methodDecl.setHasConstModifier(isConst);
-			eventType_.enclosedScope().declareMethod(methodDecl);
+			eventType_.enclosedScope().declareMethod(methodDecl, null);
 		}
 		
 		public static void setup() {
@@ -509,23 +509,23 @@ public final class PanelClass {
 				// Attributes
 				final ObjectDeclaration idDeclaration = new ObjectDeclaration("id", intType, 0);
 				idDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
-				eventType_.enclosedScope().declareObject(idDeclaration);
+				eventType_.enclosedScope().declareObject(idDeclaration, null);
 				
 				final ObjectDeclaration keyDeclaration = new ObjectDeclaration("key", intType, 0);
 				keyDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
-				eventType_.enclosedScope().declareObject(keyDeclaration);
+				eventType_.enclosedScope().declareObject(keyDeclaration, null);
 				
 				final ObjectDeclaration keyStringDeclaration = new ObjectDeclaration("keyString", stringType, 0);
 				keyStringDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
-				eventType_.enclosedScope().declareObject(keyStringDeclaration);
+				eventType_.enclosedScope().declareObject(keyStringDeclaration, null);
 				
 				final ObjectDeclaration locXDeclaration = new ObjectDeclaration("x", intType, 0);
 				locXDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
-				eventType_.enclosedScope().declareObject(locXDeclaration);
+				eventType_.enclosedScope().declareObject(locXDeclaration, null);
 				
 				final ObjectDeclaration locYDeclaration = new ObjectDeclaration("y", intType, 0);
 				locYDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
-				eventType_.enclosedScope().declareObject(locYDeclaration);
+				eventType_.enclosedScope().declareObject(locYDeclaration, null);
 				
 				// These need to be coordinated only with what is in the postSetupInitialization
 				// method below, and what is in the driver (GraphicsPanel.java)

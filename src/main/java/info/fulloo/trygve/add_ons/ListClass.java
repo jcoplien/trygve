@@ -77,7 +77,7 @@ public final class ListClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		listType_.enclosedScope().declareMethod(methodDecl);
+		listType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	private static Type addListOfXTypeNamedY(final Type type, final String typeName) {

@@ -82,7 +82,7 @@ public class InputStreamClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		inputStreamType_.enclosedScope().declareMethod(methodDecl);
+		inputStreamType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	public static void setup() {

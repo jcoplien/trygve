@@ -65,7 +65,7 @@ public final class ScannerClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		scannerType_.enclosedScope().declareMethod(methodDecl);
+		scannerType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		final StaticScope globalScope = StaticScope.globalScope();

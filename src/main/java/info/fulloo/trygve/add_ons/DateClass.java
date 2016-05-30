@@ -73,7 +73,7 @@ public final class DateClass {
 		}
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(true);
-		dateType_.enclosedScope().declareMethod(methodDecl);
+		dateType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
@@ -115,7 +115,7 @@ public final class DateClass {
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(null);
 			methodDecl.setHasConstModifier(false);
-			dateType_.enclosedScope().declareMethod(methodDecl);
+			dateType_.enclosedScope().declareMethod(methodDecl, null);
 
 			// constructor (with no arguments)
 			formals = new FormalParameterList();
@@ -126,7 +126,7 @@ public final class DateClass {
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(null);
 			methodDecl.setHasConstModifier(false);
-			dateType_.enclosedScope().declareMethod(methodDecl);
+			dateType_.enclosedScope().declareMethod(methodDecl, null);
 			
 			singleSimpleFunctionSetup("getYear", null, "int");
 			singleSimpleFunctionSetup("setYear", new ObjectDeclaration("year", integerType, 0), null);
@@ -146,7 +146,7 @@ public final class DateClass {
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(stringType);
 			methodDecl.setHasConstModifier(true);
-			dateType_.enclosedScope().declareMethod(methodDecl);
+			dateType_.enclosedScope().declareMethod(methodDecl, null);
 			
 			// Declare the type
 			globalScope.declareType(dateType_);

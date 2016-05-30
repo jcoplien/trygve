@@ -76,7 +76,7 @@ public final class FrameClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		frameType_.enclosedScope().declareMethod(methodDecl);
+		frameType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		final StaticScope globalScope = StaticScope.globalScope();

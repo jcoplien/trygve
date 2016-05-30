@@ -609,7 +609,7 @@ public class Pass0Listener extends KantBaseListener {
 			errorHook5p1(ErrorIncidenceType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
 					objectIdentifier, "'", "");
 		} else {
-			scope.declareObject(objDecl);
+			scope.declareObject(objDecl, this);
 		}
 	}
 	

@@ -76,7 +76,7 @@ public final class MouseInfoClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		mouseInfoType_.enclosedScope().declareMethod(methodDecl);
+		mouseInfoType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	public static void setup() {
@@ -193,7 +193,7 @@ public final class MouseInfoClass {
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(returnType);
 			methodDecl.setHasConstModifier(isConst);
-			pointerInfoType_.enclosedScope().declareMethod(methodDecl);
+			pointerInfoType_.enclosedScope().declareMethod(methodDecl, null);
 		}
 		
 		public static void setup() {

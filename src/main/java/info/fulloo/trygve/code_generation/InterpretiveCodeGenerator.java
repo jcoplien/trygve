@@ -1002,12 +1002,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			if (methodDeclaration.name().equals("Point")) {
 				retvalType = RetvalTypes.none;
 				pointerInfoMethodCode.add(new PointClass.RTPointCtor2(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("x")) {
+			} else if (methodDeclaration.name().equals("getX")) {
 				retvalType = RetvalTypes.usingInt;
-				pointerInfoMethodCode.add(new PointClass.RTPointXCode(methodDeclaration.enclosedScope()));
-			} else if (methodDeclaration.name().equals("y")) {
+				pointerInfoMethodCode.add(new PointClass.RTPointGetXCode(methodDeclaration.enclosedScope()));
+			} else if (methodDeclaration.name().equals("getY")) {
 				retvalType = RetvalTypes.usingInt;
-				pointerInfoMethodCode.add(new PointClass.RTPointYCode(methodDeclaration.enclosedScope()));
+				pointerInfoMethodCode.add(new PointClass.RTPointGetYCode(methodDeclaration.enclosedScope()));
 			} else {
 				assert false;
 			}

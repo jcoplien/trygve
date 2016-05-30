@@ -1240,7 +1240,7 @@ public abstract class Type implements ExpressionStackAPI
 				dummyScope_ = new StaticScope(enclosingScope);
 				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
 				sizeMethodDeclaration_.setHasConstModifier(true);
-				dummyScope_.declareMethod(sizeMethodDeclaration_);
+				dummyScope_.declareMethod(sizeMethodDeclaration_, null);
 			}
 			return sizeMethodDeclaration_;
 		}
@@ -1261,7 +1261,7 @@ public abstract class Type implements ExpressionStackAPI
 				dummyScope_ = new StaticScope(enclosingScope);
 				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
 				atMethodDeclaration_.setHasConstModifier(true);
-				dummyScope_.declareMethod(atMethodDeclaration_);
+				dummyScope_.declareMethod(atMethodDeclaration_, null);
 			}
 			return atMethodDeclaration_;
 		}
@@ -1285,7 +1285,7 @@ public abstract class Type implements ExpressionStackAPI
 				dummyScope_ = new StaticScope(enclosingScope);
 				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
 				atPutMethodDeclaration_.setHasConstModifier(false);
-				dummyScope_.declareMethod(atPutMethodDeclaration_);
+				dummyScope_.declareMethod(atPutMethodDeclaration_, null);
 			}
 			return atPutMethodDeclaration_;
 		}
@@ -1399,7 +1399,8 @@ public abstract class Type implements ExpressionStackAPI
 		assert staticObjects_.containsKey(name);
 		return staticObjects_.get(name);
 	}
-	public MethodSignature signatureForMethodSelectorCommon(final String methodSelector, final MethodSignature methodSignature,
+	public MethodSignature signatureForMethodSelectorCommon(final String methodSelector,
+			final MethodSignature methodSignature,
 			final String paramToIgnore, final HierarchySelector baseClassSearch) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
 		MethodSignature retval = null;

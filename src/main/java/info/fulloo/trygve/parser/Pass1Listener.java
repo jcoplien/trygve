@@ -156,7 +156,6 @@ import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
-import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 
 
 public class Pass1Listener extends Pass0Listener {
@@ -330,7 +329,7 @@ public class Pass1Listener extends Pass0Listener {
 				constructorScope, null, AccessQualifier.PublicAccess, decl.lineNumber(), false);
 		constructorScope.setDeclaration(newCtor);
 		newCtor.addParameterList(parameterList);
-		scope.declareMethod(newCtor);
+		scope.declareMethod(newCtor, this);
 		final Expression returnStatement = new ReturnExpression(decl.name(),
 				null, decl.lineNumber(), decl.type(), constructorScope);
 		final ExprAndDeclList ctorBody = new ExprAndDeclList(decl.lineNumber());
@@ -1134,7 +1133,7 @@ public class Pass1Listener extends Pass0Listener {
 		
 		newScope.setDeclaration(currentMethod);
 		
-		currentScope_.declareMethod(currentMethod);
+		currentScope_.declareMethod(currentMethod, this);
 		currentScope_ = newScope;
 		
 		parsingData_.pushFormalParameterList(pl);
@@ -2231,9 +2230,9 @@ public class Pass1Listener extends Pass0Listener {
 			kantParserVariableGeneratorCounter_++;
 			
 			final ObjectDeclaration variableForOperatorStringDecl = new ObjectDeclaration(variableNameForOperatorString, stringType, lineNumber);
-			currentScope_.declareObject(variableForOperatorStringDecl);
+			currentScope_.declareObject(variableForOperatorStringDecl, this);
 			final ObjectDeclaration variableForCompareToResultDecl = new ObjectDeclaration(variableNameForCompareToResult, stringType, lineNumber);
-			currentScope_.declareObject(variableForCompareToResultDecl);
+			currentScope_.declareObject(variableForCompareToResultDecl, this);
 			
 			final IdentifierExpression operatorString = new IdentifierExpression(variableNameForOperatorString, stringType,
 					currentScope_, lineNumber);
@@ -2370,9 +2369,9 @@ public class Pass1Listener extends Pass0Listener {
 				kantParserVariableGeneratorCounter_++;
 				
 				final ObjectDeclaration variableForOperatorStringDecl = new ObjectDeclaration(variableNameForOperatorString, stringType, lineNumber);
-				currentScope_.declareObject(variableForOperatorStringDecl);
+				currentScope_.declareObject(variableForOperatorStringDecl, this);
 				final ObjectDeclaration variableForCompareToResultDecl = new ObjectDeclaration(variableNameForCompareToResult, stringType, lineNumber);
-				currentScope_.declareObject(variableForCompareToResultDecl);
+				currentScope_.declareObject(variableForCompareToResultDecl, this);
 				
 				final IdentifierExpression operatorString = new IdentifierExpression(variableNameForOperatorString, stringType,
 						currentScope_, lineNumber);
@@ -2982,7 +2981,7 @@ public class Pass1Listener extends Pass0Listener {
 			final String tempName = "temp$" + parsingData_.variableGeneratorCounter_;
 			parsingData_.variableGeneratorCounter_++;
 			final ObjectDeclaration tempVariableDecl = new ObjectDeclaration(tempName, newExpr.type(), newExpr.lineNumber());;
-			currentScope_.declareObject(tempVariableDecl);
+			currentScope_.declareObject(tempVariableDecl, this);
 			
 			final IdentifierExpression tempVariable = new IdentifierExpression(tempName, newExpr.type(), currentScope_, newExpr.lineNumber());
 			
@@ -3580,7 +3579,7 @@ public class Pass1Listener extends Pass0Listener {
 		}
 		
 		final ObjectDeclaration objectDecl = new ObjectDeclaration(idName, type, ctx.getStart().getLine());
-		currentScope_.declareObject(objectDecl);
+		currentScope_.declareObject(objectDecl, this);
 	}
 	
 	@Override public void enterFor_expr(KantParser.For_exprContext ctx)
@@ -4485,10 +4484,10 @@ public class Pass1Listener extends Pass0Listener {
 	// ----------------------------------------------------------------------------------------
 
 	// WARNING. Tricky code here
-	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl); }
+	protected void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { s.declareObject(objdecl, this); }
 
 	protected void declareFormalParametersSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
-		scope.declareObject(objDecl);
+		scope.declareObject(objDecl, this);
 	}
 	
 	private ExpressionStackAPI exprFromExprDotJAVA_ID(final TerminalNode ctxJAVA_ID, final Token ctxGetStart, final TerminalNode ctxABELIAN_INCREMENT_OP) {

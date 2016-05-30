@@ -72,7 +72,7 @@ public final class ThreadClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		threadType_.enclosedScope().declareMethod(methodDecl);
+		threadType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	public static void setup() {

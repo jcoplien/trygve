@@ -78,7 +78,7 @@ public final class ColorClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		colorType_.enclosedScope().declareMethod(methodDecl);
+		colorType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
 	public static void setup() {

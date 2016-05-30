@@ -388,7 +388,7 @@ public class Pass2Listener extends Pass1Listener {
 		parsingData_.pushMessage(newMessage);
 	}
 	
-	protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
+	@Override protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
 		Expression expression = null;
 		
 		// On pass one, types may not yet be set up so we may
@@ -548,7 +548,7 @@ public class Pass2Listener extends Pass1Listener {
 				type = odecl.type();
 				assert type != null;
 			}
-
+			
 			assert qualifier instanceof Expression;
 			expression = new QualifiedIdentifierExpression((Expression)qualifier, javaIdString, type);
 		}
@@ -557,6 +557,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		return expression;
     }
+	
 	@Override public void ctorCheck(final Type type, final Message message, final int lineNumber) {
 		// Is there a constructor?
 		// We're not ready for this until here in Pass 2
@@ -939,7 +940,6 @@ public class Pass2Listener extends Pass1Listener {
 							wannabeContextType.name() + "'.");
 				}
 			}
-
 			
 			// Look this thing up in the "required" interface to see
 			// if it's really a Role method or just a latently bound
@@ -1383,13 +1383,13 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 
-	private Expression canBeAScriptEnactment(final StaticScope roleEnclosedScope, final String scriptName,
+	private Expression canBeAScriptEnactment(final StaticScope megaTypeEnclosedScope, final String scriptName,
 			final int lineNumber) {
+		// Eiffel-style script (feature) enactment
 		Expression retval = null;
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		if (null != roleEnclosedScope) {
-			assert roleEnclosedScope instanceof StaticRoleScope;
-			final RoleDeclaration roleDecl = (RoleDeclaration) roleEnclosedScope.associatedDeclaration();
+		if (megaTypeEnclosedScope instanceof StaticRoleScope) {
+			final RoleDeclaration roleDecl = (RoleDeclaration) megaTypeEnclosedScope.associatedDeclaration();
 			MethodSignature methodSignature = roleDecl.lookupRequiredMethodSignatureDeclaration(scriptName);
 			if (null == methodSignature) {
 				methodSignature = roleDecl.lookupPublishedSignatureDeclaration(scriptName);
@@ -1409,6 +1409,24 @@ public class Pass2Listener extends Pass1Listener {
 							currentContext_.enclosedScope(), lineNumber);
 					argumentList.addActualArgument(self);
 					
+					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
+					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
+					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();
+					retval = new MessageExpression(self, message, methodSignature.returnType(),
+							lineNumber, /*isStatic*/ false, originMethodClass, targetMethodClass,
+							true);
+				}
+			}
+		} else if (null != megaTypeEnclosedScope && enclosingMegaType instanceof ContextType) {
+			final ContextDeclaration contextDecl = (ContextDeclaration) enclosingMegaType.enclosedScope().associatedDeclaration();
+			final ActualArgumentList argumentList = new ActualArgumentList();
+			final Expression self = new IdentifierExpression("this", contextDecl.type(), currentScope_, lineNumber);
+			argumentList.addActualArgument(self);
+			final MethodDeclaration methodDeclaration = currentContext_.enclosedScope().lookupMethodDeclaration(scriptName, argumentList, false);
+			if (null != methodDeclaration) {
+				final MethodSignature methodSignature = methodDeclaration.signature();
+				if (methodSignature.formalParameterList().count() <= 2) {
+					// o.k.
 					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
 					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();
@@ -1562,10 +1580,14 @@ public class Pass2Listener extends Pass1Listener {
 				
 				// That was about the last chance
 				if (null == retval) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText,
-							"' is not declared in scope `", currentScope_.name(), "'.", "");
-					type = new ErrorType();
-					retval = new ErrorExpression(null);
+					// How about believing it could be a method call?
+					retval = canBeAScriptEnactment(possibleContextScope, idText, ctxGetStart.getLine());
+					if (null == retval) {
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText,
+								"' is not declared in scope `", currentScope_.name(), "'.", "");
+						type = new ErrorType();
+						retval = new ErrorExpression(null);
+					}
 				}
 			}
 		}
@@ -1686,7 +1708,7 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void declareObjectSuitableToPass(final StaticScope scope, final ObjectDeclaration objDecl) {
 		if (scope.hasDeclarationsThatAreLostBetweenPasses()) {
 			// e.g., a FOR Loop or a Block
-			scope.declareObject(objDecl);
+			scope.declareObject(objDecl, this);
 		} else {
 			// most of the time...
 			; 		/* Nothing */
@@ -1812,7 +1834,7 @@ public class Pass2Listener extends Pass1Listener {
 
 	// WARNING. Tricky code here
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) {
-		s.declareObject(objdecl);
+		s.declareObject(objdecl, this);
 	}
 	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
 		s.declareRoleOrStageProp(roledecl);	// probably redundant; done in pass 1
@@ -1832,7 +1854,7 @@ public class Pass2Listener extends Pass1Listener {
 				contextScope.declareType(newType);
 				
 				final ObjectDeclaration baseArrayObject = new ObjectDeclaration(compoundName, newType, lineNumber);
-				contextScope.declareObject(baseArrayObject);
+				contextScope.declareObject(baseArrayObject, this);
 			}
 		}
 	}

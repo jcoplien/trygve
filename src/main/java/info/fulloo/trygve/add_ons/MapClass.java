@@ -77,7 +77,7 @@ public final class MapClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		mapType_.enclosedScope().declareMethod(methodDecl);
+		mapType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	private static void declarePutAllMethod() {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
@@ -93,7 +93,7 @@ public final class MapClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(voidType);
 		methodDecl.setHasConstModifier(false);
-		mapType_.enclosedScope().declareMethod(methodDecl);
+		mapType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();

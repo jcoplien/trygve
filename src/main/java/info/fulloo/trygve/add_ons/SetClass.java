@@ -67,7 +67,7 @@ public final class SetClass {
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
-		listType_.enclosedScope().declareMethod(methodDecl);
+		listType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	public static void setup() {
 		typeDeclarationList_ = new ArrayList<TypeDeclaration>();
