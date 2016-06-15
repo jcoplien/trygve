@@ -707,7 +707,7 @@ public abstract class RTExpression extends RTCode {
 					// the base class of all Role-players -- Object -- and look there.
 					final ClassDeclaration classObject = StaticScope.globalScope().lookupClassDeclaration("Object");
 					final StaticScope classObjectScope = classObject.enclosedScope();
-					retval =  classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
+					retval = classObjectScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
 							/* conversionAllowed = */ false);
 				}
 			}

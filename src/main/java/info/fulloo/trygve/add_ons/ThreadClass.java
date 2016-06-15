@@ -143,7 +143,7 @@ public final class ThreadClass {
 			
 			try {
 				Thread.sleep(((RTIntegerObject)theWait).intValue());
-			} catch (InterruptedException interrupted) {
+			} catch (final InterruptedException interrupted) {
 				RunTimeEnvironment.runTimeEnvironment_.stopCurrentThread();
 			}
 			

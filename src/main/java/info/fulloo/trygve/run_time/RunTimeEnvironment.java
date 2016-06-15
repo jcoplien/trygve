@@ -124,7 +124,7 @@ public class RunTimeEnvironment {
 		} else {
 			retval = swingWorkerIsRunning_;
 		}
-		return retval;
+		return retval/* & !Thread.currentThread().isInterrupted()*/;
 	}
 	public void resetIsRunningForAll() {
 		awtIsRunning_ = swingWorkerIsRunning_ = true;
@@ -234,7 +234,7 @@ public class RunTimeEnvironment {
 				}
 			}
 			oldPc.decrementReferenceCount();
-		} while (pc != null && pc != exitNode);
+		} while (pc != null && pc != exitNode/* && !Thread.currentThread().isInterrupted()*/);
 	}
 	public synchronized void setFramePointer() {
 		final int stackSize = theStack().size();
@@ -443,6 +443,7 @@ public class RunTimeEnvironment {
 	public RTCode runner(final RTCode code) {
 		runnerPrefix(code);
 		final RTCode retval = isRunning()? code.run(): null;
+		// Thread.yield();		// be a good citizen
 		return retval;
 	}
 	

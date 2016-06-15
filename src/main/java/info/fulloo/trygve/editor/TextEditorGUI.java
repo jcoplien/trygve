@@ -68,7 +68,7 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "examples/simple_list.k";
+	private final static String defaultFile = "examples/spellcheck2.k";
     
     private File fileName = new File("noname");
     
@@ -1049,6 +1049,7 @@ private void cancelAllThreads() {
 	Thread.enumerate(threads);
 	for (final Thread aThread : threads) {
 		aThread.interrupt();
+		Thread.yield();// give it a chance to die (exploratory code)
 	}
 }
 

@@ -245,8 +245,13 @@ public abstract class RTClassAndContextCommon implements RTType {
 		} else if (null != this.baseClassDeclaration()) {
 			// We inherit base class methods. Recur.
 			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
-			assert (runTimeBaseClassType instanceof RTClass);
-			retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignatureNamed(methodName, suppliedParameters, ignoreName);
+			if (false == runTimeBaseClassType instanceof RTClass) {
+				ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
+						"FATAL: Internal Run-time error: Class lookup error", "", "", "");
+				retval = null;
+			} else {
+				retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignatureNamed(methodName, suppliedParameters, ignoreName);
+			}
 		} else {
 			retval = null;
 		}

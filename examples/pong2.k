@@ -106,56 +106,56 @@ context Arena implements EventHandler {
 	  public int width() const { return 100 }
 	  public void draw() {
 		 THE_PANEL.setColor(new Color(32, 170, 64));
-		 THE_PANEL.drawPADDLE(x() - (width() / 2), y(),
+		 THE_PANEL.drawPADDLE(getX() - (width() / 2), getY(),
 							 width(), thickness())
 	  }
 	  public void erase() {
 		 THE_PANEL.setColor(new Color(239, 237, 239));
-		 THE_PANEL.drawPADDLE(x() - (width() / 2), y(),
+		 THE_PANEL.drawPADDLE(getX() - (width() / 2), getY(),
 							 width(), thickness())
 	  }
-	  public void moveTo(Point p) { setXY(p.x(), y()) }
+	  public void moveTo(Point p) { setXY(p.getX(), getY()) }
 	  public boolean contains(int x) const {
-		 return ((x > (x() - (width() / 2))) &&
-				(x < (x() + (width() / 2))))
+		 return ((x > (getX() - (width() / 2))) &&
+				(x < (getX() + (width() / 2))))
 	  }
-	  public int vertical() const { return y() - thickness() }
+	  public int vertical() const { return getY() - thickness() }
    } requires {
 	  void setXY(int x, int y);
-	  int x() const;
-	  int y() const
+	  int getX() const;
+	  int getY() const
    }
    role BALL {
 	  public void erase() {
 		 THE_PANEL.setColor(new Color(239, 237, 239));
-		 THE_PANEL.drawCircle(x(), y(), radius())
+		 THE_PANEL.drawCircle(getX(), getY(), radius())
 	  }
 	  public void draw() {
 		 THE_PANEL.setColor(Color.blue);
-		 THE_PANEL.drawCircle(x(), y(), radius())
+		 THE_PANEL.drawCircle(getX(), getY(), radius())
 	  }
-	  public void step() { setXY(x() + velocity().x, y() + velocity().y) }
+	  public void step() { setXY(getX() + velocity().getX, getY() + velocity().getY) }
 	  private boolean bouncingOffOfPADDLE() {
-		 return if (y() + (radius() * 2) > PADDLE.vertical)
-				   PADDLE.contains(x() + radius())
+		 return if (getY() + (radius() * 2) > PADDLE.vertical)
+				   PADDLE.contains(getX() + radius())
 				else false
 	  }
 	  public void velocityAdjust() {
-		 int xv = velocity().x, yv = velocity().y;
-		 xv = if (velocity().x() > 0) {
-			if (x() + (radius() * 2) >= THE_PANEL.maxX) -xv else xv
-		 } else if (x() + radius() <= 0) -xv else xv;
+		 int xv = velocity().getX, yv = velocity().getY;
+		 xv = if (velocity().getX() > 0) {
+			if (getX() + (radius() * 2) >= THE_PANEL.maxX) -xv else xv
+		 } else if (getX() + radius() <= 0) -xv else xv;
 
-		 yv = if (velocity().y() > 0) {
+		 yv = if (velocity().getY() > 0) {
 			if (bouncingOffOfPADDLE()) -yv else yv
-		 } else if (y() + (radius() * 2) <= 0) -yv else yv
+		 } else if (getY() + (radius() * 2) <= 0) -yv else yv
 
 		 setVelocity(new Point(xv, yv))
 	  }
    } requires {
 	  void setXY(int x, int y);
-	  int x() const;
-	  int y() const;
+	  int getX() const;
+	  int getY() const;
 	  Point velocity();
 	  void setVelocity(Point velocity);
 	  int radius()

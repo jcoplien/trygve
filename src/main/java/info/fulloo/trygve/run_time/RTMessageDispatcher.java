@@ -143,7 +143,7 @@ public abstract class RTMessageDispatcher {
 			}
 			break;
 		case ContextEnvironment:
-			switch(targetMessageClass) {
+			switch (targetMessageClass) {
 			case ClassEnvironment:
 				retval = new RTContextToClass(messageExpr, methodSelectorName, argPush, postReturnProcessing, expressionsCountInArguments, actualParameters, isStatic, nearestEnclosingType);
 				break;
@@ -674,12 +674,13 @@ public abstract class RTMessageDispatcher {
 			RTMessage.printMiniStackStatus();
 			
 			// Halt the machine
+			hasError_ = new RTHalt();
 			return null;
 		} else if (null == rTTypeOfSelf) {
 			ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
 					methodSelectorName_, "' on a null Java object", "");
+			hasError_ = new RTHalt();
 			return null;
-			// assert null != rTTypeOfSelf;
 		}
 		
 		final ClassType classType = typeOfThisParameterToMethod instanceof ClassType? (ClassType)typeOfThisParameterToMethod: null;
@@ -1376,8 +1377,15 @@ public abstract class RTMessageDispatcher {
 			} else {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
-					assert self instanceof RTContextObject == false;
-					assert self instanceof RTRole == false;
+					if (self instanceof RTContextObject) {
+						// If an object is playing a Role and if someone is
+						// invoking a Requires script directly (instead of
+						// through the Published interface), its actually
+						// possible that the Role-player is a Context.
+						// Adjust this later.
+					} else if (self instanceof RTRole) {
+						assert self instanceof RTRole == false;
+					}
 				}
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
 			}
@@ -1395,9 +1403,6 @@ public abstract class RTMessageDispatcher {
 				methodDecl = genericMethodDeclLookup(typeOfThisParameterToMethod, self, true);
 			}
 			
-			if (null == methodDecl) {
-				assert null != methodDecl;
-			}
 			return methodDecl;
 		}
 	}

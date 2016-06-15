@@ -108,57 +108,57 @@ context Arena implements EventHandler {
       public int width() const { return 100 }
       public void draw() {
          ThePanel.setColor(new Color(32, 170, 64));
-         ThePanel.drawPaddle(x() - (width() / 2), y(),
+         ThePanel.drawPaddle(getX - (width() / 2), getY,
                              width(), thickness())
       }
       public void erase() {
          ThePanel.setColor(new Color(239, 237, 239));
-         ThePanel.drawPaddle(x() - (width() / 2), y(),
+         ThePanel.drawPaddle(getX - (width() / 2), getY,
                              width(), thickness())
       }
       public void moveTo(Point p) {
-         setXY(p.x(), y())
+         setXY(p.getX, getY)
       }
-      public boolean contains(int x) const {
-         return ((x > x() - (width() / 2)) &&
-                (x < x() + (width() / 2)))
+      public boolean contains(int p) const {
+         return ((p > getX() - (width() / 2)) &&
+                (p < getX() + (width() / 2)))
       }
-      public int vertical() const { return y() - thickness() }
+      public int vertical() const { return getY() - thickness() }
    } requires {
       void setXY(int x, int y);
-      int x() const;
-      int y() const
+      int getX() const;
+      int getY() const
    }
    role Ball {
       public void erase() {
          ThePanel.setColor(new Color(239, 237, 239));
-         ThePanel.drawCircle(x(), y(), radius())
+         ThePanel.drawCircle(getX, getY, radius())
       }
       public void draw() {
          ThePanel.setColor(Color.blue);
-         ThePanel.drawCircle(x(), y(), radius())
+         ThePanel.drawCircle(getX, getY, radius())
       }
       public void step() {
-         setXY(x() + velocity().x, y() + velocity().y);
+         setXY(getX + velocity().getX, getY() + velocity().getY);
       }
       private boolean bouncingOffOfPaddle() {
-         if (y() + (radius() * 2) > Paddle.vertical()) {
-            return Paddle.contains(x() + radius())
+         if (getY + (radius() * 2) > Paddle.vertical()) {
+            return Paddle.contains(getX() + radius())
          }
          return false
       }
       public void velocityAdjust() {
          int maxX = ThePanel.maxX(), maxY = ThePanel.maxY();
-         int xv = velocity().x.clone, yv = velocity().y.clone;
+         int xv = velocity().getX().clone, yv = velocity().getY().clone;
          int newX = xv.clone, newY = yv.clone;
-         if (velocity().x() > 0) {
-            if (x() + (radius() * 2) >= maxX) newX = -xv
-         } else if (x() + radius() <= 0) newX = -xv;
+         if (velocity().getX > 0) {
+            if (getX() + (radius() * 2) >= maxX) newX = -xv
+         } else if (getX() + radius() <= 0) newX = -xv;
 
-         if (velocity().y() > 0) {
+         if (velocity().getY() > 0) {
             if (bouncingOffOfPaddle()) newY = -yv
          } else {
-            if (y() + (radius() * 2) <= 0) newY = -yv
+            if (getY() + (radius() * 2) <= 0) newY = -yv
          }
 
          Point retval = new Point(newX, newY);
@@ -166,8 +166,8 @@ context Arena implements EventHandler {
       }
    } requires {
       void setXY(int x, int y);
-      int x();
-      int y();
+      int getX();
+      int getY();
       Point velocity();
       void setVelocity(Point velocity);
       int radius()

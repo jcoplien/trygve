@@ -1029,7 +1029,7 @@ public class StaticScope {
 			parameterList.addArgument(self);
 			methodDecl = this.lookupMethodDeclaration(objectName, parameterList, false);
 		}
-		if (null != methodDecl && methodDecl.formalParameterList().count() <= 2) {
+		if (null != methodDecl && 0 == methodDecl.formalParameterList().userParameterCount()) {
 			assert null != pass;
 			pass.errorHook5p2(ErrorIncidenceType.Fatal, decl.lineNumber(),
 					"Object `" + objectName, "' conflicts with method of same name in same scope.",

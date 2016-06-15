@@ -202,7 +202,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		if (i != pl1Count || j != pl2Count) {
 			retval = false;
 		}
-
+		
 		return retval;
 	}
 	
@@ -315,6 +315,21 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 				}
 			}
 		}
+		return retval;
+	}
+	public int userParameterCount() {
+		// Returns the number of total parameters less the declaration
+		// for this and current$context. Caller usually checks for zero / non-zero
+		int retval = super.count();
+		if (1 == retval && this.parameterAtPosition(0).name().equals("this")) {
+			retval = 0;
+		} else if (2 == retval && this.parameterAtPosition(0).name().equals("current$context") &&
+				this.parameterAtPosition(0).name().equals("this")) {
+			retval = 0;
+		} else {
+			retval -= 1;
+		}
+		assert retval >= 0;
 		return retval;
 	}
 	@Override public boolean isError() {

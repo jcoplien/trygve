@@ -4615,7 +4615,7 @@ public class Pass1Listener extends Pass0Listener {
 					final RoleDeclaration roleDeclaration = ((RoleType)objectType).associatedDeclaration();
 					final MethodSignature roleMethodSignature = roleDeclaration.lookupRequiredMethodSignatureDeclaration(methodSelectorName);
 					if (null != roleMethodSignature) {
-						if (roleMethodSignature.formalParameterList().count() <= 2) {
+						if (0 == roleMethodSignature.formalParameterList().userParameterCount()) {
 							// o.k.
 							methodDecl = new MethodDeclaration(roleMethodSignature, currentScope_, lineNumber);
 							methodDecl.setReturnType(roleMethodSignature.returnType());
@@ -4623,6 +4623,7 @@ public class Pass1Listener extends Pass0Listener {
 					}
 				}
 			}
+			
 			if (null != methodDecl) {
 				final Message message = new Message(methodSelectorName, argumentList, lineNumber, Expression.nearestEnclosingMegaTypeOf(currentScope_));
 				MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
@@ -4639,8 +4640,28 @@ public class Pass1Listener extends Pass0Listener {
 				}
 				
 				MethodInvocationEnvironmentClass targetMethodClass = null;
-				if (objectType instanceof RoleType) targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-				else if (objectType instanceof ContextType) targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+				if (objectType instanceof RoleType) {
+					// Requires methods get ClassEnvironment designation
+					final RoleType roleType = (RoleType)object.type();
+					final RoleDeclaration roleDecl = (RoleDeclaration)roleType.associatedDeclaration();
+					final MethodSignature requiredSignatureDecl = roleDecl.lookupRequiredMethodSignatureDeclaration(message.selectorName());
+					final MethodSignature publishedDecl = null == requiredSignatureDecl? null: roleDecl.lookupPublishedSignatureDeclaration(requiredSignatureDecl);
+					if (null != requiredSignatureDecl) {
+						if (null == publishedDecl) {
+							final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+							errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+									"Context script `", currentMethodScope.associatedDeclaration().name(),
+									"' may enact only Role scripts. Script `",
+									message.selectorName() + message.argumentList().selflessGetText(),
+									"' is an instance script from a class and is inaccessible to Context `",
+									roleDecl.enclosingScope().name() + "'.");
+						} else {
+							targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+						}
+					} else {
+						targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+					}
+				} else if (objectType instanceof ContextType) targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
 				else targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 				
 				final boolean isStatic = (null != methodDecl) && (null != methodDecl.signature()) && methodDecl.signature().isStatic();
@@ -4877,7 +4898,7 @@ public class Pass1Listener extends Pass0Listener {
 			final boolean isAConstructor = type.name().equals(message.selectorName());
 			if (false == isAConstructor) {
 				// Update the message type properly. Constructors are weird in
-				// that the message type is void whereas the expression type
+				// that the message type is void whereas the expression type is
 				// in terms of the thing being constructed.
 				message.setReturnType(type);
 			}

@@ -2178,10 +2178,17 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			if (null != aType) {
 				retval = aType;
 			} else if (enclosingScope != StaticScope.globalScope()) {
-				// retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
 				retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
 				RunTimeEnvironment.runTimeEnvironment_.registerTypeByPath(scopePathName, retval);
-				assert null != retval;
+				if (null == retval) {
+					final int lineNumber = null == enclosedScope? 0:
+						(null == enclosedScope.associatedDeclaration()? 0:
+							enclosedScope.associatedDeclaration().lineNumber()
+						);
+					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber,
+							"FATAL: Internal Error: Scope stack corrupted; likely termination cleanup problem. Just proceed.",
+							"", "", "");
+				}
 			} else {
 				// Top-level
 				assert enclosingScope == StaticScope.globalScope();
@@ -2190,7 +2197,6 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			}
 		}
 		
-		assert null != retval;
 		return retval;
 	}
 	public ParsingData parsingData() {

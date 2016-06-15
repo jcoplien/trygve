@@ -770,6 +770,19 @@ public class Pass2Listener extends Pass1Listener {
 				} else  {
 					targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 				}
+				
+				// Double-check to make sure that, if this is going through a Role
+				// interface, whether it is actually a "requires" declaration
+				if (MethodInvocationEnvironmentClass.RoleEnvironment == targetMethodClass) {
+					final RoleType roleType = (RoleType)object.type();
+					final RoleDeclaration roleDecl = (RoleDeclaration)roleType.associatedDeclaration();
+					final MethodSignature requiredSignatureDecl = roleDecl.lookupRequiredMethodSignatureDeclaration(message.selectorName());
+					if (null != requiredSignatureDecl) {
+						// It could be a context, but we can't tell here. We must wait until
+						// run-time and adjust
+						targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+					}
+				}
 			} else if (null != methodDeclaration) {
 				targetMethodClass = methodDeclaration.enclosingScope().methodInvocationEnvironmentClass();
 			} else  {
@@ -931,13 +944,17 @@ public class Pass2Listener extends Pass1Listener {
 				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
 						message, roleDecl);
 				if (null != signatureInRequiresSection) {
-					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
-							"Context script `", currentMethodScope.associatedDeclaration().name(),
-							"' may enact only Role scripts. Script `",
-							message.selectorName() + message.argumentList().selflessGetText(),
-							"' is an instance script from a class and is inaccessible to Context `",
-							wannabeContextType.name() + "'.");
+					// Is O.K. if it is also declared in the Role interface
+					final MethodSignature signatureInRoleInterface = roleDecl.lookupPublishedSignatureDeclaration(signatureInRequiresSection);
+					if (null == signatureInRoleInterface) {
+						final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+								"Context script `", currentMethodScope.associatedDeclaration().name(),
+								"' may enact only Role scripts. Script `",
+								message.selectorName() + message.argumentList().selflessGetText(),
+								"' is an instance script from a class and is inaccessible to Context `",
+								wannabeContextType.name() + "'.");
+					}
 				}
 			}
 			
@@ -1395,7 +1412,7 @@ public class Pass2Listener extends Pass1Listener {
 				methodSignature = roleDecl.lookupPublishedSignatureDeclaration(scriptName);
 			}
 			if (null != methodSignature) {
-				if (methodSignature.formalParameterList().count() <= 2) {
+				if (0 == methodSignature.formalParameterList().userParameterCount()) {
 					// o.k.
 					final ActualArgumentList argumentList = new ActualArgumentList();
 					
@@ -1425,8 +1442,8 @@ public class Pass2Listener extends Pass1Listener {
 			final MethodDeclaration methodDeclaration = currentContext_.enclosedScope().lookupMethodDeclaration(scriptName, argumentList, false);
 			if (null != methodDeclaration) {
 				final MethodSignature methodSignature = methodDeclaration.signature();
-				if (methodSignature.formalParameterList().count() <= 2) {
-					// o.k.
+				if (0 == methodSignature.formalParameterList().userParameterCount()) {
+					// o.k. — Eiffel-style feature invocation
 					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
 					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();

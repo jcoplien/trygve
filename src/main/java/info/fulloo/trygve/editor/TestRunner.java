@@ -169,6 +169,10 @@ public class TestRunner {
 		"listrole2.k",
 		"isexpression_test.k",
 		"confused_role_vec.k",
+		"frankfurt1.k",
+		"frankfurt2.k",
+		"frankfurt3.k",
+		"frankfurt4.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};
@@ -179,6 +183,7 @@ public class TestRunner {
 		"borrow_library_panel5.k",
 		"panel1.k",
 		"pong2.k",
+		"trygve_pong.k",
 		"breakout.k",
 		"keypad.k",
 		"simple_list.k",
