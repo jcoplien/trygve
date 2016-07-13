@@ -68,7 +68,7 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "examples/spellcheck2.k";
+	private final static String defaultFile = "tests/private_requires.k";
     
     private File fileName = new File("noname");
     

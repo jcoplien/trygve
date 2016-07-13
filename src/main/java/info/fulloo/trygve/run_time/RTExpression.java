@@ -46,6 +46,7 @@ import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
+import info.fulloo.trygve.declarations.Type.ErrorType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -1792,8 +1793,10 @@ public abstract class RTExpression extends RTCode {
 			part2_ = this instanceof RTInternalAssignment?
 						new RTInternalAssignmentPart2(expr, rhs_, nearestEnclosedType):
 						new RTAssignmentPart2(expr, rhs_, nearestEnclosedType);
-			rhs_.setNextCode(part2_);
-			rhs_.setResultIsConsumed(true);
+			if (null != rhs_) {
+				rhs_.setNextCode(part2_);
+				rhs_.setResultIsConsumed(true);
+			}
 			this.setResultIsConsumed(expr.resultIsConsumed());
 			lineNumber_ = expr.lineNumber();
 			gettableText_ = expr.getText();
@@ -2283,7 +2286,7 @@ public abstract class RTExpression extends RTCode {
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			
-			assert null != rTType_;
+			// assert null != rTType_;
 		}
 		@Override public RTCode run() {
 			final boolean isAContextConstructor = rTType_ instanceof RTContext;

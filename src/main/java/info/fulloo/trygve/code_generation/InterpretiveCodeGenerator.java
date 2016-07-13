@@ -113,6 +113,7 @@ import info.fulloo.trygve.expressions.Expression.WhileExpression;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClass.*;
+import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
@@ -2140,27 +2141,30 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private static RTType lookInTopLevelTypeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 
-		assert enclosedScope.associatedDeclaration() instanceof TypeDeclaration;
-		final TypeDeclaration typeDeclaration = (TypeDeclaration)enclosedScope.associatedDeclaration();
-		
-		retval = RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(typeDeclaration.name());
-		if (null == retval) {
-			if (typeDeclaration instanceof ClassDeclaration) {
-				final RTClass classDeclaration = new RTClass(typeDeclaration);
-				RunTimeEnvironment.runTimeEnvironment_.addTopLevelClass(typeDeclaration.name(), classDeclaration);
-			} else if (typeDeclaration instanceof ContextDeclaration) {
-				final RTContext contextDeclaration = new RTContext(typeDeclaration);
-				RunTimeEnvironment.runTimeEnvironment_.addTopLevelContext(typeDeclaration.name(), contextDeclaration);
-			} else if (typeDeclaration instanceof InterfaceDeclaration) {
-				final RTInterface interfaceDeclaration = new RTInterface(typeDeclaration);
-				RunTimeEnvironment.runTimeEnvironment_.addTopLevelInterface(typeDeclaration.name(), interfaceDeclaration);
-			} else {
-				assert false;
+		if (enclosedScope.associatedDeclaration() instanceof TypeDeclaration == false) {
+			retval = null;
+		} else {
+			final TypeDeclaration typeDeclaration = (TypeDeclaration)enclosedScope.associatedDeclaration();
+			
+			retval = RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed(typeDeclaration.name());
+			if (null == retval) {
+				if (typeDeclaration instanceof ClassDeclaration) {
+					final RTClass classDeclaration = new RTClass(typeDeclaration);
+					RunTimeEnvironment.runTimeEnvironment_.addTopLevelClass(typeDeclaration.name(), classDeclaration);
+				} else if (typeDeclaration instanceof ContextDeclaration) {
+					final RTContext contextDeclaration = new RTContext(typeDeclaration);
+					RunTimeEnvironment.runTimeEnvironment_.addTopLevelContext(typeDeclaration.name(), contextDeclaration);
+				} else if (typeDeclaration instanceof InterfaceDeclaration) {
+					final RTInterface interfaceDeclaration = new RTInterface(typeDeclaration);
+					RunTimeEnvironment.runTimeEnvironment_.addTopLevelInterface(typeDeclaration.name(), interfaceDeclaration);
+				} else {
+					assert false;
+				}
+				
+				retval = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
+				
+				//assert null != retval;
 			}
-			
-			retval = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(typeDeclaration);
-			
-			assert null != retval;
 		}
 		return retval;
 	}
@@ -2193,7 +2197,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				// Top-level
 				assert enclosingScope == StaticScope.globalScope();
 				retval = InterpretiveCodeGenerator.lookInTopLevelTypeForRTTypeDeclaration(enclosedScope);
-				assert null != retval;
+				// assert null != retval;
 			}
 		}
 		

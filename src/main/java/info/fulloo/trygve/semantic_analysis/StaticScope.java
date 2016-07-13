@@ -1435,13 +1435,15 @@ public class StaticScope {
 		return retval;
 	}
 	public String pathName() {
+		String retval = null;
 		if (null == associatedDeclaration_) {
-			assert null != associatedDeclaration_;
+			retval = null;
+		} else if (null == associatedDeclaration_.type()) {
+			retval = null;
+		} else {
+			retval = associatedDeclaration_.type().pathName();
 		}
-		if (null == associatedDeclaration_.type()) {
-			assert null != associatedDeclaration_.type();
-		}
-		return associatedDeclaration_.type().pathName();
+		return retval;
 	}
 	
 	public static class StaticRoleScope extends StaticScope {
