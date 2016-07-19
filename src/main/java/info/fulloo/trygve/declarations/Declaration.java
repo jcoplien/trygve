@@ -473,8 +473,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		public MethodSignature lookupPublishedSignatureDeclaration(final MethodSignature otherSignature) {
 			MethodSignature publishedSignature = publishedSignatures_.get(otherSignature.name());
-				if ( null != publishedSignature) {
-					if (publishedSignature.formalParameterList().alignsWith(otherSignature.formalParameterList()) == false) {
+				if (null != publishedSignature) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(
+							publishedSignature.formalParameterList(), otherSignature.formalParameterList(), "this", true) == false) {
 						publishedSignature = null;
 				}
 			}

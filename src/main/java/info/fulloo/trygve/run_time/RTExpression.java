@@ -46,7 +46,6 @@ import info.fulloo.trygve.declarations.Message;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
-import info.fulloo.trygve.declarations.Type.ErrorType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;

@@ -426,6 +426,8 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (baseType instanceof BuiltInType && baseType.name().equals("Null")) {
 			// Stumbling error
 			expression = new ErrorExpression(rawArrayBase);
+		} else if (baseType instanceof ErrorType) {
+			;		// it happens
 		} else {
 			assert false;
 		}

@@ -243,6 +243,54 @@ public abstract class Type implements ExpressionStackAPI
 					}
 				}
 			}
+			
+			if (retval == false) {
+				retval = complexCanBeConvertedCheck(t);
+			}
+			
+			return retval;
+		}
+		private boolean complexCanBeConvertedCheck(final Type t) {
+			// If every script in the signature of this is also in the
+			// signature of t, then they are type compatible
+			boolean retval = true;
+			
+			String nameWithoutTemplateParameter = name();
+			final int paramIndex = nameWithoutTemplateParameter.indexOf('<');
+			if (paramIndex != -1) {
+				nameWithoutTemplateParameter = nameWithoutTemplateParameter.substring(0, paramIndex);
+			}
+
+			if (t.isBaseClassOf(this)) {
+				retval = false;
+			} else if (t instanceof ErrorType || null == t.enclosedScope()) {
+				retval = false;
+			} else if (t instanceof RoleType) {
+				final List<MethodDeclaration> myMethods = this.enclosedScope().methodDeclarations();
+				for (final MethodDeclaration mdecl : myMethods) {
+					// Ignore constructors
+					if (mdecl.name().equals(nameWithoutTemplateParameter)) {
+						continue;
+					} else {
+						// Check the rest
+						final MethodDeclaration otherTypeMDecl = t.enclosedScope().lookupMethodDeclarationIgnoringRoleStuff(
+								mdecl.signature().name(), mdecl.formalParameterList());
+						if (null == otherTypeMDecl) {
+							// Check requires signatures (published ones instead?)
+							final RoleType roleType = (RoleType) t;
+							final RoleDeclaration associatedDeclaration = roleType.associatedDeclaration();
+							final MethodSignature publishedSignature = associatedDeclaration.lookupPublishedSignatureDeclaration(mdecl.signature());
+							if (null == publishedSignature) {
+								retval = false;
+								break;
+							}
+						}
+					}
+				}
+			} else {
+				// Probably shouldn't have called here in the first place
+				retval = false;
+			}
 			return retval;
 		}
 		@Override public boolean isBaseClassOf(final Type aDerived) {
@@ -1434,29 +1482,32 @@ public abstract class Type implements ExpressionStackAPI
 	}
 	public MethodSignature signatureForMethodSelectorGeneric(final String methodSelector, final MethodSignature methodSignature) {
 		final FormalParameterList methodSignatureFormalParameterList = methodSignature.formalParameterList();
-		if (null == enclosedScope_) {
+		MethodSignature retval = null;
+		if (null == enclosedScope_ && (false == this instanceof ErrorType)) {
 			assert null != enclosedScope_;
-		}
-		final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector,
-				methodSignatureFormalParameterList,
-				/* paramToIgnore */ "this",
-				/* conversionAllowed = */ true);
+		} else if (this instanceof ErrorType) {
+			retval = null;
+		} else {
+			final MethodDeclaration mDecl = /*class*/enclosedScope_.lookupMethodDeclarationIgnoringParameter(methodSelector,
+					methodSignatureFormalParameterList,
+					/* paramToIgnore */ "this",
+					/* conversionAllowed = */ true);
+			
+			retval = null == mDecl? null: mDecl.signature();
 		
-		// mDecl can be null under error conditions
-		MethodSignature retval = null == mDecl? null: mDecl.signature();
-	
-		// We need to explore base class signatures
-		if (null == retval) {
-			if (this instanceof ClassType) {
-				final ClassType classType = (ClassType) this;
-				if (null != classType.baseClass()) {
-					// Recur. Good code reuse.
-					retval = classType.baseClass().signatureForMethodSelectorGeneric(methodSelector, methodSignature);
+			// We need to explore base class signatures
+			if (null == retval) {
+				if (this instanceof ClassType) {
+					final ClassType classType = (ClassType) this;
+					if (null != classType.baseClass()) {
+						// Recur. Good code reuse.
+						retval = classType.baseClass().signatureForMethodSelectorGeneric(methodSelector, methodSignature);
+					} else {
+						retval = null;	// redundant
+					}
 				} else {
 					retval = null;	// redundant
 				}
-			} else {
-				retval = null;	// redundant
 			}
 		}
 		

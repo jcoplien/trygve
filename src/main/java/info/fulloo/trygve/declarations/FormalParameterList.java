@@ -225,7 +225,10 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			// in which case templateTypes.size() == 0. 
 			if (null != typeOfParameter && typeOfParameter instanceof TemplateParameterType && null != templateTypes && templateTypes.size() > 0) {
 				final int templateTypesSize = templateTypes.size();
-				assert templateTypesSize > i - 1;
+				if (templateTypesSize <= i - 1) {
+					return null;
+					// assert templateTypesSize > i - 1;
+				}
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
 						aParameter.name(), templateTypes.get(i - 1), aParameter.lineNumber());
 				retval.addFormalParameter(substituteDecl);

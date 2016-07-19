@@ -1550,7 +1550,7 @@ public class Pass1Listener extends Pass0Listener {
 		} else {
 			Type type = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			
-			if (isArray) {
+			if (null != type && isArray) {
 				// A derived type
 				final String aName = type.getText() + "_$array";
 				type = new ArrayType(aName, type);
@@ -2653,7 +2653,7 @@ public class Pass1Listener extends Pass0Listener {
 								"Expression `" + rhs.getText(), "' is not of the right type (",
 								lhs.type().getText(), ").");
 					}
-
+					
 					if (lhsType.canBeLhsOfBinaryOperatorForRhsType(operationAsString, rhsType)) {
 						;	// O.K.
 					} else if (lhs.isntError() && lhs.type().isntError() && rhs.isntError() &&
@@ -3721,7 +3721,16 @@ public class Pass1Listener extends Pass0Listener {
 			thingToIncrementOver.setResultIsConsumed(true);
 			
 			final Type typeIncrementingOver = thingToIncrementOver.type();
-			if (typeIncrementingOver instanceof ArrayType == false &&
+			
+			boolean isRoleArray = false;
+			if (typeIncrementingOver instanceof RoleType) {
+				final RoleType roleType = (RoleType) typeIncrementingOver;
+				isRoleArray = roleType.isArray();
+			}
+			
+			if (isRoleArray) {
+				;		// an O.K. possibility
+			} else if (typeIncrementingOver instanceof ArrayType == false &&
 					null != typeIncrementingOver &&
 					typeIncrementingOver.name().startsWith("List<") == false &&
 					typeIncrementingOver.name().startsWith("Set<") == false &&
@@ -4969,9 +4978,16 @@ public class Pass1Listener extends Pass0Listener {
 								"' not declared in class `", classDecl.name(), "'.", "");
 					}
 				} else if (actualArgumentList.isntError()) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
-							methodSelectorName + actualArgumentList.selflessGetText(),
-							"' not declared in class `", classDecl.name(), "'.", "");
+					// Look at Object. Could be an assert or something
+					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
+					assert null != objectDecl;
+					mdecl = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, methodSelectorName, actualArgumentList);
+					
+					if (null == mdecl) {
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+								methodSelectorName + actualArgumentList.selflessGetText(),
+								"' not declared in class `", classDecl.name(), "'.", "");
+					}
 				}
 			}
 			
@@ -5517,7 +5533,7 @@ public class Pass1Listener extends Pass0Listener {
 					}
 				}
 			} else if (lhsType.canBeConvertedFrom(rhsType) == false && lhs.isntError() &&
-					rhs.isntError()) {
+					rhs.isntError() && lhsType.isntError() && rhsType.isntError()) {
 				errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Role `", lhsType.name(),
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(lineNumber, (RoleType)lhsType, rhsType);

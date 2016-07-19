@@ -187,6 +187,7 @@ public class TestRunner {
 		"breakout.k",
 		"keypad.k",
 		"simple_list.k",
+		"july_money_transfer.k",
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

@@ -103,7 +103,7 @@ public class Pass0Listener extends KantBaseListener {
 		assert objectBaseClass instanceof ClassType;
 		ClassType baseType = (ClassType)objectBaseClass;
 		
-		final String name = ctx.JAVA_ID(0).getText();
+		final String name = null != ctx.JAVA_ID(0)? ctx.JAVA_ID(0).getText(): "*error*";
 		ClassDeclaration rawBaseClass = null;
 		
 		if (null != ctx.class_body()) {
