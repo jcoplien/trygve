@@ -174,6 +174,7 @@ public class TestRunner {
 		"frankfurt3.k",
 		"frankfurt4.k",
 		"july_money_transfer_2.k",
+		"role_class_compatibility.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

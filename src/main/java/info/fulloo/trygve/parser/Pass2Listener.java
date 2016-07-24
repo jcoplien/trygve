@@ -583,15 +583,26 @@ public class Pass2Listener extends Pass1Listener {
 				}
 				
 				if (null != constructor) {
+					final String constructorName = constructor.name();
 					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
 					if (isAccessible == false) {
 						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
-								"Cannot access constructor `", constructor.name(),
+								"Cannot access constructor `", constructorName,
 								"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
+					}
+					
+					final boolean isValidCall = message.validInRunningEnviroment(constructor);
+					if (false == isValidCall) {
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "The parameters to script `",
+								constructorName + message.argumentList().selflessGetText(),
+								"' have scripts that are unavailable outside this Context (e.g., they are Role scripts)", ".");
 					}
 				}
 			}
 		}
+
+		
+				
 	}
 	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		// Apparently called only for constructor processing.
@@ -1155,8 +1166,17 @@ public class Pass2Listener extends Pass1Listener {
 			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
 		}
 		
-		if (null == methodDeclaration && isOKMethodSignature == false) {
-			final String methodSelectorName = message.selectorName();
+		assert (null != message);	// just assuming...
+		final String methodSelectorName = message.selectorName();
+		
+		if (null != methodDeclaration) {
+			final boolean isValidCall = message.validInRunningEnviroment(methodDeclaration);
+			if (false == isValidCall) {
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "The parameters to script `",
+						methodSelectorName + message.argumentList().selflessGetText(),
+						"' have scripts that are unavailable outside this Context (e.g., they are Role scripts)", ".");
+			}
+		} else if (null == methodDeclaration && isOKMethodSignature == false) {
 			if (message.argumentList().isntError()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
 						methodSelectorName + message.argumentList().selflessGetText(),

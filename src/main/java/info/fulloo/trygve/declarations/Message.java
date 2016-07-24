@@ -23,7 +23,13 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import java.util.ArrayList;
+import java.util.List;
+
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
+import info.fulloo.trygve.declarations.Declaration.MethodSignature;
+import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -101,6 +107,79 @@ public class Message {
 	}
 	public Type enclosingMegaType() {
 		return enclosingMegaType_;
+	}
+	public boolean validInRunningEnviroment(final MethodDeclaration targetMethodDeclaration) {
+		// Normal argument checking is done on the basis
+		// of signature mapping. Let's assume that matches.
+		// One of the actual parameters may be a Role type,
+		// passed into a formal parameter that matches. If
+		// the method executes in a different Context (without
+		// access to the Role methods) then the call is
+		// meaningless. Check that here.
+		boolean retval = true;
+		// final StaticScope targetMethodScope = targetMethodDeclaration.enclosedScope();
+		// final Type targetType = Expression.nearestEnclosingMegaTypeOf(targetMethodScope);
+		final FormalParameterList formalParameters = targetMethodDeclaration.formalParameterList();
+		
+		final int numberOfActualParameters = argumentList_.count();
+		
+		// We start at 1 rather than 0 so we can discount "this"
+		for (int argNumber = 1; argNumber < numberOfActualParameters; argNumber++) {
+			final Expression actualParameter = argumentList_.parameterAtPosition(argNumber);
+			final Type typeOfActualParameter = actualParameter.type(),
+					   baseTypeOfActualParameter = actualParameter.baseType();
+			RoleType roleType = null;
+			if (typeOfActualParameter instanceof RoleType) {	// or, of course, by implication StageProp, too
+				roleType = (RoleType) typeOfActualParameter;
+			} else if (baseTypeOfActualParameter instanceof RoleType) {
+				roleType = (RoleType) baseTypeOfActualParameter;
+			}
+			
+			if (null != roleType) {
+				// Then we're calling from a Context - we have to be,
+				// or no RoleTypes would be available. Check to see if
+				// the receiving script's argument depends on matching
+				// any Role methods. If so, make sure that the receiving
+				// object is guaranteed to be in the same Context as
+				// the caller
+				final Declaration correspondingFormalParameter = formalParameters.parameterAtPosition(argNumber);
+				final Type correspondingFormalParameterType = correspondingFormalParameter.type();
+				
+				if (correspondingFormalParameterType instanceof RoleType) {
+					// We need not check Role types, because if it's a Role type
+					// it must be accessible to the caller and therefore within the
+					// same context
+					continue;
+				} else {
+					// Requires methods (which are a superset of the published
+					// methods) are all Ok. Other Role methods don't make the cut.
+					// The roleType must support all methods of the formal parameter,
+					// by using only those methods in its "requires" section
+					final List<MethodDeclaration> formalParamMethods =
+							null == correspondingFormalParameterType? new ArrayList<MethodDeclaration>():
+								(null == correspondingFormalParameterType.enclosedScope()?
+										new ArrayList<MethodDeclaration>():
+										correspondingFormalParameterType.enclosedScope().methodDeclarations()
+								);
+						
+					for (final MethodDeclaration aMethodOfTheFormalParameter : formalParamMethods) {
+						if (aMethodOfTheFormalParameter.isAConstructor()) {
+							continue;
+						} else {
+							final MethodSignature parametersSignature = aMethodOfTheFormalParameter.signature();
+							final MethodSignature roleAnswer = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(parametersSignature);
+							if (null == roleAnswer) {
+								// Couldn't find it — game over
+								retval = false;
+								break;
+							}
+						}
+					}
+					if (false == retval) break;
+				}
+			}
+		}
+		return retval;
 	}
 	
 	private String selectorName_;

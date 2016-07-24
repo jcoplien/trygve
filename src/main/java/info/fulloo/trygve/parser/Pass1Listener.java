@@ -3085,6 +3085,17 @@ public class Pass1Listener extends Pass0Listener {
 							"Cannot access constructor `", constructor.signature().getText(),
 							"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 				}
+				
+				// Create a new message just for checking (not dispatching)
+				final String methodSelectorName = constructor.name();
+				final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+				final Message message = new Message(methodSelectorName, argument_list,lineNumber, enclosingType);
+				boolean isValidCall = message.validInRunningEnviroment(constructor);
+				if (false == isValidCall) {
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Script `",
+							methodSelectorName + message.argumentList().selflessGetText(),
+							"' depends on method parameters that are not available outside this context ", ".");
+				}
 			}
 			
 			expression = checkNakedNew(expression);

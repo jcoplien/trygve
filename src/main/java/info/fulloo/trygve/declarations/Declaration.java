@@ -455,6 +455,21 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupRequiredMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
 		}
+		public MethodSignature lookupRequiredMethodSignatureDeclaration(final MethodSignature signature) {
+			MethodSignature possibleSignature = requiredSelfSignatures_.get(signature.name());
+			if (null != possibleSignature) {
+				final FormalParameterList formalParameterList = possibleSignature.formalParameterList();
+				final FormalParameterList actualParameterList = signature.formalParameterList();
+				if (FormalParameterList.alignsWithParameterListIgnoringParamCommon(
+						formalParameterList,
+						actualParameterList, null, true, -1)) {
+					;		// O.K.
+				} else {
+					possibleSignature = null;
+				}
+			}
+			return possibleSignature;
+		}
 		public boolean isAParameterlessRequiresMethod(final String methodSelectorName) {
 			boolean retval = false;
 			final MethodSignature methodSignature = this.lookupRequiredMethodSignatureDeclaration(methodSelectorName);
@@ -572,12 +587,14 @@ public abstract class Declaration implements BodyPart {
 				final boolean isStatic) {
 			super(name);
 			signature_ = new MethodSignature(name(), returnType, accessQualifier, lineNumber, isStatic);
+			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
 			this.commonInit(myEnclosedScope, returnType, accessQualifier, lineNumber);
 		}
 		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
 				final int lineNumber, final boolean manuallyInvokesConstructor) {
 			super(signature.name());
 			signature_ = signature;
+			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
 			this.commonInit(myEnclosedScope, signature.returnType(),
 					signature.accessQualifier(), lineNumber);
 		}
@@ -585,8 +602,34 @@ public abstract class Declaration implements BodyPart {
 				final int lineNumber) {
 			super(signature.name());
 			signature_ = signature;
+			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
 			this.commonInit(myEnclosedScope, signature.returnType(),
 					signature.accessQualifier(), lineNumber);
+		}
+		private boolean calculateConstructorStatus(final StaticScope myEnclosedScope) {
+			// Am I a constructor?
+			
+			boolean retval = false;
+			
+			final StaticScope parentScope = myEnclosedScope.parentScope();
+			assert null != parentScope;
+			final String className = parentScope.name();
+			final String methodSelectorName = signature_.name();
+			
+			if (methodSelectorName.equals(className)) {
+				retval = true;
+			} else {
+				if (className.matches("[a-zA-Z]<.*>") || className.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+					final int msnl = methodSelectorName.length();
+					if (className.startsWith(methodSelectorName) && className.length() < msnl) {
+						if (className.charAt(msnl-1) == '<') {
+							retval = true;
+						}
+					}
+				}
+			}
+			
+			return retval;
 		}
 		public void setHasConstModifier(final boolean tf) {
 			signature_.setHasConstModifier(tf);
@@ -675,26 +718,7 @@ public abstract class Declaration implements BodyPart {
 		}
 	
 		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final int lineNumber) {
-			// Am I a constructor?
-			boolean isCtor = false;
-			assert null != parentScope;
-			final String className = parentScope.name();
-			final String methodSelectorName = signature_.name();
-			
-			if (methodSelectorName.equals(className)) {
-				isCtor = true;
-			} else {
-				if (className.matches("[a-zA-Z]<.*>") || className.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
-					final int msnl = methodSelectorName.length();
-					if (className.startsWith(methodSelectorName) && className.length() < msnl) {
-						if (className.charAt(msnl-1) == '<') {
-							isCtor = true;
-						}
-					}
-				}
-			}
-			
-			if (isCtor) {
+			if (isAConstructor_) {
 				// Special things constructors need to do:
 				// base class processing and initializations
 				final Declaration associatedDeclaration = parentScope.associatedDeclaration();
@@ -819,6 +843,10 @@ public abstract class Declaration implements BodyPart {
 			return hasManualBaseClassConstructorInvocations_;
 		}
 		
+		public boolean isAConstructor() {
+			return isAConstructor_;
+		}
+		
 		private Type returnType_;
 		private StaticScope myEnclosedScope_;
 		private AccessQualifier accessQualifier_;
@@ -827,6 +855,7 @@ public abstract class Declaration implements BodyPart {
 		private MethodSignature signature_;
 		private ExprAndDeclList bodyPrefix_;
 		private boolean hasManualBaseClassConstructorInvocations_;
+		private final boolean isAConstructor_;
 	}
 	
 	public static class MethodSignature extends Declaration
