@@ -212,7 +212,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					myParameter = this.parameterAtPosition(i);
 					otherParameter = other.parameterAtPosition(i);
 					if (myParameter.getText().equals(otherParameter.getText())) {
-						if (myParameter.type().pathName().equals(otherParameter.type().pathName()) == false) { 
+						if (false == myParameter.type().pathName().equals(otherParameter.type().pathName())) { 
 							retval = false;
 							break;
 						}

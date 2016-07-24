@@ -56,6 +56,7 @@ import info.fulloo.trygve.run_time.RTObjectCommon.RTBooleanObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTDoubleObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -235,6 +236,14 @@ public class RunTimeEnvironment {
 			}
 			oldPc.decrementReferenceCount();
 		} while (pc != null && pc != exitNode/* && !Thread.currentThread().isInterrupted()*/);
+		finalCleanup();
+	}
+	private void finalCleanup() {
+		final RTObject lastEvaluated = RTExpression.lastExpressionResult();
+		if (null != lastEvaluated && false == lastEvaluated instanceof RTNullObject) {
+			lastEvaluated.decrementReferenceCount();
+		}
+		RTExpression.setLastExpressionResult(new RTNullObject(), 0);
 	}
 	public synchronized void setFramePointer() {
 		final int stackSize = theStack().size();
@@ -349,7 +358,7 @@ public class RunTimeEnvironment {
 	public void popDynamicScopeInstances(final long depth) {
 		// May be zero, but usually not
 		for (int i = 0; i < depth; i++) {
-			final RTDynamicScope retval = dynamicScopeStack().pop();
+			final RTDynamicScope retval = popDynamicScope();
 			retval.decrementReferenceCount();
 		}
 	}

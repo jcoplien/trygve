@@ -61,6 +61,7 @@ public class ErrorLogger {
 		numberOfInternalErrors_ = 0;
 		numberOfRuntimeErrors_ = 0;
 		numberOfUnimplementedErrors_ = 0;
+		numberOfParseErrors_ = 0;
 	}
 	private static void updateCounts(ErrorIncidenceType errorType) {
 		switch (errorType) {
@@ -70,14 +71,15 @@ public class ErrorLogger {
 		case Internal: numberOfInternalErrors_++; break;
 		case Runtime: numberOfRuntimeErrors_++; break;
 		case Unimplemented: numberOfUnimplementedErrors_++; break;
+		case Parse: numberOfParseErrors_++; break;
 		default: assert false;
 		}
 	}
 	public static int numberOfWarnings() { return numberOfWarnings_; }
-	public static int numberOfFatalErrors() { return numberOfFatalErrors_ + numberOfInternalErrors_ + numberOfUnimplementedErrors_; }
-	public enum ErrorIncidenceType { Warning, Fatal, Noncompliant, Internal, Runtime, Unimplemented };
+	public static int numberOfFatalErrors() { return numberOfFatalErrors_ + numberOfInternalErrors_ + numberOfUnimplementedErrors_ + numberOfParseErrors_; }
+	public enum ErrorIncidenceType { Warning, Fatal, Noncompliant, Internal, Runtime, Parse, Unimplemented };
 	
 	@SuppressWarnings("unused")
 	private static int numberOfFatalErrors_, numberOfWarnings_, numberOfNonCompliances_, numberOfInternalErrors_,
-						numberOfRuntimeErrors_, numberOfUnimplementedErrors_;
+						numberOfRuntimeErrors_, numberOfUnimplementedErrors_, numberOfParseErrors_;
 }

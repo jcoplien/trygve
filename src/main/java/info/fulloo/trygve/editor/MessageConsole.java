@@ -184,7 +184,7 @@ public class MessageConsole
 	 */
 	public void redirectErr(final Color textColor, final PrintStream printStream)
 	{
-		if (ConfigurationOptions.redirectStandardErrorToConsole() == false) {
+		if (false == ConfigurationOptions.redirectStandardErrorToConsole()) {
 			ConsoleOutputStream cos = new ConsoleOutputStream(textColor, printStream);
 			System.setErr( new PrintStream(cos, true) );
 		}

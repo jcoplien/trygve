@@ -113,7 +113,7 @@ public class Pass0Listener extends KantBaseListener {
 				final String baseTypeName = baseClassNode.getText();
 				Type rawBaseType = currentScope_.lookupTypeDeclarationRecursive(baseTypeName);
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
-				if ((rawBaseType instanceof ClassType) == false) {
+				if (false == (rawBaseType instanceof ClassType)) {
 					// Leave to pass 2
 					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
 							"' is not a declared class type as base of `", name, "'.", "");

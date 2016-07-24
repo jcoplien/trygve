@@ -196,9 +196,9 @@ public abstract class RTExpression extends RTCode {
 		} else if (expr instanceof ForExpression) {
 			final ForExpression exprAsFor = (ForExpression) expr;
 			if (null == exprAsFor.thingToIterateOver()) {
-				retval = new RTFor((ForExpression)expr, nearestEnclosingType);
+				retval = new RTTraditionalFor((ForExpression)expr, nearestEnclosingType);
 			} else {
-				retval = new RTForIteration((ForExpression)expr, nearestEnclosingType);
+				retval = new RTIterationFor((ForExpression)expr, nearestEnclosingType);
 			}
 		} else if (expr instanceof WhileExpression) {
 			retval = new RTWhile((WhileExpression)expr, nearestEnclosingType);
@@ -336,7 +336,9 @@ public abstract class RTExpression extends RTCode {
 			return RunTimeEnvironment.runTimeEnvironment_.runner(qualifier_);
 		}
 		public RTDynamicScope dynamicScope() {
-			assert null != part2_.dynamicScope_;
+			if (null == part2_.dynamicScope_) {
+				assert null != part2_.dynamicScope_;
+			}
 			return part2_.dynamicScope_;
 		}
 		public String name() {
@@ -355,16 +357,22 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public RTCode run() {
 				// Pop the expression off the stack
+				RTCode retval = null;
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (qualifier == null) {
 					// Run-time error
 					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_, "INTERNAL Error: Unitialized reference to object `",
 									idName_, "'.", "");
-					return new RTHalt();
+					retval = new RTHalt();
 				} else {
-					// What's this dynamicScope_ crap? Does anybody use it?
+					if (qualifier instanceof RTDynamicScope) {
+						assert false;	// just checking to see if this ever happens
+						dynamicScope_ = (RTDynamicScope)qualifier;
+					} else {
+						dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor
+						qualifier.decrementReferenceCount();
+					}
 					
-					dynamicScope_ = new RTDynamicScope(idName_, qualifier, null);	// cheesy constructor -- increments ref count, don't worry
 					RTObject value = qualifier.getObject(idName_);
 					
 					// Maybe getObject should handle Role lookup, dunno...
@@ -374,13 +382,23 @@ public abstract class RTExpression extends RTCode {
 						value = contextQualifier.getRoleOrStagePropBinding(idName_);
 					}
 					
+					assert (null != value);
+					
 					// NOTE: Value may be instance of RTNullObject.
 					
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
-					qualifier.decrementReferenceCount();
 					setLastExpressionResult(value, lineNumber_);
-					return nextCode_;
+					
+					// At the beginning of the evaluation of this qualified identifier,
+					// the qualifier was pushed on the stack. Stack pushes increment
+					// the reference count. Pops do not. At the beginning of this method
+					// we popped it. Undo the reference count manipulation.
+					
+					qualifier.decrementReferenceCount();
+					
+					retval = nextCode_;
 				}
+				return retval;
 			}
 			public int lineNumber() {
 				return lineNumber_;
@@ -1815,6 +1833,7 @@ public abstract class RTExpression extends RTCode {
 			
 			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 		}
+		
 		public void setNextCode(final RTCode pc) {
 			part2_.setNextCode(pc);
 		}
@@ -1848,7 +1867,7 @@ public abstract class RTExpression extends RTCode {
 				// That should get it on the stack. Get the RHS value now.
 				final RTObject rhs = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				assert null != rhs;
-	
+				
 				// Only three types make sense as L-values: Identifier, QualifiedIdentifier, and ArrayExpression
 				// TODO: Add QualifiedClassMemberExpression
 				RTDynamicScope dynamicScope = null;
@@ -1876,6 +1895,10 @@ public abstract class RTExpression extends RTCode {
 						this.processRoleOrStagePropBinding(rhs);
 					}
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
+					
+					rhs.decrementReferenceCount();	// because we initially popped it from the stack
+													// (the above pushStack increments it)
+					
 					return staticNextCode_;
 				/*
 				 * Actually, just handling it as an ordinary RTIdentifier
@@ -1893,7 +1916,11 @@ public abstract class RTExpression extends RTCode {
 						return check;
 					} else if (this.resultIsConsumed()) {
 						RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
-					}	
+					}
+					
+					rhs.decrementReferenceCount();	// because we initially popped it from the stack
+													// (the above pushStack increments it)
+					
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTArrayExpression && ((RTArrayExpression)lhs_).baseType() instanceof RoleType) {
 					// Role array member assignment.
@@ -1905,6 +1932,10 @@ public abstract class RTExpression extends RTCode {
 					this.processRoleArrayBinding(lhs, rhsAsArray);
 					
 					RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs);	// need reference count cleanup code here?
+					
+					rhs.decrementReferenceCount();	// because we initially popped it from the stack
+													// (the above pushStack increments it)
+					
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTIdentifier) {
 					final RTIdentifier lhs = (RTIdentifier)lhs_;
@@ -1915,6 +1946,7 @@ public abstract class RTExpression extends RTCode {
 					// the qualifier...
 					final RTCode restOfLhs = RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
 					part2b_.setRhs(rhs);
+					
 					return restOfLhs;
 				} else if (lhs_ instanceof RTArrayIndexExpression) {
 					final RTArrayIndexExpression indexedExpression = (RTArrayIndexExpression) lhs_;
@@ -2070,7 +2102,6 @@ public abstract class RTExpression extends RTCode {
 					final RTQualifiedIdentifier lhs = (RTQualifiedIdentifier)lhs_;
 					RTDynamicScope dynamicScope = lhs.dynamicScope();
 					final String name = lhs.name();
-					lhs.decrementReferenceCount();
 					
 					dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
 					assert null != dynamicScope;
@@ -2358,18 +2389,24 @@ public abstract class RTExpression extends RTCode {
 			if (isAContextConstructor) {
 				final Map<String, RTRole> nameToRoleDeclMap = rTType_.nameToRoleDeclMap();
 				assert newlyCreatedObject instanceof RTContextObject;
-				final RTContextObject downcastObject = (RTContextObject)newlyCreatedObject;
+				final RTNullObject nullObject = new RTNullObject();
+				final RTContextObject theContextObject = (RTContextObject)newlyCreatedObject;
 				for (final Map.Entry<String, RTRole> roleDeclIter : nameToRoleDeclMap.entrySet()) {
 					final String name = roleDeclIter.getKey();
 					final RTRole theRole = roleDeclIter.getValue();
 					if (theRole.isArray() == false) {
-						downcastObject.addRoleDeclaration(name, roleDeclIter.getValue());
-						final RTNullObject nullObject = new RTNullObject();
-						downcastObject.setRoleBinding(name, nullObject);
+						theContextObject.addRoleDeclaration(name, roleDeclIter.getValue());
+						theContextObject.setRoleBinding(name, nullObject);
 						nullObject.decrementReferenceCount();
+					} else {
+						// There is maybe eventually some work to be done
+						// around here. For now, since arrays don't have a
+						// protocol with Contexts, we just let them be -
+						// i.e. an array can simultaneously be a Role
+						// player in multiple Contexts (or maybe a List,
+						// too).
 					}
 				}
-				
 				
 				// ... and StageProps
 				final Map<String, RTStageProp> nameToStagePropDeclMap = rTType_.nameToStagePropDeclMap();
@@ -2377,10 +2414,16 @@ public abstract class RTExpression extends RTCode {
 					final String name = stagePropDeclIter.getKey();
 					final RTStageProp theStageProp = stagePropDeclIter.getValue();
 					if (theStageProp.isArray() == false) {
-						downcastObject.addStagePropDeclaration(name, stagePropDeclIter.getValue());
-						final RTNullObject nullObject = new RTNullObject();
-						downcastObject.setStagePropBinding(name, nullObject);
+						theContextObject.addStagePropDeclaration(name, stagePropDeclIter.getValue());
+						theContextObject.setStagePropBinding(name, nullObject);
 						nullObject.decrementReferenceCount();
+					} else {
+						// There is maybe eventually some work to be done
+						// around here. For now, since arrays don't have a
+						// protocol with Contexts, we just let them be -
+						// i.e. an array can simultaneously be a Stageprop
+						// player in multiple Contexts (or maybe a List,
+						// too).
 					}
 				}
 			}
@@ -2686,8 +2729,9 @@ public abstract class RTExpression extends RTCode {
 			do {
 				if (pc instanceof RTHalt) {
 					return pc;
+				} else {
+					pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 				}
-				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
 			} while (null != pc);
 			
 			final RTObject rawIndexResult = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
@@ -2790,60 +2834,6 @@ public abstract class RTExpression extends RTCode {
 		private final int lineNumber_;
 	}
 	
-	private static class RTForTestRunner extends RTExpression {
-		public RTForTestRunner(final Expression testExpr, final RTExpression body, final RTPopDynamicScope popScope, final RTType nearestEnclosingType) {
-			super();
-			lineNumber_ = testExpr.lineNumber();
-			test_ = RTExpression.makeExpressionFrom(testExpr, nearestEnclosingType);
-			part2_ = new RTForTestRunnerPart2(body, popScope, lineNumber_);
-			test_.setNextCode(part2_);
-		}
-		
-		@Override public RTCode run() {
-			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
-		}
-		
-		@Override public void setNextCode(final RTCode next) {
-			part2_.setNextCode(next);
-		}
-		
-		private static class RTForTestRunnerPart2 extends RTExpression {
-			public RTForTestRunnerPart2(final RTExpression body, final RTPopDynamicScope popScope, final int lineNumber) {
-				super();
-				lineNumber_ = lineNumber;
-				body_ = body;
-				popScope_ = popScope;
-			}
-			@Override public RTCode run() {
-				RTCode retval = null;
-				final RTObject conditionalExpression = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
-				if (conditionalExpression instanceof RTBooleanObject == false) {
-					assert conditionalExpression instanceof RTBooleanObject;
-				}
-				final RTBooleanObject booleanExpression = (RTBooleanObject) conditionalExpression;
-				if (booleanExpression.value()) {
-					retval = body_;
-				} else {
-					// We're closing a scope - going out of the FOR.
-					retval = popScope_;
-				}
-				
-				setLastExpressionResult(conditionalExpression, lineNumber_);
-				
-				conditionalExpression.decrementReferenceCount();
-				
-				return retval;
-			}
-			private final RTExpression body_;
-			private final RTPopDynamicScope popScope_;
-			private final int lineNumber_;
-		}
-		
-		private final RTExpression test_;
-		private final RTForTestRunnerPart2 part2_;
-		private final int lineNumber_;
-	}
-	
 	public static class RTForCommon extends RTExpression implements RTBreakableExpression {
 		public RTForCommon(final ForExpression expr, final RTType nearestEnclosingType) {
 			super();
@@ -2871,8 +2861,9 @@ public abstract class RTExpression extends RTCode {
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
-		@Override public RTCode run() {
-			// A FOR loop opens a new scope. Open it.
+		private RTCode stuffAtTopOfIteratorLoop() {
+			RTCode retval = null;
+			
 			dynamicScope_ = new RTDynamicScope("for", RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), false);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(dynamicScope_);
 			dynamicScope_.incrementReferenceCount();
@@ -2888,12 +2879,17 @@ public abstract class RTExpression extends RTCode {
 			// Process the initializations in this scope
 			// WAIT - do we do this any more? Yeah, it's O.K.
 						
-			RTCode retval = null;
 			if (initializations_.size() > 0) {
 				retval = RunTimeEnvironment.runTimeEnvironment_.runner(initializations_.get(0));
 			} else {
 				retval = test_;
 			}
+			
+			return retval;
+		}
+		@Override public RTCode run() {
+			// A FOR loop opens a new scope. Open it.
+			RTCode retval = this.stuffAtTopOfIteratorLoop();
 			
 			final RTCode checkIterator = setupIterator();
 			if (checkIterator instanceof RTHalt) {
@@ -2936,8 +2932,8 @@ public abstract class RTExpression extends RTCode {
 		protected       RTExpression evaluationResult_;
 	}
 	
-	public static class RTFor extends RTForCommon implements RTBreakableExpression {
-		public RTFor(final ForExpression expr, final RTType nearestEnclosingType) {
+	public static class RTTraditionalFor extends RTForCommon implements RTBreakableExpression {
+		public RTTraditionalFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 			
@@ -2966,16 +2962,15 @@ public abstract class RTExpression extends RTCode {
 			
 			if (this.resultIsConsumed()) {
 				evaluationResult_ = new RTPushEvaluationResult();
-				body.addExpression(evaluationResult_);
 			} else {
 				evaluationResult_ = new RTNullExpression();
-				body.addExpression(evaluationResult_);
 			}
+			body.addExpression(evaluationResult_);
 			
 			last_ = new RTNullExpression();
 			body.addExpression(last_);
 			
-			test_ = new RTForTestRunner(expr.test(), body_, popScope_, nearestEnclosingType);
+			test_ = new RTTraditionalForTestRunner(expr.test(), body_, popScope_, nearestEnclosingType);
 			goBackToTest.setNextCode(test_);	// the test chunk
 			
 			final int listSize = initializations_.size();
@@ -2995,11 +2990,65 @@ public abstract class RTExpression extends RTCode {
 		private final RTPopDynamicScope popScope_;
 	}
 	
-	private static class RTForIterationTestRunner extends RTExpression {
-		public RTForIterationTestRunner(final RTExpression body, final RTPopDynamicScope popScope, final ObjectDeclaration iterationVariable) {
+	private static class RTTraditionalForTestRunner extends RTExpression {
+		public RTTraditionalForTestRunner(final Expression testExpr, final RTExpression body, final RTPopDynamicScope popScope, final RTType nearestEnclosingType) {
+			super();
+			lineNumber_ = testExpr.lineNumber();
+			test_ = RTExpression.makeExpressionFrom(testExpr, nearestEnclosingType);
+			part2_ = new RTTraditionalForTestRunnerPart2(body, popScope, lineNumber_);
+			test_.setNextCode(part2_);
+		}
+		
+		@Override public RTCode run() {
+			return RunTimeEnvironment.runTimeEnvironment_.runner(test_);
+		}
+		
+		@Override public void setNextCode(final RTCode next) {
+			part2_.setNextCode(next);
+		}
+		
+		private static class RTTraditionalForTestRunnerPart2 extends RTExpression {
+			public RTTraditionalForTestRunnerPart2(final RTExpression body, final RTPopDynamicScope popScope, final int lineNumber) {
+				super();
+				lineNumber_ = lineNumber;
+				body_ = body;
+				popScope_ = popScope;
+			}
+			@Override public RTCode run() {
+				RTCode retval = null;
+				final RTObject conditionalExpression = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+				if (conditionalExpression instanceof RTBooleanObject == false) {
+					assert conditionalExpression instanceof RTBooleanObject;
+				}
+				final RTBooleanObject booleanExpression = (RTBooleanObject) conditionalExpression;
+				if (booleanExpression.value()) {
+					retval = body_;
+				} else {
+					// We're closing a scope - going out of the FOR.
+					retval = popScope_;
+				}
+				
+				setLastExpressionResult(conditionalExpression, lineNumber_);
+				
+				conditionalExpression.decrementReferenceCount();
+				
+				return retval;
+			}
+			private final RTExpression body_;
+			private final RTPopDynamicScope popScope_;
+			private final int lineNumber_;
+		}
+		
+		private final RTExpression test_;
+		private final RTTraditionalForTestRunnerPart2 part2_;
+		private final int lineNumber_;
+	}
+	
+	private static class RTIterationForTestRunner extends RTExpression {
+		public RTIterationForTestRunner(final RTExpression body, final RTPopDynamicScope popScope, final ObjectDeclaration iterationVariable) {
 			super();
 			popScope_ = popScope;
-			part2_ = new RTForIterationTestRunnerPart2(body, iterationVariable);
+			part2_ = new RTIterationForTestRunnerPart2(body, iterationVariable);
 		}
 		
 		@Override public RTCode run() {
@@ -3019,8 +3068,8 @@ public abstract class RTExpression extends RTCode {
 			return retval;
 		}
 		
-		private static class RTForIterationTestRunnerPart2 extends RTExpression {
-			RTForIterationTestRunnerPart2(final RTExpression body, final ObjectDeclaration iterationVariable) {
+		private static class RTIterationForTestRunnerPart2 extends RTExpression {
+			RTIterationForTestRunnerPart2(final RTExpression body, final ObjectDeclaration iterationVariable) {
 				super();
 				body_ = body;
 				iterationVariable_ = iterationVariable;
@@ -3057,10 +3106,10 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		final RTPopDynamicScope popScope_;
-		final RTForIterationTestRunnerPart2 part2_;
+		final RTIterationForTestRunnerPart2 part2_;
 	}
-	public static class RTForIteration extends RTForCommon implements RTBreakableExpression {
-		public RTForIteration(final ForExpression expr, final RTType nearestEnclosingType) {
+	public static class RTIterationFor extends RTForCommon implements RTBreakableExpression {
+		public RTIterationFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 			
@@ -3075,16 +3124,15 @@ public abstract class RTExpression extends RTCode {
 			
 			if (this.resultIsConsumed()) {
 				evaluationResult_ = new RTPushEvaluationResult();
-				body.addExpression(evaluationResult_);
 			} else {
 				evaluationResult_ = new RTNullExpression();
-				body.addExpression(evaluationResult_);
 			}
+			body.addExpression(evaluationResult_);
 			
 			last_ = new RTNullExpression();
 			body.addExpression(last_);
 			
-			test_ = new RTForIterationTestRunner(body_, popScope_, expr.iterationVariable());
+			test_ = new RTIterationForTestRunner(body_, popScope_, expr.iterationVariable());
 			
 			assert null != test_;
 			goBackToTest.setNextCode(test_);	// the test chunk
@@ -3120,7 +3168,7 @@ public abstract class RTExpression extends RTCode {
 			dynamicScope_.setObject("for$iterator", iterator);
 			return pc;
 		}
-	
+		
 		private RTExpression rTThingToIterateOverExpr_;
 	}
 	
@@ -3973,8 +4021,8 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode run() {
 			// Pop activation record
 			final RTDynamicScope lastPoppedScope = RunTimeEnvironment.runTimeEnvironment_.popDynamicScope();
-			lastPoppedScope.decrementReferenceCount();
 			lastPoppedScope.closeScope();	// this isn't uniformly used; should be deprecated. FIXME
+			lastPoppedScope.decrementReferenceCount();
 			return super.nextCode();
 		}
 	}

@@ -75,13 +75,14 @@ public final class RTDynamicScope extends RTObjectCommon {
 		// Called when a scope is closed
 		// We should decrement the reference count on all of
 		// our objects. First, the roles:
-
+		
 		for (Map.Entry<String, RTObject> iter : nameToRoleBindingMap_.entrySet()) {
 			final RTObject boundToRole = iter.getValue();
 			if (null != boundToRole) {
 				boundToRole.decrementReferenceCount();
 			}
 		}
+		nameToRoleBindingMap_ = new LinkedHashMap<String,RTObject>();
 		
 		for (Map.Entry<String, RTObject> iter : nameToStagePropBindingMap_.entrySet()) {
 			final RTObject boundToStageProp = iter.getValue();
@@ -89,12 +90,21 @@ public final class RTDynamicScope extends RTObjectCommon {
 				boundToStageProp.decrementReferenceCount();
 			}
 		}
+		nameToStagePropBindingMap_ = new LinkedHashMap<String,RTObject>();
 		
 		for (Map.Entry<String, RTObject> iter : objectMembers_.entrySet()) {
 			final RTObject boundToLocalIdentifier = iter.getValue();
 			if (null != boundToLocalIdentifier) {
 				boundToLocalIdentifier.decrementReferenceCount();
 			}
+		}
+		objectMembers_ = new LinkedHashMap<String,RTObject>();
+	}
+	@Override public void decrementReferenceCount() {
+		// Maybe this should do more in the future...
+		super.decrementReferenceCount();
+		if (0 == referenceCount()) {
+			// closeScope();	// this seems superfluous...  FIXME.
 		}
 	}
 	public RTDynamicScope nearestEnclosingScopeDeclaring(final String name) {
@@ -180,7 +190,7 @@ public final class RTDynamicScope extends RTObjectCommon {
 		return isARealMethodScope_;
 	}
 		
-	private final Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
+	private       Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
 	private final String name_;
 	private       String debuggingTypeName_;

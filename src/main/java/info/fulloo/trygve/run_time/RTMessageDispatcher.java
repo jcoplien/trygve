@@ -316,6 +316,7 @@ public abstract class RTMessageDispatcher {
 			assert ithParameter instanceof ObjectDeclaration || ithParameter.isError();
 			final String ithParameterName = ithParameter.name();
 			final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
+			assert(null == activationRecord.getObject(ithParameterName));
 			activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
 			final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (rawArgument instanceof RTObject == false) {
@@ -345,6 +346,7 @@ public abstract class RTMessageDispatcher {
 			assert ithParameter instanceof ObjectDeclaration || ithParameter.isError();
 			final String ithParameterName = ithParameter.name();
 			final RTType rTIthParameterType = null; // InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(ithParameter.type());
+			assert(null == activationRecord.getObject(ithParameterName));
 			activationRecord.addObjectDeclaration(ithParameterName, rTIthParameterType);
 			final RTStackable rawArgument = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (rawArgument instanceof RTObject == false) {
@@ -352,7 +354,7 @@ public abstract class RTMessageDispatcher {
 			}
 			if (ithParameterName.equals("current$context") && rawArgument instanceof RTContextObject == false) {
 				assert rawArgument instanceof RTContextObject;
-				// probably didn't push it when we should have
+				// if assertion fires, we probably didn't push it when we should have
 			}
 			final RTObject anArgument = (RTObject)rawArgument;
 			assert null != anArgument;

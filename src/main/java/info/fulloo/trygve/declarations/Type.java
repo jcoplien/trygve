@@ -244,7 +244,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			
-			if (retval == false) {
+			if (false == retval) {
 				retval = complexCanBeConvertedCheck(t);
 			}
 			
@@ -441,7 +441,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			
-			if (retval == false) {
+			if (false == retval) {
 				// See if t just outright implements this interface
 				if (t instanceof ClassOrContextType) {
 					final ClassOrContextType cocType = (ClassOrContextType)t;
@@ -455,7 +455,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			
-			if (retval == false) {
+			if (false == retval) {
 				// See if all of my operations are supported by t
 				retval = true;
 				for (final String methodName : this.selectorSignatureMap().keySet()) {
@@ -534,7 +534,7 @@ public abstract class Type implements ExpressionStackAPI
 				final ActualOrFormalParameterList argumentList, final boolean conversionAllowed,
 				final String parameterToIgnore) {
 			if (recurDepth > 5) {
-				if (recurRecovery == false) {
+				if (false == recurRecovery) {
 						ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(),
 								"Type reference recursion involving argument of `", selectorName, "'.", "");
 				}
@@ -615,9 +615,9 @@ public abstract class Type implements ExpressionStackAPI
 			// Built-in type
 			assert true;
 			boolean retval = false;
-			if (type instanceof RoleType == false &&
-					type instanceof StagePropType == false &&
-					this.type().canBeConvertedFrom(type) == false) {
+			if (false == type instanceof RoleType &&
+					false == type instanceof StagePropType &&
+					false == this.type().canBeConvertedFrom(type)) {
 				retval = false;
 			} else if (this.name().equals("int") || this.name().equals("Integer")) {
 				if (operator.equals("-")) retval = true;
@@ -837,7 +837,7 @@ public abstract class Type implements ExpressionStackAPI
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Role.");
 						} else if (rolesSignature.hasConstModifier()) {
-							if (signatureForMethodSelector.hasConstModifier() == false) {
+							if (false == signatureForMethodSelector.hasConstModifier()) {
 								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Role `", name(),
@@ -889,7 +889,7 @@ public abstract class Type implements ExpressionStackAPI
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
 									if (FormalParameterList.alignsWithParameterListIgnoringRoleStuff(myParameterList, otherArgumentList, true)) {
 										if (rolesSignature.hasConstModifier()) {
-											if (possibleMatchinSignature.hasConstModifier() == false) {
+											if (false == possibleMatchinSignature.hasConstModifier()) {
 												// const doesn't match — isn't this one
 												continue;
 											}
@@ -911,7 +911,7 @@ public abstract class Type implements ExpressionStackAPI
 								retval = false;
 							} else {
 								if (rolesSignature.hasConstModifier()) {
-									if (signatureForMethodSelector.hasConstModifier() == false) {
+									if (false == signatureForMethodSelector.hasConstModifier()) {
 										retval = false;
 										break;
 									}
@@ -1032,7 +1032,8 @@ public abstract class Type implements ExpressionStackAPI
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Stage Prop.");
 						} else if (rolesSignature.hasConstModifier()) {
-							if (signatureForMethodSelector.hasConstModifier() == false) {
+							if (false == signatureForMethodSelector.hasConstModifier() &&
+									false == signatureForMethodSelector.isUnusedInThisContext()) {
 								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Stage Prop `", name(),
@@ -1097,15 +1098,22 @@ public abstract class Type implements ExpressionStackAPI
 							// if Role scripts could invoke private scripts of their Role-player
 							retval = false;
 							break;
-						} else if (signatureForMethodSelector.hasConstModifier() == false) {
-							final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
-									" does not match the contract at line " +
-									Integer.toString(rolesSignature.lineNumber());
-							parserPass.errorHook5p2(ErrorIncidenceType.Warning, lineNumber,
-									"WARNING: Required methods for stage props should be const. The declaration of method ",
-									signatureForMethodSelector.name(), " at line ",
-									roleSignatureLineNumber);
-							break;
+						} else if (false == signatureForMethodSelector.hasConstModifier()) {
+							// If it's declared unused in the published interface, it's O.K.
+							
+							final StagePropType stagePropType = t instanceof StagePropType? (StagePropType)t: null;
+							final MethodSignature publishedStagePropMethodSignature = null == stagePropType? null:
+												stagePropType.associatedDeclaration().lookupPublishedSignatureDeclaration(signatureForMethodSelector);
+							if (null != publishedStagePropMethodSignature && false == publishedStagePropMethodSignature.isUnusedInThisContext()) {
+								final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
+										" does not match the contract at line " +
+										Integer.toString(rolesSignature.lineNumber());
+								parserPass.errorHook5p2(ErrorIncidenceType.Warning, lineNumber,
+										"WARNING: Required methods for stage props should be const. The declaration of method `",
+										signatureForMethodSelector.name(), "' at line ",
+										roleSignatureLineNumber);
+								break;
+							}
 						}
 					}
 
@@ -1145,7 +1153,7 @@ public abstract class Type implements ExpressionStackAPI
 								t.signatureForMethodSelectorInHierarchyIgnoringThis(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
 							retval = lookForRoleRHSThatMatches(t, methodName, rolesSignature);
-						} else if (signatureForMethodSelector.hasConstModifier() == false) {
+						} else if (false == signatureForMethodSelector.hasConstModifier()) {
 							// Now handled by error-reporting version above...
 							// final String roleSignatureLineNumber = Integer.toString(rolesSignature.lineNumber());
 							// ErrorLogger.error(ErrorIncidenceType.Warning, signatureForMethodSelector.lineNumber(),
@@ -1232,7 +1240,7 @@ public abstract class Type implements ExpressionStackAPI
 			if (t.name().equals("Null")) {
 				// redundant but clear
 				retval = true;
-			} else if (t instanceof ArrayType == false) {
+			} else if (false == t instanceof ArrayType) {
 				retval = false;
 			} else {
 				final ArrayType tAsArray = (ArrayType) t;
@@ -1247,17 +1255,17 @@ public abstract class Type implements ExpressionStackAPI
 			final StaticScope scope = StaticScope.globalScope();
 			if (methodSelector.equals("at")) {
 				retval = atMethodDeclaration(scope).signature();
-				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+				if (false == FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true)) {
 					retval = null;
 				}
 			} else if (methodSelector.equals("atPut")) {
 				retval = atPutMethodDeclaration(scope).signature();
-				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+				if (false == FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true)) {
 					retval = null;
 				}
 			} else if (methodSelector.equals("size")) {
 				retval = sizeMethodDeclaration(scope).signature();
-				if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true) == false) {
+				if (false == FormalParameterList.alignsWithParameterListIgnoringParamNamed(retval.formalParameterList(), methodSignatureFormalParameterList, paramToIgnore, true)) {
 					retval = null;
 				}
 			}
@@ -1431,7 +1439,7 @@ public abstract class Type implements ExpressionStackAPI
 		return false;
 	}
 	public boolean isntError() {
-		return isError() == false;
+		return false == isError();
 	}
 	
 	public boolean hasUnaryOperator(final String operator) {

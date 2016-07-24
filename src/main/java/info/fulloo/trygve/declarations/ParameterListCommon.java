@@ -83,7 +83,7 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 		return containsVarargs_;
 	}
 	@Override public boolean isntError() {
-		return isError() == false;
+		return false == isError();
 	}
 	
 	private final SimpleList parameters_;

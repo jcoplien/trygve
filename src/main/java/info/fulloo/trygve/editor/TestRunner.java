@@ -173,6 +173,7 @@ public class TestRunner {
 		"frankfurt2.k",
 		"frankfurt3.k",
 		"frankfurt4.k",
+		"july_money_transfer_2.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};
@@ -223,7 +224,7 @@ public class TestRunner {
 		passCounter_ = failCounter_ = 0;
 		for (final String filename : fileNames_) {
 			runATest(filename);
-			if (gui_.compiledWithoutError() == false) {
+			if (false == gui_.compiledWithoutError()) {
 				// break;
 			}
 			System.out.flush();

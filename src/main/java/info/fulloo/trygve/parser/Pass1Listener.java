@@ -908,10 +908,17 @@ public class Pass1Listener extends Pass0Listener {
 					final String methodName = iter.getKey();
 					final List<MethodSignature> signatures = iter.getValue();
 					for (final MethodSignature signature : signatures) {
-						if (false == signature.hasConstModifier()) {
-							errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
-									"WARNING: Signatures for functions required by stageprops like ", currentRoleOrStageProp_.name(),
-									" should have a const modifier: method ", methodName, " does not.", "");
+						if (false == signature.hasConstModifier() &&
+								false == signature.isUnusedInThisContext()) {
+							// If the published version has its unused flag set, we're Ok
+							final MethodSignature publishedSignature = currentRoleOrStageProp_.lookupPublishedSignatureDeclaration(signature);
+							if (null != publishedSignature && publishedSignature.isUnusedInThisContext() == true) {
+								;	// an "unused" flag is as good as a const
+							} else {
+								errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart().getLine(),
+										"WARNING: Signatures for functions required by stageprops like `", currentRoleOrStageProp_.name(),
+										"' should have a const modifier: method `", methodName, "' does not.", "");
+							}
 						}
 					}
 				}
@@ -945,10 +952,14 @@ public class Pass1Listener extends Pass0Listener {
 	
 	@Override public void enterStageprop_body(KantParser.Stageprop_bodyContext ctx) {
 		// stageprop_body
-	    //	: method_decl
-	    //	| stageprop_body method_decl
+		//	: method_decl
+		//	| stageprop_body method_decl
+		//  | object_decl
+		//  | stageprop_body object_decl
 		//	| method_signature ';'*
 		//	| role_body method_signature ';'*
+		//	| method_signature UNUSED ';'*
+		//	| role_body method_signature UNUSED ';'*
 	    
 		if (null != ctx.method_signature()) {
 			final FormalParameterList formalParameterList = new FormalParameterList();
@@ -964,6 +975,8 @@ public class Pass1Listener extends Pass0Listener {
 		//  | stageprop_body object_decl
 		//	| method_signature ';'*
 		//	| role_body method_signature ';'*
+		//	| method_signature UNUSED ';'*
+		//	| role_body method_signature UNUSED ';'*
 		
 		if (null != ctx.object_decl()) {
 			@SuppressWarnings("unused")
@@ -971,8 +984,11 @@ public class Pass1Listener extends Pass0Listener {
 			// We have issued an error message about this already elsewhere
 		}
 		
+		final boolean unusedFlag = null != ctx.UNUSED();
+		
 		if (null != ctx.method_signature()) {
 			final MethodSignature signature = parsingData_.popMethodSignature();
+			signature.setUnused(unusedFlag);
 			final FormalParameterList plInProgress = parsingData_.popFormalParameterList();
 		
 			// Add a declaration of "this." These are class instance methods, never
@@ -2331,7 +2347,7 @@ public class Pass1Listener extends Pass0Listener {
 		argumentList.addActualArgument(rhs);
 		final RoleType roleType = (RoleType)lhs.type();
 		assert null != roleType;
-		final Expression self = new IdentifierExpression("t$his", roleType, currentScope_,	// just this? GNU!!
+		final Expression self = new IdentifierExpression("t$his", roleType, currentScope_,	// just this?
 				lhs.lineNumber());
 		argumentList.addFirstActualParameter(self);
 

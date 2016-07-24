@@ -35,9 +35,11 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	public FormalParameterList() {
 		super(new SimpleList());
 	}
+	
 	public void addFormalParameter(final Declaration parameter) {
 		insertAtStart(parameter);
 	}
+	
 	public Declaration parameterAtPosition(final int i) {
 		final Object backFromParameterAtIndex = parameterAtIndex(i);
 		Declaration retval = null;
@@ -46,22 +48,27 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	
 	public boolean alignsWith(final ActualOrFormalParameterList pl) {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, false, -1);
 	}
+	
 	public boolean alignsWithUsingConversion(final ActualOrFormalParameterList pl) {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, true, -1);
 	}
+	
 	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList pl1,
 			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
 				pl2, paramToIgnore, conversionAllowed, -1);
 	}
+	
 	public static boolean alignsWithParameterListIgnoringParamAtPosition(final ActualOrFormalParameterList pl1,
 			final ActualOrFormalParameterList pl2, final int paramToIgnore, final boolean conversionAllowed) {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
 				pl2, null, conversionAllowed, paramToIgnore);
 	}
+	
 	public static boolean alignsWithParameterListIgnoringParamCommon(final ActualOrFormalParameterList formals,
 			final ActualOrFormalParameterList actuals, final String paramToIgnore, final boolean conversionAllowed,
 			final int parameterPositionToIgnore) {
@@ -76,7 +83,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			}
 		} else {
 			final int actualsCount = actuals.count();
-			if (actualsCount != formalsCount && formals.containsVarargs() == false) {
+			if (actualsCount != formalsCount && false == formals.containsVarargs()) {
 				retval = false;
 			} else {
 				for (int i = 0; i < actualsCount; i++) {
@@ -125,6 +132,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	
 	public static boolean alignsWithParameterListIgnoringRoleStuff(final ActualOrFormalParameterList pl1,
 			final ActualOrFormalParameterList pl2, final boolean conversionIsAllowed) {
 		boolean retval = true;
@@ -209,9 +217,11 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 	@Override public Type typeOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).type();
 	}
+	
 	@Override public String nameOfParameterAtPosition(final int i) {
 		return parameterAtPosition(i).name();
 	}
+	
 	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
 		// templateTypes can be null if we're processing a lookup in an actual template
 		final FormalParameterList retval = new FormalParameterList();
@@ -242,6 +252,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	
 	@Override public String getText() {
 		final StringBuffer stringBuffer = new StringBuffer();
 		final int numberOfParameters = this.count();
@@ -262,6 +273,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return stringBuffer.toString();
 	}
+	
 	public String selflessGetText() {
 		final StringBuffer stringBuffer = new StringBuffer();
 		final int numberOfParameters = this.count();
@@ -307,7 +319,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					final String myName = this.nameOfParameterAtPosition(i), otherName = other.nameOfParameterAtPosition(i);
 					if (myName.equals(otherName)) {
 						final Type myType = this.typeOfParameterAtPosition(i), otherType = other.typeOfParameterAtPosition(i);
-						if (myType.pathName().equals(otherType.pathName()) == false) {
+						if (false == myType.pathName().equals(otherType.pathName())) {
 							retval = false;
 							break;
 						}
@@ -320,6 +332,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		}
 		return retval;
 	}
+	
 	public int userParameterCount() {
 		// Returns the number of total parameters less the declaration
 		// for this and current$context. Caller usually checks for zero / non-zero
@@ -335,6 +348,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		assert retval >= 0;
 		return retval;
 	}
+	
 	@Override public boolean isError() {
 		boolean retval = false;
 		for (int i = 0; i < count(); i++) {

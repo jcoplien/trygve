@@ -113,12 +113,18 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		if (nameToRoleDeclMap_.containsKey(roleName) == false) {
 			nameToRoleDeclMap_.put(roleName,  roleType);
 		}
+		if (null != nameToRoleObjectMap_.get(roleName)) {
+			assert false;	// can this happen? do we care?
+		}
 		nameToRoleObjectMap_.put(roleName, roleType);
 	}
 	@Override public void addObjectDeclaration(final String objectName, final RTType objectType) {
 		nameToTypeObjectMap_.put(objectName, objectType);
 	}
 	@Override public void setObject(final String name, final RTObject value) {
+		if (null != nameToObjectDeclMap_.get(name)) {
+			assert false;
+		}
 		nameToObjectDeclMap_.put(name, value);
 		value.incrementReferenceCount();
 	}
@@ -175,10 +181,20 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			rTContext_ = theContext;
 		}
 		void addRolePlayer(final String roleName, final RTObject rolePlayer) {
+			final RTObject currentRolePlayer = rolePlayers_.get(roleName);
+			if (null != currentRolePlayer) {
+				currentRolePlayer.unenlistAsRolePlayerForContext(roleName, rTContext_);
+			}
+			
 			rolePlayers_.put(roleName, rolePlayer);
 			rolePlayer.enlistAsRolePlayerForContext(roleName, rTContext_);
 		}
 		void addStagePropPlayer(final String stagePropName, final RTObject stagePropPlayer) {
+			final RTObject currentStagePropPlayer = stagePropPlayers_.get(stagePropName);
+			if (null != currentStagePropPlayer) {
+				currentStagePropPlayer.unenlistAsStagePropPlayerForContext(stagePropName, rTContext_);
+			}
+			
 			stagePropPlayers_.put(stagePropName, stagePropPlayer);
 			stagePropPlayer.enlistAsStagePropPlayerForContext(stagePropName, rTContext_);
 		}
@@ -186,13 +202,27 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			if (roleArrayPlayers_.containsKey(roleArrayName) == false) {
 				roleArrayPlayers_.put(roleArrayName, new LinkedHashMap<Integer,RTObject>());
 			}
+			
+			final RTObject currentRolePlayer = roleArrayPlayers_.get(roleArrayName).get(theIndex);
+			if (null != currentRolePlayer) {
+				currentRolePlayer.unenlistAsRolePlayerForContext(roleArrayName, rTContext_);
+			}
+			
 			roleArrayPlayers_.get(roleArrayName).put(Integer.valueOf(theIndex), rolePlayer);
-			rolePlayer.enlistAsRolePlayerForContext(roleArrayName, rTContext_);
+			if (null != currentRolePlayer) {
+				rolePlayer.enlistAsRolePlayerForContext(roleArrayName, rTContext_);
+			}
 		}
 		void addStagePropArrayPlayer(final String stagePropArrayName, final int theIndex, final RTObject stagePropPlayer) {
 			if (stagePropArrayPlayers_.containsKey(stagePropArrayName) == false) {
 				stagePropArrayPlayers_.put(stagePropArrayName, new LinkedHashMap<Integer,RTObject>());
 			}
+
+			final RTObject currentStagePropPlayer = stagePropArrayPlayers_.get(stagePropArrayName).get(theIndex);
+			if (null != currentStagePropPlayer) {
+				currentStagePropPlayer.unenlistAsStagePropPlayerForContext(stagePropArrayName, rTContext_);
+			}
+			
 			stagePropArrayPlayers_.get(stagePropArrayName).put(Integer.valueOf(theIndex), stagePropPlayer);
 			stagePropPlayer.enlistAsStagePropPlayerForContext(stagePropArrayName, rTContext_);
 		}
@@ -275,6 +305,12 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 					stagePropPlayerArray.unenlistAsStagePropPlayerForContext(stagePropPlayerArrayName, rTContext_);
 				}
 			}
+			
+			// Clean them all up
+			rolePlayers_ = new LinkedHashMap<String, RTObject>();
+			stagePropPlayers_ = new LinkedHashMap<String, RTObject>();
+			roleArrayPlayers_ = new LinkedHashMap<String, Map<Integer,RTObject>>();
+			stagePropArrayPlayers_ = new LinkedHashMap<String, Map<Integer,RTObject>>();
 		}
 		public RTStackable rolePlayerNamedAndIndexed(final String roleName, final RTIntegerObject theIndex) {
 			RTStackable retval = null;
@@ -350,10 +386,10 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			return retval;
 		}
 		
-		private final Map<String, RTObject> rolePlayers_, stagePropPlayers_;
+		private       Map<String, RTObject> rolePlayers_, stagePropPlayers_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
-		private final Map<String, Map<Integer,RTObject>> roleArrayPlayers_;
-		private final Map<String, Map<Integer,RTObject>> stagePropArrayPlayers_;
+		private       Map<String, Map<Integer,RTObject>> roleArrayPlayers_;
+		private       Map<String, Map<Integer,RTObject>> stagePropArrayPlayers_;
 		private final RTContextObject rTContext_;
 	}
 	

@@ -969,6 +969,16 @@ public class Pass2Listener extends Pass1Listener {
 			if (null != methodSignature) {
 				// Then it may be in the "required" declarations and is NOT a role method per se
 				isOKMethodSignature = true;
+				
+				// But this check may be useful...
+				final MethodSignature publishedSignature = roleType.associatedDeclaration().lookupPublishedSignatureDeclaration(methodSignature);
+				if (null != publishedSignature && publishedSignature.isUnusedInThisContext()) {
+					final FormalParameterList formalParameterList = publishedSignature.formalParameterList();
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+							message.selectorName() + formalParameterList.selflessGetText(),
+							"' is declared as unused in `", objectType.name(), "' at line ",
+							Integer.toString(publishedSignature.lineNumber()) + ".");
+				}
 			} else {
 				// If we're calling from a Context script to a script of one of its Roles,
 				// we want to pass "this" in the "current$context" slot. Otherwise, if it's

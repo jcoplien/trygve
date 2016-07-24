@@ -1562,7 +1562,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			if (null != baseClassDeclaration) {
 				if (megaTypeOfPotentialCtor.name().equals(methodDeclaration.name()) &&
 						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
-					if (methodDeclaration.hasManualBaseClassConstructorInvocations() == false) {
+					if (false == methodDeclaration.hasManualBaseClassConstructorInvocations()) {
 						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
 							"Constructor `", methodDeclaration.signature().getText(),
 							"' has no valid means to ensure that the base class part of the object is initialized.", "");
@@ -1902,14 +1902,14 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	}
 	@Override public List<RTCode> compileForExpression(final ForExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
-		final RTFor newFor = new RTFor(expr, rtTypeDeclaration);
+		final RTTraditionalFor newFor = new RTTraditionalFor(expr, rtTypeDeclaration);
 		retval.add(newFor);
 		assert null == expr.thingToIterateOver();
 		return retval;
 	}
 	@Override public List<RTCode> compileForIterationExpression(final ForExpression expr, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 		final List<RTCode> retval = new ArrayList<RTCode>();
-		final RTForIteration newFor = new RTForIteration(expr, rtTypeDeclaration);
+		final RTIterationFor newFor = new RTIterationFor(expr, rtTypeDeclaration);
 		retval.add(newFor);
 		assert null != expr.thingToIterateOver();
 		return retval;
@@ -2045,7 +2045,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// There's some kind of problem that we need to do this.
 		// FIXME.
 		for (final RoleDeclaration rd : scope.roleDeclarations()) {
-			if (rd instanceof StagePropDeclaration == false) {
+			if (false == rd instanceof StagePropDeclaration) {
 				this.compileRole(rd);
 			}
 		}
@@ -2140,7 +2140,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	private static RTType lookInTopLevelTypeForRTTypeDeclaration(final StaticScope enclosedScope) {
 		RTType retval = null;
 
-		if (enclosedScope.associatedDeclaration() instanceof TypeDeclaration == false) {
+		if (false == enclosedScope.associatedDeclaration() instanceof TypeDeclaration) {
 			retval = null;
 		} else {
 			final TypeDeclaration typeDeclaration = (TypeDeclaration)enclosedScope.associatedDeclaration();

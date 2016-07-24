@@ -143,6 +143,8 @@ stageprop_body
         | stageprop_body method_decl
         | object_decl				// illegal
         | stageprop_body object_decl		// illegal - for better error messages only
+        | method_signature UNUSED ';'*
+        | stageprop_body method_signature UNUSED ';'*
         | method_signature ';'*
         | stageprop_body method_signature ';'*
         ;
@@ -362,7 +364,7 @@ if_expr
 
 for_expr
 		: 'for' '(' expr ';' expr ';' expr ')' expr
-        | 'for' '(' object_decl expr ';' expr ')' expr  // O.K. � expr can be a block
+        | 'for' '(' object_decl expr ';' expr ')' expr  // O.K. - expr can be a block
         | 'for' '(' JAVA_ID ':' expr ')' expr
         | 'for' '(' trivial_object_decl ':' expr ')' expr
         ;
@@ -482,6 +484,8 @@ CLONE : 'clone' ;
 NULL : 'null' ;
 
 CONST : 'const' ;
+
+UNUSED : 'unused' ;
 
 POW : '**' ;
 

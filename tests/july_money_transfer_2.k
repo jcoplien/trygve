@@ -24,7 +24,6 @@ class Currency
         return ""
     }
     public double amountInEuro() const {
-        assert(false);
         return 0.0
     }
     public double amount() const {
@@ -323,6 +322,9 @@ context PayBillsContext
 
     public void doit()  {
         for (Creditor credit : CREDITORS) {
+            // Error
+            SOURCE_ACCOUNT.updateLog("Error check", new Date(),
+                                new Currency(0.0));
             // Note that here we invoke another Use Case
             TransferMoneyContext xfer = new TransferMoneyContext(
                                                       credit.amountOwed(),
@@ -359,3 +361,10 @@ context PayBillsContext
     anotherNewUseCase.doit()
 }
 
+/* GOLD:
+line 187: WARNING: substituting object of type `Currency' for `[new Euro]'.
+line 198: WARNING: substituting object of type `Currency' for `[new Euro]'.
+line 326: Script `updateLog(String message, Date dt, Currency amount)' is declared as unused in `SOURCE_ACCOUNT' at line 312.
+2 warnings, 1 error.
+___________________________________________________________
+*/

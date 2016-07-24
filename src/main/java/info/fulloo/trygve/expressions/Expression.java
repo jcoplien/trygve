@@ -1275,7 +1275,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			lineNumber_ = lineNumber;
 			assert loop instanceof BreakableExpression;
 			loop_ = (BreakableExpression)loop;
-			assert loop_ instanceof SwitchExpression == false;
+			assert false == loop_ instanceof SwitchExpression;
 			nestingLevelInsideBreakable_ = nestingLevelInsideBreakable;
 		}
 		@Override public String getText() {
@@ -1567,7 +1567,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			// (kind of a sentinel, too...)
 			if (null != enclosingScope.parentScope()) {
 				StaticScope myScope = enclosingScope;
-				while (myScope.associatedDeclaration() instanceof MethodDeclaration == false) {
+				while (false == myScope.associatedDeclaration() instanceof MethodDeclaration) {
 					nestingLevelInsideMethod++;
 					myScope = myScope.parentScope();
 					if (null == myScope) {
@@ -1938,7 +1938,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return false;
 	}
 	public boolean isntError() {
-		return isError() == false;
+		return false == isError();
 	}
 	
 	public abstract List<RTCode> compileCodeForInScope(CodeGenerator codeGenerator, MethodDeclaration methodDeclaration, RTType rtTypeDeclaration, StaticScope scope);

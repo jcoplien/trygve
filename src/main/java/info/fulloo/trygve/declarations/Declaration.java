@@ -74,7 +74,7 @@ public abstract class Declaration implements BodyPart {
 	}
 	
 	public boolean isntError() {
-		return isError() == false;
+		return false == isError();
 	}
 	
 	public static class ObjectDeclaration extends Declaration
@@ -474,8 +474,8 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupPublishedSignatureDeclaration(final MethodSignature otherSignature) {
 			MethodSignature publishedSignature = publishedSignatures_.get(otherSignature.name());
 				if (null != publishedSignature) {
-					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(
-							publishedSignature.formalParameterList(), otherSignature.formalParameterList(), "this", true) == false) {
+					if (false == FormalParameterList.alignsWithParameterListIgnoringParamNamed(
+							publishedSignature.formalParameterList(), otherSignature.formalParameterList(), "this", true)) {
 						publishedSignature = null;
 				}
 			}
@@ -841,6 +841,7 @@ public abstract class Declaration implements BodyPart {
 			lineNumber_ = lineNumber;
 			hasConstModifier_ = false;
 			isStatic_ = isStatic;
+			isUnused_ = false;
 		}
 		public void addParameterList(final FormalParameterList formalParameterList) {
 			formalParameterList_ = formalParameterList;
@@ -894,6 +895,12 @@ public abstract class Declaration implements BodyPart {
 		public boolean isStatic() {
 			return isStatic_;
 		}
+		public boolean isUnusedInThisContext() {
+			return isUnused_;
+		}
+		public void setUnused(final boolean isUnusedInThisContext) {
+			isUnused_ = isUnusedInThisContext;
+		}
 		
 		private       Type returnType_;
 		private       boolean hasConstModifier_;
@@ -901,6 +908,7 @@ public abstract class Declaration implements BodyPart {
 		private final AccessQualifier accessQualifier_;
 		private final int lineNumber_;
 		private final boolean isStatic_;
+		private       boolean isUnused_;
 	}
 	
 	public static class ExprAndDeclList extends Declaration
@@ -943,7 +951,7 @@ public abstract class Declaration implements BodyPart {
 			final List<BodyPart> bodyParts = bodyParts();
 			for (final BodyPart bodyPart : bodyParts) {
 				final Type bodyPartType = bodyPart.type();
-				if (ignoreBodyPartForReturnValue(bodyPart) == false) {
+				if (false == ignoreBodyPartForReturnValue(bodyPart)) {
 					retval = bodyPartType;
 				}
 			}

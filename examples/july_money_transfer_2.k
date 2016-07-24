@@ -24,7 +24,6 @@ class Currency
         return ""
     }
     public double amountInEuro() const {
-        assert(false);
         return 0.0
     }
     public double amount() const {
@@ -323,6 +322,9 @@ context PayBillsContext
 
     public void doit()  {
         for (Creditor credit : CREDITORS) {
+            // Error
+            SOURCE_ACCOUNT.updateLog("Error check", new Date(),
+                                new Currency(0.0));
             // Note that here we invoke another Use Case
             TransferMoneyContext xfer = new TransferMoneyContext(
                                                       credit.amountOwed(),

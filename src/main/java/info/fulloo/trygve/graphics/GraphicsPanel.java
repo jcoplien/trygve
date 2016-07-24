@@ -183,7 +183,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			final MethodDeclaration methodDecl = hE.methodDeclaration();
 			final Type returnType = methodDecl.returnType();
 			final String returnTypePathName = returnType.pathName();
-			if (returnTypePathName.equals("boolean.") == false) {
+			if (false == returnTypePathName.equals("boolean.")) {
 				ErrorLogger.error(ErrorIncidenceType.Internal, "Return type of `handleEvent' is not boolean in class `",
 						methodDecl.enclosingScope().name() + "' at line ", Integer.toString(methodDecl.lineNumber()), ".");
 				// not sure what else to do here...
@@ -197,7 +197,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			//
 			// Note that this shouldn't affect blocked reads...
 			RTStackable retval = RunTimeEnvironment.runTimeEnvironment_.peekStack();
-			if (retval instanceof RTPostReturnProcessing == false) {
+			if (false == retval instanceof RTPostReturnProcessing) {
 				retval = RunTimeEnvironment.runTimeEnvironment_.popStack();
 			}
 			
@@ -226,7 +226,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 
 			if (retval instanceof RTBooleanObject) {
 				final boolean interruptWasHandled = ((RTBooleanObject)retval).value();
-				if (interruptWasHandled == false) {
+				if (false == interruptWasHandled) {
 					if (e.key != 0 && e.id == Event.KEY_RELEASE) {
 						checkIOIntegration(e);
 					}
@@ -286,7 +286,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			RTCode pc = method;
 			do {
 				pc = RunTimeEnvironment.runTimeEnvironment_.runner(pc);
-			} while (null != pc && pc instanceof RTHalt == false);
+			} while (null != pc && false == pc instanceof RTHalt);
 		}
 	}
 

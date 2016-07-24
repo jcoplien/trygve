@@ -68,7 +68,7 @@ enum RunButtonState { Idle, Running, Disabled } ;
 public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 	final boolean OLD = false;
-	private final static String defaultFile = "examples/july_money_transfer.k";
+	private final static String defaultFile = "examples/july_money_transfer_2.k";
     
     private File fileName = new File("noname");
     
@@ -277,7 +277,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 			String text = "";
 			try {
 				int temp = currentOffset;
-				if (repeat == false) {
+				if (false == repeat) {
 					temp += searchTextLength;
 					
 					// Allow it to match the next character typed if indeed

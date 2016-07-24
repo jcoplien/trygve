@@ -36,6 +36,7 @@ import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.editor.BatchRunner;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.Program;
@@ -56,11 +57,44 @@ public class ParseRun {
         input_ = input;
 	}
 	
+	// http://stackoverflow.com/questions/18132078/handling-errors-in-antlr4
+	public static class DescriptiveErrorListener extends BaseErrorListener {
+	    public static DescriptiveErrorListener INSTANCE = new DescriptiveErrorListener();
+	    
+	    private boolean REPORT_SYNTAX_ERRORS = true;
+	    
+	    @Override
+	    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+	                            int line, int charPositionInLine,
+	                            String msg, RecognitionException e)
+	    {
+	        if (!REPORT_SYNTAX_ERRORS) {
+	            return;
+	        }
+
+	        String sourceName = recognizer.getInputStream().getSourceName();
+	        if (!sourceName.isEmpty()) {
+	            sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine);
+	        }
+
+	        ErrorLogger.error(ErrorIncidenceType.Parse, line, "column ", Integer.toString(charPositionInLine), ": ",  msg);
+	    }
+	}
+	
+	private void setupParseErrorReportingFor(final KantLexer lexer, final KantParser parser) {
+		lexer.removeErrorListeners();
+		lexer.addErrorListener(DescriptiveErrorListener.INSTANCE);
+		parser.removeErrorListeners();
+		parser.addErrorListener(DescriptiveErrorListener.INSTANCE);
+	}
+	
 	protected void commonInit() {
     	final ANTLRInputStream inputStream = new ANTLRInputStream(input_);
     	final KantLexer lexer = new KantLexer(inputStream);
     	final CommonTokenStream commonTokenStream = new CommonTokenStream(lexer);
     	final KantParser aParser = new KantParser(commonTokenStream);
+    	
+    	setupParseErrorReportingFor(lexer, aParser);
     
     	try {
     		final Method startRule = parserClass_.getMethod(startRuleName);

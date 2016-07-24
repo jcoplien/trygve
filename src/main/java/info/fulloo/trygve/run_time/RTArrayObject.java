@@ -222,8 +222,8 @@ public class RTArrayObject implements RTObject, RTIterable {
 			count += iter.getValue().size();
 		}
 		if ((1 < count) && (1 < rolesIAmPlayingInContext_.size())) {
-			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type ", this.rTType().name(),
-					" playing too many roles, including ", roleName);
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Object of type `", this.rTType().name(),
+					"' playing too many roles, including `", roleName+ "'.");
 		}
 	}
 	@Override public void unenlistAsRolePlayerForContext(final String roleName, final RTContextObject contextInstance) {

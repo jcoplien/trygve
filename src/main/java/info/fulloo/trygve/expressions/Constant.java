@@ -101,7 +101,7 @@ public abstract class Constant extends Expression {
 		}
 		public boolean isEqualTo(Constant constant) {
 			boolean retval = false;
-			if (constant instanceof StringConstant == false) {
+			if (false == constant instanceof StringConstant) {
 				retval = false;
 			} else {
 				final StringConstant constantAsString = (StringConstant) constant;
@@ -129,7 +129,7 @@ public abstract class Constant extends Expression {
 		}
 		public boolean isEqualTo(Constant constant) {
 			boolean retval = false;
-			if (constant instanceof IntegerConstant == false) {
+			if (false == constant instanceof IntegerConstant) {
 				retval = false;
 			} else {
 				final IntegerConstant constantAsInteger = (IntegerConstant) constant;
@@ -157,7 +157,7 @@ public abstract class Constant extends Expression {
 		}
 		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
-			if (constant instanceof DoubleConstant == false) {
+			if (false == constant instanceof DoubleConstant) {
 				retval = false;
 			} else {
 				final DoubleConstant constantAsDouble = (DoubleConstant) constant;
@@ -181,7 +181,7 @@ public abstract class Constant extends Expression {
 		}
 		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
-			if (constant instanceof CharacterConstant == false) {
+			if (false == constant instanceof CharacterConstant) {
 				retval = false;
 			} else {
 				final CharacterConstant constantAsCharacter = (CharacterConstant) constant;
@@ -205,7 +205,7 @@ public abstract class Constant extends Expression {
 		}
 		public boolean isEqualTo(final Constant constant) {
 			boolean retval = false;
-			if (constant instanceof BooleanConstant == false) {
+			if (false == constant instanceof BooleanConstant) {
 				retval = false;
 			} else {
 				final BooleanConstant constantAsBool = (BooleanConstant) constant;

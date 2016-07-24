@@ -262,7 +262,7 @@ public final class SystemClass {
 			
 			final RTObject theStream = myEnclosedScope.getObject("this");
 			final RTObject printStreamInfo = theStream.getObject("printStreamInfo");
-			if (printStreamInfo instanceof RTPrintStreamInfo == false) {
+			if (false == printStreamInfo instanceof RTPrintStreamInfo) {
 				ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "Print empire (", this.methodSelectorName(),
 						"): Internal Error with stack corruption so PrintStreamInfo is missing.", "");
 				return new RTHalt();
@@ -512,7 +512,7 @@ public final class SystemClass {
 				// Maybe the format string start with just a
 				// normal string
 				int i = 0;
-				if (formatString.substring(0,1).equals("%") == false) {
+				if (false == formatString.substring(0,1).equals("%")) {
 					finalStream.format(formats[0]);
 					i++;
 				}
