@@ -572,13 +572,21 @@ public class Pass2Listener extends Pass1Listener {
 			// Can be null in error condition
 			if (null != declarationScope) {
 				final String typeName = type.name();
-				final MethodDeclaration constructor = declarationScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+				MethodDeclaration constructor = declarationScope.lookupMethodDeclarationWithConversionIgnoringParameter(
 						typeName, actualArgumentList, false, /*parameterToIgnore*/ null);
 				if (null != actualArgumentList && 1 < actualArgumentList.count()) {
 					// So the "new" message actually had arguments, which means
 					// it's expecting a constructor
 					if (null == constructor) {
-						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "No matching constructor on class `", className, "' for `new' invocation", "");
+						// See if we're passing in a Role, and the Role "requires" signature
+						// can supply everything needed by the called method. "Superconversion"
+						// uses Role "requires" methods
+						constructor = declarationScope.lookupMethodDeclarationWithSuperConversionIgnoringParameter(
+								typeName, actualArgumentList, false, /*parameterToIgnore*/ null);
+						if (null == constructor) {
+							errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "No matching constructor on class `",
+									className, "' for `new' invocation", ".");
+						}
 					}
 				}
 				

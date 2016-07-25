@@ -25,6 +25,8 @@ package info.fulloo.trygve.declarations;
 
 import info.fulloo.trygve.declarations.Declaration.ErrorDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
+import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
@@ -61,6 +63,75 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
 				pl2, paramToIgnore, conversionAllowed, -1);
+	}
+	
+	public static boolean alignsWithParameterListIgnoringParamNamedWithRequiresCheck(final ActualOrFormalParameterList formals,
+			final ActualOrFormalParameterList actuals, final String paramToIgnore, final boolean conversionAllowed) {
+		boolean retval = FormalParameterList.alignsWithParameterListIgnoringParamCommon(formals,
+				actuals, paramToIgnore, conversionAllowed, -1);
+		if (false == retval) {
+			final int formalsCount = formals.count();
+			if (null == actuals) {
+				if (formalsCount != 0) {
+					retval = false;
+				} else {
+					// Redundant, but clear
+					retval = true;
+				}
+			} else {
+				retval = true;
+				final int actualsCount = actuals.count();
+				if (actualsCount != formalsCount && false == formals.containsVarargs()) {
+					retval = false;
+				} else {
+					for (int i = 0; i < actualsCount; i++) {
+						final String pl1Name = formals.nameOfParameterAtPosition(i),
+								     pl2Name = actuals.nameOfParameterAtPosition(i);
+						if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
+							continue;
+						}
+						
+						// We really should be a bit more dutiful about knowing whether it's pl1 or
+						// pl2 we're checking. But it's almost always "this" and since it's a
+						// reserved word, it won't be aliased with a user variable
+						if (null != pl1Name && null != paramToIgnore && pl1Name.equals(paramToIgnore)) {
+							continue;
+						}
+						
+						final Type actualsType = actuals.typeOfParameterAtPosition(i);
+						final Type formalsType = formals.typeOfParameterAtPosition(i);
+						final String actualsTypePathname = null == actualsType? "$wrong$": actualsType.pathName();	// these two are mainly
+						final String formalsTypePathname = null == formalsType? "!Wrong!": formalsType.pathName();	//	for debugging
+						if (null == actualsType || null == formalsType) {
+							retval = false;
+							break;
+						} else if (formalsType instanceof VarargsType) {
+							retval = true;
+							break;
+						} else if (actualsTypePathname.equals(formalsTypePathname)) {
+							// This is a big of a kludge but was necessary to get things
+							// to work comparing two different String instantiations. FIXME?
+							continue;
+						} else if (actualsType.enclosedScope() == formalsType.enclosedScope()) {
+							continue;
+						} else if (formalsType.isBaseClassOf(actualsType)) {
+							continue;
+						} else if (conversionAllowed) {
+							retval = formalsType.canBeConvertedFrom(actualsType);
+							if (false == retval && actualsType instanceof RoleType && formalsType instanceof ClassType) {
+								final ClassType formalsClassType = (ClassType) formalsType;
+								retval = formalsClassType.canBeConvertedFromRole((RoleType)actualsType);
+							}
+							if (false == retval) break;
+						} else {
+							retval = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return retval;
 	}
 	
 	public static boolean alignsWithParameterListIgnoringParamAtPosition(final ActualOrFormalParameterList pl1,

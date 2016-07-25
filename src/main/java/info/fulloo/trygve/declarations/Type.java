@@ -196,6 +196,66 @@ public abstract class Type implements ExpressionStackAPI
 		public ClassType(final String name, final StaticScope enclosedScope, final ClassType baseClass) {
 			super(name, enclosedScope, baseClass);
 		}
+		public boolean canBeConvertedFromRole(final RoleType roleType) {
+			// Very customized. Please refactor. Used in only one place, I think.
+			boolean retval = false;
+			if (null == roleType || null == roleType.pathName() || null == pathName()) {
+				assert false;
+			} else if (name().equals("Object")) {
+				// anything can be converted to Object
+				retval = true;
+			} else {
+				retval = roleType.pathName().equals(pathName());
+				if (!retval) {
+					if (roleType.name().equals("Null")) {
+						retval = true;
+					} else if (null != isTemplate(this) && null != isTemplate(roleType)) {
+						// Messy, messy, messy
+						final String thisParameterName = isTemplate(this);
+						final String tParameterName = isTemplate(roleType);
+						Type thisType = enclosedScope().lookupTypeDeclarationRecursive(thisParameterName);
+						if (null == thisType) {
+							if (this.name().startsWith("List<")) {
+								final StaticScope enclosedScope = this.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+							}
+						}
+						Type tType = enclosedScope().lookupTypeDeclarationRecursive(tParameterName);
+						if (null == tType) {
+							if (roleType.name().startsWith("List<")) {
+								final StaticScope enclosedScope = roleType.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
+							}
+						}
+						assert null != tType;
+						assert null != thisType;
+						retval = thisType.canBeConvertedFrom(tType);
+					} else {
+						// Compare signatures. For each Class signature, we should
+						// be able to find it in the Role as well
+						retval = true;
+						final List<MethodDeclaration> classMethodDecls = this.enclosedScope().methodDeclarations();
+						for (final MethodDeclaration methodDecl : classMethodDecls) {
+							if (methodDecl.isAConstructor()) continue;
+							final MethodSignature classMethodSignature = methodDecl.signature();
+							final MethodSignature roleDecl1 = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(classMethodSignature);
+							if (null == roleDecl1) {
+								retval = false;
+								break;
+							}
+						}
+					}
+				}
+			}
+			
+			if (false == retval) {
+				retval = complexCanBeConvertedCheck(roleType);
+			}
+			
+			return retval;
+		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
 			if (null == t || null == t.pathName() || null == pathName()) {

@@ -1220,7 +1220,44 @@ public class StaticScope {
 		}
 		return retval;
 	}
-	
+	public MethodDeclaration lookupMethodDeclarationWithSuperConversionIgnoringParameter(final String methodSelector,
+			final ActualOrFormalParameterList parameterList,
+			final boolean ignoreSignature, final String parameterToIgnore) {
+		// Like lookupMethodDeclarationWithConversionIgnoringParameter, but uses Role "requires" methods
+		MethodDeclaration retval = null;
+		
+		if (methodSelector.equals(previousMethodSelector_) && previousArgumentList_.equals(parameterList)) {	// yes, I really mean ==
+			ErrorLogger.error(ErrorIncidenceType.Fatal, "Method lookup argument type recursion for method `", methodSelector, "':", "");
+			return null;
+		} else {
+			previousMethodSelector_ = methodSelector;
+			previousArgumentList_ = parameterList;
+		}
+		if (methodDeclarationDictionary_.containsKey(methodSelector)) {
+			final ArrayList<MethodDeclaration> oldEntry = methodDeclarationDictionary_.get(methodSelector);
+			for (final MethodDeclaration aDecl : oldEntry) {
+				final FormalParameterList loggedSignature = aDecl.formalParameterList();
+				final ActualOrFormalParameterList mappedLoggedSignature = null == loggedSignature? null:
+					loggedSignature.mapTemplateParameters(templateInstantiationInfo_);
+				final ActualOrFormalParameterList mappedParameterList = null == parameterList? null:
+					(ActualOrFormalParameterList)parameterList.mapTemplateParameters(templateInstantiationInfo_);
+				if (ignoreSignature) {
+					retval = aDecl; break;
+				} else if (null == mappedLoggedSignature && null == mappedParameterList) {
+					retval = aDecl; break;
+				} else if (null != mappedLoggedSignature && FormalParameterList.
+						alignsWithParameterListIgnoringParamNamedWithRequiresCheck(mappedLoggedSignature, mappedParameterList, parameterToIgnore, true)) {
+					// exact matches get preference
+					retval = aDecl; break;
+				}
+			}
+		}
+
+		previousMethodSelector_ = null;
+		previousArgumentList_ = null;
+
+		return retval;
+	}
 	public MethodDeclaration lookupMethodDeclarationWithConversionIgnoringParameter(final String methodSelector,
 			final ActualOrFormalParameterList parameterList,
 			final boolean ignoreSignature, final String parameterToIgnore) {
