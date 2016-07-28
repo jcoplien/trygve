@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
@@ -246,6 +247,15 @@ public abstract class Type implements ExpressionStackAPI
 								break;
 							}
 						}
+						
+						// Also, for each base class public method, we
+						// should be able to find it in the Role as well!
+						if (false == retval) {
+							final ClassType baseClass = this.baseClass();
+							if (null != baseClass){
+								retval = baseClass.recursivelyCheckBaseClasses(roleType);
+							}
+						}
 					}
 				}
 			}
@@ -256,6 +266,40 @@ public abstract class Type implements ExpressionStackAPI
 			
 			return retval;
 		}
+		
+		private boolean recursivelyCheckBaseClasses(final RoleType roleType) {
+			boolean retval = true;
+			if (this.pathName().equals("Object.")) {
+				return retval;
+			}
+			
+			// Compare signatures. For each Class signature, we should
+			// be able to find it in the Role as well
+			retval = true;
+			final List<MethodDeclaration> classMethodDecls = this.enclosedScope().methodDeclarations();
+			for (final MethodDeclaration methodDecl : classMethodDecls) {
+				if (methodDecl.isAConstructor())
+					continue;
+				if (methodDecl.accessQualifier() != AccessQualifier.PublicAccess)
+					continue;
+				final MethodSignature classMethodSignature = methodDecl.signature();
+				final MethodSignature roleDecl1 = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(classMethodSignature);
+				if (null == roleDecl1) {
+					retval = false;
+					break;
+				}
+			}
+			
+			if (false == retval) {
+				final ClassType baseClass = this.baseClass();
+				if (null != baseClass){
+					retval = baseClass.recursivelyCheckBaseClasses(roleType);
+				}
+			}
+			
+			return retval;
+		}
+		
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
 			if (null == t || null == t.pathName() || null == pathName()) {
@@ -570,6 +614,19 @@ public abstract class Type implements ExpressionStackAPI
 					}
 				}
 			} else {
+				// Get it from the declaration
+				final Declaration potentialInterfaceDeclaration = enclosedScope().associatedDeclaration();
+				if (potentialInterfaceDeclaration instanceof InterfaceDeclaration) {
+					final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration) potentialInterfaceDeclaration;
+					retval = interfaceDeclaration.signatures_.get(methodSelector);
+					if (null != retval) {
+						final FormalParameterList formalParameterList = retval.formalParameterList();
+						final FormalParameterList argumentList = methodSignature.formalParameterList();
+						if (false == formalParameterList.alignsWith(argumentList)) {
+							retval = null;
+						}
+					}
+				}
 				retval = null;
 			}
 			
@@ -620,7 +677,12 @@ public abstract class Type implements ExpressionStackAPI
 					}
 				}
 			} else {
-				retval = null;
+				final Declaration potentialInterfaceDecl = null == enclosedScope()? null:
+					(null == enclosedScope().associatedDeclaration()? null: enclosedScope().associatedDeclaration());
+				if (potentialInterfaceDecl instanceof InterfaceDeclaration) {
+					final InterfaceDeclaration interfaceDecl = (InterfaceDeclaration) potentialInterfaceDecl;
+					retval = interfaceDecl.lookupMethodSignatureDeclarationInInterfaceDecl(selectorName, argumentList);
+				}
 			}
 			
 			--recurDepth;
@@ -1576,6 +1638,15 @@ public abstract class Type implements ExpressionStackAPI
 				} else {
 					retval = null;	// redundant
 				}
+			}
+		}
+		
+		if (null == retval) {
+			// Check declaration
+			final Declaration declaration = enclosedScope().associatedDeclaration();
+			if (declaration instanceof InterfaceDeclaration) {
+				final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration) declaration;
+				retval = interfaceDeclaration.lookupMethodSignatureDeclaration(methodSelector, methodSignature.formalParameterList());
 			}
 		}
 		

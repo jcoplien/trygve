@@ -114,6 +114,9 @@ public class Pass4Listener extends Pass3Listener {
 		}
 		return retval;
 	}
+	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+		;		// p3 only
+	}
 }
 
 

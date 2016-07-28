@@ -39,7 +39,8 @@ class B {
 }
 
 /* GOLD:
-line 10: The parameters to script `C2(R)' have scripts that are unavailable outside this Context (e.g., they are Role scripts).
-0 warnings, 1 error.
+line 10: The parameters to script `C2(R)' have scripts that are unavailable outside this Context, though some formal parameters of C2 presume they are available (they are likely Role scripts):
+line 10: 	R.bar()
+0 warnings, 2 errors.
 ___________________________________________________________
 */

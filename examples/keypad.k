@@ -198,7 +198,12 @@ context App {
 		UI.eventLoop();
 	}
 
-	role Keys {} requires {
+	role Keys {
+		public void input(String key);
+		public void backspace();
+		public String content();
+		public void clear();
+   } requires {
 		public void clear();
 		public void backspace();
 		public String content();

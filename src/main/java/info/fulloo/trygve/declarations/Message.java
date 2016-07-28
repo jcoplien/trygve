@@ -25,10 +25,14 @@ package info.fulloo.trygve.declarations;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
+import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -108,7 +112,62 @@ public class Message {
 	public Type enclosingMegaType() {
 		return enclosingMegaType_;
 	}
-	public boolean validInRunningEnviroment(final MethodDeclaration targetMethodDeclaration) {
+	private List<String> helper1(final String parameterName,
+			                     final RoleType roleType,
+			                     final Type correspondingFormalParameterType,
+			                     final boolean publicOnly) {
+		// Requires methods (which are a superset of the published
+		// methods) are all Ok. Other Role methods alone don't make the cut.
+		// The roleType must support all methods of the formal parameter,
+		// by using only those methods in its "requires" section
+		
+		final List<String> retval = new ArrayList<String>();
+		if (null == correspondingFormalParameterType ||
+				correspondingFormalParameterType.pathName().equals("Object.")) {
+			return retval;
+		}
+		
+		final List<MethodDeclaration> formalParamMethods =
+				null == correspondingFormalParameterType? new ArrayList<MethodDeclaration>():
+					(null == correspondingFormalParameterType.enclosedScope()?
+							new ArrayList<MethodDeclaration>():
+							correspondingFormalParameterType.enclosedScope().methodDeclarations()
+					);
+			
+		for (final MethodDeclaration aMethodOfTheFormalParameter : formalParamMethods) {
+			if (aMethodOfTheFormalParameter.isAConstructor()) {
+				continue;
+			} else if (publicOnly && aMethodOfTheFormalParameter.accessQualifier() != AccessQualifier.PublicAccess) {
+				continue;
+			} else {
+				final MethodSignature parametersSignature = aMethodOfTheFormalParameter.signature();
+				
+				// Ignore "this". Is this the right thing to do?
+				// tests/role_class_compatibility_new.k
+				final MethodSignature roleAnswer = roleType.associatedDeclaration().
+						lookupRequiredMethodSignatureDeclarationIgnoringParamAtPosition(parametersSignature, 0);
+				
+				if (null == roleAnswer) {
+					// Couldn't find it — game over
+					retval.add(parameterName + "." + parametersSignature.getText());
+				}
+			}
+		}
+		
+		// If the formal parameter is of a class type, we need also to
+		// support the public interface of any of its base classes!
+		if (correspondingFormalParameterType instanceof ClassType) {
+			final ClassType classType = (ClassType)correspondingFormalParameterType;
+			final ClassType baseClassType = classType.baseClass();
+			if (null != baseClassType) {
+				retval.addAll(helper1(parameterName, roleType, baseClassType, true));
+			}
+		}
+		
+		return retval;
+	}
+	
+	public List<String> validInRunningEnviroment(final MethodDeclaration targetMethodDeclaration) {
 		// Normal argument checking is done on the basis
 		// of signature mapping. Let's assume that matches.
 		// One of the actual parameters may be a Role type,
@@ -116,9 +175,7 @@ public class Message {
 		// the method executes in a different Context (without
 		// access to the Role methods) then the call is
 		// meaningless. Check that here.
-		boolean retval = true;
-		// final StaticScope targetMethodScope = targetMethodDeclaration.enclosedScope();
-		// final Type targetType = Expression.nearestEnclosingMegaTypeOf(targetMethodScope);
+		final List<String> retval = new ArrayList<String>();	// return value
 		final FormalParameterList formalParameters = targetMethodDeclaration.formalParameterList();
 		
 		final int numberOfActualParameters = argumentList_.count();
@@ -150,32 +207,28 @@ public class Message {
 					// it must be accessible to the caller and therefore within the
 					// same context
 					continue;
-				} else {
+				} else if (correspondingFormalParameterType instanceof InterfaceType) {
+					// We look up interface method declarations differently. Still,
 					// Requires methods (which are a superset of the published
 					// methods) are all Ok. Other Role methods don't make the cut.
 					// The roleType must support all methods of the formal parameter,
-					// by using only those methods in its "requires" section
-					final List<MethodDeclaration> formalParamMethods =
-							null == correspondingFormalParameterType? new ArrayList<MethodDeclaration>():
-								(null == correspondingFormalParameterType.enclosedScope()?
-										new ArrayList<MethodDeclaration>():
-										correspondingFormalParameterType.enclosedScope().methodDeclarations()
-								);
+					// by using only those methods in its "requires" section.
+					final Declaration potentialInterfaceDeclaration = correspondingFormalParameterType.enclosedScope().associatedDeclaration();
+					if (potentialInterfaceDeclaration instanceof InterfaceDeclaration) {
+						final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration) potentialInterfaceDeclaration;
 						
-					for (final MethodDeclaration aMethodOfTheFormalParameter : formalParamMethods) {
-						if (aMethodOfTheFormalParameter.isAConstructor()) {
-							continue;
-						} else {
-							final MethodSignature parametersSignature = aMethodOfTheFormalParameter.signature();
-							final MethodSignature roleAnswer = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(parametersSignature);
+						// Go through its signatures
+						for (Map.Entry<String, MethodSignature> signatureMapEntry : interfaceDeclaration.signatureMap().entrySet()) {
+							final MethodSignature formalParamSignature = signatureMapEntry.getValue();
+							final MethodSignature roleAnswer = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(formalParamSignature);
 							if (null == roleAnswer) {
-								// Couldn't find it — game over
-								retval = false;
-								break;
+								// Couldn't find it - game over
+								retval.add(actualParameter.name() + "." + formalParamSignature.getText());
 							}
 						}
 					}
-					if (false == retval) break;
+				} else {
+					retval.addAll(helper1(actualParameter.name(), roleType, correspondingFormalParameterType, false));
 				}
 			}
 		}

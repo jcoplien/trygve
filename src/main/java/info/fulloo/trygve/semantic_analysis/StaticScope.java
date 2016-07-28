@@ -1514,8 +1514,8 @@ public class StaticScope {
 				}
 				
 				if (dup) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
-						name(), " would create multiple methods of the same name in the same object.", "");
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Defining `", methodName, "' in ",
+						name(), " would create multiple scripts of the same name in the same object.", "");
 				} else {
 					super.declareMethod(decl, pass);
 				}
@@ -1527,17 +1527,17 @@ public class StaticScope {
 			final MethodDeclaration lookupExistingEntry = this.lookupMethodDeclaration(methodName,
 					decl.formalParameterList(), true);
 			if (null != lookupExistingEntry) {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of `", methodName, "' in ",
-						name(), " would create multiple methods of the same name in the same object.", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Defining `", methodName, "' in ",
+						name(), " would create multiple scripts of the same name in the same object.", "");
 			} else if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
 				for (final MethodDeclaration aDecl : oldEntry) {
 					final FormalParameterList loggedSignature = aDecl.formalParameterList();
 					if (null == loggedSignature && null == decl.formalParameterList()) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
+						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' script `", methodName, "' in " + name(), "'.");
 						break;
 					} else if (null != loggedSignature && loggedSignature.alignsWith(decl.formalParameterList())) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' method `", methodName, "' in " + name(), "'.");
+						ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple declarations of `required' script `", methodName, "' in " + name(), "'.");
 						break;
 					}
 				}

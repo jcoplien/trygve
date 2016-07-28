@@ -176,6 +176,7 @@ public class TestRunner {
 		"july_money_transfer_2.k",
 		"role_class_compatibility.k",
 		"role_class_compatibility_new.k",
+		"role_interface_compatibility.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 	};

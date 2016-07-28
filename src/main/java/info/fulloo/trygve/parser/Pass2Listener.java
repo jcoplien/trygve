@@ -599,18 +599,21 @@ public class Pass2Listener extends Pass1Listener {
 								"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 					}
 					
-					final boolean isValidCall = message.validInRunningEnviroment(constructor);
-					if (false == isValidCall) {
-						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "The parameters to script `",
+					final List<String> nonmatchingMethods = message.validInRunningEnviroment(constructor);
+					if (0 < nonmatchingMethods.size()) {
+						errorHook5p3(ErrorIncidenceType.Fatal, lineNumber, "The parameters to script `",
 								constructorName + message.argumentList().selflessGetText(),
-								"' have scripts that are unavailable outside this Context (e.g., they are Role scripts)", ".");
+								"' have scripts that are unavailable outside this Context, ",
+								"though some formal parameters of " + constructorName +
+								" presume they are available (they are likely Role scripts):");
+						for (final String badMethod : nonmatchingMethods) {
+							errorHook5p3(ErrorIncidenceType.Fatal, lineNumber,
+									"\t", badMethod, "", "");
+						}
 					}
 				}
 			}
 		}
-
-		
-				
 	}
 	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		// Apparently called only for constructor processing.
@@ -1123,18 +1126,26 @@ public class Pass2Listener extends Pass1Listener {
 		} else if (objectType instanceof InterfaceType) {
 			final InterfaceType classObjectType = (InterfaceType) objectType;
 			final ActualOrFormalParameterList argumentList = message.argumentList();
+			final String methodSelectorName = message.selectorName();
 			methodSignature = null != classObjectType?
-						classObjectType.lookupMethodSignature(message.selectorName(), argumentList):
+						classObjectType.lookupMethodSignature(methodSelectorName, argumentList):
 						null;
 			if (null == methodSignature) {
-				// Mainly for error recovery (bad argument to method / method not declared)
-				final String methodSelectorName = message.selectorName();
-				if (argumentList.isntError()) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
-							"Script `",
-							methodSelectorName + argumentList.getText(),
-							"' not declared in Interface `",
-							classObjectType.name() + "'.");
+				// Try again, ignoring type of this (e.g., for Interface types)
+				methodSignature = null != classObjectType?
+						classObjectType.lookupMethodSignatureWithConversionIgnoringParameter(methodSelectorName, argumentList, "this"):
+						null;
+				if (null == methodSignature) {
+					// Mainly for error recovery (bad argument to method / method not declared)
+					if (argumentList.isntError()) {
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+								"Script `",
+								methodSelectorName + argumentList.getText(),
+								"' not declared in Interface `",
+								classObjectType.name() + "'.");
+					}
+				} else {
+					isOKMethodSignature = true;
 				}
 			} else {
 				isOKMethodSignature = true;
@@ -1178,11 +1189,17 @@ public class Pass2Listener extends Pass1Listener {
 		final String methodSelectorName = message.selectorName();
 		
 		if (null != methodDeclaration) {
-			final boolean isValidCall = message.validInRunningEnviroment(methodDeclaration);
-			if (false == isValidCall) {
+			final List<String> invalidMethodSelectors = message.validInRunningEnviroment(methodDeclaration);
+			if (0 < invalidMethodSelectors.size()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "The parameters to script `",
 						methodSelectorName + message.argumentList().selflessGetText(),
-						"' have scripts that are unavailable outside this Context (e.g., they are Role scripts)", ".");
+						"' have scripts that are unavailable outside this Context, ",
+						"though some formal parameters of " + methodSelectorName +
+						" presume they are available (they are likely Role scripts):");
+				for (final String badMethod : invalidMethodSelectors) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+							"\t", badMethod, "", "");
+				}
 			}
 		} else if (null == methodDeclaration && isOKMethodSignature == false) {
 			if (message.argumentList().isntError()) {
@@ -1794,6 +1811,9 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
+	}
+	public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+		;		// p3 and beyond only
 	}
 	@Override protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
 		// It actually is right that one of these is an add and one is an insert...

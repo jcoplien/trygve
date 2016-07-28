@@ -8,7 +8,7 @@ context C1 {
             new C2(R1);
         }
         public void foo2() {
-            System.out.println("foo2")
+            System.out.println("foo2b")
         }
         public void foo1();
     } requires {
@@ -21,7 +21,7 @@ context C1 {
             new C2(R2);
         }
         public void foo2() {
-            System.out.println("foo2")
+            System.out.println("foo2b")
         }
         public void foo1();
     } requires {
@@ -33,7 +33,7 @@ context C1 {
             new C2(R3);
         }
         public void foo2b() {
-            System.out.println("foo2")
+            System.out.println("foo2b")
         }
         public void foo1();
     } requires {
@@ -48,17 +48,21 @@ context C2 {
      }
 }
 
-class A {
-    public void foo1() {}
+interface A {
+    public void foo1();
 }
 
-class B {
-    public void foo1() {}
-    public void foo2() {}
+class AClass implements A {
+   public void foo1() { }
+}
+
+interface B {
+    public void foo1();
+    public void foo2();
 }
 
 {
-    new C1(new A());
+    new C1(new AClass());
 }
 
 /* GOLD:

@@ -3090,11 +3090,17 @@ public class Pass1Listener extends Pass0Listener {
 				final String methodSelectorName = constructor.name();
 				final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
 				final Message message = new Message(methodSelectorName, argument_list,lineNumber, enclosingType);
-				boolean isValidCall = message.validInRunningEnviroment(constructor);
-				if (false == isValidCall) {
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Script `",
+				final List<String> nonmatchingMethods = message.validInRunningEnviroment(constructor);
+				if (0 < nonmatchingMethods.size()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "The parameters to script `",
 							methodSelectorName + message.argumentList().selflessGetText(),
-							"' depends on method parameters that are not available outside this context ", ".");
+							"' have scripts that are unavailable outside this Context, ",
+							"though some formal parameters of " + methodSelectorName +
+							" presume they are available (they are likely Role scripts):");
+					for (final String badMethod : nonmatchingMethods) {
+						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
+								"\t", badMethod, "", "");
+					}
 				}
 			}
 			
@@ -5614,8 +5620,8 @@ public class Pass1Listener extends Pass0Listener {
 				if (null != correspondingRoleMethod) {
 					errorHook6p2(ErrorIncidenceType.Warning, lineNumber,
 							"WARNING: Both class `" + baseType.name(), "' and Role `" + lhsType.name(),
-							"' contain the same method signature `", correspondingRoleMethod.signature().getText(),
-							"'. This results in several methods of the same name in the same object",
+							"' contain the same script signature `", correspondingRoleMethod.signature().getText(),
+							"'. This results in several scripts of the same name in the same object",
 							" and may not behave as you expected.");
 				}
 			}

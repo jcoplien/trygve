@@ -428,8 +428,19 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupMethodSignatureDeclaration(final String methodSelectorName, final ActualOrFormalParameterList argumentList) {
 			return ((InterfaceType)type_).lookupMethodSignature(methodSelectorName, argumentList);
 		}
+		public MethodSignature lookupMethodSignatureDeclarationInInterfaceDecl(final String methodSelectorName, final ActualOrFormalParameterList argumentList) {
+			// FIXME: Design doesn't accommodate overloading?
+			MethodSignature retval = null;
+			if (signatures_.containsKey(methodSelectorName)) {
+				retval = signatures_.get(methodSelectorName);
+			}
+			return retval;
+		}
 		public void addSignature(final MethodSignature signature) {
 			signatures_.put(signature.name(), signature);
+		}
+		public Map<String, MethodSignature> signatureMap() {
+			return signatures_;
 		}
 		
 		protected final Map<String, MethodSignature> signatures_;
@@ -455,20 +466,24 @@ public abstract class Declaration implements BodyPart {
 		public MethodSignature lookupRequiredMethodSignatureDeclaration(final String name) {
 			return requiredSelfSignatures_.get(name);
 		}
-		public MethodSignature lookupRequiredMethodSignatureDeclaration(final MethodSignature signature) {
+		public MethodSignature lookupRequiredMethodSignatureDeclarationIgnoringParamAtPosition(final MethodSignature signature,
+				final int paramIgnorePosition) {
 			MethodSignature possibleSignature = requiredSelfSignatures_.get(signature.name());
 			if (null != possibleSignature) {
 				final FormalParameterList formalParameterList = possibleSignature.formalParameterList();
 				final FormalParameterList actualParameterList = signature.formalParameterList();
 				if (FormalParameterList.alignsWithParameterListIgnoringParamCommon(
 						formalParameterList,
-						actualParameterList, null, true, -1)) {
+						actualParameterList, null, true, paramIgnorePosition)) {
 					;		// O.K.
 				} else {
 					possibleSignature = null;
 				}
 			}
 			return possibleSignature;
+		}
+		public MethodSignature lookupRequiredMethodSignatureDeclaration(final MethodSignature signature) {
+			return lookupRequiredMethodSignatureDeclarationIgnoringParamAtPosition(signature, -1);
 		}
 		public boolean isAParameterlessRequiresMethod(final String methodSelectorName) {
 			boolean retval = false;
@@ -522,7 +537,7 @@ public abstract class Declaration implements BodyPart {
 					parserPass, signature.lineNumber());
 			requiredSelfSignatures_.put(signature.name(), signature);
 		}
-		public Map<String, List<MethodSignature> > requiredSelfSignatures() {
+		public Map<String, List<MethodSignature>> requiredSelfSignatures() {
 			final Map<String, List<MethodSignature> > retval = new LinkedHashMap<String, List<MethodSignature> >();
 			for (final String methodName : requiredSelfSignatures_.keySet()) {
 				final List<MethodSignature> signatureList = new ArrayList<MethodSignature>();
