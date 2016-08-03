@@ -267,11 +267,18 @@ public abstract class Type implements ExpressionStackAPI
 			return retval;
 		}
 		
+		private boolean checkIfIsObjectScript(
+				final MethodSignature formalParamSignature) {
+			boolean retval = false;
+			final StaticScope objectScope = StaticScope.globalScope().lookupClassDeclaration("Object").enclosedScope();
+			assert null != objectScope;
+			retval = null != objectScope.lookupMethodDeclaration(formalParamSignature.name(),
+					formalParamSignature.formalParameterList(), false);
+			return retval;
+		}
+		
 		private boolean recursivelyCheckBaseClasses(final RoleType roleType) {
 			boolean retval = true;
-			if (this.pathName().equals("Object.")) {
-				return retval;
-			}
 			
 			// Compare signatures. For each Class signature, we should
 			// be able to find it in the Role as well
@@ -285,7 +292,9 @@ public abstract class Type implements ExpressionStackAPI
 				final MethodSignature classMethodSignature = methodDecl.signature();
 				final MethodSignature roleDecl1 = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(classMethodSignature);
 				if (null == roleDecl1) {
-					retval = false;
+					// Every Role-player plays class Object. If we can
+					// find it in class Object, we're O.K.
+					retval = checkIfIsObjectScript(classMethodSignature);
 					break;
 				}
 			}

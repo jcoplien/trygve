@@ -112,7 +112,7 @@ public class Message {
 	public Type enclosingMegaType() {
 		return enclosingMegaType_;
 	}
-	private List<String> helper1(final String parameterName,
+	private List<String> helper1(final Expression actualParameter,
 			                     final RoleType roleType,
 			                     final Type correspondingFormalParameterType,
 			                     final boolean publicOnly) {
@@ -122,11 +122,6 @@ public class Message {
 		// by using only those methods in its "requires" section
 		
 		final List<String> retval = new ArrayList<String>();
-		if (null == correspondingFormalParameterType ||
-				correspondingFormalParameterType.pathName().equals("Object.")) {
-			return retval;
-		}
-		
 		final List<MethodDeclaration> formalParamMethods =
 				null == correspondingFormalParameterType? new ArrayList<MethodDeclaration>():
 					(null == correspondingFormalParameterType.enclosedScope()?
@@ -149,7 +144,9 @@ public class Message {
 				
 				if (null == roleAnswer) {
 					// Couldn't find it — game over
-					retval.add(parameterName + "." + parametersSignature.getText());
+					// retval.add(parameterName + "." + parametersSignature.getText());
+					// Methods of class Object work
+					retval.addAll(checkIfIsObjectScript(actualParameter, parametersSignature));
 				}
 			}
 		}
@@ -160,10 +157,52 @@ public class Message {
 			final ClassType classType = (ClassType)correspondingFormalParameterType;
 			final ClassType baseClassType = classType.baseClass();
 			if (null != baseClassType) {
-				retval.addAll(helper1(parameterName, roleType, baseClassType, true));
+				retval.addAll(helper1(actualParameter, roleType, baseClassType, true));
 			}
 		}
 		
+		return retval;
+	}
+
+	private List<String> checkIfIsObjectScript(
+			final Expression actualParameter,
+			final MethodSignature formalParamSignature) {
+		final List<String> retval = new ArrayList<String>();
+		final StaticScope objectScope = StaticScope.globalScope().lookupClassDeclaration("Object").enclosedScope();
+		assert null != objectScope;
+		final MethodDeclaration lookedUpMethod = objectScope.lookupMethodDeclaration(formalParamSignature.name(),
+				formalParamSignature.formalParameterList(), false);
+		if (null == lookedUpMethod) {
+			// Couldn't find it - game over
+			retval.add(actualParameter.name() + "." + formalParamSignature.getText());
+		}
+		return retval;
+	}
+	
+	private List<String> checkIfValidInterface(
+			final Expression actualParameter,
+			final Type correspondingFormalParameterType,
+			final RoleType roleType) {
+		// We look up interface method declarations differently. Still,
+		// Requires methods (which are a superset of the published
+		// methods) are all Ok. Other Role methods don't make the cut.
+		// The roleType must support all methods of the formal parameter,
+		// by using only those methods in its "requires" section.
+		final List<String> retval = new ArrayList<String>();
+		final Declaration potentialInterfaceDeclaration = correspondingFormalParameterType.enclosedScope().associatedDeclaration();
+		if (potentialInterfaceDeclaration instanceof InterfaceDeclaration) {
+			final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration) potentialInterfaceDeclaration;
+			
+			// Go through its signatures
+			for (Map.Entry<String, MethodSignature> signatureMapEntry : interfaceDeclaration.signatureMap().entrySet()) {
+				final MethodSignature formalParamSignature = signatureMapEntry.getValue();
+				final MethodSignature roleAnswer = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(formalParamSignature);
+				if (null == roleAnswer) {
+					// Methods of class Object work
+					retval.addAll(checkIfIsObjectScript(actualParameter, formalParamSignature));
+				}
+			}
+		}
 		return retval;
 	}
 	
@@ -208,27 +247,10 @@ public class Message {
 					// same context
 					continue;
 				} else if (correspondingFormalParameterType instanceof InterfaceType) {
-					// We look up interface method declarations differently. Still,
-					// Requires methods (which are a superset of the published
-					// methods) are all Ok. Other Role methods don't make the cut.
-					// The roleType must support all methods of the formal parameter,
-					// by using only those methods in its "requires" section.
-					final Declaration potentialInterfaceDeclaration = correspondingFormalParameterType.enclosedScope().associatedDeclaration();
-					if (potentialInterfaceDeclaration instanceof InterfaceDeclaration) {
-						final InterfaceDeclaration interfaceDeclaration = (InterfaceDeclaration) potentialInterfaceDeclaration;
-						
-						// Go through its signatures
-						for (Map.Entry<String, MethodSignature> signatureMapEntry : interfaceDeclaration.signatureMap().entrySet()) {
-							final MethodSignature formalParamSignature = signatureMapEntry.getValue();
-							final MethodSignature roleAnswer = roleType.associatedDeclaration().lookupRequiredMethodSignatureDeclaration(formalParamSignature);
-							if (null == roleAnswer) {
-								// Couldn't find it - game over
-								retval.add(actualParameter.name() + "." + formalParamSignature.getText());
-							}
-						}
-					}
+					retval.addAll(checkIfValidInterface(
+							actualParameter, correspondingFormalParameterType, roleType));
 				} else {
-					retval.addAll(helper1(actualParameter.name(), roleType, correspondingFormalParameterType, false));
+					retval.addAll(helper1(actualParameter, roleType, correspondingFormalParameterType, false));
 				}
 			}
 		}
