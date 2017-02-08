@@ -1423,17 +1423,16 @@ public class StaticScope {
 	public void setParentScope(final StaticScope scope) {
 		parentScope_ = scope;
 	}
-	
 	public List<ObjectDeclaration> objectDeclarations() {
 		final List<ObjectDeclaration> retval = new ArrayList<ObjectDeclaration>();
-		for (Map.Entry<String, ObjectDeclaration> objectDecl : objectDeclarationDictionary_.entrySet()) {
+		for (final Map.Entry<String, ObjectDeclaration> objectDecl : objectDeclarationDictionary_.entrySet()) {
 			retval.add(objectDecl.getValue());
 		}
 		return retval;
 	}
 	public List<ClassDeclaration> classDeclarations() {
 		final List<ClassDeclaration> retval = new ArrayList<ClassDeclaration>();
-		for (Map.Entry<String, ClassDeclaration> classDecl : classDeclarationDictionary_.entrySet()) {
+		for (final Map.Entry<String, ClassDeclaration> classDecl : classDeclarationDictionary_.entrySet()) {
 			retval.add(classDecl.getValue());
 		}
 		return retval;
