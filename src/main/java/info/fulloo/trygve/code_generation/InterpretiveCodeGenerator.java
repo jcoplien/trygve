@@ -94,6 +94,7 @@ import info.fulloo.trygve.expressions.Expression.LastIndexExpression;
 import info.fulloo.trygve.expressions.Expression.MessageExpression;
 import info.fulloo.trygve.expressions.Expression.NewArrayExpression;
 import info.fulloo.trygve.expressions.Expression.NewExpression;
+import info.fulloo.trygve.expressions.Expression.NullExpression;
 import info.fulloo.trygve.expressions.Expression.PowerExpression;
 import info.fulloo.trygve.expressions.Expression.ProductExpression;
 import info.fulloo.trygve.expressions.Expression.PromoteToDoubleExpr;
@@ -1496,7 +1497,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				}
 				
 				boolean isWellFormedInitialization = false;
-				if (rhs instanceof Constant) {
+				if (rhs instanceof Constant || rhs instanceof NullExpression) {
 					isWellFormedInitialization = true;	// O.K.
 				} else if (rhs instanceof UnaryAbelianopExpression) {
 					// Negative numbers. Generalize this later to constant expressions?

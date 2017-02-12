@@ -1677,8 +1677,9 @@ public class Pass2Listener extends Pass1Listener {
 				// See if the base class also has this name
 				final StaticScope baseClassScope = baseClassDeclaration.enclosedScope();
 				final ObjectDeclaration baseClassInstance = baseClassScope.lookupObjectDeclaration(idName);
-				if (null != baseClassInstance) {
-					// Hmmm. It also exists in the base class
+				// Check if the same identifier also exists in the base class and is public.
+				// (if it's private then it's encapsulated, so duplicate identifiers are OK)
+				if (null != baseClassInstance && baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
 					final String lastPartOfMessage = baseClassDeclaration.name() + "'.";
 					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Object declaration `", idName,
 							"' appears both in class `",
@@ -1823,6 +1824,7 @@ public class Pass2Listener extends Pass1Listener {
 	}
 	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, final int lineNumber) {
 		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
+		this.ensureNotDuplicatedInBaseClass(currentScope_.associatedDeclaration(), name, lineNumber);
 		// It's been declared, so multiple declarations aren't an error
 		return objDecl;
 	}
