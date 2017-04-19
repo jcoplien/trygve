@@ -309,7 +309,7 @@ context PayBillsContext
         public Currency availableBalance() const;
         public void increaseBalance(Currency amount) unused;
         public void decreaseBalance(Currency amount) unused;
-        public void updateLog(String message, Date dt, Currency amount)
+        public void updateLog(String message, Date dt, Currency amount) unused
     } requires {
         String accountID() const;
         Currency availableBalance() const;
