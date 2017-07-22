@@ -30,6 +30,10 @@ import info.fulloo.trygve.configuration.ConfigurationOptions;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
@@ -37,7 +41,13 @@ import info.fulloo.trygve.editor.BatchRunner;
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
+import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTClassAndContextCommon;
+import info.fulloo.trygve.run_time.RTCode;
+import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTExpression;
+import info.fulloo.trygve.run_time.RTMethod;
+import info.fulloo.trygve.run_time.RTRole;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.Program;
 
@@ -120,6 +130,8 @@ public class ParseRun {
     	catch (final IllegalAccessException iae) {
     		System.err.println("IllegalAccessException");
     	}
+    	
+        allExpressions_ = new HashMap<Integer, RTCode>();
 	}
 
 	private void pass0(final ParsingData parsingData, final ParserRuleContext tree) {
@@ -150,6 +162,43 @@ public class ParseRun {
 		codeGenerator.compile();
 		virtualMachine_ = codeGenerator.virtualMachine();
 		mainExpr_ = codeGenerator.mainExpr();
+		
+		// Get rid of old, and make a new one
+		// (used by buildExpressionsMapFor)
+		allExpressions_ = new HashMap<Integer, RTCode>();
+		
+        if (null != mainExpr_) {
+        	buildExpressionMapFor(mainExpr_);
+        }
+        
+        // All classes
+        final Collection<RTClass> allClasses = RunTimeEnvironment.runTimeEnvironment_.allRTClasses();
+        for (final RTClass aClassDecl: allClasses) {
+        	final Collection<RTMethod> allRTMethods = aClassDecl.allRTMethods();
+        	for (final RTCode aMethod: allRTMethods) {
+        		buildExpressionMapFor(aMethod);
+        	}
+        }
+        
+        // Aaaaand all Contexts
+        final Collection<RTContext> allContexts = RunTimeEnvironment.runTimeEnvironment_.allRTContexts();
+        for (final RTContext aContextDecl: allContexts) {
+        	// This uses the same method in the base class it shares
+        	// in common with classes
+        	final Collection<RTMethod> allRTMethods = aContextDecl.allRTMethods();
+        	for (final RTCode aMethod: allRTMethods) {
+        		buildExpressionMapFor(aMethod);
+        	}
+        	
+        	// It gets StageProps too
+        	final Collection<RTClassAndContextCommon> allRTRoles = aContextDecl.allRTRoles();
+        	for (final RTClassAndContextCommon aRoleDecl: allRTRoles) {
+        		final Collection<RTMethod> allRTMethods2 = aRoleDecl.allRTMethods();
+            	for (final RTCode aMethod: allRTMethods2) {
+            		buildExpressionMapFor(aMethod);
+            	}
+        	}
+        }
 	}
 	
 	public RunTimeEnvironment virtualMachine() {
@@ -188,6 +237,26 @@ public class ParseRun {
 		}
 	}
 	
+	private void buildExpressionMapFor(final RTCode expr) {
+		if (null != expr && false == allExpressions_.containsValue(expr)) {
+			final int lineNumber = expr.lineNumber();
+			if (0 != lineNumber) {	// discard library declarations
+				allExpressions_.put(lineNumber, expr);
+				final List<RTCode> connectedExpressions = expr.connectedExpressions();
+				for (RTCode anExpression: connectedExpressions) {
+					buildExpressionMapFor(anExpression);
+				}
+			}
+		}
+	}
+	public RTCode expressionForByteOffsetInBuffer(int byteOffset, TextEditorGUI gui) {
+		RTCode retval = null;
+		int lineNumber = gui.lineNumberForBufferOffset(byteOffset);
+		retval = (RTCode)allExpressions_.get(new Integer(lineNumber));
+		return retval;
+	}
+	
 	private RunTimeEnvironment virtualMachine_;
 	private RTExpression mainExpr_;
+	private Map<Integer /* Line Number*/, RTCode> allExpressions_;
 }

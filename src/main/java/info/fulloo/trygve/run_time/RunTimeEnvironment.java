@@ -26,6 +26,7 @@ package info.fulloo.trygve.run_time;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,7 @@ public class RunTimeEnvironment {
 			redirectedInputStream_ = System.in;
 		}
 	}
-	private Stack<RTStackable> theStack() {
+	public final Stack<RTStackable> theStack() {
 		final String threadName = Thread.currentThread().getName();
 		if (threadName.startsWith("AWT-EventQueue")) {
 			return awtEventQueueStack_;
@@ -244,6 +245,12 @@ public class RunTimeEnvironment {
 			lastEvaluated.decrementReferenceCount();
 		}
 		RTExpression.setLastExpressionResult(new RTNullObject(), 0);
+		if (null != RunTimeEnvironment.runTimeEnvironment_) {
+			final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+			if (null != debugger) {
+				debugger.debuggerWindowMessage("Execution complete\n");
+			}
+		}
 	}
 	public synchronized void setFramePointer() {
 		final int stackSize = theStack().size();
@@ -451,6 +458,9 @@ public class RunTimeEnvironment {
 	}
 	public RTCode runner(final RTCode code) {
 		runnerPrefix(code);
+		if (code.isBreakpoint()) {
+			rTDebugger_.breakpointFiredAt(code);
+		}
 		final RTCode retval = isRunning()? code.run(): null;
 		// Thread.yield();		// be a good citizen
 		return retval;
@@ -499,6 +509,21 @@ public class RunTimeEnvironment {
 		}
 	}
 	
+	public void setDebugger(RTDebuggerWindow rTDebugger) {
+		rTDebugger_ = rTDebugger;
+	}
+	public RTDebuggerWindow rTDebuggerWindow() {
+		return rTDebugger_;
+	}
+	public final Collection<RTClass> allRTClasses() {
+		final Collection<RTClass> retval = stringToRTClassMap_.values();
+		return retval;
+	}
+	public final Collection<RTContext> allRTContexts() {
+		final Collection<RTContext> retval = stringToRTContextMap_.values();
+		return retval;
+	}
+	
 	
 	private final Map<String, RTContext> stringToRTContextMap_;
 	private final Map<String, RTClass> stringToRTClassMap_;
@@ -519,4 +544,5 @@ public class RunTimeEnvironment {
 	public        RTDynamicScope globalDynamicScope;
 	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
+	private       RTDebuggerWindow rTDebugger_;
 }

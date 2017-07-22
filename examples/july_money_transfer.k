@@ -1,3 +1,7 @@
+/*
+* july_money_transfer.k
+*/
+
 class Currency
 {
     public Currency(double amount) {
@@ -71,8 +75,8 @@ class Euro extends Currency {
 
 class Account
 {
-    public Account() {
-       acct_ = 1234
+    public Account(int acctno) {
+       acct_ = acctno
     }
     public String accountID() const {
        return acct_.toString()    
@@ -89,7 +93,8 @@ class Account
 
 class CheckingAccount extends Account {
     public CheckingAccount() {
-        availableBalance_ = new Euro(100.00)
+			Account(1234);
+			availableBalance_ = new Euro(100.00)
     }
     public Currency availableBalance() const
     {
@@ -114,7 +119,8 @@ class CheckingAccount extends Account {
 
 class SavingsAccount extends Account {
     public SavingsAccount() {
-        availableBalance_ = new Euro(0.00)
+			Account(1234);
+			availableBalance_ = new Euro(0.00)
     }
     public Currency availableBalance() const {
         return availableBalance_
@@ -146,7 +152,8 @@ class SavingsAccount extends Account {
 class InvestmentAccount extends Account
 {
     public InvestmentAccount() {
-       availableBalance_ = new Euro(0.00)
+			Account(1234);
+			availableBalance_ = new Euro(0.00)
     }
     public Currency availableBalance() const {
         return availableBalance_
@@ -171,7 +178,7 @@ class InvestmentAccount extends Account
 class Creditor
 {
     public Creditor(Account account) {
-        account_ = account
+			account_ = account
     }
     public Account account() { return account_ }
     public Currency amountOwed() const { return new Currency(0.0) }

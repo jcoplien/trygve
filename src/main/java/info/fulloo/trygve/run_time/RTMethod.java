@@ -23,6 +23,7 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -281,8 +282,20 @@ public class RTMethod extends RTCode {
 		return retval;
 	}
 	
-	public int lineNumber() {
+	@Override public int lineNumber() {
 		return lineNumber_;
+	}
+	
+	@Override public List<RTCode> connectedExpressions() {
+		final ArrayList<RTCode> retval = new ArrayList<RTCode>();
+		for (final RTCode aStatement: code_) {
+			retval.add(aStatement);
+		}
+		for (final RTCode anInitializer: initializationList_.values()) {
+			retval.add(anInitializer);
+		}
+		retval.add(returnInstruction_);
+		return retval;
 	}
 
 

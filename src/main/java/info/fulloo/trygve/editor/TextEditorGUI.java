@@ -46,6 +46,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.lntextpane.LNTextPane;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
+import info.fulloo.trygve.run_time.RTDebuggerWindow;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTWindowRegistryEntry;
@@ -59,8 +60,16 @@ import javax.swing.JMenu;
 import javax.swing.JOptionPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument.BranchElement;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.Element;
 
 
 enum RunButtonState { Idle, Running, Disabled } ;
@@ -72,6 +81,176 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     
     private File fileName = new File("noname");
     
+    public int currentByteOffset() {
+    	return editPane.getCaretPosition();
+    }
+    
+	public int currentLineNumber() {
+		return lineNumberForBufferOffset(editPane.getCaretPosition());
+	}
+	
+	public int lineNumberForBufferOffset(int caretPosition) {
+		// Turn into a line number
+		int lineNumber = 1;
+		final Document document = editPane.getDocument();
+		for (int i = 0; i < caretPosition; i++) {
+			try {
+				String column = document.getText(i, 1);
+				if ("\n".equals(column)) {
+					lineNumber++;
+				}
+			} catch (BadLocationException e1) {
+				e1.printStackTrace();
+				lineNumber = 1;
+				break;
+			}
+		}
+		return lineNumber;
+	}
+	
+	public int bufferOffsetForLineNumber(int lineNumber) {
+		final Document document = editPane.getDocument();
+		String documentText;
+		try {
+			documentText = document.getText(0, document.getLength());
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+			return 1;
+		}
+		
+		int walker = 0;
+		
+		// It is "-1" because we want the newline that terminates
+		// the *preceding* line
+		for (int i = 0; i < lineNumber - 1; i++) {
+			int nextNewlineIndex = documentText.indexOf("\n", walker);
+			if (-1 == nextNewlineIndex) {
+				break;
+			} else {
+				walker = nextNewlineIndex + 1;
+			}
+		}
+		return walker;
+	}
+	
+	public void setBreakpointToEOLAt(int byteOffset, int lineNumber) {
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final Element paragraphElement = doc.getParagraphElement(byteOffset);
+		if (paragraphElement.getClass() == BranchElement.class) {
+			final SimpleAttributeSet sas = new SimpleAttributeSet(); 
+			StyleConstants.setBackground(sas, Color.cyan);
+			
+			// Look for ending delimiter
+			int length = 1;
+			try {
+				for (int i = byteOffset; ; i++) {
+					if (i >= doc.getLength()) {
+						length = i - byteOffset + 1;
+						break;
+					} else if (doc.getText(i, 1).equals("\n")) {
+						length = i - byteOffset;
+						break;
+					}
+				}
+			} catch (BadLocationException ble) {
+				length = 0;
+			}
+			if (0 < length) {
+				doc.setCharacterAttributes(byteOffset, length, sas, false);
+			}
+		}
+	}
+	
+	public void setBreakpointAt(int byteOffset, int lineNumber) {
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final Element paragraphElement = doc.getParagraphElement(byteOffset);
+		if (paragraphElement.getClass() == BranchElement.class) {
+			final SimpleAttributeSet sas = new SimpleAttributeSet(); 
+			StyleConstants.setBackground(sas, Color.cyan);
+			
+			// Look for ending delimiter
+			int length = 1;
+			try {
+				for (int i = byteOffset; ; i++) {
+					if (i >= doc.getLength()) {
+						length = i - byteOffset + 1;
+						break;
+					} else if (doc.getText(i, 1).equals("\n")) {
+						length = i - byteOffset;
+						break;
+					} else if (doc.getText(i, 1).equals(" ")) {
+						length = i - byteOffset;
+						break;
+					} else if (doc.getText(i, 1).equals("")) {
+						length = i - byteOffset;
+						break;
+					} else if (doc.getText(i, 1).equals("(")) {
+						length = i - byteOffset;
+						break;
+					}
+				}
+			} catch (BadLocationException ble) {
+				length = 0;
+			}
+			if (0 < length) {
+				doc.setCharacterAttributes(byteOffset, length, sas, false);
+			}
+		}
+	}
+	
+	public void removeAllBreakpoints() {
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final SimpleAttributeSet sas = new SimpleAttributeSet();
+		StyleConstants.setBackground(sas, new java.awt.Color(233, 228, 242));
+		
+		// https://stackoverflow.com/questions/28927274/get-attributes-of-selected-text-in-jtextpane
+		for(int i = 0; i < doc.getLength(); i++) {
+		    final AttributeSet set = doc.getCharacterElement(i).getAttributes();
+		    final Color backgroundColor = StyleConstants.getBackground(set);
+		    if (backgroundColor.equals(Color.cyan)) {
+		    	// The breakpoint color. Remove breakpoint annotation from this text
+		    	doc.setCharacterAttributes(i, 1, sas, false);
+		    }
+		}
+	}
+	
+	/*
+	public void removeBreakpointAt(int byteOffset) {
+		// Probably deprecated. TODO. Check.
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final Element paragraphElement = doc.getParagraphElement(byteOffset);
+		if (paragraphElement.getClass() == BranchElement.class) {
+			final SimpleAttributeSet sas = new SimpleAttributeSet(); 
+			StyleConstants.setBackground(sas, new java.awt.Color(233, 228, 242));
+			
+			// Look for ending delimiter
+			int length = 1;
+			try {
+				for (int i = byteOffset; ; i++) {
+					if (i >= doc.getLength()) {
+						length = i - byteOffset + 1;
+						break;
+					} else if (doc.getText(i, 1).equals(" ")) {
+						length = i - byteOffset;
+						break;
+					} else if (doc.getText(i, 1).equals("")) {
+						length = i - byteOffset;
+						break;
+					} else if (doc.getText(i, 1).equals("(")) {
+						length = i - byteOffset;
+						break;
+					}
+				}
+			} catch (BadLocationException ble) {
+				length = 0;
+			}
+			if (0 < length) {
+				doc.setCharacterAttributes(byteOffset, length, sas, false);
+			}
+		}
+	}
+	*/
+    
     public InputStream getIn() {
     	return console_.getIn();
     }
@@ -82,6 +261,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	underscores_ = "___________________________________________________________";
     	worker_ = null;
     	parseRun_ = null;
+    	parseNeeded_ = true;
     	compiledWithoutError_ = false;
     	
 		initComponents();
@@ -336,6 +516,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		public void setMouseListener(final MouseListener mouseListener) {
 			mouseListener_ = mouseListener;
 		}
+
 		
 		private MouseListener mouseListener_;
 		private boolean reverseDirection_;
@@ -371,7 +552,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		}
 		@Override public void keyTyped(final KeyEvent keyEvent) { keyEvent.consume(); }
 	}
-	
 	
     private void initComponents() {
     	worker_ = null;
@@ -448,6 +628,32 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         	editPane.getActionMap().put("save", save);
         	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
         	editPane.getActionMap().put("escape", escape);
+        	
+        	// https://stackoverflow.com/questions/3953208/value-change-listener-to-jtextfield
+        	editPane.getDocument().addDocumentListener(new DocumentListener() {
+        		  public void changedUpdate(DocumentEvent e) {
+        			// This is apparently for font and color changes.
+        			// No need to invalidate the current breakpoint annotations
+        			// in the editor text.
+        		    // warn();
+        		  }
+        		  public void removeUpdate(DocumentEvent e) {
+        		    warn();
+        		  }
+        		  public void insertUpdate(DocumentEvent e) {
+        		    warn();
+        		  }
+        		  private void warn() {
+        			  parseNeeded_ = true;
+        			  final RunTimeEnvironment runTimeEnvironment = RunTimeEnvironment.runTimeEnvironment_;
+        			  if (null != runTimeEnvironment) {
+        				  final RTDebuggerWindow debugger = runTimeEnvironment.rTDebuggerWindow();
+        				  if (null != debugger) {
+        					  debugger.updateParsingStatus(0, parseNeeded_);
+        				  }
+        			  }
+        		  }
+        	});
         }
         
         cutButton = new javax.swing.JButton();
@@ -458,6 +664,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         runButton = new javax.swing.JButton();
         interruptButton = new javax.swing.JButton();
         parseButton = new javax.swing.JButton();
+        debugButton = new javax.swing.JButton();
         wwwButton = new javax.swing.JButton();
         urlTextField = new javax.swing.JTextField();
         openFileButton = new javax.swing.JButton();
@@ -556,12 +763,20 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 interruptButtonActionPerformed(evt);
             }
         });
-        interruptButton.setEnabled(false);
+        enableInterruptButton(false);
         
         parseButton.setText("Parse");
         parseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 parseButtonActionPerformed(evt);
+            }
+        });
+        
+        debugButton.setText("Debug");
+        debugButton.setEnabled(false);
+        debugButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                debugButtonActionPerformed(evt);
             }
         });
 
@@ -742,7 +957,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                             .addComponent(selectAllButton)
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(clearButton)
-                            .addComponent(parseButton))))
+                            .addComponent(parseButton)
+                            .addComponent(debugButton))))
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 		.addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
@@ -767,6 +983,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                     .addComponent(selectAllButton)
                     .addComponent(clearButton)
                     .addComponent(parseButton)
+                    .addComponent(debugButton)
                     .addComponent(showWButton)
                     .addComponent(showCButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -951,16 +1168,16 @@ private void saveMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 }//GEN-LAST:event_saveMenuActionPerformed
 
 private void loadTestCaseMenuActionPerformed(final java.awt.event.ActionEvent evt) {
-	runButton.setEnabled(false);
+	enableRunButton(false);
 	parseButton.setEnabled(true);
-	interruptButton.setEnabled(true);
+	enableInterruptButton(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
 }
 private void loadExampleMenuActionPerformed(final java.awt.event.ActionEvent evt) {
-	runButton.setEnabled(false);
+	enableRunButton(false);
 	parseButton.setEnabled(true);
-	interruptButton.setEnabled(true);
+	enableInterruptButton(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
 }
@@ -968,7 +1185,6 @@ private void loadExampleMenuActionPerformed(final java.awt.event.ActionEvent evt
 private void loadMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadMenuActionPerformed
     final JFileChooser fileChooser = new JFileChooser();
     if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-
     	final StringBuilder stringBuilder = new StringBuilder();
         try {
             final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileChooser.getSelectedFile()), "UTF-8"));
@@ -995,6 +1211,10 @@ private void clearLogButtonActionPerformed(final java.awt.event.ActionEvent evt)
     this.errorPanel.setText("");
 }//GEN-LAST:event_clearLogButtonActionPerformed
 
+public ParseRun getParseRun() {
+	return parseRun_;
+}
+
 public void simpleRun() {
 	console_.reinitialize();
 	final RTExpression rTMainExpr = parseRun_.mainExpr();
@@ -1004,20 +1224,20 @@ public void simpleRun() {
 
 private void setRunButtonState(final RunButtonState state) {
 	if (userWindowsAreOpen()) {
-		runButton.setEnabled(true);
+		enableRunButton(true);
     	runButton.setForeground(Color.RED);
 	} else {
 		switch (state) {
 		case Idle:
-			runButton.setEnabled(true);
+			enableRunButton(true);
 	    	runButton.setForeground(Color.BLACK);
 			break;
 		case Running:
-			runButton.setEnabled(true);
+			enableRunButton(true);
 	    	runButton.setForeground(Color.RED);
 			break;
 		case Disabled:
-			runButton.setEnabled(false);
+			enableRunButton(false);
 	    	runButton.setForeground(Color.BLACK);
 			break;
 		}
@@ -1026,17 +1246,17 @@ private void setRunButtonState(final RunButtonState state) {
 
 private void setInterruptButtonState(final RunButtonState state) {
 	if (userWindowsAreOpen()) {
-		interruptButton.setEnabled(true);
+		enableInterruptButton(true);
 	} else {
 		switch (state) {
 		case Idle:
-			interruptButton.setEnabled(false);
+			enableInterruptButton(false);
 			break;
 		case Running:
-			interruptButton.setEnabled(true);
+			enableInterruptButton(true);
 			break;
 		case Disabled:
-			interruptButton.setEnabled(false);
+			enableInterruptButton(false);
 			break;
 		}
 	}
@@ -1058,6 +1278,9 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 		worker_.cancel(true);
 		worker_ = null;
 	}
+	
+	final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+	if (null != debugger) debugger.running();
 	
 	worker_ = new SwingWorker<Integer, Void>() {
 	    @Override public Integer doInBackground() {
@@ -1098,6 +1321,27 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	worker_.execute();
 }//GEN-LAST:event_runButtonActionPerformed
 
+private void enableRunButton(boolean tf) {
+	runButton.setEnabled(tf);
+	debugButton.setEnabled(tf);	 // follows run button
+	if (null != RunTimeEnvironment.runTimeEnvironment_) {
+		final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+		if (null != debugger) {
+			debugger.enableRunButton(tf);
+		}
+	}
+}
+
+private void enableInterruptButton(boolean tf) {
+	interruptButton.setEnabled(tf);
+	if (null != RunTimeEnvironment.runTimeEnvironment_) {
+		final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+		if (null != debugger) {
+			debugger.enableInterruptButton(tf);
+		}
+	}
+}
+
 public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runButtonActionPerformed
 	killAppWindows();
 	parseButton.setEnabled(true);
@@ -1121,13 +1365,44 @@ public void interruptButtonActionPerformed(final java.awt.event.ActionEvent evt)
 
 public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_parseButtonActionPerformed
 	final String program = editPane.getText();
-    parseRun_  = new GuiParseRun(program, this);
+    parseRun_ = new GuiParseRun(program, this);
     assert parseRun_ != null;
 	virtualMachine_ = parseRun_.virtualMachine();
 	final int numberOfErrors = ErrorLogger.numberOfFatalErrors();
 	compiledWithoutError_ = numberOfErrors == 0;
+	if (compiledWithoutError_) {
+		parseNeeded_ = false;
+	}
+	final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+	if (null != debugger) {
+		debugger.updateParsingStatus(numberOfErrors, parseNeeded_);
+	}
+	
 	updateButtons();
 }//GEN-LAST:event_parseButtonActionPerformed
+
+public void unregisterDebugger() {
+	RunTimeEnvironment.runTimeEnvironment_.setDebugger(null);
+}
+
+public void debugButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_debugButtonActionPerformed
+	this_ = this;	// just to make it accessible to the inline class
+	javax.swing.SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+        	if (null != RunTimeEnvironment.runTimeEnvironment_) {
+        		final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+        		if (null != debugger) {
+        			debugger.close();
+        			unregisterDebugger();
+        		}
+        		RunTimeEnvironment.runTimeEnvironment_.setDebugger(new RTDebuggerWindow(this_));
+        	}
+        }
+     });
+	
+	updateButtons();
+}//GEN-LAST:event_debugButtonActionPerformed
 
 private void clearMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearMenuActionPerformed
     this.editPane.setText("");
@@ -1192,9 +1467,9 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
 private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerformed
 	this.errorPanel.setText("");
 	final TestRunner testRunner = new TestRunner(this);
-	interruptButton.setEnabled(true);
+	enableInterruptButton(true);
 	testRunner.runTests();	
-	interruptButton.setEnabled(false);
+	enableInterruptButton(false);
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
 private void showWButtonActionPerformed() {//GEN-FIRST:event_showWButtonActionPerformed
@@ -1267,7 +1542,8 @@ private void loadFile(final String pathName) {
     try {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
         while (reader.ready()) {
-            stringBuilder.append(reader.readLine() + System.getProperty("line.separator"));
+        	final String aLine = new String(reader.readLine() + System.getProperty("line.separator"));
+            stringBuilder.append(aLine);
         }
         reader.close();
         this.editPane.setText(stringBuilder.toString());
@@ -1378,6 +1654,7 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     private javax.swing.JButton runButton;
     private javax.swing.JButton interruptButton;
     private javax.swing.JButton parseButton;
+    private javax.swing.JButton debugButton;
     private javax.swing.JMenuItem clearMenu;
     private javax.swing.JMenuItem jMenu3Files[];
     private javax.swing.JMenuItem jMenu4Files[];
@@ -1418,6 +1695,9 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     private SwingWorker<Integer, Void> worker_;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
+    private boolean parseNeeded_;
+    
+    private TextEditorGUI this_;
     
     @SuppressWarnings("unused")
     private String lastFileLoaded_;

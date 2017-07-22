@@ -56,6 +56,8 @@ public class LNTextPane extends JFrame {
 	
 	public static class MyJEditorPane extends JEditorPane {
 		// For potential later hooks (esp. those that need protected methods)
+		// This is a JEditorPane. No need to change it to JTextPane to get DefaultStyledDocument as
+		// the document type — we have that
 		public MyJEditorPane() { }
 		private static final long serialVersionUID = -923489314;
 	}

@@ -23,6 +23,8 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,6 +167,14 @@ public abstract class RTClassAndContextCommon implements RTType {
 			newVector.put(methodDecl.formalParameters(), methodDecl);
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}
+	}
+	public final Collection<RTMethod> allRTMethods() {
+		Collection<Map<FormalParameterList, RTMethod>> allSignatures = stringToMethodDeclMap_.values();
+		Collection<RTMethod> retval = new ArrayList<RTMethod>();
+		for (Map<FormalParameterList, RTMethod> signatureSlice: allSignatures) {
+			retval.addAll(signatureSlice.values());
+		}
+		return retval;
 	}
 	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
 		return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);

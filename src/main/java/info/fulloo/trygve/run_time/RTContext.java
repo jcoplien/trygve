@@ -23,6 +23,8 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -391,6 +393,13 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		private       Map<String, Map<Integer,RTObject>> roleArrayPlayers_;
 		private       Map<String, Map<Integer,RTObject>> stagePropArrayPlayers_;
 		private final RTContextObject rTContext_;
+	}
+	
+	public final Collection<RTClassAndContextCommon> allRTRoles() {
+		Collection<RTClassAndContextCommon> retval = new ArrayList<RTClassAndContextCommon>();
+		retval.addAll(nameToStagePropObjectMap_.values());
+		retval.addAll(nameToRoleObjectMap_.values());
+		return retval;
 	}
 	
 	private Map<String, RTContext> stringToContextDeclMap_;

@@ -50,7 +50,13 @@ class NumberedParagraphView extends ParagraphView {
     }
 
     public void paintChild(Graphics g, Rectangle r, int n) {
+    	boolean line0 = false;		// kludge
+    	if (r.x == 3) {				// kludge
+    		line0 = true;			// kludge
+    		r.x = 33;				// kludge
+    	}							// kludge
         super.paintChild(g, r, n);
+        if (line0) r.x = 3;			// kludge
         int previousLineCount = getPreviousLineCount();
         String formattedNumber;
         final int numberX = r.x - getLeftInset();

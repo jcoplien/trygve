@@ -297,6 +297,10 @@ public abstract class RTExpression extends RTCode {
 			}
 			return super.nextCode();
 		}
+		public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			return retval;
+		}
 	}
 	public static class RTTopOfStackExpression extends RTExpression {
 		public RTTopOfStackExpression(final TopOfStackExpression unused) {
@@ -414,6 +418,12 @@ public abstract class RTExpression extends RTCode {
 		public String getText() {
 			return stringRep_;
 		}
+		public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(part2_);
+			retval.add(nextCode_);
+			return retval;
+		}
 
 		private final RTExpression qualifier_;
 		private final RTQualifiedIdentifierPart2 part2_;
@@ -452,6 +462,12 @@ public abstract class RTExpression extends RTCode {
 		}
 		public String name() {
 			return idName_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(qualifier_);
+			retval.add(nextCode_);
+			return retval;
 		}
 
 		private final String idName_;
@@ -525,6 +541,15 @@ public abstract class RTExpression extends RTCode {
 		public String name() {
 			return idName_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
+		
 
 		private String idName_;
 		private ClassType theClassItself_;
@@ -877,8 +902,14 @@ public abstract class RTExpression extends RTCode {
 			return actualParameters_;
 		}
 		
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
 		}
 		
 		// Should be a private class, but it's public for access
@@ -1036,6 +1067,16 @@ public abstract class RTExpression extends RTCode {
 			part2_.setNextCode(next);
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
+		
 		private final String name_;
 		private final int lineNumber_;
 		private final RTExpressionList objectToClone_;
@@ -1061,6 +1102,16 @@ public abstract class RTExpression extends RTCode {
 		
 		public String name() {
 			return name_;
+		}
+		
+		@Override public int lineNumber() {
+			return lineNumber();
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
 		}
 		
 		final private String name_;
@@ -1251,8 +1302,13 @@ public abstract class RTExpression extends RTCode {
 		public StaticScope declaringScope() {
 			return declaringScope_;
 		}
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
 		}
 
 		protected final String idName_;
@@ -1265,6 +1321,7 @@ public abstract class RTExpression extends RTCode {
 		RTArrayIdentifier(final String name, final IdentifierExpression expression, final Type baseType) {
 			super(name, expression);
 			baseType_ = baseType;
+			lineNumber_ = expression.lineNumber();
 			
 			setResultIsConsumed(expression.resultIsConsumed());
 		}
@@ -1278,7 +1335,18 @@ public abstract class RTExpression extends RTCode {
 			return super.run();
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
+		
 		private final Type baseType_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTRoleIdentifier extends RTIdentifier {
@@ -1346,6 +1414,7 @@ public abstract class RTExpression extends RTCode {
 				rhs_ = rhs;
 			}
 			part2_ = new RTRelopPart2(expr);
+			lineNumber_ = expr.lineNumber();
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			// part2_ takes care of itself...
@@ -1412,12 +1481,33 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression lhs_, rhs_;
 		private final RTRelopPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	
@@ -1435,6 +1525,7 @@ public abstract class RTExpression extends RTCode {
 				rhs_ = rhs;
 			}
 			part2_ = new RTIdentityBooleanExpressionPart2(expr);
+			lineNumber_ = expr.lineNumber();
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			// part2_ takes care of itself...
@@ -1496,12 +1587,31 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber();
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final int lineNumber_;
+		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(part2_);
+			retval.add(nextCode_);
+			return retval;
 		}
 		
 		private final RTExpression lhs_, rhs_;
 		private final RTIdentityBooleanExpressionPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTBoolean extends RTExpression {
@@ -1544,6 +1654,15 @@ public abstract class RTExpression extends RTCode {
 			
 			return nextCode_;
 		}
+		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
 
 		private final RTExpression lhs_, rhs_;
 		private final String operator_;
@@ -1557,6 +1676,8 @@ public abstract class RTExpression extends RTCode {
 			part2_ = new RTBinopPart2(expr);
 			lhs_.setNextCode(rhs_);
 			rhs_.setNextCode(part2_);
+			
+			lineNumber_ = expr.lineNumber();
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
@@ -1604,12 +1725,31 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final int lineNumber_;
+		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(part2_);
+			retval.add(nextCode_);
+			return retval;
 		}
 		
 		private final RTBinopPart2 part2_;
 		private final RTExpression lhs_, rhs_;
+		private final int lineNumber_;
 	}
 	public static class RTUnaryopWithSideEffect extends RTExpression {
 		public RTUnaryopWithSideEffect(final UnaryopExpressionWithSideEffect expr, final RTType nearestEnclosingType) {
@@ -1619,6 +1759,7 @@ public abstract class RTExpression extends RTCode {
 			lhs_.setNextCode(part2_);
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			return RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
@@ -1697,13 +1838,33 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final UnaryopExpressionWithSideEffect.PreOrPost preOrPost_;
 			private final int lineNumber_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(part2_);
+			return retval;
+		}
 		
 		private final RTExpression lhs_;
 		private final RTUnaryopWithSideEffectPart2 part2_;
+		private final int lineNumber_;
 	}
 	public static class RTUnaryAbelianop extends RTExpression {
 		public RTUnaryAbelianop(final UnaryAbelianopExpression expr, final RTType nearestEnclosingType) {
@@ -1715,6 +1876,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
@@ -1754,12 +1916,33 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression rhs_;
 		private final RTUnaryAbelianopPart2 part2_;
+		private final int lineNumber_;
 	}
 	public static class RTDoubleCaster extends RTExpression {
 		public RTDoubleCaster(final DoubleCasterExpression expr, final RTType nearestEnclosingType) {
@@ -1838,8 +2021,16 @@ public abstract class RTExpression extends RTCode {
 			part2_.setNextCode(pc);
 		}
 	
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(rhs_);
+			retval.add(part2_);
+			return retval;
 		}
 		
 		public static class RTAssignmentPart2 extends RTExpression {
@@ -2125,8 +2316,15 @@ public abstract class RTExpression extends RTCode {
 					rhs_ = rhs;
 				}
 				
-				public int lineNumber() {
+				@Override public int lineNumber() {
 					return lineNumber_;
+				}
+				
+				@Override public List<RTCode> connectedExpressions() {
+					List<RTCode> retval = new ArrayList<RTCode>();
+					retval.add(nextCode_);
+					retval.add(lhs_);
+					return retval;
 				}
 				
 				private final RTExpression lhs_;
@@ -2137,8 +2335,15 @@ public abstract class RTExpression extends RTCode {
 			public String getText() {
 				return gettableText_;
 			}
-			public int lineNumber() {
+			@Override public int lineNumber() {
 				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(staticNextCode_);
+				retval.add(lhs_);
+				retval.add(part2b_);
+				return retval;
 			}
 			
 			private RTExpression lhs_;
@@ -2477,8 +2682,15 @@ public abstract class RTExpression extends RTCode {
 			return "new " + classType_.name();
 		}
 		
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(rTConstructor_);
+			return retval;
 		}
 		
 		private Type classType_;
@@ -2526,6 +2738,16 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(nextCode);
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(sizeExpression_);
+			return retval;
+		}
+		
 		private final RTExpression sizeExpression_;
 		private final RTArrayType rTType_;
 		private final int lineNumber_;
@@ -2535,6 +2757,7 @@ public abstract class RTExpression extends RTCode {
 			super();
 			baseType_ = expr.baseType();
 			arrayName_ = expr.name();
+			lineNumber_ = expr.lineNumber();
 			
 			// I mean, it's just an expression...
 			arrayBase_ = RTExpression.makeExpressionFrom(expr.originalExpression(), nearestEnclosingType);
@@ -2562,9 +2785,21 @@ public abstract class RTExpression extends RTCode {
 			return nextCode_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(arrayBase_);
+			return retval;
+		}
+		
 		private final Type baseType_;
 		private final String arrayName_;
 		private final RTExpression arrayBase_;
+		private final int lineNumber_;
 	}
 	public static class RTArrayIndexExpression extends RTExpression {
 		public RTArrayIndexExpression(final ArrayIndexExpression expr, final RTType nearestEnclosingType) {
@@ -2658,6 +2893,18 @@ public abstract class RTExpression extends RTCode {
 			return ((RTArrayExpression)rTArrayExpression_).baseType();
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(rTIndexExpression_);
+			retval.add(rTArrayExpression_);
+			return retval;
+		}
+		
 		private final RTExpression rTIndexExpression_;
 		private final RTExpression rTArrayExpression_;
 		private final int lineNumber_;
@@ -2674,6 +2921,8 @@ public abstract class RTExpression extends RTCode {
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			
+			lineNumber_ = expr.lineNumber();
 		}
 		
 		@Override public RTCode run() {
@@ -2706,14 +2955,34 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;	// probably null
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operation_;
 			private final PreOrPost preOrPost_;
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression rTIndexExpression_;
 		private final RTExpression rTArrayExpression_;
 		private final RTArrayIndexExpressionUnaryOpPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTRoleArrayIndexExpression extends RTExpression {
@@ -2802,6 +3071,7 @@ public abstract class RTExpression extends RTCode {
 				super();
 				thenPart_ = RTExpression.makeExpressionFrom(expr.thenPart(), nearestEnclosingType);
 				elsePart_ = RTExpression.makeExpressionFrom(expr.elsePart(), nearestEnclosingType);
+				lineNumber_ = expr.lineNumber();
 			}
 			@Override public RTCode run() {
 				// The condition is on the stack
@@ -2823,10 +3093,29 @@ public abstract class RTExpression extends RTCode {
 				thenPart_.setNextCode(code);
 				elsePart_.setNextCode(code);
 			}
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				retval.add(thenPart_);
+				retval.add(elsePart_);
+				return retval;
+			}
 			private final RTExpression thenPart_, elsePart_;
+			private final int lineNumber_;
 		}
-		public int lineNumber() {
+		
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(part2_);
+			retval.add(conditionalExpression_);
+			return retval;
 		}
 		
 		private final RTIfPart2 part2_;
@@ -2840,6 +3129,7 @@ public abstract class RTExpression extends RTCode {
 			
 			objectDeclarations_ = new LinkedHashMap<String, RTType>();
 			evaluationResult_ = null;
+			lineNumber_ = expr.lineNumber();
 			
 			// Copy from the compiler data, the local variable names
 			// declared in the FOR scope
@@ -2922,6 +3212,9 @@ public abstract class RTExpression extends RTCode {
 			super.setNextCode(code);
 			last_.setNextCode(code);
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
 		
 		protected RTExpression test_, body_, last_;
 		protected RTDynamicScope dynamicScope_;
@@ -2930,12 +3223,15 @@ public abstract class RTExpression extends RTCode {
 		protected final List<RTExpression> initializations_;
 		protected final Map<String, RTType> objectDeclarations_;
 		protected       RTExpression evaluationResult_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTTraditionalFor extends RTForCommon implements RTBreakableExpression {
 		public RTTraditionalFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
+			
+			lineNumber_ = expr.lineNumber();
 			
 			// See if the "for" loop itself has an "initialization" expression.
 			// If it was part of a declaration / initialization then it
@@ -2986,8 +3282,22 @@ public abstract class RTExpression extends RTCode {
 			parsingData.addBreakableRTExpression(label_, this);
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(body_);
+			retval.add(last_);
+			retval.add(increment_);
+			return retval;
+		}
+		
 		private final RTExpression increment_;
 		private final RTPopDynamicScope popScope_;
+		final private int lineNumber_;
 	}
 	
 	private static class RTTraditionalForTestRunner extends RTExpression {
@@ -3034,9 +3344,24 @@ public abstract class RTExpression extends RTCode {
 				
 				return retval;
 			}
+			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				retval.add(body_);
+				return retval;
+			}
+			
 			private final RTExpression body_;
 			private final RTPopDynamicScope popScope_;
 			private final int lineNumber_;
+		}
+		
+		@Override public int lineNumber() {
+			return lineNumber_;
 		}
 		
 		private final RTExpression test_;
@@ -3049,6 +3374,7 @@ public abstract class RTExpression extends RTCode {
 			super();
 			popScope_ = popScope;
 			part2_ = new RTIterationForTestRunnerPart2(body, iterationVariable);
+			lineNumber_ = body.lineNumber();
 		}
 		
 		@Override public RTCode run() {
@@ -3073,6 +3399,7 @@ public abstract class RTExpression extends RTCode {
 				super();
 				body_ = body;
 				iterationVariable_ = iterationVariable;
+				lineNumber_ = body.lineNumber();
 			}
 			@Override public RTCode run() {
 				// Do the assign
@@ -3101,17 +3428,36 @@ public abstract class RTExpression extends RTCode {
 				}
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				retval.add(body_);
+				return retval;
+			}
+			
 			final RTExpression body_;
 			final ObjectDeclaration iterationVariable_;
+			final private int lineNumber_;
 		}
+		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
 		
 		final RTPopDynamicScope popScope_;
 		final RTIterationForTestRunnerPart2 part2_;
+		final private int lineNumber_;
 	}
 	public static class RTIterationFor extends RTForCommon implements RTBreakableExpression {
 		public RTIterationFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
+			
+			lineNumber_ = expr.lineNumber();
 			
 			final RTExpressionList body = new RTExpressionList( expr.body(), nearestEnclosingType );
 			body_ = body;
@@ -3169,7 +3515,21 @@ public abstract class RTExpression extends RTCode {
 			return pc;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(body_);
+			retval.add(last_);
+			retval.add(rTThingToIterateOverExpr_);
+			return retval;
+		}
+		
 		private RTExpression rTThingToIterateOverExpr_;
+		private final int lineNumber_;
 	}
 	
 	private static class RTWhileTestRunner extends RTExpression {
@@ -3217,6 +3577,17 @@ public abstract class RTExpression extends RTCode {
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression test_;
 		private final int lineNumber_;;
 		private final RTWhileTestRunnerPart2 part2_;
@@ -3226,6 +3597,8 @@ public abstract class RTExpression extends RTCode {
 			super();
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 
+			lineNumber_ = expr.lineNumber();
+			
 			body_ = new RTExpressionList(expr.body(), nearestEnclosingType);
 			
 			final RTExpression goBackToTest = new RTNullExpression();
@@ -3270,9 +3643,21 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode continueHook() {
 			return test_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(body_);
+			retval.add(last_);
+			return retval;
+		}
 		
 		private RTExpression test_, body_, last_;
 		private final String label_;
+		private final int lineNumber_;
 	}
 	
 	private static class RTDoWhileTestRunner extends RTExpression {
@@ -3281,6 +3666,7 @@ public abstract class RTExpression extends RTCode {
 			test_ = RTExpression.makeExpressionFrom(testExpr, nearestEnclosingType);
 			part2_ = new RTDoWhileTestRunnerPart2(testExpr, body, last);
 			test_.setNextCode(part2_);
+			lineNumber_ = testExpr.lineNumber();
 		}
 		
 		@Override public RTCode run() {
@@ -3316,18 +3702,36 @@ public abstract class RTExpression extends RTCode {
 				return retval;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			
 			private final RTExpression body_, last_;
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression test_;
 		private final RTDoWhileTestRunnerPart2 part2_;
+		private final int lineNumber_;
 	}
 	public static class RTDoWhile extends RTExpression implements RTBreakableExpression {
 		public RTDoWhile(final DoWhileExpression expr, final RTType nearestEnclosingType) {
 			super();
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
 
+			lineNumber_ = expr.lineNumber();
+			
 			body_ = new RTExpressionList(expr.body(), nearestEnclosingType);
 			
 			loopTerminate_ = new RTPopDownToFramePointer();
@@ -3377,9 +3781,24 @@ public abstract class RTExpression extends RTCode {
 		@Override public RTCode continueHook() {
 			return test_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(test_);
+			retval.add(body_);
+			retval.add(last_);
+			retval.add(loopEntry_);
+			retval.add(loopTerminate_);
+			retval.add(popBlockResults_);
+			return retval;
+		}
 		
 		private RTExpression loopEntry_, loopTerminate_, popBlockResults_, test_, body_, last_;
 		private final String label_;
+		private final int lineNumber_;
 	}
 	
 	private static class RTPushFramePointer extends RTExpression {
@@ -3613,6 +4032,7 @@ public abstract class RTExpression extends RTCode {
 			public RTSwitchPart2(final SwitchExpression expr, final RTSwitch original) {
 				super();
 				original_ = original;
+				lineNumber_ = expr.lineNumber();
 			}
 
 			@Override public RTCode run() {
@@ -3659,8 +4079,29 @@ public abstract class RTExpression extends RTCode {
 				assert false;
 				return null;
 			}
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				retval.add(original_);
+				return retval;
+			}
 			
 			final private RTSwitch original_;
+			final private int lineNumber_;
+		}
+		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(last_);
+			retval.add(switchExpression_);
+			return retval;
 		}
 		
 		private RTExpression switchExpression_;
@@ -3751,8 +4192,13 @@ public abstract class RTExpression extends RTCode {
 		@Override public String toString() {
 			return this.getText();
 		}
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
 		}
 		
 		protected RTObject rTExpr_;
@@ -3768,6 +4214,7 @@ public abstract class RTExpression extends RTCode {
 			firstIter_ = true;
 			nestingLevelInsideBreakable_ = expr.nestingLevelInsideBreakable();
 			setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			if (firstIter_) {
@@ -3790,12 +4237,24 @@ public abstract class RTExpression extends RTCode {
 			
 			return breakExit_;
 		}
+		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(breakExit_);
+			return retval;
+		}
+		
 		private boolean firstIter_;
 		private RTBreakableExpression associatedBreakable_;
 		private final String label_;
 		private final ParsingData parsingData_;
 		private RTCode breakExit_;
 		private final long nestingLevelInsideBreakable_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTContinue extends RTExpression {
@@ -3807,6 +4266,7 @@ public abstract class RTExpression extends RTCode {
 			nestingLevelInsideBreakable_ = expr.nestingLevelInsideBreakable();
 			firstIter_ = true;
 			setResultIsConsumed(expr.resultIsConsumed());
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			if (firstIter_) {
@@ -3831,12 +4291,23 @@ public abstract class RTExpression extends RTCode {
 			
 			return continueHook_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(continueHook_);
+			return retval;
+		}
+		
 		private boolean firstIter_;
 		private RTBreakableExpression associatedBreakable_;
 		private final String label_;
 		private final ParsingData parsingData_;
 		private RTCode continueHook_;
 		private final long nestingLevelInsideBreakable_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTSum extends RTExpression {
@@ -3850,6 +4321,8 @@ public abstract class RTExpression extends RTCode {
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 			part2_.setResultIsConsumed(expr.resultIsConsumed());
+			
+			lineNumber_ = expr.lhs().lineNumber();
 		}
 		@Override public RTCode run() {
 			return lhs_;
@@ -3892,18 +4365,43 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 			
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
+			
+			@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
+			
 			private final String operator_;
 			private final int lineNumber_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(lhs_);
+			retval.add(rhs_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private RTExpression lhs_, rhs_;
 		private final RTSumPart2 part2_;
+		private final int lineNumber_;
 	}
 	public static class RTProduct extends RTExpression {
 		public RTProduct(final ProductExpression expr, final RTType nearestEnclosingType) {
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
 			part2_ = new RTProductPart2(expr);
+			lineNumber_ = lhs_.lineNumber();
 			
 			if (null != rhs_ && null != lhs_) {
 				lhs_.setNextCode(rhs_);
@@ -3958,13 +4456,32 @@ public abstract class RTExpression extends RTCode {
 				
 				return nextCode_;
 			}
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}@Override public List<RTCode> connectedExpressions() {
+				List<RTCode> retval = new ArrayList<RTCode>();
+				retval.add(nextCode_);
+				return retval;
+			}
 			
 			private final String operator_;
 			private final int lineNumber_;
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(lhs_);
+			retval.add(rhs_);
+			retval.add(part2_);
+			return retval;
+		}
 		
 		private RTExpression lhs_, rhs_;
 		private final RTProductPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTPower extends RTExpression {
@@ -3972,6 +4489,8 @@ public abstract class RTExpression extends RTCode {
 			lhs_ = RTExpression.makeExpressionFrom(expr.lhs(), nearestEnclosingType);
 			rhs_ = RTExpression.makeExpressionFrom(expr.rhs(), nearestEnclosingType);
 			part2_ = new RTPowerPart2(expr);
+			
+			lineNumber_ = lhs_.lineNumber();
 			
 			lhs_.setNextCode(rhs_);
 			rhs_.setNextCode(part2_);
@@ -4006,12 +4525,27 @@ public abstract class RTExpression extends RTCode {
 				
 				return nextCode_;
 			}
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
 			
 			private final int lineNumber_;
+		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(lhs_);
+			retval.add(rhs_);
+			retval.add(part2_);
+			return retval;
 		}
 		
 		private RTExpression lhs_, rhs_;
 		private final RTPowerPart2 part2_;
+		private final int lineNumber_;
 	}
 	
 	public static class RTPopDynamicScope extends RTExpression {
@@ -4154,8 +4688,13 @@ public abstract class RTExpression extends RTCode {
 		public String methodName() {
 			return methodName_;
 		}
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
 		}
 		@Override public boolean resultIsConsumed() {
 			// All dogs go to heaven
@@ -4182,6 +4721,7 @@ public abstract class RTExpression extends RTCode {
 			super();
 			rTBlockBody_ = bodyPartsToRTExpressionList(expr.bodyParts(), nearestEnclosingType);
 			ctorCommon(expr);
+			lineNumber_ = expr.lineNumber();
 		}
 		public RTBlock(final BlockExpression expr) {
 			super();
@@ -4246,6 +4786,17 @@ public abstract class RTExpression extends RTCode {
 			rTBlockBody_.setNextCode(code);
 			super.setNextCode(code);
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			for (RTExpression expr: rTBlockBody_.expressionList()) {
+				retval.add(expr);
+			}
+			return retval;
+		}
 		
 		private RTExpressionList rTBlockBody_;
 		private Map<String, RTType> objectDeclarations_;
@@ -4279,6 +4830,18 @@ public abstract class RTExpression extends RTCode {
 			expr_.setResultIsConsumed(tf);
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			retval.add(expr_);
+			retval.add(part2_);
+			return retval;
+		}
+		
 		private final RTExpression expr_;
 		private final RTPromoteToDoubleExprPart2 part2_;
 		private final int lineNumber_;
@@ -4305,12 +4868,23 @@ public abstract class RTExpression extends RTCode {
 			return nextCode_;
 		}
 		
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
+		
 		private final int lineNumber_;
 	}
 	public static class RTIndexExpression extends RTExpression {
 		public RTIndexExpression(final IndexExpression indexExpression) {
 			super();
 			roleName_ = indexExpression.roleName();
+			lineNumber_ = indexExpression.lineNumber();
 		}
 		@Override public RTCode run() {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
@@ -4328,13 +4902,23 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
 		
 		final private String roleName_;
+		final private int lineNumber_;
 	}
 	public static class RTLastIndexExpression extends RTExpression {
 		public RTLastIndexExpression(final LastIndexExpression expr) {
 			super();
 			roleName_ = expr.roleName();
+			lineNumber_ = expr.lineNumber();
 		}
 		@Override public RTCode run() {
 			final RTDynamicScope currentScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
@@ -4352,8 +4936,17 @@ public abstract class RTExpression extends RTCode {
 				return nextCode_;
 			}
 		}
+		@Override public int lineNumber() {
+			return lineNumber_;
+		}
+		@Override public List<RTCode> connectedExpressions() {
+			List<RTCode> retval = new ArrayList<RTCode>();
+			retval.add(nextCode_);
+			return retval;
+		}
 		
 		final private String roleName_;
+		final private int lineNumber_;
 	}
 	
 	public static class RTPushEvaluationResult extends RTExpression {
@@ -4408,6 +5001,15 @@ public abstract class RTExpression extends RTCode {
 			lastExpressionResult_ = null;
 		}
 	}
+	
+	public int lineNumber() {
+		return 0;
+	}
+	
+	public List<RTCode> connectedExpressions() {
+		return new ArrayList<RTCode>();
+	}
+	
 	
 	protected final static Stack<RTSwitch> switchStack_ = new Stack<RTSwitch>();
 	private boolean resultIsConsumed_;
