@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import info.fulloo.trygve.code_generation.CodeGenerator;
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
@@ -45,9 +46,9 @@ import info.fulloo.trygve.run_time.RTClass;
 import info.fulloo.trygve.run_time.RTClassAndContextCommon;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
+import info.fulloo.trygve.run_time.RTDebuggerWindow;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RTMethod;
-import info.fulloo.trygve.run_time.RTRole;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.Program;
 
@@ -156,11 +157,16 @@ public class ParseRun {
 	
 	protected void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
 		final Program program = Program.program();
-		
+		RTDebuggerWindow saveDebugger = null;
+		if (null != RunTimeEnvironment.runTimeEnvironment_) {
+			saveDebugger = RunTimeEnvironment.runTimeEnvironment_.getDebugger();
+		}
+
 		// WARNING: gui may be null in batch mode
 		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, gui);
 		codeGenerator.compile();
 		virtualMachine_ = codeGenerator.virtualMachine();
+		RunTimeEnvironment.runTimeEnvironment_.setDebugger(saveDebugger);
 		mainExpr_ = codeGenerator.mainExpr();
 		
 		// Get rid of old, and make a new one
@@ -237,14 +243,82 @@ public class ParseRun {
 		}
 	}
 	
+	/* Original:
+	 * 
 	private void buildExpressionMapFor(final RTCode expr) {
-		if (null != expr && false == allExpressions_.containsValue(expr)) {
+		if (null != expr && (false == allExpressions_.containsValue(expr))) {
 			final int lineNumber = expr.lineNumber();
 			if (0 != lineNumber) {	// discard library declarations
 				allExpressions_.put(lineNumber, expr);
 				final List<RTCode> connectedExpressions = expr.connectedExpressions();
-				for (RTCode anExpression: connectedExpressions) {
+				for (final RTCode anExpression: connectedExpressions) {
 					buildExpressionMapFor(anExpression);
+				}
+			}
+		}
+	}
+	 *
+	 * These data structures can become very large, and the recursion
+	 * can run deep enough to create a stack size error in the JVM. So
+	 * we get out our old CS books and create an interative, rather than
+	 * explicitly recursive, version of the algorithm.
+	 * 
+	 * Iterative version:
+	 */
+	/*
+	// http://www.dreamincode.net/forums/topic/82376-non-recursive-tree-traversal/
+	private void buildExpressionMapFor(final RTCode expr) {
+		final Stack<RTCode> exprStack_ = new Stack<RTCode>();
+		exprStack_.push(expr);
+		RTCode anExpr = null;
+		while(exprStack_.size() > 0){
+			anExpr = exprStack_.pop();
+			if (null != anExpr) {
+				if (false == allExpressions_.containsValue(anExpr)) {
+					final int lineNumber = anExpr.lineNumber();
+					allExpressions_.put(lineNumber, anExpr);
+					final List<RTCode> connectedExpressions = anExpr.connectedExpressions();
+					for (final RTCode e: connectedExpressions) {
+						if (false == allExpressions_.containsValue(e) && false == exprStack_.contains(e)) {
+							exprStack_.push(e);
+						}
+					}
+				}
+			}
+		}
+	}
+	*/
+	
+	// This is an optimized version based on the fact that most RTCode
+	// nodes will have zero or one subnodes. Without branching there
+	// is not need to stack the node.
+	private void buildExpressionMapFor(final RTCode expr) {
+		final Stack<RTCode> exprStack_ = new Stack<RTCode>();
+		exprStack_.push(expr);
+		RTCode anExpr = null;
+		while(exprStack_.size() > 0){
+			anExpr = exprStack_.pop();
+			if (null != anExpr) {
+				if (false == allExpressions_.containsValue(anExpr)) {
+					allExpressions_.put(anExpr.lineNumber(), anExpr);
+					List<RTCode> connectedExpressions = anExpr.connectedExpressions();
+					
+					// Don't stack singletons - just do them now
+					while (1 == connectedExpressions.size()) {
+						anExpr = connectedExpressions.get(0);
+						assert (null != anExpr);
+						if (false == allExpressions_.containsValue(anExpr)) {
+							allExpressions_.put(anExpr.lineNumber(), anExpr);
+						}
+						connectedExpressions = anExpr.connectedExpressions();
+					}
+					
+					// Done with singletons, stack the children
+					for (final RTCode e: connectedExpressions) {
+						if (false == allExpressions_.containsValue(anExpr)) {
+							exprStack_.push(e);
+						}
+					}
 				}
 			}
 		}

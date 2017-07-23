@@ -37,6 +37,7 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,7 +68,9 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.Element;
 
@@ -160,7 +163,59 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 			}
 		}
 	}
+	public void unsetBreakpointToEOLAt(int byteOffset, int lineNumber) {
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final Element paragraphElement = doc.getParagraphElement(byteOffset);
+		if (paragraphElement.getClass() == BranchElement.class) {
+			final SimpleAttributeSet sas = new SimpleAttributeSet(); 
+			StyleConstants.setBackground(sas, Color.cyan);
+			
+			// Look for ending delimiter
+			int length = 1;
+			try {
+				for (int i = byteOffset; ; i++) {
+					if (i >= doc.getLength()) {
+						length = i - byteOffset + 1;
+						break;
+					} else if (doc.getText(i, 1).equals("\n")) {
+						length = i - byteOffset;
+						break;
+					}
+				}
+			} catch (BadLocationException ble) {
+				length = 0;
+			}
+			
+			// Also look for beginning...
+			try {
+				for (--byteOffset; ; --byteOffset) {
+					if (0 >= byteOffset) {
+						length++;
+						byteOffset = 0;
+						break;
+					} else if (doc.getText(byteOffset, 1).equals("\n")) {
+						byteOffset++;
+						break;
+					} else {
+						length++;
+					}
+				}
+			} catch (BadLocationException ble) {
+				length = 0;
+			}
+			if (0 < length) {
+				Style defaultStyle = StyleContext.
+						   getDefaultStyleContext().
+						   getStyle(StyleContext.DEFAULT_STYLE);
+				doc.setCharacterAttributes(byteOffset, length, defaultStyle, true);
+			}
+		}
+	}
 	
+	/*
+	 * Probably no longer used. Keep around in case we go to
+	 * graularity finer than a line for breakpoints.
+	 *
 	public void setBreakpointAt(int byteOffset, int lineNumber) {
 		final StyledDocument doc = (StyledDocument)editPane.getDocument();
 		final Element paragraphElement = doc.getParagraphElement(byteOffset);
@@ -196,6 +251,44 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 				doc.setCharacterAttributes(byteOffset, length, sas, false);
 			}
 		}
+	}
+	*/
+	
+	private enum State { LookingForField, InField; };
+	
+	public ArrayList<Integer> breakpointByteOffsets() {
+		State state = State.LookingForField;
+		ArrayList<Integer> retval = new ArrayList<Integer>();
+		
+		final StyledDocument doc = (StyledDocument)editPane.getDocument();
+		final SimpleAttributeSet breakpointColored = new SimpleAttributeSet(); 
+		StyleConstants.setBackground(breakpointColored, Color.cyan);
+		
+		for(int i = 0; i < doc.getLength(); i++) {
+			final Element element = doc.getCharacterElement(i);
+		    final AttributeSet set = element.getAttributes();
+		    final Color backgroundColor = StyleConstants.getBackground(set);
+		    switch (state) {
+		    case LookingForField:
+		    	if (true == backgroundColor.equals(Color.cyan)) {
+		    		state = State.InField;
+		    		retval.add(new Integer(i));
+		    	}
+		    	break;
+		    case InField:
+		    	if (false == backgroundColor.equals(Color.cyan)) {
+		    		state = State.LookingForField;
+		    	} else if (element.toString().equals("\n")) {
+		    		state = State.LookingForField;
+		    	}
+		    	break;
+		    default:
+		    	assert (false);
+		    	break;
+		    }
+		}
+		
+		return retval;
 	}
 	
 	public void removeAllBreakpoints() {
@@ -276,7 +369,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(Main.TRYGVE_VERSION);
-    	System.out.println(". Copyright (c)2016 James O. Coplien, jcoplien@gmail.com.");
+    	System.out.println(". Copyright (c)2017 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
@@ -1280,7 +1373,10 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 	}
 	
 	final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
-	if (null != debugger) debugger.running();
+	if (null != debugger) {
+		debugger.plantAllBreakpointsAccordingToGUIMarkers(parseRun_);
+		debugger.running();
+	}
 	
 	worker_ = new SwingWorker<Integer, Void>() {
 	    @Override public Integer doInBackground() {

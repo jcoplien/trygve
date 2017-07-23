@@ -208,7 +208,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			final MethodDeclaration methodDecl = method.methodDeclaration();
 			final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
 			final String debugName = null == methodParentScope? "???": methodParentScope.name();
-			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
+			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName, method.lineNumber());
 			retInst.setResultIsConsumed(true);
 			final RTObject event = RTEventObject.ctor1(e);
 

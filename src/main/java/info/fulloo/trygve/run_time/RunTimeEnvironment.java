@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
@@ -67,6 +68,7 @@ public class RunTimeEnvironment {
 	public RunTimeEnvironment(final TextEditorGUI gui) {
 		super();
 		gui_ = gui;
+		pauseFlag_ = false;
 		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
 		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
 		stringToRTInterfaceMap_ = new LinkedHashMap<String, RTInterface>();
@@ -389,11 +391,21 @@ public class RunTimeEnvironment {
 		}
 		return retval;
 	}
+	
+	private int iCounter_ = 0;
+	
 	private void runnerPrefix(final RTCode code) {
 		if (null == code) {
 			assert null != code;		// put the check up here, out of the
 										// code we will be stepping through...
 		}
+		if (null != rTDebugger_) {
+			// Cut it some slack
+			try {
+                if (0 == iCounter_++ % 100) TimeUnit.MILLISECONDS.sleep(5);
+            } catch (InterruptedException ex) {}
+		}
+		currentExecutingExpression_ = code;
 		final PrintStream stream = System.err;
 		if (ConfigurationOptions.fullExecutionTrace()) {
 			if (null == code.getClass()) {
@@ -460,6 +472,9 @@ public class RunTimeEnvironment {
 		runnerPrefix(code);
 		if (code.isBreakpoint()) {
 			rTDebugger_.breakpointFiredAt(code);
+		} else if (pauseFlag_) {
+			pauseFlag_ = false;
+			rTDebugger_.pauseAt(code);
 		}
 		final RTCode retval = isRunning()? code.run(): null;
 		// Thread.yield();		// be a good citizen
@@ -509,8 +524,11 @@ public class RunTimeEnvironment {
 		}
 	}
 	
-	public void setDebugger(RTDebuggerWindow rTDebugger) {
+	public void setDebugger(final RTDebuggerWindow rTDebugger) {
 		rTDebugger_ = rTDebugger;
+	}
+	public RTDebuggerWindow getDebugger() {
+		return rTDebugger_;
 	}
 	public RTDebuggerWindow rTDebuggerWindow() {
 		return rTDebugger_;
@@ -523,12 +541,23 @@ public class RunTimeEnvironment {
 		final Collection<RTContext> retval = stringToRTContextMap_.values();
 		return retval;
 	}
+	public int currentExecutingLineNumber() {
+		int retval = 0;
+		if (null != currentExecutingExpression_) {
+			retval = currentExecutingExpression_.lineNumber();
+		}
+		return retval;
+	}
+	public void pauseButtonActionPerformed() {
+		pauseFlag_ = true;
+	}
 	
 	
 	private final Map<String, RTContext> stringToRTContextMap_;
 	private final Map<String, RTClass> stringToRTClassMap_;
 	private final Map<String, RTInterface> stringToRTInterfaceMap_;
 	private final Map<String, RTType> pathToTypeMap_;
+	private       RTCode currentExecutingExpression_ = null;
 	
 	private       Stack<RTStackable> swingWorkerThreadStack_;
 	private       Stack<RTStackable> awtEventQueueStack_;
@@ -545,4 +574,5 @@ public class RunTimeEnvironment {
 	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
 	private       RTDebuggerWindow rTDebugger_;
+	private       boolean pauseFlag_ = false;
 }

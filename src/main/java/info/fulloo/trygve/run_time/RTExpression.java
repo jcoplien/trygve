@@ -420,8 +420,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(part2_);
-			retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 
@@ -465,8 +465,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(qualifier_);
-			retval.add(nextCode_);
+			if (null != qualifier_) retval.add(qualifier_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 
@@ -546,7 +546,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -610,7 +610,7 @@ public abstract class RTExpression extends RTCode {
 			final Type returnType = messageExpr.returnType();
 			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
 					(returnType.name().equals("void") == false);
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, messageExpr.lineNumber());
 			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
 			super.setNextCode(postReturnProcessing_);	// necessary?
 			setResultIsConsumed(!resultNeedsToBePopped);
@@ -659,7 +659,7 @@ public abstract class RTExpression extends RTCode {
 			
 			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
 			assert null != argPush_;
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, lineNumber_);
 			final boolean resultNeedsToBePopped = null != returnType && (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);
 			postReturnProcessing_.setResultIsConsumed(this.resultIsConsumed());
@@ -908,7 +908,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -916,11 +916,13 @@ public abstract class RTExpression extends RTCode {
 		// to the debugging empire in RunTimeEnvironment
 		
 		public static class RTPostReturnProcessing extends RTExpression {
-			public RTPostReturnProcessing(final RTCode nextCode, final String name, final String debugName) {
+			public RTPostReturnProcessing(final RTCode nextCode, final String name,
+					final String debugName, final int lineNumberOfPointOfCall) {
 				super();
 				super.setNextCode(nextCode);
 				name_ = name;
 				debugName_ = debugName;
+				lineNumber_ = lineNumberOfPointOfCall;
 			}
 			@Override public RTCode run() {
 				if (false == resultIsConsumed()) {
@@ -935,6 +937,9 @@ public abstract class RTExpression extends RTCode {
 				}
 				return super.nextCode();
 			}
+			@Override public int lineNumber() {
+				return lineNumber_;
+			}
 			
 			public String name() {
 				return name_;
@@ -944,6 +949,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			private final String name_, debugName_;		// for debugging only
+			private final int lineNumber_;
 		}
 		
 		@Override public void setResultIsConsumed(final boolean tf) {
@@ -1073,7 +1079,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -1110,7 +1116,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -1307,7 +1313,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 
@@ -1341,7 +1347,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -1486,7 +1492,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -1500,8 +1506,8 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -1592,7 +1598,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -1604,8 +1610,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(part2_);
-			retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -1660,7 +1666,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 
@@ -1730,7 +1736,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -1742,8 +1748,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(part2_);
-			retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -1844,7 +1850,7 @@ public abstract class RTExpression extends RTCode {
 			
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -1857,8 +1863,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -1922,7 +1928,7 @@ public abstract class RTExpression extends RTCode {
 			
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -1935,8 +1941,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -2027,9 +2033,9 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(rhs_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != rhs_) retval.add(rhs_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -2322,8 +2328,8 @@ public abstract class RTExpression extends RTCode {
 				
 				@Override public List<RTCode> connectedExpressions() {
 					List<RTCode> retval = new ArrayList<RTCode>();
-					retval.add(nextCode_);
-					retval.add(lhs_);
+					if (null != nextCode_) retval.add(nextCode_);
+					if (null != lhs_) retval.add(lhs_);
 					return retval;
 				}
 				
@@ -2340,9 +2346,9 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(staticNextCode_);
-				retval.add(lhs_);
-				retval.add(part2b_);
+				if (null != staticNextCode_) retval.add(staticNextCode_);
+				if (null != lhs_) retval.add(lhs_);
+				if (null != part2b_) retval.add(part2b_);
 				return retval;
 			}
 			
@@ -2688,8 +2694,8 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(rTConstructor_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != rTConstructor_) retval.add(rTConstructor_);
 			return retval;
 		}
 		
@@ -2743,8 +2749,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(sizeExpression_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != sizeExpression_) retval.add(sizeExpression_);
 			return retval;
 		}
 		
@@ -2791,8 +2797,8 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(arrayBase_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != arrayBase_) retval.add(arrayBase_);
 			return retval;
 		}
 		
@@ -2899,9 +2905,9 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(rTIndexExpression_);
-			retval.add(rTArrayExpression_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != rTIndexExpression_) retval.add(rTIndexExpression_);
+			if (null != rTArrayExpression_) retval.add(rTArrayExpression_);
 			return retval;
 		}
 		
@@ -2960,7 +2966,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -2974,8 +2980,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -3098,9 +3104,9 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
-				retval.add(thenPart_);
-				retval.add(elsePart_);
+				if (null != nextCode_) retval.add(nextCode_);
+				if (null != thenPart_) retval.add(thenPart_);
+				if (null != elsePart_) retval.add(elsePart_);
 				return retval;
 			}
 			private final RTExpression thenPart_, elsePart_;
@@ -3112,9 +3118,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(part2_);
-			retval.add(conditionalExpression_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != part2_) retval.add(part2_);
+			if (null != conditionalExpression_) retval.add(conditionalExpression_);
 			return retval;
 		}
 		
@@ -3287,11 +3293,11 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(body_);
-			retval.add(last_);
-			retval.add(increment_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != body_) retval.add(body_);
+			if (null != last_) retval.add(last_);
+			if (null != increment_) retval.add(increment_);
 			return retval;
 		}
 		
@@ -3350,8 +3356,8 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
-				retval.add(body_);
+				if (null != nextCode_) retval.add(nextCode_);
+				if (null != body_) retval.add(body_);
 				return retval;
 			}
 			
@@ -3433,8 +3439,8 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
-				retval.add(body_);
+				if (null != nextCode_) retval.add(nextCode_);
+				if (null != body_) retval.add(body_);
 				return retval;
 			}
 			
@@ -3520,11 +3526,11 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(body_);
-			retval.add(last_);
-			retval.add(rTThingToIterateOverExpr_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != body_) retval.add(body_);
+			if (null != last_) retval.add(last_);
+			if (null != rTThingToIterateOverExpr_) retval.add(rTThingToIterateOverExpr_);
 			return retval;
 		}
 		
@@ -3582,9 +3588,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -3648,10 +3654,10 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(body_);
-			retval.add(last_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != body_) retval.add(body_);
+			if (null != last_) retval.add(last_);
 			return retval;
 		}
 		
@@ -3715,9 +3721,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -3786,13 +3792,13 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(test_);
-			retval.add(body_);
-			retval.add(last_);
-			retval.add(loopEntry_);
-			retval.add(loopTerminate_);
-			retval.add(popBlockResults_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != test_) retval.add(test_);
+			if (null != body_) retval.add(body_);
+			if (null != last_) retval.add(last_);
+			if (null != loopEntry_) retval.add(loopEntry_);
+			if (null != loopTerminate_) retval.add(loopTerminate_);
+			if (null != popBlockResults_) retval.add(popBlockResults_);
 			return retval;
 		}
 		
@@ -4084,8 +4090,8 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
-				retval.add(original_);
+				if (null != nextCode_) retval.add(nextCode_);
+				if (null != original_) retval.add(original_);
 				return retval;
 			}
 			
@@ -4098,9 +4104,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(last_);
-			retval.add(switchExpression_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != last_) retval.add(last_);
+			if (null != switchExpression_) retval.add(switchExpression_);
 			return retval;
 		}
 		
@@ -4197,7 +4203,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -4243,8 +4249,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(breakExit_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != breakExit_) retval.add(breakExit_);
 			return retval;
 		}
 		
@@ -4296,8 +4302,8 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(continueHook_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != continueHook_) retval.add(continueHook_);
 			return retval;
 		}
 		
@@ -4371,7 +4377,7 @@ public abstract class RTExpression extends RTCode {
 			
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -4385,10 +4391,10 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(lhs_);
-			retval.add(rhs_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != lhs_) retval.add(lhs_);
+			if (null != rhs_) retval.add(rhs_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -4458,9 +4464,10 @@ public abstract class RTExpression extends RTCode {
 			}
 			@Override public int lineNumber() {
 				return lineNumber_;
-			}@Override public List<RTCode> connectedExpressions() {
+			}
+			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
-				retval.add(nextCode_);
+				if (null != nextCode_) retval.add(nextCode_);
 				return retval;
 			}
 			
@@ -4472,10 +4479,10 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(lhs_);
-			retval.add(rhs_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != lhs_) retval.add(lhs_);
+			if (null != rhs_) retval.add(rhs_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -4536,10 +4543,10 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(lhs_);
-			retval.add(rhs_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != lhs_) retval.add(lhs_);
+			if (null != rhs_) retval.add(rhs_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -4693,7 +4700,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		@Override public boolean resultIsConsumed() {
@@ -4791,9 +4798,9 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			for (RTExpression expr: rTBlockBody_.expressionList()) {
-				retval.add(expr);
+			if (null != nextCode_) retval.add(nextCode_);
+			for (final RTExpression expr: rTBlockBody_.expressionList()) {
+				if (null != expr) retval.add(expr);
 			}
 			return retval;
 		}
@@ -4836,9 +4843,9 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
-			retval.add(expr_);
-			retval.add(part2_);
+			if (null != nextCode_) retval.add(nextCode_);
+			if (null != expr_) retval.add(expr_);
+			if (null != part2_) retval.add(part2_);
 			return retval;
 		}
 		
@@ -4874,7 +4881,7 @@ public abstract class RTExpression extends RTCode {
 		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -4907,7 +4914,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
@@ -4941,7 +4948,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
-			retval.add(nextCode_);
+			if (null != nextCode_) retval.add(nextCode_);
 			return retval;
 		}
 		
