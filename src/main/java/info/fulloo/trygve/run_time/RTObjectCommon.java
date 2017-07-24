@@ -198,6 +198,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 	@Override public Map<String, RTType> objectDeclarations() { return rTTypeMap_; }
+	          public Map<String,RTObject> objectMembers() { return objectMembers_; }
 	@Override public void addObjectDeclaration(final String name, final RTType type) {
 		rTTypeMap_.put(name, type);
 		final RTObject oldValue = objectMembers_.get(name);

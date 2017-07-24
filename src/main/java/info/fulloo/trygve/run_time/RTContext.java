@@ -388,6 +388,14 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			return retval;
 		}
 		
+		// For debugger only
+		public final Map<String, RTObject> rolePlayers() {
+			return rolePlayers_;
+		}
+		public final Map<String, RTObject> stagePropPlayers() {
+			return stagePropPlayers_;
+		}
+		
 		private       Map<String, RTObject> rolePlayers_, stagePropPlayers_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
 		private       Map<String, Map<Integer,RTObject>> roleArrayPlayers_;

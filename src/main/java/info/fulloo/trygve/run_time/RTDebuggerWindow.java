@@ -2,10 +2,18 @@ package info.fulloo.trygve.run_time;
 
 import info.fulloo.trygve.editor.TextEditorGUI;
 import info.fulloo.trygve.parser.ParseRun;
+import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
+import info.fulloo.trygve.run_time.RTClass.RTStringClass;
+import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
+import info.fulloo.trygve.run_time.RTObjectCommon.RTStringObject;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Stack;
 
 import javax.swing.*;
@@ -120,6 +128,15 @@ public class RTDebuggerWindow extends JFrame {
 	  tracebackScrollPane_.setPreferredSize(new Dimension(350, 300));
 	  javax.swing.JFrame.setDefaultLookAndFeelDecorated(true);
   	  cp.add(tracebackScrollPane_);
+  	  
+  	  objectOverviewPanel_ = new javax.swing.JTextArea(15, 35);
+  	  objectOverviewPanel_.setMargin(new java.awt.Insets(3, 3, 3, 3));
+  	  objectOverviewPanel_.setBackground(new java.awt.Color(233, 228, 242));
+  	  objectOverviewPanel_.setSize(600, 300);
+	  
+  	  objectScrollPane_ = new javax.swing.JScrollPane(objectOverviewPanel_);
+  	  objectScrollPane_.setPreferredSize(new Dimension(350, 300));
+	  cp.add(objectScrollPane_);
  
       // Not: setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); instead:
       this_ = this;
@@ -131,8 +148,8 @@ public class RTDebuggerWindow extends JFrame {
     	});
       
       setTitle("Debugger");
-      setSize(780, 400);
-      setLocation(600, 200);
+      setSize(1100, 400);
+      setLocation(600, 400);
       setVisible(true);
    }
    private int plantBreakpointInExpression(int byteOffset, int lineNumber, ParseRun parseRun) {
@@ -269,6 +286,8 @@ public class RTDebuggerWindow extends JFrame {
    public void running() {
 	   debuggerWindowMessage("Running\n");
 	   pauseButton_.setEnabled(true);
+	   objectOverviewPanelContent_ = "";
+	   objectOverviewPanel_.setText(objectOverviewPanelContent_);
    }
    public void enableRunButton(boolean tf) {
 	   runButton_.setEnabled(tf);
@@ -286,6 +305,7 @@ public class RTDebuggerWindow extends JFrame {
    }
    private void stopCommon() {
 	   this.printMiniStackStatus();
+	   displayObjectSnapshot();
 	   breakpointSemaphore_ = new RTSemaphore();
 	   try {
 		   breakpointSemaphore_.release();
@@ -305,6 +325,96 @@ public class RTDebuggerWindow extends JFrame {
 	   continueButton_.setEnabled(true);
 	   debuggerWindowMessage("Breakpoint at line " + code.lineNumber() + ". Stopped.\n");
 	   this.stopCommon();
+   }
+   private void snapshotAnElement(final String name, final RTObject instanceArg, int indent) {
+	   RTObject instance = instanceArg;
+	   if (name.startsWith("temp$")) {
+		   return;
+	   }
+	   for (int i = 0; i < indent; i++) {
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "    ";
+	   }
+	   if (false == name.equalsIgnoreCase("context$info")) {
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + name + ": ";
+	   }
+	   final RTType type = instance.rTType();
+	   if (type instanceof RTStringClass) {
+		   final RTStringObject stringObject = (RTStringObject) instance;
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "\"" + stringObject.toString() + "\"\n";
+	   } else if (type instanceof RTIntegerClass) {
+		   final RTStringObject integerObject = (RTStringObject) instance;
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + integerObject.toString() + "\n";
+	   } else if (instance instanceof RTListObject) {
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + 
+				   instance.rTType().name() + "\n"; // instance.toString();
+		   final RTListObject list = (RTListObject) instance;
+		   for (int i = 0; i < list.size(); i++) {
+			   final RTObject listElement = list.get(i);
+			   snapshotAnElement(Integer.toString(i), listElement, indent + 1);
+		   }
+	   } else if (instance.getClass().getSimpleName().equals("RTObjectCommon")) {
+		   // Is a class object
+		   // Put type out on this line
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "instance of class " + type.name() + "\n";
+		   final RTObjectCommon rtocInstance = (RTObjectCommon) instance;
+		   final Map<String,RTObject> objectMembers = rtocInstance.objectMembers();
+		   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
+		   while (objectNameIter.hasNext()) {
+			   final String identifierName = objectNameIter.next();
+			   instance = objectMembers.get(identifierName);
+			   snapshotAnElement(identifierName, instance, indent + 1);
+		   }
+	   } else if (instance instanceof RTContextObject) {
+		   // Is a Context object
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "instance of context " + type.name() + "\n";
+		   final RTContextObject rtcoInstance = (RTContextObject) instance;
+		   final Map<String,RTObject> objectMembers = rtcoInstance.objectMembers();
+		   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
+		   while (objectNameIter.hasNext()) {
+			   final String identifierName = objectNameIter.next();
+			   instance = objectMembers.get(identifierName);
+			   snapshotAnElement(identifierName, instance, indent + 1);
+		   }
+	   } else if (instance instanceof RTContextInfo) {
+		   final RTContextInfo contextInfo = (RTContextInfo) instance;
+		   final Map<String, RTObject> rolePlayers = contextInfo.rolePlayers();
+		   final Map<String, RTObject> stagePropPlayers = contextInfo.rolePlayers();
+		   
+		   for (final String roleName: rolePlayers.keySet() ) {
+			   final RTObject rolePlayer = rolePlayers.get(roleName);
+			   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "Role " +
+					   roleName + " bound to object of type " + rolePlayer.rTType().name() +
+					   "\n";
+			   snapshotAnElement(roleName, rolePlayer, indent + 1);
+		   }
+		   
+		   for (int i = 0; i < indent; i++) {
+			   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "    ";
+		   }
+		   for (final String stagePropName: stagePropPlayers.keySet() ) {
+			   final RTObject stagePropPlayer = stagePropPlayers.get(stagePropName);
+			   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "Stageprop " +
+					   stagePropName + " bound to object of type " + stagePropPlayer.rTType().name() +
+					   "\n";
+			   snapshotAnElement(stagePropName, stagePropPlayer, indent + 1);
+		   }
+	   } else {
+		   objectOverviewPanelContent_ = objectOverviewPanelContent_ + instance.toString() + "\n";
+	   }
+   }
+   private void displayObjectSnapshot() {
+	   objectOverviewPanelContent_ = "";
+	   final RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+	   final Map<String,RTObject> objectMembers = scope.objectMembers();
+	   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
+	   while (objectNameIter.hasNext()) {
+		   final String identifierName = objectNameIter.next();
+		   final RTObject instance = objectMembers.get(identifierName);
+		   snapshotAnElement(identifierName, instance, 0);
+	   }
+	   objectOverviewPanel_.setText(objectOverviewPanelContent_);
+	   final JScrollBar vertical = objectScrollPane_.getVerticalScrollBar();
+	   vertical.setValue( vertical.getMaximum() );
    }
 
    public void close() {
@@ -373,6 +483,10 @@ public class RTDebuggerWindow extends JFrame {
 			returnChit = (RTPostReturnProcessing) topOfStack;
 			tracebackScrollContent_ = tracebackScrollContent_.concat(
 				" Called from `main:' " + returnChit.lineNumber() + "\n");
+		} else if (null == topOfStack) {
+			final int current = RunTimeEnvironment.runTimeEnvironment_.currentExecutingLineNumber();
+			tracebackScrollContent_ = tracebackScrollContent_.concat(
+					" Called from `main:' " + current + "\n");
 		}
 
 		tracebackPanel_.setText(tracebackScrollContent_);
@@ -394,6 +508,8 @@ public class RTDebuggerWindow extends JFrame {
    private final JTextArea messagePanel_;
    private final JScrollPane tracebackScrollPane_;
    private final JTextArea tracebackPanel_;
-   private String messagePanelContent_ = "", tracebackScrollContent_ = "";
+   private final JScrollPane objectScrollPane_;
+   private final JTextArea objectOverviewPanel_;
+   private String messagePanelContent_ = "", tracebackScrollContent_ = "", objectOverviewPanelContent_ = "";
    private final ArrayList<RTCode> allBreakpointedExpressions_;
 }
