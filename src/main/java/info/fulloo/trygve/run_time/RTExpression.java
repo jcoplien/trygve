@@ -4091,7 +4091,7 @@ public abstract class RTExpression extends RTCode {
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
 				if (null != nextCode_) retval.add(nextCode_);
-				if (null != original_) retval.add(original_);
+				// NO: if (null != original_) retval.add(original_);
 				return retval;
 			}
 			
@@ -4106,6 +4106,11 @@ public abstract class RTExpression extends RTCode {
 			List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != nextCode_) retval.add(nextCode_);
 			if (null != last_) retval.add(last_);
+			if (null != cases_) {
+				for (final RTExpressionList exprList: cases_.values()) {
+					retval.add(exprList.expressionList().get(0));
+				}
+			}
 			if (null != switchExpression_) retval.add(switchExpression_);
 			return retval;
 		}

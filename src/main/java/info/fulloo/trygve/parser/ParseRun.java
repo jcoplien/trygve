@@ -48,6 +48,7 @@ import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTContext;
 import info.fulloo.trygve.run_time.RTDebuggerWindow;
 import info.fulloo.trygve.run_time.RTExpression;
+import info.fulloo.trygve.run_time.RTExpression.RTConstant;
 import info.fulloo.trygve.run_time.RTMethod;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.Program;
@@ -315,8 +316,28 @@ public class ParseRun {
 					
 					// Done with singletons, stack the children
 					for (final RTCode e: connectedExpressions) {
-						if (false == allExpressions_.containsValue(anExpr)) {
-							exprStack_.push(e);
+						if (e instanceof RTConstant) {
+							continue;
+						}
+						if (false == allExpressions_.containsValue(e)) {
+							boolean isOnStack = false;
+							final int stackSize = exprStack_.size();
+							
+							// Just check and see if it's in the top 10 on
+							// the stack ("11" because it limits the
+							// computation)
+							int limit = 11;
+							if (limit > stackSize) limit = stackSize - 1;
+							for (int i = 1; i < limit; i++) {
+								final RTCode aCode = exprStack_.get(stackSize - limit);
+								if (aCode == e) {
+									isOnStack = true;
+									break;
+								}
+							}
+							if (!isOnStack) {
+								exprStack_.push(e);
+							}
 						}
 					}
 				}
