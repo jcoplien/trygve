@@ -156,25 +156,8 @@ public class ParseRun {
         ParseTreeWalker.DEFAULT.walk(new Pass4Listener(parsingData), tree);
 	}
 	
-	protected void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
-		final Program program = Program.program();
-		RTDebuggerWindow saveDebugger = null;
-		if (null != RunTimeEnvironment.runTimeEnvironment_) {
-			saveDebugger = RunTimeEnvironment.runTimeEnvironment_.getDebugger();
-		}
-
-		// WARNING: gui may be null in batch mode
-		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, gui);
-		codeGenerator.compile();
-		virtualMachine_ = codeGenerator.virtualMachine();
-		RunTimeEnvironment.runTimeEnvironment_.setDebugger(saveDebugger);
-		mainExpr_ = codeGenerator.mainExpr();
-		
-		// Get rid of old, and make a new one
-		// (used by buildExpressionsMapFor)
-		allExpressions_ = new HashMap<Integer, RTCode>();
-		
-        if (null != mainExpr_) {
+	private void buildExpressionMap() {
+		if (null != mainExpr_) {
         	buildExpressionMapFor(mainExpr_);
         }
         
@@ -206,6 +189,29 @@ public class ParseRun {
             	}
         	}
         }
+	}
+	
+	protected void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
+		final Program program = Program.program();
+		RTDebuggerWindow saveDebugger = null;
+		if (null != RunTimeEnvironment.runTimeEnvironment_) {
+			saveDebugger = RunTimeEnvironment.runTimeEnvironment_.getDebugger();
+		}
+
+		// WARNING: gui may be null in batch mode
+		final CodeGenerator codeGenerator = new InterpretiveCodeGenerator(program, parsingData, gui);
+		codeGenerator.compile();
+		virtualMachine_ = codeGenerator.virtualMachine();
+		RunTimeEnvironment.runTimeEnvironment_.setDebugger(saveDebugger);
+		mainExpr_ = codeGenerator.mainExpr();
+		
+		// Get rid of old, and make a new one
+		// (used by buildExpressionsMapFor)
+		allExpressions_ = new HashMap<Integer, RTCode>();
+		
+		if (null != gui && gui.debuggingEnabled()) {
+			buildExpressionMap();
+		}
 	}
 	
 	public RunTimeEnvironment virtualMachine() {
@@ -346,7 +352,7 @@ public class ParseRun {
 	}
 	public RTCode expressionForByteOffsetInBuffer(int byteOffset, TextEditorGUI gui) {
 		RTCode retval = null;
-		int lineNumber = gui.lineNumberForBufferOffset(byteOffset);
+		final int lineNumber = gui.lineNumberForBufferOffset(byteOffset);
 		retval = (RTCode)allExpressions_.get(new Integer(lineNumber));
 		return retval;
 	}

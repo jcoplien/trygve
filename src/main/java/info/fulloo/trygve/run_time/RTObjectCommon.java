@@ -966,6 +966,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public String getText() {
 			return Double.toString((double)foobar_);
 		}
+		@Override public String toString() {
+			return getText();
+		}
 		
 		final double EPSILON = 0.00001;
 		private double foobar_;

@@ -303,9 +303,13 @@ public class RTDebuggerWindow extends JFrame {
 	   final JScrollBar vertical = messageScrollPane_.getVerticalScrollBar();
 	   vertical.setValue( vertical.getMaximum() );
    }
-   private void stopCommon() {
+   private void stopCommon(final RTCode code) {
 	   this.printMiniStackStatus();
 	   displayObjectSnapshot();
+	   pauseButton_.setEnabled(false);
+	   int lineNumber = code.lineNumber() - 5;
+	   if (0 > lineNumber) lineNumber = 5;
+	   gui_.makeLineVisible(lineNumber);
 	   breakpointSemaphore_ = new RTSemaphore();
 	   try {
 		   breakpointSemaphore_.release();
@@ -314,17 +318,16 @@ public class RTDebuggerWindow extends JFrame {
 		   e.printStackTrace();
 		   breakpointSemaphore_.take();
 	   }
-	   pauseButton_.setEnabled(false);
    }
-   public void pauseAt(RTCode code) {
+   public void pauseAt(final RTCode code) {
 	   continueButton_.setEnabled(true);
 	   debuggerWindowMessage("Paused at line " + code.lineNumber() + ". Stopped.\n");
-	   this.stopCommon();
+	   this.stopCommon(code);
    }
-   public void breakpointFiredAt(RTCode code) {
+   public void breakpointFiredAt(final RTCode code) {
 	   continueButton_.setEnabled(true);
 	   debuggerWindowMessage("Breakpoint at line " + code.lineNumber() + ". Stopped.\n");
-	   this.stopCommon();
+	   this.stopCommon(code);
    }
    private void snapshotAnElement(final String name, final RTObject instanceArg, int indent) {
 	   RTObject instance = instanceArg;

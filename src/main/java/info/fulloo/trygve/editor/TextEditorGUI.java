@@ -757,6 +757,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         runButton = new javax.swing.JButton();
         interruptButton = new javax.swing.JButton();
         parseButton = new javax.swing.JButton();
+        debugCheckBox = new javax.swing.JCheckBox("Enable\nDebugging");
         debugButton = new javax.swing.JButton();
         wwwButton = new javax.swing.JButton();
         urlTextField = new javax.swing.JTextField();
@@ -862,6 +863,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         parseButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 parseButtonActionPerformed(evt);
+            }
+        });
+        
+        debuggingEnabled_ = false;
+        debugCheckBox.setSelected(debuggingEnabled_);
+        debugCheckBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                debugCheckBoxActionPerformed(evt);
             }
         });
         
@@ -1051,6 +1060,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                             .addComponent(clearButton)
                             .addComponent(parseButton)
+                            .addComponent(debugCheckBox)
                             .addComponent(debugButton))))
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1076,6 +1086,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                     .addComponent(selectAllButton)
                     .addComponent(clearButton)
                     .addComponent(parseButton)
+                    .addComponent(debugCheckBox)
                     .addComponent(debugButton)
                     .addComponent(showWButton)
                     .addComponent(showCButton))
@@ -1419,7 +1430,7 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 
 private void enableRunButton(boolean tf) {
 	runButton.setEnabled(tf);
-	debugButton.setEnabled(tf);	 // follows run button
+	debugButton.setEnabled(tf && debuggingEnabled_);	 // follows run button
 	if (null != RunTimeEnvironment.runTimeEnvironment_) {
 		final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
 		if (null != debugger) {
@@ -1476,6 +1487,23 @@ public void parseButtonActionPerformed(final java.awt.event.ActionEvent evt) {//
 	
 	updateButtons();
 }//GEN-LAST:event_parseButtonActionPerformed
+
+public void debugCheckBoxActionPerformed(final java.awt.event.ActionEvent evt) {
+	// Have to disallow running because there is no symbol table,
+	// even if it was compiled. We have to recompile to get that
+	runButton.setEnabled(false);
+	debuggingEnabled_ = debugCheckBox.isSelected();
+	if (null != RunTimeEnvironment.runTimeEnvironment_) {
+		final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+		if (null != debugger) {
+			debugButton.setEnabled(debuggingEnabled_);
+    		if (false == debuggingEnabled_) {
+    			debugger.close();
+    			unregisterDebugger();
+    		}
+		}
+	}
+}
 
 public void unregisterDebugger() {
 	RunTimeEnvironment.runTimeEnvironment_.setDebugger(null);
@@ -1544,6 +1572,9 @@ public boolean compiledWithoutError() {
 }
 public void resetCompiledWithoutError() {
 	compiledWithoutError_ = false;
+}
+public boolean debuggingEnabled() {
+	return debuggingEnabled_;
 }
 
 private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
@@ -1678,6 +1709,25 @@ private void updateButtons() {
 	}
 }
 
+public void makeLineVisible(int lineNumber) {
+	final int bufferOffset = bufferOffsetForLineNumber(lineNumber);
+	makeBufferOffsetVisible(bufferOffset);
+}
+
+public void makeBufferOffsetVisible(int bufferOffset) {
+	Rectangle viewArea = null;
+	try {
+		viewArea = editPane.modelToView(bufferOffset);
+	} catch (BadLocationException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
+	if (null != viewArea) {
+		editPane.scrollRectToVisible(viewArea);
+		editPane.setCaretPosition(bufferOffset);
+	}
+}
+
 //------------- Application window management ----------------------
 
 private void resetButtonsBasedOnWindowQueue() {
@@ -1749,6 +1799,7 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     private javax.swing.JButton clearButton2;
     private javax.swing.JButton runButton;
     private javax.swing.JButton interruptButton;
+    private javax.swing.JCheckBox debugCheckBox;
     private javax.swing.JButton parseButton;
     private javax.swing.JButton debugButton;
     private javax.swing.JMenuItem clearMenu;
@@ -1792,6 +1843,7 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     private RunTimeEnvironment virtualMachine_;
     private boolean compiledWithoutError_;
     private boolean parseNeeded_;
+    private boolean debuggingEnabled_;
     
     private TextEditorGUI this_;
     
