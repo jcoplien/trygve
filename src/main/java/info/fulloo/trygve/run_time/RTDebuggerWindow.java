@@ -21,7 +21,7 @@ import javax.swing.*;
 
 // https://www3.ntu.edu.sg/home/ehchua/programming/java/j5e_multithreading.html
 public class RTDebuggerWindow extends JFrame {
-   public RTDebuggerWindow(TextEditorGUI gui) {
+   public RTDebuggerWindow(final TextEditorGUI gui) {
 	  gui_ = gui;
 	  allBreakpointedExpressions_ = new ArrayList<RTCode>();
       final Container cp = getContentPane();
