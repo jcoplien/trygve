@@ -72,13 +72,13 @@ public class InputStreamClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", inputStreamType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", inputStreamType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(inputStreamType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -93,7 +93,7 @@ public class InputStreamClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("InputStream", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("InputStream", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			inputStreamType_ = new ClassType("InputStream", newScope, null);
 			classDecl.setType(inputStreamType_);
@@ -118,7 +118,7 @@ public class InputStreamClass {
 			// depends on System. So we moved this here into the InputStream initialization.
 			assert null != inputStreamType_;
 			final Type systemClassType = StaticScope.globalScope().lookupTypeDeclaration("System");
-			final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, 0);
+			final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, null);
 			systemClassType.enclosedScope().declareStaticObject(inputDeclaration);
 			systemClassType.declareStaticObject(inputDeclaration);
 		}

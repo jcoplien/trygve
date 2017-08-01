@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
@@ -54,10 +56,10 @@ public abstract class Type implements ExpressionStackAPI
 		enclosedScope_ = enclosedScope;
 		staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
 		staticObjects_ = new LinkedHashMap<String, RTCode>();
-		lineNumber_ = null != enclosedScope?
+		token_ = null != enclosedScope?
 					(null != enclosedScope.associatedDeclaration()?
-							enclosedScope.associatedDeclaration().lineNumber(): 0):
-					0;
+							enclosedScope.associatedDeclaration().token(): null):
+									null;
 	}
 	public StaticScope enclosedScope() {
 		return enclosedScope_;
@@ -68,7 +70,7 @@ public abstract class Type implements ExpressionStackAPI
 	public void declareStaticObject(final ObjectDeclaration declaration) {
 		final String objectName = declaration.name();
 		if (staticObjectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, declaration.lineNumber(), "Multiple definitions of static member ",
+			ErrorLogger.error(ErrorIncidenceType.Internal, declaration.token(), "Multiple definitions of static member ",
 					objectName, "", "");
 		} else {
 			staticObjectDeclarationDictionary_.put(objectName, declaration);
@@ -105,16 +107,16 @@ public abstract class Type implements ExpressionStackAPI
 				operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
 			// Valid if compareTo(X) is defined on us. Probably needs some loosening up
 			final FormalParameterList parameterList = new FormalParameterList();
-			ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+			ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 			parameterList.addFormalParameter(self);
-			ObjectDeclaration other = new ObjectDeclaration("other", this, 0);
+			ObjectDeclaration other = new ObjectDeclaration("other", this, null);
 			parameterList.addFormalParameter(other);
 			MethodDeclaration compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 					"compareTo", parameterList, false, /*parameterToIgnore*/ null);
 			if (null == compareTo) {
-				self = new ObjectDeclaration("this", type, 0);
+				self = new ObjectDeclaration("this", type, null);
 				parameterList.addFormalParameter(self);
-				other = new ObjectDeclaration("other", type, 0);
+				other = new ObjectDeclaration("other", type, null);
 				parameterList.addFormalParameter(other);
 				compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 						"compareTo", parameterList, false, /*parameterToIgnore*/ null);
@@ -172,7 +174,7 @@ public abstract class Type implements ExpressionStackAPI
 			assert false;
 			return false;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
 		public ClassType baseClass() {
@@ -498,7 +500,7 @@ public abstract class Type implements ExpressionStackAPI
 		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -535,7 +537,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public String name() {
 			return name_;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -661,7 +663,7 @@ public abstract class Type implements ExpressionStackAPI
 				final String parameterToIgnore) {
 			if (recurDepth > 5) {
 				if (false == recurRecovery) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, token(),
 								"Type reference recursion involving argument of `", selectorName, "'.", "");
 				}
 				recurRecovery = true;
@@ -848,7 +850,7 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -941,7 +943,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(scope);
 			name_ = name;
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type type) {
+		public void reportMismatchesWith(final Token token, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -957,19 +959,19 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Role.");
 						} else if (rolesSignature.hasConstModifier()) {
 							if (false == signatureForMethodSelector.hasConstModifier()) {
-								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.token(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Role `", name(),
 										"' is missing a const modifier.", "");
@@ -979,7 +981,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1136,7 +1138,7 @@ public abstract class Type implements ExpressionStackAPI
 		public StagePropType(final String name, final StaticScope scope) {
 			super(name, scope);
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type type) {
+		public void reportMismatchesWith(final Token token, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -1152,12 +1154,12 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' is declared as private in interface of `", type.name() +
@@ -1165,7 +1167,7 @@ public abstract class Type implements ExpressionStackAPI
 						} else if (rolesSignature.hasConstModifier()) {
 							if (false == signatureForMethodSelector.hasConstModifier() &&
 									false == signatureForMethodSelector.isUnusedInThisContext()) {
-								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.token(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Stage Prop `", name(),
 										"' is missing a const modifier.", "");
@@ -1178,7 +1180,7 @@ public abstract class Type implements ExpressionStackAPI
 		public Map<String, List<MethodSignature>> requiredSelfSignatures() {
 			return associatedDeclaration_.requiredSelfSignatures();
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 
@@ -1239,7 +1241,7 @@ public abstract class Type implements ExpressionStackAPI
 								final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
 										" does not match the contract at line " +
 										Integer.toString(rolesSignature.lineNumber());
-								parserPass.errorHook5p2(ErrorIncidenceType.Warning, lineNumber,
+								parserPass.errorHook5p2(ErrorIncidenceType.Warning, token,
 										"WARNING: Required methods for stage props should be const. The declaration of method `",
 										signatureForMethodSelector.name(), "' at line ",
 										roleSignatureLineNumber);
@@ -1363,7 +1365,7 @@ public abstract class Type implements ExpressionStackAPI
 			atPutMethodDeclaration_ = null;
 			baseType_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1417,15 +1419,15 @@ public abstract class Type implements ExpressionStackAPI
 		// their own scope where we can declare things like this.
 		public MethodDeclaration sizeMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == sizeMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				formalParameterList.addFormalParameter(self);
 				final MethodSignature signature = new MethodSignature("size",
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				sizeMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(sizeMethodDeclaration_, null);
 			}
@@ -1433,20 +1435,20 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public MethodDeclaration atMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == atMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
-				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, null);
 				
 				formalParameterList.addFormalParameter(theIndex);
 				formalParameterList.addFormalParameter(self);
 				
 				final MethodSignature signature = new MethodSignature("at",
 						baseType_,
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				atMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(atMethodDeclaration_, null);
 			}
@@ -1454,12 +1456,12 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public MethodDeclaration atPutMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == atPutMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
 				final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
-				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
-				final ObjectDeclaration object = new ObjectDeclaration("object", baseType_, 0);
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, null);
+				final ObjectDeclaration object = new ObjectDeclaration("object", baseType_, null);
 				
 				formalParameterList.addFormalParameter(object);
 				formalParameterList.addFormalParameter(theIndex);
@@ -1467,10 +1469,10 @@ public abstract class Type implements ExpressionStackAPI
 				
 				final MethodSignature signature = new MethodSignature("atPut",
 						voidType,
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				atPutMethodDeclaration_.setHasConstModifier(false);
 				dummyScope_.declareMethod(atPutMethodDeclaration_, null);
 			}
@@ -1491,7 +1493,7 @@ public abstract class Type implements ExpressionStackAPI
 			name_ = name;
 			baseClassType_ = baseClassType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1516,7 +1518,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(null);
 			name_ = name;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1542,7 +1544,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean isBaseClassOf(final Type t) {
 			return true;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1564,7 +1566,7 @@ public abstract class Type implements ExpressionStackAPI
 	
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
-	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
+	public abstract boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass);
 
 	public boolean isError() {
 		return false;
@@ -1681,11 +1683,14 @@ public abstract class Type implements ExpressionStackAPI
 				HierarchySelector.ThisClassOnly);
 	}
 	public int lineNumber() {
-		return lineNumber_;
+		return null == token_? 0: token_.getLine();
+	}
+	public Token token() {
+		return token_;
 	}
 	
 	protected StaticScope enclosedScope_;
 	protected Map<String, ObjectDeclaration> staticObjectDeclarationDictionary_;
 	protected Map<String, RTCode> staticObjects_;
-	private final int lineNumber_;
+	private final Token token_;
 }

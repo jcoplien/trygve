@@ -89,7 +89,10 @@ public class ParseRun {
 	            sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine);
 	        }
 
-	        ErrorLogger.error(ErrorIncidenceType.Parse, line, "column ", Integer.toString(charPositionInLine), ": ",  msg);
+	        final CommonToken errorToken = new CommonToken(0);
+	        errorToken.setLine(line);
+	        errorToken.setCharPositionInLine(charPositionInLine);
+	        ErrorLogger.error(ErrorIncidenceType.Parse, errorToken, "column ", Integer.toString(charPositionInLine), ": ",  msg);
 	    }
 	}
 	
@@ -189,6 +192,7 @@ public class ParseRun {
             	}
         	}
         }
+        return;		// just as a debugging breakpoint hook
 	}
 	
 	protected void generateCode(final ParsingData parsingData, final TextEditorGUI gui) {
@@ -314,8 +318,19 @@ public class ParseRun {
 					while (1 == connectedExpressions.size()) {
 						anExpr = connectedExpressions.get(0);
 						assert (null != anExpr);
-						if (false == allExpressions_.containsValue(anExpr)) {
-							allExpressions_.put(anExpr.lineNumber(), anExpr);
+						final int lineNumber = anExpr.lineNumber();
+						if (false == allExpressions_.containsKey(lineNumber)) {
+							// First entry for this line
+							allExpressions_.put(lineNumber, anExpr);
+						} else {
+							final RTCode existingExpr = allExpressions_.get(lineNumber);
+							final Token token1 = anExpr.token(), token2 = existingExpr.token();
+							if (null != token1 && null != token2) {
+								if (token1.getStartIndex() < token2.getStartIndex()) {
+									// Take just the first one on every line
+									allExpressions_.put(lineNumber, anExpr);
+								}
+							}
 						}
 						connectedExpressions = anExpr.connectedExpressions();
 					}
@@ -325,14 +340,18 @@ public class ParseRun {
 						if (e instanceof RTConstant) {
 							continue;
 						}
+						/*
 						if (false == allExpressions_.containsValue(e)) {
 							boolean isOnStack = false;
 							final int stackSize = exprStack_.size();
 							
 							// Just check and see if it's in the top 10 on
-							// the stack ("11" because it limits the
-							// computation)
-							int limit = 11;
+							// the stack ("limit" because it limits the
+							// computation).
+							//
+							// This seems only to make time worse for limit > 0,
+							// and it seems to work within the space confines O.K.
+							int limit = 0;
 							if (limit > stackSize) limit = stackSize - 1;
 							for (int i = 1; i < limit; i++) {
 								final RTCode aCode = exprStack_.get(stackSize - limit);
@@ -344,6 +363,11 @@ public class ParseRun {
 							if (!isOnStack) {
 								exprStack_.push(e);
 							}
+						}
+						*/
+
+						if (null != e && false == allExpressions_.containsKey(e.lineNumber())) {
+							exprStack_.push(e);
 						}
 					}
 				}

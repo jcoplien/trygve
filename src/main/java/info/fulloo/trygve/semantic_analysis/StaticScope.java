@@ -29,6 +29,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.Token;
+
 import static java.util.Arrays.asList;
 import info.fulloo.trygve.add_ons.ColorClass;
 import info.fulloo.trygve.add_ons.MouseInfoClass;
@@ -157,7 +160,7 @@ public class StaticScope {
 		
 		// Meta-stuff for boundary conditions
 		final Type t = new ClassType(" Class", globalScope_, null);
-		final ObjectDeclaration object = new ObjectDeclaration(" Object", t, 0);
+		final ObjectDeclaration object = new ObjectDeclaration(" Object", t, null);
 		globalScope_.setDeclaration(object);
 	}
 
@@ -227,18 +230,18 @@ public class StaticScope {
 			final Iterator<Type> typeIter = paramTypes.iterator();
 			for (final String paramName : paramNames) {
 				final Type paramType = typeIter.next();
-			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			    formals.addFormalParameter(formalParameter);
 			}
 		}
 		
 		if (false == isStatic) {
-			final ObjectDeclaration self = new ObjectDeclaration("this", objectType, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", objectType, null);
 			formals.addFormalParameter(self);
 		}
 		
 		final StaticScope newScope = new StaticScope(objectType.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, newScope, returnType, Public, 0, isStatic);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, newScope, returnType, Public, null, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(isConst);
 		newScope.setDeclaration(methodDecl);
@@ -246,7 +249,9 @@ public class StaticScope {
 	}
 	
 	private static void reinitializeObject(final Type objectType, final StaticScope objectsScope) {
-		final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, 157239);
+		final CommonToken objectToken = new CommonToken(0);
+		objectToken.setLine(157239);
+		final ClassDeclaration objectClass = new ClassDeclaration("Object", objectsScope, null, objectToken);
 		globalScope_.declareClass(objectClass);
 		objectClass.setType(objectType);
 		objectsScope.setDeclaration(objectClass);
@@ -262,62 +267,62 @@ public class StaticScope {
 		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 		assert null != objectBaseClass;
 
-		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intScope, objectBaseClass, 0);
+		final ClassDeclaration intDeclaration = new ClassDeclaration(typeName, intScope, objectBaseClass, null);
 		
-		ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, 0);
-		final ObjectDeclaration self = new ObjectDeclaration("this", intType, 0);
+		ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", intType, null);
+		final ObjectDeclaration self = new ObjectDeclaration("this", intType, null);
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, intType, Public, 0, false);
+		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodScope.setDeclaration(methodDecl);
 		methodDecl.setHasConstModifier(true);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("-", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("-", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("*", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("*", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("**", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("**", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("/", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("/", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("%", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("%", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		intScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(intType.enclosedScope());
-		formalParameter = new ObjectDeclaration("other", intType, 0);
+		formalParameter = new ObjectDeclaration("other", intType, null);
 		formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
-		methodDecl = new MethodDeclaration("compareTo", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("compareTo", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -326,7 +331,7 @@ public class StaticScope {
 		methodScope = new StaticScope(intType.enclosedScope());
 		formals = new FormalParameterList();
 		formals.addFormalParameter(self);
-		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -349,74 +354,74 @@ public class StaticScope {
 		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 		assert null != objectBaseClass;
 		
-		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleScope, objectBaseClass, 0);
+		final ClassDeclaration doubleDeclaration = new ClassDeclaration("double", doubleScope, objectBaseClass, null);
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, 0);
-		ObjectDeclaration self = new ObjectDeclaration("this", doubleType, 0);
+		ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", doubleType, null);
+		ObjectDeclaration self = new ObjectDeclaration("this", doubleType, null);
 		FormalParameterList formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		
 		methodScope = new StaticScope(doubleScope);
-		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, doubleType, Public, 0, false);
+		MethodDeclaration methodDecl = new MethodDeclaration("+", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("-", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("-", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("*", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("*", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("/", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("/", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("**", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("**", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("%", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("%", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
-		formalParameter = new ObjectDeclaration("other", doubleType, 0);
+		formalParameter = new ObjectDeclaration("other", doubleType, null);
 		formals = new FormalParameterList();
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("compareTo", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("compareTo", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
 		
 		final FormalParameterList formalsWithInt = new FormalParameterList();
-		final ObjectDeclaration formalIntParameter = new ObjectDeclaration("rhs", intType, 0);
+		final ObjectDeclaration formalIntParameter = new ObjectDeclaration("rhs", intType, null);
 		formalsWithInt.addFormalParameter(formalIntParameter);
 		formalsWithInt.addFormalParameter(self);
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("**", methodScope, doubleType, Public, 0, false);
+		methodDecl = new MethodDeclaration("**", methodScope, doubleType, Public, null, false);
 		methodDecl.addParameterList(formalsWithInt);
 		methodScope.setDeclaration(methodDecl);
 		doubleScope.declareMethod(methodDecl, null);
@@ -424,7 +429,7 @@ public class StaticScope {
 		formals = new FormalParameterList();
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(doubleScope);
-		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toInteger", methodScope, intType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -443,13 +448,13 @@ public class StaticScope {
 	public static void addStringMethod(final Type stringType, final String methodSelectorName, final Type returnType,
 			final List<String> paramNames, final List<Type> paramTypes, final boolean isStatic) {
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		final ObjectDeclaration self = new ObjectDeclaration("this", stringType, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", stringType, null);
 		FormalParameterList formals = new FormalParameterList();
 		if (null != paramNames) {
 			final Iterator<Type> typeIter = paramTypes.iterator();
 			for (final String paramName : paramNames) {
 				final Type paramType = typeIter.next();
-			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			    final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			    formals.addFormalParameter(formalParameter);
 			}
 		}
@@ -457,7 +462,7 @@ public class StaticScope {
 			formals.addFormalParameter(self);
 		}
 		final StaticScope myScope = new StaticScope(stringType.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, 0, isStatic);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelectorName, myScope, returnType, Public, null, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		myScope.setDeclaration(methodDecl);
@@ -469,7 +474,7 @@ public class StaticScope {
 		final ClassDeclaration objectBaseClass = StaticScope.globalScope().lookupClassDeclaration("Object");
 		assert null != objectBaseClass;
 		
-		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), objectBaseClass, 0);
+		final ClassDeclaration stringDeclaration = new ClassDeclaration("String", stringType.enclosedScope(), objectBaseClass, null);
 		
 		addStringMethod(stringType, "+", stringType, asList("rhs"), asList(stringType), false);
 		
@@ -509,18 +514,18 @@ public class StaticScope {
 		
 		final StaticScope booleanScope = booleanType.enclosedScope();
 		StaticScope methodScope = null;
-		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, objectBaseClass, 0);
+		final ClassDeclaration booleanClassDecl = new ClassDeclaration("boolean", booleanScope, objectBaseClass, null);
 		booleanScope.setDeclaration(booleanClassDecl);
 		
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
-		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", booleanType, 0);
-		final ObjectDeclaration self = new ObjectDeclaration("this", booleanType, 0);
+		final ObjectDeclaration formalParameter = new ObjectDeclaration("rhs", booleanType, null);
+		final ObjectDeclaration self = new ObjectDeclaration("this", booleanType, null);
 		FormalParameterList formals = new FormalParameterList();
 		
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		MethodDeclaration methodDecl = new MethodDeclaration("&&", methodScope, booleanType, Public, 0, false);
+		MethodDeclaration methodDecl = new MethodDeclaration("&&", methodScope, booleanType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -530,7 +535,7 @@ public class StaticScope {
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("||", methodScope, booleanType, Public, 0, false);
+		methodDecl = new MethodDeclaration("||", methodScope, booleanType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -540,7 +545,7 @@ public class StaticScope {
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("^", methodScope, booleanType, Public, 0, false);
+		methodDecl = new MethodDeclaration("^", methodScope, booleanType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -550,7 +555,7 @@ public class StaticScope {
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("==", methodScope, booleanType, Public, 0, false);
+		methodDecl = new MethodDeclaration("==", methodScope, booleanType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -560,7 +565,7 @@ public class StaticScope {
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("!=", methodScope, booleanType, Public, 0, false);
+		methodDecl = new MethodDeclaration("!=", methodScope, booleanType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -570,7 +575,7 @@ public class StaticScope {
 		formals.addFormalParameter(formalParameter);
 		formals.addFormalParameter(self);
 		methodScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("compareTo", methodScope, integerType, Public, 0, false);
+		methodDecl = new MethodDeclaration("compareTo", methodScope, integerType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		methodScope.setDeclaration(methodDecl);
@@ -596,20 +601,20 @@ public class StaticScope {
 		assert null != doubleType;
 		
 		StaticScope newScope = new StaticScope(doubleType.enclosedScope());
-		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, null, false);
 		methodDecl.setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", doubleType, 0);
+		self = new ObjectDeclaration("this", doubleType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		newScope.setDeclaration(methodDecl);
 		doubleType.enclosedScope().declareMethod(methodDecl, null);
 		
 		newScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, null, false);
 		methodDecl.setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", intType, 0);
+		self = new ObjectDeclaration("this", intType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		newScope.setDeclaration(methodDecl);
@@ -617,10 +622,10 @@ public class StaticScope {
 		
 		final Type booleanType = StaticScope.globalScope().lookupTypeDeclaration("boolean");
 		newScope = new StaticScope(booleanType.enclosedScope());
-		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, null, false);
 		methodDecl.setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", booleanType, 0);
+		self = new ObjectDeclaration("this", booleanType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		newScope.setDeclaration(methodDecl);
@@ -630,10 +635,10 @@ public class StaticScope {
 		assert null != bigIntegerType;
 		newScope = new StaticScope(bigIntegerType.enclosedScope());
 
-		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("toString", newScope, stringType, Public, null, false);
 		methodDecl.setHasConstModifier(true);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", bigIntegerType, 0);
+		self = new ObjectDeclaration("this", bigIntegerType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		newScope.setDeclaration(methodDecl);
@@ -650,9 +655,9 @@ public class StaticScope {
 		addStringMethod(stringType, "split", arrayOfStringType, asList("regex"), asList(stringType), false);
 		
 		newScope = new StaticScope(intType.enclosedScope());
-		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, null, false);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", intType, 0);
+		self = new ObjectDeclaration("this", intType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
@@ -660,9 +665,9 @@ public class StaticScope {
 		intType.enclosedScope().declareMethod(methodDecl, null);
 		
 		newScope = new StaticScope(bigIntegerType.enclosedScope());
-		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, 0, false);
+		methodDecl = new MethodDeclaration("to1CharString", newScope, stringType, Public, null, false);
 		formals = new FormalParameterList();
-		self = new ObjectDeclaration("this", bigIntegerType, 0);
+		self = new ObjectDeclaration("this", bigIntegerType, null);
 		formals.addFormalParameter(self);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
@@ -721,7 +726,7 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorIncidenceType.Warning, decl.lineNumber(), "WARNING: Declaration hides ", name, " declaration at line ",
+					ErrorLogger.error(ErrorIncidenceType.Warning, decl.token(), "WARNING: Declaration hides ", name, " declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
 			}
@@ -892,7 +897,7 @@ public class StaticScope {
 		final ObjectDeclaration objectDecl = this.lookupObjectDeclaration(methodName);
 		if (null != objectDecl && decl.formalParameterList().count() >= 2) {
 			assert null != pass;
-			pass.errorHook5p2(ErrorIncidenceType.Fatal, objectDecl.lineNumber(),
+			pass.errorHook5p2(ErrorIncidenceType.Fatal, objectDecl.token(),
 					"Script name `" + methodName, "' conflicts with identifier of type `",
 					objectDecl.type().getText(), "' in same scope.");
 		} else {
@@ -958,7 +963,7 @@ public class StaticScope {
 								else if (typeOfWhichDeclIsAMember instanceof ClassType) rightName = "Class";
 								else rightName = "declaration";
 								ErrorLogger.error(ErrorIncidenceType.Warning,
-										decl.lineNumber(),
+										decl.token(),
 										"WARNING: Script declaration for `",
 										decl.name(),
 										"' has the same name as the ",
@@ -970,7 +975,7 @@ public class StaticScope {
 					}
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Method ", name,
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.token(), "Method ", name,
 							" hides method of same name at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
@@ -982,10 +987,10 @@ public class StaticScope {
 	public void declareType(final Type typeDecl) {
 		final String typeName = typeDecl.name();
 		if (typeDeclarationDictionary_.containsKey(typeName)) {
-			ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.lineNumber(), "Multiple definitions of type ", typeName, " in ", name());
+			ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.token(), "Multiple definitions of type ", typeName, " in ", name());
 		} else {
 			if (this.lookupTypeDeclarationRecursive(typeName) != null) {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.lineNumber(), "Type declaration of `", typeName, "' might hide declaration in enclosing scope", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, typeDecl.token(), "Type declaration of `", typeName, "' might hide declaration in enclosing scope", "");
 			} else {
 				typeDeclarationDictionary_.put(typeName, typeDecl);
 			}
@@ -1025,13 +1030,13 @@ public class StaticScope {
 		if (null != associatedDeclaration() && null != associatedDeclaration().type()) {
 			final ActualArgumentList parameterList = new ActualArgumentList();
 			final Expression self = new IdentifierExpression(objectName, associatedDeclaration().type(),
-					this, decl.lineNumber());
+					this, decl.token());
 			parameterList.addArgument(self);
 			methodDecl = this.lookupMethodDeclaration(objectName, parameterList, false);
 		}
 		if (null != methodDecl && 0 == methodDecl.formalParameterList().userParameterCount()) {
 			assert null != pass;
-			pass.errorHook5p2(ErrorIncidenceType.Fatal, decl.lineNumber(),
+			pass.errorHook5p2(ErrorIncidenceType.Fatal, decl.token(),
 					"Object `" + objectName, "' conflicts with method of same name in same scope.",
 					"", "");
 		} else {
@@ -1062,7 +1067,7 @@ public class StaticScope {
 			assert null != associatedDeclaration;
 			
 			if (!(associatedDeclaration instanceof TypeDeclaration)) {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, 0, "Static member ", objectName, " in ", name(),
+				ErrorLogger.error(ErrorIncidenceType.Fatal, null, "Static member ", objectName, " in ", name(),
 						" may be declared only in a class, Context or Role", "");
 			} else {
 				final TypeDeclaration typeDeclaration = (TypeDeclaration)associatedDeclaration;
@@ -1092,7 +1097,7 @@ public class StaticScope {
 					collision = true;
 				}
 				if (collision) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Declaration of ", name,
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.token(), "Declaration of ", name,
 							" may hide declaration at line ",
 							Integer.toString(collidingDeclaration.lineNumber()));
 				}
@@ -1494,7 +1499,7 @@ public class StaticScope {
 			final ObjectDeclaration objectDecl = this.lookupObjectDeclaration(methodName);
 			if (null != objectDecl && decl.formalParameterList().count() >= 2) {
 				assert null != pass;
-				pass.errorHook5p2(ErrorIncidenceType.Fatal, objectDecl.lineNumber(),
+				pass.errorHook5p2(ErrorIncidenceType.Fatal, objectDecl.token(),
 						"Script name `" + methodName, "' conflicts with identifier of type `",
 						objectDecl.type().getText(), "' in same scope.");
 			} else {
@@ -1513,7 +1518,7 @@ public class StaticScope {
 				}
 				
 				if (dup) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Defining `", methodName, "' in ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, decl.token(), "Defining `", methodName, "' in ",
 						name(), " would create multiple scripts of the same name in the same object.", "");
 				} else {
 					super.declareMethod(decl, pass);
@@ -1526,7 +1531,7 @@ public class StaticScope {
 			final MethodDeclaration lookupExistingEntry = this.lookupMethodDeclaration(methodName,
 					decl.formalParameterList(), true);
 			if (null != lookupExistingEntry) {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.lineNumber(), "Defining `", methodName, "' in ",
+				ErrorLogger.error(ErrorIncidenceType.Fatal, decl.token(), "Defining `", methodName, "' in ",
 						name(), " would create multiple scripts of the same name in the same object.", "");
 			} else if (requiredMethodDeclarationDictionary_.containsKey(methodName)) {
 				final ArrayList<MethodDeclaration> oldEntry = requiredMethodDeclarationDictionary_.get(methodName);
@@ -1637,7 +1642,7 @@ public class StaticScope {
 			
 			if (null != signatureForRetval) {
 				// Return a dummy declaration
-				retval = new MethodDeclaration(signatureForRetval, this, 0);
+				retval = new MethodDeclaration(signatureForRetval, this, null);
 			}
 			return retval;
 		}
@@ -1687,7 +1692,7 @@ public class StaticScope {
 					// Create a dummy declaration to return
 					final MethodDeclaration mDecl = null == aSignature?
 								null:
-								new MethodDeclaration(aSignature, this, 0);
+								new MethodDeclaration(aSignature, this, null);
 					
 					if (ignoreSignature) {
 						retval = mDecl; break;
@@ -1714,7 +1719,7 @@ public class StaticScope {
 		final boolean retval = b.type().isBaseClassOf(a.type());
 		return retval;
 	}
-	public boolean canAccessDeclarationWithAccessibility(final Declaration decl, final AccessQualifier accessQualifier, final int lineNumber) {
+	public boolean canAccessDeclarationWithAccessibility(final Declaration decl, final AccessQualifier accessQualifier, final Token token) {
 		// Can this scope access the given declaration?
 		boolean retval = false;
 		StaticScope myEnclosingMethodScope = null, declsEnclosingMethodScope = null;

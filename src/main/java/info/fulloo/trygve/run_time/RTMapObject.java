@@ -145,7 +145,7 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		RTObject retval = theMap_.get(element);
 		if (null == retval) {
 			ErrorLogger.error(ErrorIncidenceType.Runtime,
-					0,
+					null,
 					"ERROR: Map object <",
 					null == keyType_? "null": keyType_.toString(), " -> " + element.getText(),
 					",",

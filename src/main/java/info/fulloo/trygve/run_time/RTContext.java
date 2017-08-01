@@ -322,16 +322,16 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				// The map at roleArrayPlayers_[roleName] would never have been set
 				// up if the vector / array size were zero. Treat as an out-of-range
 				// error
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
 				RTMessage.printMiniStackStatus(); 
 				retval = null;
 			} else {
 				if (iIndex >= intToObjectMap.size()) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
 					RTMessage.printMiniStackStatus();
 					retval = (RTStackable) new RTHalt();
 				} else if (iIndex < 0) {
-						ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
+						ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
 						RTMessage.printMiniStackStatus();
 						retval = (RTStackable) new RTHalt();
 				} else {

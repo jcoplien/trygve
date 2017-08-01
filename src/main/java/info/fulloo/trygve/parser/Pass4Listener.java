@@ -26,6 +26,8 @@ package info.fulloo.trygve.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -53,10 +55,10 @@ public class Pass4Listener extends Pass3Listener {
 			// for that production:
 			
 			final ArrayList<String> typeNameList = parsingData_.popTypeNameList();
-			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart().getLine(),
+			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart(),
 					typeNameList);
 			if (null == type) {
-				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart(),
 						"No Type returned from commonTemplateInstantiationHandling: ",
 						"instantiating a type in an expression: `",
 						ctx.getText(),
@@ -73,7 +75,7 @@ public class Pass4Listener extends Pass3Listener {
 	}
 	
 	@Override protected Type lookupOrCreateTemplateInstantiation(final String templateName,
-			final List<String> parameterTypeNames, final int lineNumber) {
+			final List<String> parameterTypeNames, final Token token) {
 		// This varies by pass. Here we first remove the instantiation, so that the
 		// new one picks up the body created in Pass 3.
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);
@@ -104,7 +106,7 @@ public class Pass4Listener extends Pass3Listener {
 				templateScope.undeclareClass(classDeclaration);
 				parsingData_.currentTemplateInstantiationList().removeDeclaration(classDeclaration);
 				
-				retval = super.lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, lineNumber);
+				retval = super.lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, token);
 				
 				classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
 				classDeclaration.setMethodsHaveBodyParts(true);
@@ -114,7 +116,7 @@ public class Pass4Listener extends Pass3Listener {
 		}
 		return retval;
 	}
-	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		;		// p3 only
 	}
 }

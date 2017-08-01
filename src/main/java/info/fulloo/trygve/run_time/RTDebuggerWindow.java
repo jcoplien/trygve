@@ -385,8 +385,9 @@ public class RTDebuggerWindow extends JFrame {
 		   
 		   for (final String roleName: rolePlayers.keySet() ) {
 			   final RTObject rolePlayer = rolePlayers.get(roleName);
+			   final String typeName = null == rolePlayer.rTType()? "<NULL>": rolePlayer.rTType().name();
 			   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "Role " +
-					   roleName + " bound to object of type " + rolePlayer.rTType().name() +
+					   roleName + " bound to object of type " + typeName +
 					   "\n";
 			   snapshotAnElement(roleName, rolePlayer, indent + 1);
 		   }
@@ -396,8 +397,9 @@ public class RTDebuggerWindow extends JFrame {
 		   }
 		   for (final String stagePropName: stagePropPlayers.keySet() ) {
 			   final RTObject stagePropPlayer = stagePropPlayers.get(stagePropName);
+			   final String typeName = null == stagePropPlayer.rTType()? "<NULL>": stagePropPlayer.rTType().name();
 			   objectOverviewPanelContent_ = objectOverviewPanelContent_ + "Stageprop " +
-					   stagePropName + " bound to object of type " + stagePropPlayer.rTType().name() +
+					   stagePropName + " bound to object of type " + typeName +
 					   "\n";
 			   snapshotAnElement(stagePropName, stagePropPlayer, indent + 1);
 		   }

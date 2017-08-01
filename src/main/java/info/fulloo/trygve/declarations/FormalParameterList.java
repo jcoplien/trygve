@@ -311,11 +311,11 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					// assert templateTypesSize > i - 1;
 				}
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
-						aParameter.name(), templateTypes.get(i - 1), aParameter.lineNumber());
+						aParameter.name(), templateTypes.get(i - 1), aParameter.token());
 				retval.addFormalParameter(substituteDecl);
 			} else if (null != typeOfParameter && typeOfParameter instanceof TemplateType && null != templateTypes) {
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
-						aParameter.name(), templateTypes.classType(), aParameter.lineNumber());
+						aParameter.name(), templateTypes.classType(), aParameter.token());
 				retval.addFormalParameter(substituteDecl);
 			} else {
 				retval.addFormalParameter(aParameter);

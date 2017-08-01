@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -322,8 +324,9 @@ public abstract class RTExpression extends RTCode {
 		public RTQualifiedIdentifier(final String name, final Expression expr, final RTType nearestEnclosingType) {
 			super();
 			
+			token_ = expr.token();
 			lineNumber_ = expr.lineNumber();
-			part2_ = new RTQualifiedIdentifierPart2(name, lineNumber());
+			part2_ = new RTQualifiedIdentifierPart2(name, token());
 			final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
 			stringRep_ = qie.getText();
 			
@@ -353,9 +356,10 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		public static class RTQualifiedIdentifierPart2 extends RTExpression {
-			public RTQualifiedIdentifierPart2(final String name, final int lineNumber) {
+			public RTQualifiedIdentifierPart2(final String name, final Token token) {
 				super();
-				lineNumber_ = lineNumber;
+				token_ = token;
+				lineNumber_ = (null == token_)? 0: token_.getLine();
 				idName_ = name;
 				dynamicScope_ = null;
 			}
@@ -365,7 +369,7 @@ public abstract class RTExpression extends RTCode {
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (qualifier == null) {
 					// Run-time error
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_, "INTERNAL Error: Unitialized reference to object `",
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token_, "INTERNAL Error: Unitialized reference to object `",
 									idName_, "'.", "");
 					retval = new RTHalt();
 				} else {
@@ -404,21 +408,25 @@ public abstract class RTExpression extends RTCode {
 				}
 				return retval;
 			}
-			public int lineNumber() {
+			@Override public int lineNumber() {
 				return lineNumber_;
 			}
 			
 			private RTDynamicScope dynamicScope_;	// this should not be in a program element. FIXME.
 			private final String idName_;
+			private final Token token_;
 			private final int lineNumber_;
 		}
-		public int lineNumber() {
+		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		public String getText() {
 			return stringRep_;
 		}
-		public List<RTCode> connectedExpressions() {
+		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != part2_) retval.add(part2_);
 			if (null != nextCode_) retval.add(nextCode_);
@@ -428,6 +436,7 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression qualifier_;
 		private final RTQualifiedIdentifierPart2 part2_;
 		private final int lineNumber_;
+		private final Token token_;
 		private final String stringRep_;
 	}
 	public static class RTQualifiedIdentifierUnaryOp extends RTExpression {
@@ -595,6 +604,7 @@ public abstract class RTExpression extends RTCode {
 				expressionsCountInArguments_ = new int[1];	// we insert a dummy
 			}
 			
+			token_ = messageExpr.token();
 			lineNumber_ = messageExpr.lineNumber();
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
 			final StaticScope parentScope = methodDecl == null? null: methodDecl.enclosingScope();
@@ -602,7 +612,7 @@ public abstract class RTExpression extends RTCode {
 			
 			if (null != methodDecl) {
 				// "if" test is error stumble insurance
-				argPush_ = this.buildArgumentPushList(methodDecl.formalParameterList(), messageExpr.name(), messageExpr.lineNumber());
+				argPush_ = this.buildArgumentPushList(methodDecl.formalParameterList(), messageExpr.name(), messageExpr.token());
 				assert null != argPush_;
 			} else {
 				argPush_ = null;
@@ -610,7 +620,7 @@ public abstract class RTExpression extends RTCode {
 			final Type returnType = messageExpr.returnType();
 			final boolean resultNeedsToBePopped = (!messageExpr.resultIsConsumed()) &&
 					(returnType.name().equals("void") == false);
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, messageExpr.lineNumber());
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, messageExpr.token());
 			postReturnProcessing_.setResultIsConsumed(!resultNeedsToBePopped);
 			super.setNextCode(postReturnProcessing_);	// necessary?
 			setResultIsConsumed(!resultNeedsToBePopped);
@@ -624,11 +634,12 @@ public abstract class RTExpression extends RTCode {
 			// for built-in methods like System.out.print, List
 			actualParameters_ = actualParameters;
 			lineNumber_ = 0;		// used by built-ins like println
+			token_ = null;
 			isStatic_ = isStatic;
 			expressionsCountInArguments_ = new int [actualParameters_.count()];
 			
 			Expression fakeSelfExpression = null;
-			final Message fakeMessage = new Message(name, actualParameters, lineNumber_, enclosingMegaType);
+			final Message fakeMessage = new Message(name, actualParameters, token_, enclosingMegaType);
 			fakeMessage.setReturnType(returnType);
 			MessageExpression fakeMessageExpression = null;
 			
@@ -638,11 +649,11 @@ public abstract class RTExpression extends RTCode {
 			if (false == isStatic) {
 				fakeSelfExpression = actualParameters.parameterAtPosition(0);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-					returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_, true);
+					returnType, token_, isStatic_, originMessageClass_, targetMessageClass_, true);
 			} else {
-				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope(), 0);
+				fakeSelfExpression = new IdentifierExpression(enclosingMegaType.name(), enclosingMegaType, enclosingMegaType.enclosedScope(), null);
 				fakeMessageExpression = new MessageExpression(fakeSelfExpression, fakeMessage,
-						returnType, lineNumber_, isStatic_, originMessageClass_, targetMessageClass_, true);
+						returnType, token_, isStatic_, originMessageClass_, targetMessageClass_, true);
 			}
 
 			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(fakeMessageExpression);
@@ -657,9 +668,9 @@ public abstract class RTExpression extends RTCode {
 				fakeParameterList = new FormalParameterList();
 			}
 			
-			argPush_ = this.buildArgumentPushList(fakeParameterList, name, lineNumber_);
+			argPush_ = this.buildArgumentPushList(fakeParameterList, name, token_);
 			assert null != argPush_;
-			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, lineNumber_);
+			postReturnProcessing_ = new RTPostReturnProcessing(null, name, debugName, token_);
 			final boolean resultNeedsToBePopped = null != returnType && (returnType.name().equals("void") == false);
 			setResultIsConsumed(!resultNeedsToBePopped);
 			postReturnProcessing_.setResultIsConsumed(this.resultIsConsumed());
@@ -697,7 +708,7 @@ public abstract class RTExpression extends RTCode {
 				final StaticScope enclosedScope = typeOfReceiver.enclosedScope();
 				final InterfaceDeclaration associatedDeclaration = (InterfaceDeclaration)enclosedScope.associatedDeclaration();
 				final MethodSignature methodSignature = associatedDeclaration.lookupMethodSignatureDeclaration(methodSelectorName_, actualParameters_);
-				retval = new MethodDeclaration(methodSignature, enclosedScope, methodSignature.lineNumber());
+				retval = new MethodDeclaration(methodSignature, enclosedScope, methodSignature.token());
 			} else if (typeOfReceiver instanceof ArrayType && methodSelectorName.equals("size")) {
 				// Special kludge for method invocation on array "object." Can
 				// add others here (clone?). If the number of methods we add gets
@@ -799,13 +810,13 @@ public abstract class RTExpression extends RTCode {
 			return retval;
 		}
 		
-		private Expression promoteArgToType(final Expression anArgument, final Type formalParameterType, final String methodName, final int lineNumber) {
+		private Expression promoteArgToType(final Expression anArgument, final Type formalParameterType, final String methodName, final Token token) {
 			Expression retval = anArgument;
 			final Type sourceType = anArgument.type();
 			final String sourceTypePathName = sourceType.pathName();
 			if (formalParameterType.pathName().equals("double.")) {
 				if (sourceTypePathName.equals("int.")) {
-					ErrorLogger.error(ErrorIncidenceType.Warning, lineNumber,
+					ErrorLogger.error(ErrorIncidenceType.Warning, token,
 							"WARNING: Substituting double object for `", anArgument.getText(),
 							"' for call to method `", methodName, "' at line ",
 							String.valueOf(anArgument.lineNumber()));
@@ -815,7 +826,7 @@ public abstract class RTExpression extends RTCode {
 			return retval;
 		}
 		
-		private RTCode buildArgumentPushList(final FormalParameterList actualMethodFormals, final String methodName, final int lineNumber) {
+		private RTCode buildArgumentPushList(final FormalParameterList actualMethodFormals, final String methodName, final Token token) {
 			// Arrange an arguments data structure in preparation
 			// for pushing them onto the stack.
 			// This returns a code block (just a linked list)
@@ -841,7 +852,7 @@ public abstract class RTExpression extends RTCode {
 					if (null != anArgumentType && false == formalParameterType.name().equals(anArgumentType.name()) && 0 != i) {
 						if (false == formalParameterType.isBaseClassOf(anArgumentType)) {
 							if (formalParameterType.canBeConvertedFrom(anArgument.type())) {
-								anArgument = this.promoteArgToType(anArgument, formalParameterType, methodName, lineNumber);
+								anArgument = this.promoteArgToType(anArgument, formalParameterType, methodName, token);
 							}
 						}
 					}
@@ -906,6 +917,10 @@ public abstract class RTExpression extends RTCode {
 			return lineNumber_;
 		}
 		
+		@Override public Token token() {
+			return token_;
+		}
+		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != nextCode_) retval.add(nextCode_);
@@ -917,17 +932,18 @@ public abstract class RTExpression extends RTCode {
 		
 		public static class RTPostReturnProcessing extends RTExpression {
 			public RTPostReturnProcessing(final RTCode nextCode, final String name,
-					final String debugName, final int lineNumberOfPointOfCall) {
+					final String debugName, final Token tokenOfPointOfCall) {
 				super();
 				super.setNextCode(nextCode);
 				name_ = name;
 				debugName_ = debugName;
-				lineNumber_ = lineNumberOfPointOfCall;
+				token_ = tokenOfPointOfCall;
+				lineNumber_ = null == tokenOfPointOfCall? 0: tokenOfPointOfCall.getLine();
 			}
 			@Override public RTCode run() {
 				if (false == resultIsConsumed()) {
 					if (RunTimeEnvironment.runTimeEnvironment_.stackSize() < 1) {
-						ErrorLogger.error(ErrorIncidenceType.Internal, 0,
+						ErrorLogger.error(ErrorIncidenceType.Internal, null,
 								"FATAL: Run-time error: In post-return processing, return value not found on the stack",
 								": `", debugName_, "', `", name_, "'.");
 						return new RTHalt();
@@ -940,6 +956,9 @@ public abstract class RTExpression extends RTCode {
 			@Override public int lineNumber() {
 				return lineNumber_;
 			}
+			@Override public Token token() {
+				return token_;
+			}
 			
 			public String name() {
 				return name_;
@@ -950,6 +969,7 @@ public abstract class RTExpression extends RTCode {
 			
 			private final String name_, debugName_;		// for debugging only
 			private final int lineNumber_;
+			private final Token token_;
 		}
 		
 		@Override public void setResultIsConsumed(final boolean tf) {
@@ -971,10 +991,10 @@ public abstract class RTExpression extends RTCode {
 			final Declaration associatedDeclaration = null == enclosedMethodScope?
 																null: 
 																enclosedMethodScope.associatedDeclaration();
-			final int lineNumber = null == associatedDeclaration? 0: associatedDeclaration.lineNumber();
-					
+			final Token token = null == associatedDeclaration? null: associatedDeclaration.token();
+			
 			if (false == isStatic) {
-				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope, lineNumber);
+				final IdentifierExpression self = new IdentifierExpression("this", outType, enclosedMethodScope, token);
 				argList.addActualArgument(self);
 			}
 			
@@ -989,7 +1009,7 @@ public abstract class RTExpression extends RTCode {
 					final Type stringType = StaticScope.globalScope().lookupTypeDeclaration(parameterTypeName);
 
 					final IdentifierExpression theArgument = new IdentifierExpression(parameterName, stringType,
-							enclosedMethodScope, lineNumber);
+							enclosedMethodScope, token);
 					argList.addActualArgument(theArgument);
 				}
 			}
@@ -1039,6 +1059,7 @@ public abstract class RTExpression extends RTCode {
 		protected final RTCode argPush_;
 		private ActualArgumentList actualParameters_;
 		private final int lineNumber_;
+		private final Token token_;
 		private final int [] expressionsCountInArguments_;
 		private final RTPostReturnProcessing postReturnProcessing_;
 		private RTType nearestEnclosingType_;
@@ -1069,7 +1090,7 @@ public abstract class RTExpression extends RTCode {
 			return name_;
 		}
 		
-		public void setNextCode(final RTCode next) {
+		@Override public void setNextCode(final RTCode next) {
 			part2_.setNextCode(next);
 		}
 		
@@ -1157,6 +1178,7 @@ public abstract class RTExpression extends RTCode {
 		public RTIdentifier(final String name, final IdentifierExpression expression) {
 			super();
 
+			token_ = expression.token();
 			lineNumber_ = expression.lineNumber();
 			declaringScope_ = expression.scopeWhereDeclared();
 			
@@ -1211,9 +1233,9 @@ public abstract class RTExpression extends RTCode {
 						value = null == parentScope? null: parentScope.getObject(idName_);
 					}
 					if (null == value) {
-						ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber_,
+						ErrorLogger.error(ErrorIncidenceType.Internal, token_,
 								"RUNTIME: Unknown run-time error around source line ",
-								Integer.toString(lineNumber_),
+								Integer.toString(token_.getLine()),
 								" associated with `", idName_,
 								"'. Check other error messages.", "");
 						return new RTHalt();
@@ -1311,6 +1333,9 @@ public abstract class RTExpression extends RTCode {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != nextCode_) retval.add(nextCode_);
@@ -1321,6 +1346,7 @@ public abstract class RTExpression extends RTCode {
 		protected StaticScope declaringScope_;
 		protected final boolean isLocal_;
 		protected final int lineNumber_;
+		protected final Token token_;
 	}
 	
 	public static class RTArrayIdentifier extends RTIdentifier {
@@ -1779,6 +1805,7 @@ public abstract class RTExpression extends RTCode {
 			public RTUnaryopWithSideEffectPart2(final UnaryopExpressionWithSideEffect expr) {
 				super();
 				lineNumber_ = expr.lineNumber();
+				token_ = expr.token();
 				operator_ = expr.operator();
 				preOrPost_ = expr.preOrPost();
 				setResultIsConsumed(expr.resultIsConsumed());
@@ -1794,7 +1821,7 @@ public abstract class RTExpression extends RTCode {
 					value = lhs.unaryMinus();
 				} else if (operator_.equals("++")) {
 					if (lhs instanceof RTNullObject) {
-						ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+						ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 								(preOrPost_ == PreOrPost.Pre? "FATAL: Pre": "FATAL: Post"),
 								"-increment of unitialized identifier `",
 								lhs.getText(), "'.");
@@ -1813,7 +1840,7 @@ public abstract class RTExpression extends RTCode {
 					}
 				} else if (operator_.equals("--")) {
 					if (lhs instanceof RTNullObject) {
-						ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+						ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 								(preOrPost_ == PreOrPost.Pre? "FATAL: Pre": "FATAL: Post"),
 								"-decrement of unitialized identifier `",
 								lhs.getText(), "'.");
@@ -1848,6 +1875,10 @@ public abstract class RTExpression extends RTCode {
 				return lineNumber_;
 			}
 			
+			@Override public Token token() {
+				return token_;
+			}
+			
 			@Override public List<RTCode> connectedExpressions() {
 				List<RTCode> retval = new ArrayList<RTCode>();
 				if (null != nextCode_) retval.add(nextCode_);
@@ -1857,6 +1888,7 @@ public abstract class RTExpression extends RTCode {
 			private final String operator_;
 			private final UnaryopExpressionWithSideEffect.PreOrPost preOrPost_;
 			private final int lineNumber_;
+			private final Token token_;
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
@@ -2023,7 +2055,7 @@ public abstract class RTExpression extends RTCode {
 			return RunTimeEnvironment.runTimeEnvironment_.runner(rhs_);
 		}
 		
-		public void setNextCode(final RTCode pc) {
+		@Override public void setNextCode(final RTCode pc) {
 			part2_.setNextCode(pc);
 		}
 	
@@ -2082,7 +2114,7 @@ public abstract class RTExpression extends RTCode {
 							assert lhs_ instanceof RTRoleIdentifier;
 							this.processRoleArrayBinding2b((RTListObject)aRhs);
 						} else {
-							ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber(),
+							ErrorLogger.error(ErrorIncidenceType.Runtime, token(),
 									"Argument `", rhs.getText(), "' is not of an iterable type (List or vector) suitable to playing Role `" +
 											((RTRoleIdentifier)lhs_).name(),
 											"'.");
@@ -2156,7 +2188,7 @@ public abstract class RTExpression extends RTCode {
 					// it's all done within the "assign" method called above
 					return staticNextCode_;
 				} else if (lhs_ instanceof RTArrayIndexExpressionUnaryOp) {
-					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "INTERNAL Error: Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
+					ErrorLogger.error(ErrorIncidenceType.Internal, null, "INTERNAL Error: Invalid left-hand side: unary increment or decrement operation on indexed array element", "", "", "");
 				} else {
 					assert false;
 				}
@@ -2261,7 +2293,7 @@ public abstract class RTExpression extends RTCode {
 				final RTContextObject contextScope = (RTContextObject)RTExpression.getObjectUpToMethodScopeFrom("this", scope);
 				
 				assert contextScope.rTType() instanceof RTContext;
-				ErrorLogger.error(ErrorIncidenceType.Unimplemented, 0, "Unimplemented: assigment of vector to scalar role", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Unimplemented, null, "Unimplemented: assigment of vector to scalar role", "", "", "");
 			}
 			
 			private RTCode processRoleArrayElementBinding(final RTRoleArrayIndexExpression lhs, final RTObject rhs) {
@@ -2494,8 +2526,8 @@ public abstract class RTExpression extends RTCode {
 						MethodInvocationEnvironmentClass.ClassEnvironment:
 						expr.enclosingMegaType().enclosedScope().methodInvocationEnvironmentClass();
 				final MethodInvocationEnvironmentClass targetMessageClass = constructor.enclosedScope().methodInvocationEnvironmentClass();
-				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope, expr.lineNumber());
-				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.lineNumber(),
+				final IdentifierExpression rawSelf = new IdentifierExpression("this", classType_, classScope, expr.token());
+				final MessageExpression messageExpression = new MessageExpression(rawSelf, message, classType_, expr.token(),
 						false, originMessageClass, targetMessageClass, true);
 				
 				// The selectorName() will be the name of the class. The messageExpression
@@ -2813,6 +2845,7 @@ public abstract class RTExpression extends RTCode {
 			rTIndexExpression_ = RTExpression.makeExpressionFrom( expr.indexExpr(), nearestEnclosingType );
 			rTArrayExpression_ = RTExpression.makeExpressionFrom( expr.arrayExpr(), nearestEnclosingType );
 			lineNumber_ = expr.lineNumber();
+			token_ = expr.token();
 			
 			setResultIsConsumed(expr.resultIsConsumed());
 		}
@@ -2844,14 +2877,14 @@ public abstract class RTExpression extends RTCode {
 				final RTArrayObject arrayBase = (RTArrayObject)rawArrayBase;
 				result = arrayBase.getObject(theIndex);
 			} else if (rawArrayBase instanceof RTNullObject) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_, "Likely access of uninitialized array. Machine halted.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, token_, "Likely access of uninitialized array. Machine halted.", "", "", "");
 				return new RTHalt();
 			} else if (true) {
 				assert false;
 			}
 			
 			if (null == result) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Likely access of uninitialized array element.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Likely access of uninitialized array element.", "", "", "");
 				return null;
 			}
 			RunTimeEnvironment.runTimeEnvironment_.pushStack(result);
@@ -2875,13 +2908,13 @@ public abstract class RTExpression extends RTCode {
 			
 			final RTObject theIndex = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 			if (theIndex instanceof RTNullObject) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Array index ", rTIndexExpression_.toString(), " unitialized at run-time for array ", 
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Array index ", rTIndexExpression_.toString(), " unitialized at run-time for array ", 
 						rTArrayExpression_.toString());
 				pc2 = null; 	// halt
 			} else {
 				final RTStackable evaluationResult = RunTimeEnvironment.runTimeEnvironment_.popStack();
 				if (evaluationResult instanceof RTNullObject) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Object ", rTArrayExpression_.toString(), " unitialized at run-time.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Object ", rTArrayExpression_.toString(), " unitialized at run-time.", "");
 					pc2 = null; 	// halt
 				} else {
 					assert evaluationResult instanceof RTArrayObject;
@@ -2903,6 +2936,10 @@ public abstract class RTExpression extends RTCode {
 			return lineNumber_;
 		}
 		
+		@Override public Token token() {
+			return token_;
+		}
+		
 		@Override public List<RTCode> connectedExpressions() {
 			List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != nextCode_) retval.add(nextCode_);
@@ -2914,6 +2951,7 @@ public abstract class RTExpression extends RTCode {
 		private final RTExpression rTIndexExpression_;
 		private final RTExpression rTArrayExpression_;
 		private final int lineNumber_;
+		private final Token token_;
 	}
 	public static class RTArrayIndexExpressionUnaryOp extends RTExpression {
 		public RTArrayIndexExpressionUnaryOp(final ArrayIndexExpressionUnaryOp expr, final RTType nearestEnclosingType) {
@@ -3415,7 +3453,7 @@ public abstract class RTExpression extends RTCode {
 				final RTDynamicScope scope = dynamicScope.nearestEnclosingScopeDeclaring(iterationIdentifierName);
 				
 				if (null == scope) {
-					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "INTERNAL: Cannot find loop variable ",
+					ErrorLogger.error(ErrorIncidenceType.Internal, null, "INTERNAL: Cannot find loop variable ",
 							iterationIdentifierName, ".", "");
 					RTMessage.printMiniStackStatus();
 					
@@ -3425,7 +3463,7 @@ public abstract class RTExpression extends RTCode {
 					scope.setObject(iterationIdentifierName, valueFromIteration);
 					return body_;
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Runtime: `",
+					ErrorLogger.error(ErrorIncidenceType.Internal, null, "Runtime: `",
 							iterationIdentifierName, "' has been bound to an uninitialized object.", "");
 					RTMessage.printMiniStackStatus();
 					
@@ -3503,7 +3541,7 @@ public abstract class RTExpression extends RTCode {
 			parsingData.addBreakableRTExpression(label_, this);
 		}
 		
-		protected RTCode setupIterator() {
+		@Override protected RTCode setupIterator() {
 			RTCode pc = RunTimeEnvironment.runTimeEnvironment_.runner(rTThingToIterateOverExpr_);
 			while (null != pc) {
 				if (pc instanceof RTHalt) {
@@ -4422,7 +4460,7 @@ public abstract class RTExpression extends RTCode {
 				part2_.setResultIsConsumed(expr.resultIsConsumed());
 			} else {
 				lhs_ = rhs_ = new RTNullExpression();
-				ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Internal error in building RTProduct", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Internal, null, "Internal error in building RTProduct", "", "", "");
 			}
 		}
 		@Override public RTCode run() {
@@ -5014,11 +5052,15 @@ public abstract class RTExpression extends RTCode {
 		}
 	}
 	
-	public int lineNumber() {
+	@Override public int lineNumber() {
 		return 0;
 	}
 	
-	public List<RTCode> connectedExpressions() {
+	@Override public Token token() {
+		return null;
+	}
+	
+	@Override public List<RTCode> connectedExpressions() {
 		return new ArrayList<RTCode>();
 	}
 	

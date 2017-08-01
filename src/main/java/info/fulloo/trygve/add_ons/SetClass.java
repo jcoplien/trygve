@@ -57,13 +57,13 @@ public final class SetClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -81,10 +81,10 @@ public final class SetClass {
 		
 		if (null == globalScope.lookupTypeDeclaration("Set")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("Set", newScope, /*Base Class*/ null, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Set", newScope, /*Base Class*/ null, null);
 			newScope.setDeclaration(templateDecl);
 			final Type T = new TemplateParameterType("T", null);
-			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, 0);
+			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, null);
 			templateDecl.addTypeParameter(typeParamId, 1);
 			listType_ = new TemplateType("Set", newScope, null);
 			templateDecl.setType(listType_);

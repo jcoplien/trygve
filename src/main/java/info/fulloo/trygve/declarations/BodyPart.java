@@ -25,9 +25,12 @@ package info.fulloo.trygve.declarations;
 
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
+
 public interface BodyPart {
 	public String getText();
 	public Type type();
 	public List<BodyPart> bodyParts();
 	public int lineNumber();
+	public Token token();
 }

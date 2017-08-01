@@ -29,6 +29,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration;
@@ -150,11 +152,11 @@ public abstract class RTClassAndContextCommon implements RTType {
 				if (methodDecl.formalParameters().alignsWith(loggedSignature)) {
 					String toPrint = methodName;
 					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
-					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
+					final Token token = originalMethodDecl == null? null: originalMethodDecl.token();
 					if (null != originalMethodDecl) {
 						toPrint = originalMethodDecl.signature().getText();
 					}
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "Multiple declarations of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, token, "Multiple declarations of `",
 							toPrint + "' in scope `", name(), "'.");
 				}
 			}
@@ -256,7 +258,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 			// We inherit base class methods. Recur.
 			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
 			if (false == runTimeBaseClassType instanceof RTClass) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null,
 						"FATAL: Internal Run-time error: Class lookup error", "", "", "");
 				retval = null;
 			} else {

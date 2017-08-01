@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
@@ -77,7 +76,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert myType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
 		final Type myTypeAsType = myClass.typeDeclaration().type();
-		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, null);
 		pl.addFirstActualParameter(self);
 		
 		assert other instanceof RTObject;
@@ -86,7 +85,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert otherType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon otherClass = (RTClassAndContextCommon)otherType;
 		final Type otherTypeAsType = otherClass.typeDeclaration().type();
-		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, 0);
+		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, null);
 		pl.addActualArgument(otherVar);
 		
 		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo", pl, null);
@@ -137,7 +136,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert myType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
 		final Type myTypeAsType = myClass.typeDeclaration().type();
-		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, null);
 		pl.addFirstActualParameter(self);
 		
 		final RTMethod toString = myType.lookupMethod("toString", pl);
@@ -181,7 +180,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	@Override public void setObject(final String name, final RTObject object) {
 		if (null == object) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0,
+			ErrorLogger.error(ErrorIncidenceType.Internal, null,
 					"Internal error: attempt to set ",
 					name,
 					" to a Java NULL.", "");

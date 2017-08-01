@@ -58,7 +58,7 @@ public final class MathClass {
 		if (null != argumentNames) {
 			for (int i = 0; i < argumentNames.size(); i++) {
 				final ObjectDeclaration formalParameter = 
-						new ObjectDeclaration(argumentNames.get(i), argumentTypes.get(i), 0);
+						new ObjectDeclaration(argumentNames.get(i), argumentTypes.get(i), null);
 				formals.addFormalParameter(formalParameter);
 			}
 		} else {
@@ -68,7 +68,7 @@ public final class MathClass {
 		final StaticScope methodScope = new StaticScope(
 				mathType_.enclosedScope());
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodName,
-				methodScope, mathType_, Public, 0, true);
+				methodScope, mathType_, Public, null, true);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(true);
@@ -84,7 +84,7 @@ public final class MathClass {
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
 			final ClassDeclaration mathDecl = new ClassDeclaration("Math",
-					newScope, objectBaseClass, 0);
+					newScope, objectBaseClass, null);
 			newScope.setDeclaration(mathDecl);
 			mathType_ = new ClassType("Math", newScope, null);
 			mathDecl.setType(mathType_);

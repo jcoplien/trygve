@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.add_ons.ColorClass;
 import info.fulloo.trygve.add_ons.PointClass;
 import info.fulloo.trygve.add_ons.DateClass;
@@ -328,8 +330,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingColor:
 		case usingPoint:
 			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
-					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.lineNumber(),
+					methodDeclaration.enclosedScope(), methodDeclaration.token());
+			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.token(),
 					retval.type(), StaticScope.globalScope());
 			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression.returnExpression(),
 					rTEnclosingMegaType,
@@ -387,11 +389,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get") || methodDeclaration.name().equals("at")) {
 			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope(),
-					methodDeclaration.lineNumber()));
+					methodDeclaration.token()));
 			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("set") || methodDeclaration.name().equals("atPut")) {
 			listCode.add(new ListClass.RTSetCode(methodDeclaration.enclosedScope(),
-					methodDeclaration.lineNumber()));
+					methodDeclaration.token()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("indexOf")) {
 			listCode.add(new ListClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
@@ -653,10 +655,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		assert (sizeOfCodeArray > 0);
 		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
 		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
-				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
+				methodDeclaration.enclosedScope(), methodDeclaration.token());
 		final ReturnExpression returnExpression = new ReturnExpression(
 				methodDeclaration.name(),
-				self, methodDeclaration.lineNumber(),
+				self, methodDeclaration.token(),
 				self.type(), StaticScope.globalScope());
 		final StaticScope myScope = methodDeclaration.enclosedScope();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
@@ -1207,7 +1209,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else if (elementsParamType instanceof ArrayType) {
 					code.add(new RTStringClass.RTJoinArrayCode(methodDeclaration.enclosedScope()));
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
+					ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.token(),
 							"Invalid parameter type `",
 							elementsParamType.name(),
 							"' to String.join.", "", "", "");
@@ -1309,7 +1311,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				final Expression expressionToReturn = new TopOfStackExpression();
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingString;
@@ -1317,15 +1319,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				final Expression expressionToReturn = new TopOfStackExpression();
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						intType,
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("to1CharString")) {
-				final Expression expressionToReturn = new IdentifierExpression("ret$val", intType, methodDeclaration.enclosedScope(), 0);
+				final Expression expressionToReturn = new IdentifierExpression("ret$val", intType, methodDeclaration.enclosedScope(), null);
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						StaticScope.globalScope().lookupTypeDeclaration("String"),
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingString;
@@ -1488,10 +1490,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				Expression newLhs;
 				if (lhs instanceof IdentifierExpression) {
 					final IdentifierExpression self = new IdentifierExpression("this", classType,
-							methodScope, lhs.lineNumber());
+							methodScope, lhs.token());
 					newLhs = new QualifiedIdentifierExpression(self, lhs.name(), lhs.type());
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, lhs.token(), "Improperly formed initialization of `",
 							lhs.name(), "'.", "");
 					newLhs = new ErrorExpression(lhs);
 				}
@@ -1508,12 +1510,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					isWellFormedInitialization = innerExpr instanceof Constant;
 				}
 				if (false == isWellFormedInitialization) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, rhs.token(), "Improperly formed initialization of `",
 							lhs.name() + "': non-constant right-hand side `", rhs.getText(), "'.");
 					rhs = new ErrorExpression(rhs);
 				}
 				final AssignmentExpression newAssignmentExpression =
-						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
+						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.token(), null);
 				retval.add(newAssignmentExpression);
 			} else {
 				retval.add(initializer);
@@ -1566,7 +1568,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (megaTypeOfPotentialCtor.name().equals(methodDeclaration.name()) &&
 						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
 					if (false == methodDeclaration.hasManualBaseClassConstructorInvocations()) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.token(),
 							"Constructor `", methodDeclaration.signature().getText(),
 							"' has no valid means to ensure that the base class part of the object is initialized.", "");
 					}
@@ -1686,7 +1688,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final Expression returnExpression = new ReturnExpression(
 					methodDeclaration.name(),
 					expressionToReturn,	/* Dummy? */
-					methodDeclaration.lineNumber(),
+					methodDeclaration.token(),
 					nearestEnclosingMegaType, methodDeclaration.enclosedScope());
 			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpression);
 		} else {
@@ -2187,11 +2189,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
 				RunTimeEnvironment.runTimeEnvironment_.registerTypeByPath(scopePathName, retval);
 				if (null == retval) {
-					final int lineNumber = null == enclosedScope? 0:
-						(null == enclosedScope.associatedDeclaration()? 0:
-							enclosedScope.associatedDeclaration().lineNumber()
+					final Token token = null == enclosedScope? null:
+						(null == enclosedScope.associatedDeclaration()? null:
+							enclosedScope.associatedDeclaration().token()
 						);
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token,
 							"FATAL: Internal Error: Scope stack corrupted; likely termination cleanup problem. Just proceed.",
 							"", "", "");
 				}

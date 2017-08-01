@@ -274,7 +274,7 @@ public class RTArrayObject implements RTObject, RTIterable {
 		RTObject retval = null;
 		final int index = this.calculateIndexFrom(theIndex);
 		if (index >= size_) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "array index ", Integer.toString(index), " beyone array bounds 0:",
+			ErrorLogger.error(ErrorIncidenceType.Internal, null, "array index ", Integer.toString(index), " beyone array bounds 0:",
 					Integer.toString(size_));
 		}
 		switch (preOrPost) {

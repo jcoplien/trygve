@@ -28,6 +28,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -62,6 +64,7 @@ public class RTMethod extends RTCode {
 		nextCodeIndex_ = 0; 
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
+		token_ = methodDeclaration.token();
 		lineNumber_ = methodDeclaration.lineNumber();
 		
 		// Put in a default return statement at the end of the function.
@@ -286,6 +289,10 @@ public class RTMethod extends RTCode {
 		return lineNumber_;
 	}
 	
+	@Override public Token token() {
+		return token_;
+	}
+	
 	@Override public List<RTCode> connectedExpressions() {
 		final ArrayList<RTCode> retval = new ArrayList<RTCode>();
 		for (final RTCode aStatement: code_) {
@@ -307,4 +314,5 @@ public class RTMethod extends RTCode {
 	protected RTCode returnInstruction_;
 	private Type returnType_;
 	private final int lineNumber_;
+	private final Token token_;
 }

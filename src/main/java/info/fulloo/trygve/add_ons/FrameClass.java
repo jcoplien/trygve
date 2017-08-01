@@ -64,15 +64,15 @@ public final class FrameClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", frameType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", frameType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(frameType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -94,7 +94,7 @@ public final class FrameClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("Frame", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("Frame", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			frameType_ = new ClassType("Frame", newScope, null);
 			classDecl.setType(frameType_);
@@ -164,7 +164,7 @@ public final class FrameClass {
 				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
 				theFrameObjectHelper.add(name, panel);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.add.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame.add.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -188,7 +188,7 @@ public final class FrameClass {
 				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
 				theFrameObjectHelper.resize(width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.resize.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame.resize.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -212,7 +212,7 @@ public final class FrameClass {
 				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
 				theFrameObjectHelper.resize(width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setSize.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame.setSize.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -246,7 +246,7 @@ public final class FrameClass {
 				final RTFrameObject theFrameObjectHelper = (RTFrameObject)theFrame.getObject("frame$object");
 				theFrameObjectHelper.setVisible(tf);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame.setVisible.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame.setVisible.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -271,7 +271,7 @@ public final class FrameClass {
 			try {
 				theFrameObjectHelper.ctor1(name.stringValue());
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame (1) constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame (1) constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -296,7 +296,7 @@ public final class FrameClass {
 			try {
 				theFrameObjectHelper.ctor0();
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Frame (0) constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Frame (0) constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}

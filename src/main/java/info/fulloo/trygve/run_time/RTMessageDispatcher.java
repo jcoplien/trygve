@@ -23,6 +23,8 @@ package info.fulloo.trygve.run_time;
  *
  */
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -183,7 +185,7 @@ public abstract class RTMessageDispatcher {
 								final boolean isStatic,
 								final RTType nearestEnclosingType) {
 		messageExpr_ = messageExpr;
-		lineNumber_ = messageExpr_.lineNumber();
+		token_ = messageExpr_.token();
 		methodSelectorName_ = methodSelectorName;
 		argPush_ = argPush;
 		postReturnProcessing_ = postReturnProcessing;
@@ -217,7 +219,11 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	public int lineNumber() {
-		return lineNumber_;
+		return token_.getLine();
+	}
+	
+	public Token token() {
+		return token_;
 	}
 	
 	public RTCode hasError() {
@@ -333,7 +339,7 @@ public abstract class RTMessageDispatcher {
 		}
 		if (this.isBuiltInAssert_) {
 			// Put the line number in the activation record
-			final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+			final RTIntegerObject lineNumberToPush = new RTIntegerObject(token_.getLine());
 			activationRecord.addObjectDeclaration("lineNumber", null);
 			activationRecord.setObject("lineNumber", lineNumberToPush);
 		}
@@ -363,7 +369,7 @@ public abstract class RTMessageDispatcher {
 		}
 		if (this.isBuiltInAssert_) {
 			// Put the line number in the activation record
-			final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+			final RTIntegerObject lineNumberToPush = new RTIntegerObject(token_.getLine());
 			activationRecord.addObjectDeclaration("lineNumber", null);
 			activationRecord.setObject("lineNumber", lineNumberToPush);
 		}
@@ -671,7 +677,7 @@ public abstract class RTMessageDispatcher {
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 
 		if (self instanceof RTNullObject) {
-			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method `",
+			ErrorLogger.error(ErrorIncidenceType.Fatal, token(), "FATAL: TERMINATED: Attempting to invoke method `",
 					methodSelectorName_, "' on a null object", "");
 			RTMessage.printMiniStackStatus();
 			
@@ -679,7 +685,7 @@ public abstract class RTMessageDispatcher {
 			hasError_ = new RTHalt();
 			return null;
 		} else if (null == rTTypeOfSelf) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+			ErrorLogger.error(ErrorIncidenceType.Internal, token(), "INTERNAL: Attempting to invoke method `",
 					methodSelectorName_, "' on a null Java object", "");
 			hasError_ = new RTHalt();
 			return null;
@@ -951,14 +957,14 @@ public abstract class RTMessageDispatcher {
 				final RTType rTTypeOfSelf = null != self? self.rTType():
 					InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, token(), "FATAL: TERMINATED: Attempting to invoke method ",
 							methodSelectorName_, " on a null object", "");
 					RTMessage.printMiniStackStatus();
 					
 					// Halt the machine
 					return null;
 				} else if (null == rTTypeOfSelf) {
-					ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+					ErrorLogger.error(ErrorIncidenceType.Internal, token(), "INTERNAL: Attempting to invoke method `",
 							methodSelectorName_, "' on a null Java object", "");
 					return null;
 					// assert null != rTTypeOfSelf;
@@ -1478,7 +1484,7 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	protected       RTMethod methodDecl_;
-	protected final int lineNumber_;
+	protected final Token token_;
 	protected final MessageExpression messageExpr_;
 	protected final String methodSelectorName_;
 	protected final RTCode argPush_;

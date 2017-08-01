@@ -264,7 +264,7 @@ public class RunTimeEnvironment {
 		final int stackSize = theStack().size();
 		final int framePointer = (framePointerStack().pop()).intValue();
 		if (framePointer > stackSize) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
+			ErrorLogger.error(ErrorIncidenceType.Internal, null, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
@@ -280,7 +280,7 @@ public class RunTimeEnvironment {
 		final int stackSize = theStack().size();
 		int framePointer = (framePointerStack().pop()).intValue() + 1;
 		if (framePointer < stackSize) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
+			ErrorLogger.error(ErrorIncidenceType.Internal, null, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}

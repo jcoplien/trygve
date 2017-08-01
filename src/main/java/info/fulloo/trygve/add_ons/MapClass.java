@@ -65,15 +65,15 @@ public final class MapClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -84,12 +84,12 @@ public final class MapClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
-		final ObjectDeclaration m = new ObjectDeclaration("m", mapType_, 0);
+		final ObjectDeclaration m = new ObjectDeclaration("m", mapType_, null);
 		formals.addFormalParameter(m);
-		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration("putAll", methodScope, voidType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration("putAll", methodScope, voidType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(voidType);
 		methodDecl.setHasConstModifier(false);
@@ -109,12 +109,12 @@ public final class MapClass {
 			final StaticScope newScope = new StaticScope(globalScope);
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, objectBaseClass, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, objectBaseClass, null);
 			newScope.setDeclaration(templateDecl);
 			final Type K = new TemplateParameterType("K", null);
 			final Type V = new TemplateParameterType("V", null);
-			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope, 0);
-			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope, 0);
+			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope, null);
+			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope, null);
 			templateDecl.addTypeParameter(keyTypeParamID, 2);
 			templateDecl.addTypeParameter(valueTypeParamID, 2);
 			mapType_ = new TemplateType("Map", newScope, null);

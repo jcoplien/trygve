@@ -23,11 +23,14 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public interface TypeDeclaration {
 	public int lineNumber();
+	public Token token();
 	public String name();
 	public StaticScope enclosingScope();
 	public StaticScope enclosedScope();

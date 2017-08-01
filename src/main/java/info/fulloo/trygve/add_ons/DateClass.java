@@ -56,13 +56,13 @@ public final class DateClass {
 			formals.addFormalParameter(parameter);
 		}
 		
-		final ObjectDeclaration self = new ObjectDeclaration("this", dateType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", dateType_, null);
 		formals.addFormalParameter(self);
 		
 		final StaticScope methodScope = new StaticScope(dateType_.enclosedScope());
 		final AccessQualifier Public = AccessQualifier.PublicAccess;
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector,
-				methodScope, dateType_, Public, 0, false);
+				methodScope, dateType_, Public, null, false);
 		methodDecl.addParameterList(formals);
 		Type returnType = null;
 		if (null != returnTypeName) {
@@ -89,7 +89,7 @@ public final class DateClass {
 			final StaticScope newScope = new StaticScope(globalScope);
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
-			final ClassDeclaration dateDecl = new ClassDeclaration("Date", newScope, objectBaseClass, 0);
+			final ClassDeclaration dateDecl = new ClassDeclaration("Date", newScope, objectBaseClass, null);
 			newScope.setDeclaration(dateDecl);
 			dateType_ = new ClassType("Date", newScope, null);
 			dateDecl.setType(dateType_);
@@ -99,10 +99,10 @@ public final class DateClass {
 			
 			// constructor (with three arguments)
 			FormalParameterList formals = new FormalParameterList();
-			ObjectDeclaration self = new ObjectDeclaration("this", dateType_, 0);
-			ObjectDeclaration year = new ObjectDeclaration("year", integerType, 0),
-					         month = new ObjectDeclaration("month", integerType, 0),
-					          date = new ObjectDeclaration("date", integerType, 0);
+			ObjectDeclaration self = new ObjectDeclaration("this", dateType_, null);
+			ObjectDeclaration year = new ObjectDeclaration("year", integerType, null),
+					         month = new ObjectDeclaration("month", integerType, null),
+					          date = new ObjectDeclaration("date", integerType, null);
 			
 			formals.addFormalParameter(date);
 			formals.addFormalParameter(month);
@@ -111,7 +111,7 @@ public final class DateClass {
 			formals.addFormalParameter(self);
 			
 			StaticScope methodScope = new StaticScope(dateType_.enclosedScope());
-			MethodDeclaration methodDecl = new MethodDeclaration("Date", methodScope, null, Public, 0, false);
+			MethodDeclaration methodDecl = new MethodDeclaration("Date", methodScope, null, Public, null, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(null);
 			methodDecl.setHasConstModifier(false);
@@ -119,30 +119,30 @@ public final class DateClass {
 
 			// constructor (with no arguments)
 			formals = new FormalParameterList();
-			self = new ObjectDeclaration("this", dateType_, 0);
+			self = new ObjectDeclaration("this", dateType_, null);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(dateType_.enclosedScope());
-			methodDecl = new MethodDeclaration("Date", methodScope, null, Public, 0, false);
+			methodDecl = new MethodDeclaration("Date", methodScope, null, Public, null, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(null);
 			methodDecl.setHasConstModifier(false);
 			dateType_.enclosedScope().declareMethod(methodDecl, null);
 			
 			singleSimpleFunctionSetup("getYear", null, "int");
-			singleSimpleFunctionSetup("setYear", new ObjectDeclaration("year", integerType, 0), null);
+			singleSimpleFunctionSetup("setYear", new ObjectDeclaration("year", integerType, null), null);
 			singleSimpleFunctionSetup("getMonth", null, "int");
-			singleSimpleFunctionSetup("setMonth", new ObjectDeclaration("month", integerType, 0), null);
+			singleSimpleFunctionSetup("setMonth", new ObjectDeclaration("month", integerType, null), null);
 			singleSimpleFunctionSetup("getDate", null, "int");
-			singleSimpleFunctionSetup("setDate", new ObjectDeclaration("date", integerType, 0), null);
+			singleSimpleFunctionSetup("setDate", new ObjectDeclaration("date", integerType, null), null);
 			singleSimpleFunctionSetup("getDay", null, "int");
-			singleSimpleFunctionSetup("setDay", new ObjectDeclaration("day", integerType, 0), null);
-			singleSimpleFunctionSetup("compareTo", new ObjectDeclaration("other", dateType_, 0), "int");
+			singleSimpleFunctionSetup("setDay", new ObjectDeclaration("day", integerType, null), null);
+			singleSimpleFunctionSetup("compareTo", new ObjectDeclaration("other", dateType_, null), "int");
 			
 			formals = new FormalParameterList();
-			self = new ObjectDeclaration("this", dateType_, 0);
+			self = new ObjectDeclaration("this", dateType_, null);
 			formals.addFormalParameter(self);
 			methodScope = new StaticScope(dateType_.enclosedScope());
-			methodDecl = new MethodDeclaration("toString", methodScope, stringType, Public, 0, false);
+			methodDecl = new MethodDeclaration("toString", methodScope, stringType, Public, null, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(stringType);
 			methodDecl.setHasConstModifier(true);

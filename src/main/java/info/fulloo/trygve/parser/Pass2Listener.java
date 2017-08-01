@@ -103,21 +103,21 @@ public class Pass2Listener extends Pass1Listener {
 		currentContext_ = null;
 	}
 
-	@Override protected ClassDeclaration lookupOrCreateNewClassDeclaration(String name, StaticScope newScope, ClassDeclaration rawBaseClass, int lineNumber) {
+	@Override protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope, final ClassDeclaration rawBaseClass, final Token token) {
 		return currentScope_.lookupClassDeclarationRecursive(name);
 	}
 	
-	@Override protected void createNewTemplateTypeSuitableToPass(TemplateDeclaration newClass, String name, StaticScope newScope, ClassType baseType) {
+	@Override protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newClass, final String name, final StaticScope newScope, final ClassType baseType) {
 	}
 
-	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
+	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final Token token, final boolean isRoleArray) {
 		// Return value is through currentRole_
 		currentRoleOrStageProp_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(roleName);
 		if (null == currentRoleOrStageProp_) {
 			assert null != currentRoleOrStageProp_;
 		}
 	}
-	@Override protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
+	@Override protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final Token token, final boolean isStagePropArray) {
 		// Return value is through currentRole_
 		currentRoleOrStageProp_ = currentScope_.lookupRoleOrStagePropDeclarationRecursive(stagePropName);
 		if (null == currentRoleOrStageProp_) {
@@ -137,7 +137,7 @@ public class Pass2Listener extends Pass1Listener {
 		
 		// There will be a (potentially null) method body. Set up the
 		// ExprAndDeclList to receive it.
-		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart().getLine());
+		final ExprAndDeclList newList = new ExprAndDeclList(ctx.getStart());
 		parsingData_.pushExprAndDecl(newList);
 		
 		final Method_decl_hookContext declHookContext = ctx.method_decl_hook();
@@ -195,7 +195,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null != returnType) {
 				final String returnTypeName = returnType.getText();
 				if (null == currentScope_.lookupTypeDeclarationRecursive(returnTypeName)) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type `", returnTypeName, "' not declared for `",
+					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Return type `", returnTypeName, "' not declared for `",
 							currentMethod.name(), "'.", "");
 				} else {
 					currentMethod.setReturnType(returnType);
@@ -208,7 +208,7 @@ public class Pass2Listener extends Pass1Listener {
 					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 						; // then O.K. - constructor
 					} else {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for `", currentMethod.name(), "'.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Return type not declared for `", currentMethod.name(), "'.", "");
 					}
 				} else if (otherAssociatedDeclaration instanceof ClassDeclaration) {
 					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
@@ -219,40 +219,40 @@ public class Pass2Listener extends Pass1Listener {
 							if (currentMethod.name().equals(templateDeclaration.name())) {
 								// o.k. - constructors on templates don't include parameter names
 							} else {
-								errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+								errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
 							}
 						} else {
-							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
+							errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Return type not declared for class method `", currentMethod.name(), "'.", "");
 						}
 					}
 				} else if (otherAssociatedDeclaration instanceof TemplateDeclaration) {
 					if (currentMethod.name().equals(otherAssociatedDeclaration.name())) {
 						; // then O.K. - constructor
 					} else {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Return type not declared for template method `", currentMethod.name(), "'.", "");
 					}
 				} else {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Bad declaration of `", currentMethod.name(), "': ", "bad return type?");
 				}
 			}
 			// +++++++++++++++++++++++++
 			
-			this.checkMethodAccess(currentMethod, ctx.getStart().getLine());
+			this.checkMethodAccess(currentMethod, ctx.getStart());
 			
 			final StaticScope parentScope = currentScope_.parentScope();
 			currentScope_ = parentScope;
 			
 			@SuppressWarnings("unused")
 			final FormalParameterList pl = parsingData_.popFormalParameterList();	// hope this is the right place
-			final int lastLineNumber = ctx.getStop().getLine();
+			final Token lastLineNumberPosition = ctx.getStop();
 			
-			final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumber, this);
+			final ReturnStatementAudit audit = new ReturnStatementAudit(currentMethod.returnType(), parsingData_.currentExprAndDecl(), lastLineNumberPosition, this);
 			assert null != audit;	// just so it's used...
 			this.setMethodBodyAccordingToPass(currentMethod);
 		}
 	}
 	
-	private void checkMethodAccess(final MethodDeclaration currentMethod, int lineNumber) {
+	private void checkMethodAccess(final MethodDeclaration currentMethod, Token token) {
 		final AccessQualifier activeAccessQualifier = currentMethod.accessQualifier();
 		final StaticScope currentScope = currentMethod.enclosedScope();
 		final StaticScope parentScope = currentScope.parentScope();
@@ -268,7 +268,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != baseClassVersionOfMethod) {
 					final AccessQualifier baseClassAccessQualifier = baseClassVersionOfMethod.accessQualifier();
 					if (baseClassAccessQualifier != activeAccessQualifier) {
-						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+						errorHook6p2(ErrorIncidenceType.Fatal, token,
 								"Derived class declaration of `", currentMethod.signature().getText(),
 								"' must have same access qualifier as that of declaration in base class `",
 								baseClass.name(), "'.", "");
@@ -281,8 +281,8 @@ public class Pass2Listener extends Pass1Listener {
 							baseClassReturnType.isntError() &&
 							derivedClassReturnType.isntError() &&
 							baseClassReturnType.canBeConvertedFrom(derivedClassReturnType,
-									lineNumber, this) == false) {
-						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+									token, this) == false) {
+						errorHook6p2(ErrorIncidenceType.Fatal, token,
 								"Return type `",
 								derivedClassReturnType.getText(),
 								"' of `" + currentMethod.signature().getText(),
@@ -318,7 +318,7 @@ public class Pass2Listener extends Pass1Listener {
 		// | access_qualifier 'role' JAVA_ID '{ '}' REQUIRES '{' self_methods '}'
 		
 		super.enterRole_decl(ctx);
-		this.processRequiredDeclarations(ctx.getStart().getLine());
+		this.processRequiredDeclarations(ctx.getStart());
 	}
 	@Override public void exitRole_decl(KantParser.Role_declContext ctx)
 	{
@@ -331,7 +331,7 @@ public class Pass2Listener extends Pass1Listener {
 		// | access_qualifier 'role' JAVA_ID '{ '}'
 		// | access_qualifier 'role' JAVA_ID '{ '}' REQUIRES '{' self_methods '}'
 		
-		this.processDeclareRoleArrayAlias(ctx.getStart().getLine());
+		this.processDeclareRoleArrayAlias(ctx.getStart());
 		super.exitRole_decl(ctx);	// necessary? some of the cleanup seems relevant
 	}
 	@Override public void enterStageprop_decl(KantParser.Stageprop_declContext ctx)
@@ -341,12 +341,12 @@ public class Pass2Listener extends Pass1Listener {
 		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}'
 		// | access_qualifier 'stageprop' JAVA_ID '{' role_body '}' REQUIRES '{' self_methods '}'
 		super.enterStageprop_decl(ctx);
-		this.processRequiredDeclarations(ctx.getStart().getLine());
+		this.processRequiredDeclarations(ctx.getStart());
 	}
 	
-	protected void processRequiredDeclarations(int lineNumber)
+	protected void processRequiredDeclarations(final Token token)
 	{
-		currentRoleOrStageProp_.processRequiredDeclarations(lineNumber);
+		currentRoleOrStageProp_.processRequiredDeclarations(token);
 	}
 	
 	@Override public void enterArgument_list(KantParser.Argument_listContext ctx)
@@ -370,7 +370,7 @@ public class Pass2Listener extends Pass1Listener {
 			assert false;
 		}	
 
-		final long lineNumber = ctx.getStart().getLine();
+		final Token token = ctx.getStart();
 		
 		// This is definitely Pass 2 stuff.
 		final ActualArgumentList argumentList = parsingData_.popArgumentList();
@@ -384,11 +384,11 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		final Message newMessage = new Message(selectorName, argumentList, lineNumber, enclosingMegaType);
+		final Message newMessage = new Message(selectorName, argumentList, token, enclosingMegaType);
 		parsingData_.pushMessage(newMessage);
 	}
 	
-	@Override protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final int lineNumber) {
+	@Override protected Expression processIndexExpression(final Expression rawArrayBase, final Expression indexExpr, final Token token) {
 		Expression expression = null;
 		
 		// On pass one, types may not yet be set up so we may
@@ -408,7 +408,7 @@ public class Pass2Listener extends Pass1Listener {
 				
 				final Type contextType = Expression.nearestEnclosingMegaTypeOf(roleDecl.enclosedScope());
 				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope, lineNumber);
+				final Expression currentContext = new IdentifierExpression("current$context", contextType, nearestMethodScope, token);
 				final Expression roleNameInvocation = new QualifiedIdentifierExpression(currentContext, roleName, roleDecl.type());
 				expression = new RoleArrayIndexExpression(roleName, roleNameInvocation, indexExpr);
 			}
@@ -419,7 +419,7 @@ public class Pass2Listener extends Pass1Listener {
 			final Type aBaseType = arrayType.baseType();	// like int
 			final ArrayExpression arrayBase = new ArrayExpression(rawArrayBase, aBaseType);
 			arrayBase.setResultIsConsumed(true);
-			expression = new ArrayIndexExpression(arrayBase, indexExpr, lineNumber);
+			expression = new ArrayIndexExpression(arrayBase, indexExpr, token);
 		} else if (baseType instanceof BuiltInType && baseType.name().equals("void")) {
 			// Stumbling error
 			expression = new ErrorExpression(rawArrayBase);
@@ -441,22 +441,22 @@ public class Pass2Listener extends Pass1Listener {
 			if (executionContext instanceof Method_declContext) {
 				break;
 			} else if (executionContext instanceof Stageprop_bodyContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Role_bodyContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Stageprop_declContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in stageprop scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Role_declContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in Role scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Class_bodyContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in Class scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in Class scope: it must be in a method", "", "", "");
 				break;
 			} else if (executionContext instanceof Type_declarationContext) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Expression cannot just appear in a global program element scope: it must be in a method", "", "", "");
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Expression cannot just appear in a global program element scope: it must be in a method", "", "", "");
 				break;
 			}
 			executionContext = executionContext.parent;
@@ -471,13 +471,13 @@ public class Pass2Listener extends Pass1Listener {
 
 		if (resultType.canBeConvertedFrom(rightExpr.type()) == false && leftExpr.isntError() && rightExpr.isntError()
 				&& leftExpr.type().isntError() && rightExpr.type().isntError()) {
-			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Invalid operands to `" +
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Invalid operands to `" +
 					"", operationAsString, "' on type ", leftExpr.type().name(),
 					" with operand of type ", rightExpr.type().name());
 		}
 		final ActualArgumentList argList = new ActualArgumentList();
 		argList.addActualArgument(rightExpr);
-		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope(), ctxGetStart.getLine());
+		final Expression self = new IdentifierExpression("t$his", resultType, resultType.enclosedScope(), ctxGetStart);
 		argList.addFirstActualParameter(self);
 		final StaticScope enclosedScope = resultType.enclosedScope();
 		
@@ -488,7 +488,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == mdecl) {
 				mdecl = enclosedScope.lookupMethodDeclarationIgnoringRoleStuff(operationAsString, argList);
 				if (null == mdecl && rightExpr.isntError() && rightExpr.type().isntError() && resultType.isntError()) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "No such operation `", operationAsString, "' on type `",
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "No such operation `", operationAsString, "' on type `",
 							resultType.name(), "' for argument `" + rightExpr.type().name(), "'.");
 				}
 			}
@@ -508,7 +508,7 @@ public class Pass2Listener extends Pass1Listener {
 				rightExprType.canBeRhsOfBinaryOperator(operationAsString)) {
 			;	// o.k.
 		} else if (rightExpr.isntError() && resultType.isntError() && rightExpr.type().isntError()){
-			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Operation `", operationAsString, "' cannot be applied to type `",
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Operation `", operationAsString, "' cannot be applied to type `",
 					resultType.name(), "' for argument `", rightExpr.type().name() + "'.");
 		}
 	}
@@ -541,7 +541,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (null == odecl) {
 				final MethodDeclaration javaId2 = qualifier.type().enclosedScope().lookupMethodDeclarationRecursive(javaIdString, null, true);
 				if (null == javaId2) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Identifier `", javaIdString, "' not declared for object `", qualifier.name(), "'.", "");
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Identifier `", javaIdString, "' not declared for object `", qualifier.name(), "'.", "");
 					type = new ErrorType();
 				} else {
 					type = javaId2.returnType();
@@ -560,7 +560,7 @@ public class Pass2Listener extends Pass1Listener {
 		return expression;
     }
 	
-	@Override public void ctorCheck(final Type type, final Message message, final int lineNumber) {
+	@Override public void ctorCheck(final Type type, final Message message, final Token token) {
 		// Is there a constructor?
 		// We're not ready for this until here in Pass 2
 		final String className = message.selectorName();
@@ -584,7 +584,7 @@ public class Pass2Listener extends Pass1Listener {
 						constructor = declarationScope.lookupMethodDeclarationWithSuperConversionIgnoringParameter(
 								typeName, actualArgumentList, false, /*parameterToIgnore*/ null);
 						if (null == constructor) {
-							errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "No matching constructor on class `",
+							errorHook5p2(ErrorIncidenceType.Fatal, token, "No matching constructor on class `",
 									className, "' for `new' invocation", ".");
 						}
 					}
@@ -592,22 +592,22 @@ public class Pass2Listener extends Pass1Listener {
 				
 				if (null != constructor) {
 					final String constructorName = constructor.name();
-					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), lineNumber);
+					final boolean isAccessible = currentScope_.canAccessDeclarationWithAccessibility(constructor, constructor.accessQualifier(), token);
 					if (isAccessible == false) {
-						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+						errorHook6p2(ErrorIncidenceType.Fatal, token,
 								"Cannot access constructor `", constructorName,
 								"' with `", constructor.accessQualifier().asString(), "' access qualifier.","");
 					}
 					
 					final List<String> nonmatchingMethods = message.validInRunningEnviroment(constructor);
 					if (0 < nonmatchingMethods.size()) {
-						errorHook5p3(ErrorIncidenceType.Fatal, lineNumber, "The parameters to script `",
+						errorHook5p3(ErrorIncidenceType.Fatal, token, "The parameters to script `",
 								constructorName + message.argumentList().selflessGetText(),
 								"' have scripts that are unavailable outside this Context, ",
 								"though some formal parameters of " + constructorName +
 								" presume they are available (they are likely Role scripts):");
 						for (final String badMethod : nonmatchingMethods) {
-							errorHook5p3(ErrorIncidenceType.Fatal, lineNumber,
+							errorHook5p3(ErrorIncidenceType.Fatal, token,
 									"\t", badMethod, "", "");
 						}
 					}
@@ -618,7 +618,7 @@ public class Pass2Listener extends Pass1Listener {
 	public void addSelfAccordingToPass(final Type type, final Message message, final StaticScope scope) {
 		// Apparently called only for constructor processing.
 		// The simple part. Add this.
-		final Expression self = new IdentifierExpression("t$his", type, scope, 0);
+		final Expression self = new IdentifierExpression("t$his", type, scope, null);
 		message.addActualThisParameter(self);
 	}
 	
@@ -665,7 +665,7 @@ public class Pass2Listener extends Pass1Listener {
 						message.argumentList(), "this", true);
 				if (null != testDecl) {
 					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-					errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart,
 							"NONCOMPLIANT: Enacting enclosed Context script `", message.selectorName() + message.argumentList().selflessGetText(),
 							"' from within `" + nearestEnclosingMegaType.name() + "." + currentMethodScope.associatedDeclaration().name(),
 							"'.");
@@ -701,11 +701,11 @@ public class Pass2Listener extends Pass1Listener {
 					if (null != publishedSignature) {
 						// Is it public?
 						if (publishedSignature.accessQualifier() != AccessQualifier.PublicAccess) {
-							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", message.selectorName(),
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", message.selectorName(),
 									"' is not public and so is not accessible to `", nearestEnclosingMegaType.name(), "'.", "");
 						}
 					} else {
-						errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Noncompliant, ctxGetStart,
 							"NONCOMPLIANT: Trying to enact object script `", message.selectorName() + message.argumentList().selflessGetText(),
 							"' without using the interface of the Role it is playing: `" + roleDecl.name(),
 							"'.");
@@ -744,9 +744,9 @@ public class Pass2Listener extends Pass1Listener {
 			final Type theType = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			final Type classType = StaticScope.globalScope().lookupTypeDeclaration("Class");
 			object = new IdentifierExpression(theType.name(), classType, classType.enclosedScope().parentScope(),
-						ctxGetStart.getLine());
+						ctxGetStart);
 		} else if (null != nearestEnclosingMegaType) {
-			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope, ctxGetStart.getLine());
+			object = new IdentifierExpression("this", nearestEnclosingMegaType, nearestMethodScope, ctxGetStart);
 		} else {
 			object = new ErrorExpression(null);
 		}
@@ -823,15 +823,15 @@ public class Pass2Listener extends Pass1Listener {
 					}
 				}
 			}
-			retval = new MessageExpression(object, message, returnType, ctxGetStart.getLine(), methodSignature.isStatic(),
+			retval = new MessageExpression(object, message, returnType, ctxGetStart, methodSignature.isStatic(),
 					originMethodClass, targetMethodClass, isPolymorphic);
 			if (null == methodDeclaration) {
 				// Could be a "required" method in a Role. It's O.K.
 				assert true;
 			} else {
-				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart.getLine());
+				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart);
 				if (accessOK == false) {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 							"Cannot access method `", methodDeclaration.name(),
 							"' with `", methodDeclaration.accessQualifier().asString(), "' access qualifier.", "");
 				}
@@ -864,7 +864,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		
 		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
-			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
 		} else if (null != object) {
 			// For future reference, we don't want to do this if the
@@ -898,7 +898,7 @@ public class Pass2Listener extends Pass1Listener {
 					message.selectorName(), message.argumentList(), false, /*parameterToIgnore*/ null);
 			}
 			if (null == methodDeclaration) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 						"Cannot find declaration of ", object.name() + ".", message.selectorName(),
 						".");
 			} else {
@@ -933,7 +933,7 @@ public class Pass2Listener extends Pass1Listener {
 							// as holds this method
 							final String objectTypePathName = object.type().pathName();
 							if (nearestEnclosingMegaType.pathName().equals(objectTypePathName) == false) {
-								errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+								errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 										"Trying to access method `", message.selectorName(), "' of another Role (`",
 										object.name(), "') with indexing the Role vector to yield a Role-player.", "");
 							} else {
@@ -959,7 +959,7 @@ public class Pass2Listener extends Pass1Listener {
 					} else {
 						// Then this is trying to invoke a Role vector method
 						// without specifying the individual vector method
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 							"Trying to access a Role method `", message.selectorName(), "' on the vector ID `", object.name() + "'.");
 					}
 				}
@@ -972,7 +972,7 @@ public class Pass2Listener extends Pass1Listener {
 					final MethodSignature signatureInRoleInterface = roleDecl.lookupPublishedSignatureDeclaration(signatureInRequiresSection);
 					if (null == signatureInRoleInterface) {
 						final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 								"Context script `", currentMethodScope.associatedDeclaration().name(),
 								"' may enact only Role scripts. Script `",
 								message.selectorName() + message.argumentList().selflessGetText(),
@@ -996,7 +996,7 @@ public class Pass2Listener extends Pass1Listener {
 				final MethodSignature publishedSignature = roleType.associatedDeclaration().lookupPublishedSignatureDeclaration(methodSignature);
 				if (null != publishedSignature && publishedSignature.isUnusedInThisContext()) {
 					final FormalParameterList formalParameterList = publishedSignature.formalParameterList();
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
 							message.selectorName() + formalParameterList.selflessGetText(),
 							"' is declared as unused in `", objectType.name(), "' at line ",
 							Integer.toString(publishedSignature.lineNumber()) + ".");
@@ -1018,7 +1018,7 @@ public class Pass2Listener extends Pass1Listener {
 					assert false;
 				}
 
-				final Expression currentContext = new IdentifierExpression(nameOfContextIdentifier, wannabeContextType, nearestMethodScope, ctxGetStart.getLine());
+				final Expression currentContext = new IdentifierExpression(nameOfContextIdentifier, wannabeContextType, nearestMethodScope, ctxGetStart);
 				final ActualArgumentList saveArgumentList = message.argumentList().copy();
 				message.argumentList().addFirstActualParameter(currentContext);
 				currentContext.setResultIsConsumed(true);
@@ -1042,7 +1042,7 @@ public class Pass2Listener extends Pass1Listener {
 						// parameter list above...
 						
 						message = new Message(message.selectorName(), saveArgumentList,
-								message.lineNumber(), message.enclosingMegaType());
+								message.token(), message.enclosingMegaType());
 						methodSignature = methodDeclaration.signature();
 					}
 				}
@@ -1083,7 +1083,7 @@ public class Pass2Listener extends Pass1Listener {
 								null;
 					if (null == methodDeclaration) {
 						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
 								message.getText(),
 								"' not declared in class `", classObjectType.name() + "'.");
 						return new ErrorExpression(null);		// punt
@@ -1114,7 +1114,7 @@ public class Pass2Listener extends Pass1Listener {
 							null;
 				if (null == methodDeclaration) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `", message.getText(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", message.getText(),
 							"' not declared in class `", classObjectType.name() + "'.");
 					return new ErrorExpression(null);		// punt
 				} else {
@@ -1138,7 +1138,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (null == methodSignature) {
 					// Mainly for error recovery (bad argument to method / method not declared)
 					if (argumentList.isntError()) {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 								"Script `",
 								methodSelectorName + argumentList.getText(),
 								"' not declared in Interface `",
@@ -1156,17 +1156,17 @@ public class Pass2Listener extends Pass1Listener {
 			if (message.selectorName().equals("size")) {
 				methodSignature = new MethodSignature(message.selectorName(), 
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
-						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+						AccessQualifier.PublicAccess, message.token(), false);
 				methodSignature.setHasConstModifier(true);
 			} else if (message.selectorName().equals("at")) {
 				methodSignature = new MethodSignature(message.selectorName(), 
 						message.returnType(),
-						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+						AccessQualifier.PublicAccess, message.token(), false);
 				methodSignature.setHasConstModifier(true);
 			} else if (message.selectorName().equals("atPut")) {
 				methodSignature = new MethodSignature(message.selectorName(), 
 						StaticScope.globalScope().lookupTypeDeclaration("void"),
-						AccessQualifier.PublicAccess, (int)message.lineNumber(), false);
+						AccessQualifier.PublicAccess, message.token(), false);
 				methodSignature.setHasConstModifier(false);
 			}
 			isOKMethodSignature = true;
@@ -1182,7 +1182,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 		
 		if (objectType.name().equals(message.selectorName())) {
-			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
 		}
 		
 		assert (null != message);	// just assuming...
@@ -1191,19 +1191,19 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != methodDeclaration) {
 			final List<String> invalidMethodSelectors = message.validInRunningEnviroment(methodDeclaration);
 			if (0 < invalidMethodSelectors.size()) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "The parameters to script `",
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "The parameters to script `",
 						methodSelectorName + message.argumentList().selflessGetText(),
 						"' have scripts that are unavailable outside this Context, ",
 						"though some formal parameters of " + methodSelectorName +
 						" presume they are available (they are likely Role scripts):");
 				for (final String badMethod : invalidMethodSelectors) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 							"\t", badMethod, "", "");
 				}
 			}
 		} else if (null == methodDeclaration && isOKMethodSignature == false) {
 			if (message.argumentList().isntError()) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Script `",
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
 						methodSelectorName + message.argumentList().selflessGetText(),
 						"' not declared in class ", "classname (dubious error — see other messages)");
 			}
@@ -1229,7 +1229,7 @@ public class Pass2Listener extends Pass1Listener {
 		MethodDeclaration retval = classOrRoleOrWhateverScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
 				/* conversionAllowed = */ false);
 		if (null == retval) {
-			// If exact match doesn't work, try promition
+			// If exact match doesn't work, try promotion
 			retval = classOrRoleOrWhateverScope.lookupMethodDeclarationIgnoringParameter(methodSelectorName, parameterList, "this",
 					/* conversionAllowed = */ true);
 		}
@@ -1271,14 +1271,14 @@ public class Pass2Listener extends Pass1Listener {
 				  numberOfActualParameters = (null == actuals)? 0: actuals.count();
 		if (null == actuals) {
 			if (numberOfActualParameters != 0) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
-				int lineNumber = mdecl.lineNumber();
-				if (0 == lineNumber) {
+				Token token = mdecl.token();
+				if (null == token || 0 == token.getLine()) {
 					// e.g., for a built-in type
-					lineNumber = ctxGetStart.getLine();
+					token = ctxGetStart;
 				}
-				errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+				errorHook5p2(ErrorIncidenceType.Fatal, token, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 			}
 		} else {
 			// Strip off all the stuff up front
@@ -1345,7 +1345,7 @@ public class Pass2Listener extends Pass1Listener {
 				if (false == parametersMatch && actualParameter.isntError() && formalParameter.isntError()) {
 					final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 					final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Type of actual parameter `", actualParamMsg,
 							" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
 				}
 			}
@@ -1353,17 +1353,17 @@ public class Pass2Listener extends Pass1Listener {
 			if (formalParameterIndex != numberOfFormalParameters ||
 						actualParameterIndex != numberOfActualParameters) {
 				if (null != mdecl) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
 				}
 					
-				int lineNumber = null == mdecl ? 0 : mdecl.lineNumber();
-				if (0 == lineNumber) {
+				Token token = null == mdecl ? null : mdecl.token();
+				if (null == token || 0 == token.getLine()) {
 					// e.g., for a built-in type
-					lineNumber = ctxGetStart.getLine();
+					token = ctxGetStart;
 				}
 				if (null != classdecl && null != mdecl) {
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tScript ", mdecl.name(), " is declared in ", classdecl.name());
+					errorHook5p2(ErrorIncidenceType.Fatal, token, "\tScript ", mdecl.name(), " is declared in ", classdecl.name());
 				}	
 			}
 		}
@@ -1378,21 +1378,21 @@ public class Pass2Listener extends Pass1Listener {
 		if (numberOfFormalParameters != numberOfActualParameters) {
 			if (formals.containsVarargs()) {
 				if (numberOfActualParameters < numberOfFormalParameters) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Number of arguments in enactment of script `", mdecl.name(),
 							"' must be at least as many as in declaration of the script (", String.format("%d", numberOfFormalParameters-1) + ").");
 				} else {
 					;	// O.K.
 				}
 			} else {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Number of arguments in enactment of script `", mdecl.name(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Number of arguments in enactment of script `", mdecl.name(),
 						"' does not match declaration of `", mdecl.name() + "'.");
-				int lineNumber = mdecl.lineNumber();
-				if (0 == lineNumber) {
+				Token token = mdecl.token();
+				if (null == token || 0 == token.getLine()) {
 					// e.g., for a built-in type
-					lineNumber = ctxGetStart.getLine();
+					token = ctxGetStart;
 				}
 				if (null != classdecl) {
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
+					errorHook5p2(ErrorIncidenceType.Fatal, token, "\tMethod ", mdecl.name(), " is declared in ", classdecl.name());
 				}
 			}
 		} else {
@@ -1434,7 +1434,7 @@ public class Pass2Listener extends Pass1Listener {
 						if (false == isOK && actualParameter.isntError() && formalParameter.isntError()) {
 							final String actualParamMsg = actualParameter.getText() + "' (" + actualParameterType.name() + ")";
 							final String formalParamMsg = "`" + formalParameter.name() + "' (" + formalParameterType.name() + " " + formalParameter.name() + ")";
-							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Type of actual parameter `", actualParamMsg,
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Type of actual parameter `", actualParamMsg,
 									" in call of `", mdecl.name(), "' does not match type of formal parameter ", formalParamMsg);
 						}
 					}
@@ -1458,7 +1458,7 @@ public class Pass2Listener extends Pass1Listener {
 	}
 
 	private Expression canBeAScriptEnactment(final StaticScope megaTypeEnclosedScope, final String scriptName,
-			final int lineNumber) {
+			final Token token) {
 		// Eiffel-style script (feature) enactment
 		Expression retval = null;
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
@@ -1480,32 +1480,32 @@ public class Pass2Listener extends Pass1Listener {
 					argumentList.addActualArgument(currentContext);
 					*/
 					final Expression self = new IdentifierExpression(roleDecl.name(), roleDecl.type(),
-							currentContext_.enclosedScope(), lineNumber);
+							currentContext_.enclosedScope(), token);
 					argumentList.addActualArgument(self);
 					
-					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
+					final Message message = new Message(scriptName, argumentList, token, enclosingMegaType);
 					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();
 					retval = new MessageExpression(self, message, methodSignature.returnType(),
-							lineNumber, /*isStatic*/ false, originMethodClass, targetMethodClass,
+							token, /*isStatic*/ false, originMethodClass, targetMethodClass,
 							true);
 				}
 			}
 		} else if (null != megaTypeEnclosedScope && enclosingMegaType instanceof ContextType) {
 			final ContextDeclaration contextDecl = (ContextDeclaration) enclosingMegaType.enclosedScope().associatedDeclaration();
 			final ActualArgumentList argumentList = new ActualArgumentList();
-			final Expression self = new IdentifierExpression("this", contextDecl.type(), currentScope_, lineNumber);
+			final Expression self = new IdentifierExpression("this", contextDecl.type(), currentScope_, token);
 			argumentList.addActualArgument(self);
 			final MethodDeclaration methodDeclaration = currentContext_.enclosedScope().lookupMethodDeclaration(scriptName, argumentList, false);
 			if (null != methodDeclaration) {
 				final MethodSignature methodSignature = methodDeclaration.signature();
 				if (0 == methodSignature.formalParameterList().userParameterCount()) {
 					// o.k. — Eiffel-style feature invocation
-					final Message message = new Message(scriptName, argumentList, lineNumber, enclosingMegaType);
+					final Message message = new Message(scriptName, argumentList, token, enclosingMegaType);
 					final MethodInvocationEnvironmentClass originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 					final MethodInvocationEnvironmentClass targetMethodClass = self.type().enclosedScope().methodInvocationEnvironmentClass();
 					retval = new MessageExpression(self, message, methodSignature.returnType(),
-							lineNumber, /*isStatic*/ false, originMethodClass, targetMethodClass,
+							token, /*isStatic*/ false, originMethodClass, targetMethodClass,
 							true);
 				}
 			}
@@ -1542,13 +1542,13 @@ public class Pass2Listener extends Pass1Listener {
 				// Probably better to make it a qualified identifier
 				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
-				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart.getLine());
+				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart);
 				retval = new QualifiedIdentifierExpression(self, idText, type);
 				
 				// Further checks
-				this.ensureNotDuplicatedInBaseClass(associatedDeclaration, idText, ctxGetStart.getLine());
+				this.ensureNotDuplicatedInBaseClass(associatedDeclaration, idText, ctxGetStart);
 			} else {
-				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
+				retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
 			}
 			
 			
@@ -1568,7 +1568,7 @@ public class Pass2Listener extends Pass1Listener {
 					if (symbolsEnclosingMegaType instanceof ContextDeclaration) {
 						// Then there is code within the Role method accessing a symbol
 						// in the surrounding Context. Maybe a no-no.
-						errorHook6p2(ErrorIncidenceType.Noncompliant, ctxGetStart.getLine(),
+						errorHook6p2(ErrorIncidenceType.Noncompliant, ctxGetStart,
 								"NONCOMPLIANT: Attempt to access Context member `", idText,
 								"' from within scope of Role script `",
 								enclosingMegaTypeDeclaration.name() + "." + currentMethod.name(),
@@ -1583,11 +1583,11 @@ public class Pass2Listener extends Pass1Listener {
 			// Could be a reference to a class itself (like System)
 			type = StaticScope.globalScope().lookupTypeDeclaration("Class");
 			declaringScope = StaticScope.globalScope();
-			retval = new IdentifierExpression(idText, type, declaringScope, ctxGetStart.getLine());
+			retval = new IdentifierExpression(idText, type, declaringScope, ctxGetStart);
 		} else if (null != (aRoleDecl = super.isRoleAssignmentWithinContext(idText))) {
 			type = aRoleDecl.type();
 			declaringScope = aRoleDecl.enclosingScope();
-			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
+			retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
 		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
 				&& null != Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope()
 				&& null != (objectDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupObjectDeclarationRecursive(idText))) {
@@ -1595,7 +1595,7 @@ public class Pass2Listener extends Pass1Listener {
 			final IdentifierExpression self = new IdentifierExpression("this",		// name
 					Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
 					Expression.nearestEnclosingMethodScopeAround(currentScope_),	// scope where *declared*
-					ctxGetStart.getLine());
+					ctxGetStart);
 			self.setResultIsConsumed(true);
 			retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
 		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
@@ -1603,7 +1603,7 @@ public class Pass2Listener extends Pass1Listener {
 				&& null != (aRoleDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupRoleOrStagePropDeclarationRecursive(idText))) {
 			// done — get outta here
 			final IdentifierExpression currentContext = new IdentifierExpression("current$context", Expression.nearestEnclosingMegaTypeOf(aRoleDecl.enclosedScope()),
-					Expression.nearestEnclosingMethodScopeAround(currentScope_), ctxGetStart.getLine());
+					Expression.nearestEnclosingMethodScopeAround(currentScope_), ctxGetStart);
 			currentContext.setResultIsConsumed(true);
 			retval = new QualifiedIdentifierExpression(currentContext, idText, aRoleDecl.type());
 		} else {
@@ -1621,7 +1621,7 @@ public class Pass2Listener extends Pass1Listener {
 								new LastIndexExpression(roleDeclaration, (ContextDeclaration)associatedDeclaration);
 				} else {
 					retval = new ErrorExpression(null);
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 							"The identifier `", idText, "' may be invoked only from a method of an element of a Role vector.", "");
 				}
 			} else if (associatedDeclaration == currentContext_) {
@@ -1629,8 +1629,8 @@ public class Pass2Listener extends Pass1Listener {
 					final RoleDeclaration roleDecl = possibleContextScope.lookupRoleOrStagePropDeclaration(idText);
 					if (null == roleDecl) {
 						// Check to see if it is a script invocation
-						if (null == (retval = canBeAScriptEnactment(possibleRoleScope, idText, ctxGetStart.getLine()))) {
-							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+						if (null == (retval = canBeAScriptEnactment(possibleRoleScope, idText, ctxGetStart))) {
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Object `", idText, 
 									"' is not declared in scope `", currentScope_.name(), "'.", "");
 							type = new ErrorType();
 							retval = new ErrorExpression(null);
@@ -1639,25 +1639,25 @@ public class Pass2Listener extends Pass1Listener {
 						// it's O.K. - maybe. Can be used as an L-value in an assignment. R-value, too, I guess
 						type = possibleContextScope.lookupTypeDeclaration(idText);
 						declaringScope = roleDecl.enclosingScope();
-						retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
+						retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
 					}
 				} else {
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText, 
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Object `", idText, 
 							"' is not declared in scope `", currentScope_.name(), "'.", "");
 					type = new ErrorType();
-					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart.getLine());
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
 					retval = new ErrorExpression(retval);
 				}
 			} else {
 				// Could be a base class reference
-				retval = this.lookToBaseClassForHelp(idText, ctxGetStart.getLine(), currentScope_);
+				retval = this.lookToBaseClassForHelp(idText, ctxGetStart, currentScope_);
 				
 				// That was about the last chance
 				if (null == retval) {
 					// How about believing it could be a method call?
-					retval = canBeAScriptEnactment(possibleContextScope, idText, ctxGetStart.getLine());
+					retval = canBeAScriptEnactment(possibleContextScope, idText, ctxGetStart);
 					if (null == retval) {
-						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Object `", idText,
+						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Object `", idText,
 								"' is not declared in scope `", currentScope_.name(), "'.", "");
 						type = new ErrorType();
 						retval = new ErrorExpression(null);
@@ -1668,7 +1668,7 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
     }
 
-	private void ensureNotDuplicatedInBaseClass(final Declaration associatedDeclaration, final String idName, int lineNumber) {
+	private void ensureNotDuplicatedInBaseClass(final Declaration associatedDeclaration, final String idName, final Token token) {
 		if (associatedDeclaration instanceof ClassDeclaration) {
 			// See if there is a base declaration
 			final ClassDeclaration cdecl = (ClassDeclaration)associatedDeclaration;
@@ -1680,17 +1680,17 @@ public class Pass2Listener extends Pass1Listener {
 				if (null != baseClassInstance) {
 					// Hmmm. It also exists in the base class
 					final String lastPartOfMessage = baseClassDeclaration.name() + "'.";
-					errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Object declaration `", idName,
+					errorHook6p2(ErrorIncidenceType.Fatal, token, "Object declaration `", idName,
 							"' appears both in class `",
 							associatedDeclaration.name(), "' and in base class `", lastPartOfMessage);
-					errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
+					errorHook5p2(ErrorIncidenceType.Fatal, token, "  (The same identifier name may not appear multiple times in the same run-time scope.)",
 							"", "", "");
 				}
 			}
 		}
 	}
 	
-	private Expression lookToBaseClassForHelp(final String idName, int lineNumber, StaticScope scope) {
+	private Expression lookToBaseClassForHelp(final String idName, final Token token, StaticScope scope) {
 		Expression retval = null;
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(scope);
 		StaticScope megaTypeScope = null;
@@ -1713,20 +1713,20 @@ public class Pass2Listener extends Pass1Listener {
 					if (baseClassInstance.accessQualifier_ == AccessQualifier.PublicAccess) {
 						final Type type = baseClassInstance.type();
 						final StaticScope nearestEnclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope, lineNumber);
+						final IdentifierExpression self = new IdentifierExpression("this", type, nearestEnclosingMethodScope, token);
 						self.setResultIsConsumed(true);
 						retval = new QualifiedIdentifierExpression(self, idName, type);
 					} else {
-						errorHook6p2(ErrorIncidenceType.Fatal, lineNumber, "Symbol `", idName,
+						errorHook6p2(ErrorIncidenceType.Fatal, token, "Symbol `", idName,
 								"' is not public and so is not accessible to `", associatedDeclaration.name(), "'.", "");
 					}
 				} else {
 					final ClassDeclaration nextBaseClassDeclaration = baseClassDeclaration.baseClassDeclaration();
 					if (null == nextBaseClassDeclaration) {
-						errorHook5p2(ErrorIncidenceType.Fatal, lineNumber, "Symbol `", idName, "' cannot be found.", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, token, "Symbol `", idName, "' cannot be found.", "");
 					} else {
 						// Recur
-						retval = this.lookToBaseClassForHelp(idName, lineNumber, nextBaseClassDeclaration.enclosedScope());
+						retval = this.lookToBaseClassForHelp(idName, token, nextBaseClassDeclaration.enclosedScope());
 					}
 				}
 			}
@@ -1768,7 +1768,7 @@ public class Pass2Listener extends Pass1Listener {
 		}
 	}
 	
-	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final int lineNumber) {
+	@Override protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass, final ClassType baseType, final Token token) {
 		final ClassDeclaration newClass = currentScope_.lookupClassDeclarationRecursive(name);
 		final Type rawClass = newClass.type();
 		assert rawClass instanceof ClassType;
@@ -1797,22 +1797,22 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
 		classOrContextType.addInterfaceType(interfaceType);
 	}
-	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final int lineNumber) {
-		newDeclaration.doIImplementImplementsList(this, lineNumber);
+	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final Token token) {
+		newDeclaration.doIImplementImplementsList(this, token);
 	}
-	@Override protected void errorHook5p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override protected void errorHook5p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		/* Nothing */
 	}
-	@Override protected void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	@Override protected void errorHook6p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* Nothing */
 	}	
-	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
+	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
+		ErrorLogger.error(errorType, t, s1, s2, s3, s4);
 	}
-	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
+	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+		ErrorLogger.error(errorType, t, s1, s2, s3, s4, s5, s6);
 	}
-	public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	public void errorHook5p3(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		;		// p3 and beyond only
 	}
 	@Override protected void updateInitializationLists(final Expression initializationExpr, final ObjectDeclaration objDecl) {
@@ -1821,13 +1821,13 @@ public class Pass2Listener extends Pass1Listener {
 		initializationExpressions_.add(initializationExpr);
 		variablesToInitialize_.insertAtStart(objDecl);
 	}
-	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, final int lineNumber) {
+	@Override public ObjectDeclaration pass1InitialDeclarationCheck(final String name, final Token token) {
 		final ObjectDeclaration objDecl = currentScope_.lookupObjectDeclaration(name);
 		// It's been declared, so multiple declarations aren't an error
 		return objDecl;
 	}
-	@Override protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
-		lhsType.reportMismatchesWith(lineNumber, rhsType);
+	@Override protected void reportMismatchesWith(final Token token, final RoleType lhsType, final Type rhsType) {
+		lhsType.reportMismatchesWith(token, rhsType);
 	}
 	
 	@Override protected void checkForAssignmentViolatingConstness(final AssignmentExpression assignment, final Token ctxGetStart) {
@@ -1843,7 +1843,7 @@ public class Pass2Listener extends Pass1Listener {
 		if (null != enclosingMethod && enclosingMethod.isConst()) {
 			// We can have no idea where the array base is "pointing," so we have
 			// to deny such expressions
-			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+			errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 					"Modification of array ", expression.getText(),
 					" from within const method ",
 					enclosingMethod.name(), ", which violates the const modifier of the latter.", "");
@@ -1862,20 +1862,20 @@ public class Pass2Listener extends Pass1Listener {
 			final Declaration idDecl = currentScope_.lookupObjectDeclarationRecursiveWithinMethod(assignee.name());
 			if (null == idDecl) {
 				// Then it's not on the activation record
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 						"Assignment statement violates constness of declaration of ",
 						enclosingMethod.name(), "", "");
 			}
 		} else if (assignee instanceof QualifiedIdentifierExpression) {
 			// We're assigning to something within "qualifier." That doesn't immediately
 			// disqualify it - could be a locally created object.
-			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 					"Assignment statement modifies a member object that could be shared; ",
 					"that violates the constness of ",
 					enclosingMethod.name(), "");
 		} else if (assignee instanceof QualifiedClassMemberExpression) {
 			// Certainly off-limits
-			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart,
 					"WARNING: Assignment statement modifies a class member that could be shared; ",
 					"that violates the constness of ",
 					enclosingMethod.name(), "");
@@ -1886,7 +1886,7 @@ public class Pass2Listener extends Pass1Listener {
 			checkLhsForAssignmentViolatingConstness(arrayExpression.originalExpression(), enclosingMethod, ctxGetStart);
 		} else if (assignee instanceof ArrayIndexExpression) {
 			// Can't know without full dataflow analysis
-			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart.getLine(),
+			errorHook5p2(ErrorIncidenceType.Warning, ctxGetStart,
 					"WARNING: Assignment statement modifies an array member that could be shared; ",
 					"that violates the constness of `",
 					enclosingMethod.name(), "'.");
@@ -1899,7 +1899,7 @@ public class Pass2Listener extends Pass1Listener {
 			if (signature.hasConstModifier()) {
 				; // it's O.K. - this is a const method
 			} else {
-				errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+				errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 						"Call of non-const method ", signature.name(),
 						" from within const method ",
 						enclosingMethod.name(), ", which violates the const modifier of the latter.", "");
@@ -1913,10 +1913,10 @@ public class Pass2Listener extends Pass1Listener {
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) {
 		s.declareObject(objdecl, this);
 	}
-	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final Token token) {
 		s.declareRoleOrStageProp(roledecl);	// probably redundant; done in pass 1
 	}
-	private void processDeclareRoleArrayAlias(final int lineNumber) {
+	private void processDeclareRoleArrayAlias(final Token token) {
 		// Declare an actual object for the Role, if the Role is a RoleArray type
 		if (currentRoleOrStageProp_.isArray()) {
 			final String roleName = currentRoleOrStageProp_.type().getText();
@@ -1930,7 +1930,7 @@ public class Pass2Listener extends Pass1Listener {
 				final StaticScope contextScope = contextDeclaration.type().enclosedScope();
 				contextScope.declareType(newType);
 				
-				final ObjectDeclaration baseArrayObject = new ObjectDeclaration(compoundName, newType, lineNumber);
+				final ObjectDeclaration baseArrayObject = new ObjectDeclaration(compoundName, newType, token);
 				contextScope.declareObject(baseArrayObject, this);
 			}
 		}

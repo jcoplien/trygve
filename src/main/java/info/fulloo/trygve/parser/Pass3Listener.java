@@ -112,13 +112,13 @@ public class Pass3Listener extends Pass2Listener {
 		
 		if (null == methodDecl) {
 			expressionReturned = new ErrorExpression(null);
-			ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Return statement must be within a method scope ", "", "", "");
+			ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart, "Return statement must be within a method scope ", "", "", "");
 		} else {
 			if (methodDecl.returnType() == null || methodDecl.returnType().name().equals("void")) {
 				if (null == expressionReturned || expressionReturned.type().name().equals("void")) {
 					;
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(), "Return expression `", expressionReturned.getText(), "' of type ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart, "Return expression `", expressionReturned.getText(), "' of type ",
 							expressionReturned.type().getText(), " is incompatible with method that returns no value.", "");
 					expressionReturned = new ErrorExpression(null);
 				}
@@ -126,7 +126,7 @@ public class Pass3Listener extends Pass2Listener {
 				;
 			} else {
 				if (expressionReturned.isntError()) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart.getLine(),
+					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart,
 							"Return expression `" + expressionReturned.getText(),
 							"`' of type `", expressionReturned.type().getText(),
 							"' is not compatible with declared return type `",
@@ -154,10 +154,10 @@ public class Pass3Listener extends Pass2Listener {
 	{
 		/* Nothing */
 	}
-	protected void processRequiredDeclarations(final int lineNumber) {
+	@Override protected void processRequiredDeclarations(final Token token) {
 		/* Nothing */
 	}
-	@Override protected void reportMismatchesWith(final int lineNumber, final RoleType lhsType, final Type rhsType) {
+	@Override protected void reportMismatchesWith(final Token token, final RoleType lhsType, final Type rhsType) {
 		/* Nothing */
 	}
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
@@ -166,16 +166,16 @@ public class Pass3Listener extends Pass2Listener {
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
 		// nothing in pass 3, 4
 	}
-	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final int lineNumber) {
+	@Override protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final Token token) {
 		// nothing in pass 3, 4
 	}
 	@Override public void declareObject(final StaticScope s, final ObjectDeclaration objdecl) { }
-	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) { }
-	@Override public void errorHook5p1(final ErrorIncidenceType errorType, int i, final String s1, final String s2, final String s3, final String s4) { }
-	@Override public void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
-	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) { }
-	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
-	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4);
+	@Override public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final Token token) { }
+	@Override public void errorHook5p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
+	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
+	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
+		ErrorLogger.error(errorType, t, s1, s2, s3, s4);
 	}
 }

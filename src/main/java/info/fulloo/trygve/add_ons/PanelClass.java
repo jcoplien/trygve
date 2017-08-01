@@ -64,15 +64,15 @@ public final class PanelClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", panelType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", panelType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(panelType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -93,7 +93,7 @@ public final class PanelClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("Panel", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("Panel", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			panelType_ = new ClassType("Panel", newScope, null);
 			classDecl.setType(panelType_);
@@ -115,7 +115,7 @@ public final class PanelClass {
 			
 			// add the pointer to the GraphicsPanel object
 			// that contains all the goodies
-			final ObjectDeclaration objectDecl = new ObjectDeclaration("panelObject", objectType, 0);
+			final ObjectDeclaration objectDecl = new ObjectDeclaration("panelObject", objectType, null);
 			newScope.declareObject(objectDecl, null);
 			
 			// standard wrap-up
@@ -199,7 +199,7 @@ public final class PanelClass {
 			try {
 				thePanel.setColor(color);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.setColor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.setColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -222,7 +222,7 @@ public final class PanelClass {
 				final RTType rTColor = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(colorType.enclosedScope());
 				value = new RTColorObject(cRetval.getRed(), cRetval.getGreen(), cRetval.getBlue(), rTColor);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.getColor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.getColor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -248,7 +248,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawLine(fromX, fromY, toX, toY);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawLine.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.drawLine.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -271,7 +271,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawRect(fromX, fromY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawRect.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.drawRect.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -299,7 +299,7 @@ public final class PanelClass {
 			try {
 				thePanel.fillRect(fromXObject, fromYObject, widthObject, heightObject);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.fillRect.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.fillRect.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -322,7 +322,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawOval(leftX, topY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawOval.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.drawOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -345,7 +345,7 @@ public final class PanelClass {
 			try {
 				thePanel.fillOval(leftX, topY, width, height);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.fillOval.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.fillOval.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -366,7 +366,7 @@ public final class PanelClass {
 			try {
 				thePanel.drawString(x, y, text);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.drawString(`", ((RTStringObject)text).toString(), "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -401,7 +401,7 @@ public final class PanelClass {
 			try{
 				thePanel.clear();
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.clear()", ".", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.clear()", ".", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -419,7 +419,7 @@ public final class PanelClass {
 				thePanel.flipBuffers();
 				thePanel.repaint();
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel.repaint(`", "", "'.", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -440,7 +440,7 @@ public final class PanelClass {
 				thePanelObject.setObject("panelObject", theGraphicsPanel);
 				RunTimeEnvironment.runTimeEnvironment_.pushStack(thePanelObject);
 			} catch (final Exception e) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad call to Panel constructor.", "", "", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad call to Panel constructor.", "", "", "");
 				RTMessage.printMiniStackStatus();
 				return null;
 			}
@@ -469,15 +469,15 @@ public final class PanelClass {
 				for (final String paramName : paramNames) {
 					if (null != paramName) {
 						final Type paramType = typeIterator.next();
-						final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+						final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 						formals.addFormalParameter(formalParameter);
 					}
 				}
 			}
-			final ObjectDeclaration self = new ObjectDeclaration("this", eventType_, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", eventType_, null);
 			formals.addFormalParameter(self);
 			final StaticScope methodScope = new StaticScope(eventType_.enclosedScope());
-			final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+			final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(returnType);
 			methodDecl.setHasConstModifier(isConst);
@@ -497,7 +497,7 @@ public final class PanelClass {
 				assert null != objectBaseClass;
 
 				final StaticScope newScope = new StaticScope(globalScope);
-				final ClassDeclaration classDecl = new ClassDeclaration("Event", newScope, objectBaseClass, 0);
+				final ClassDeclaration classDecl = new ClassDeclaration("Event", newScope, objectBaseClass, null);
 				newScope.setDeclaration(classDecl);
 				eventType_ = new ClassType("Event", newScope, null);
 				classDecl.setType(eventType_);
@@ -507,32 +507,32 @@ public final class PanelClass {
 				declareEventMethod("Event", null, null, null, false);
 				
 				// Attributes
-				final ObjectDeclaration idDeclaration = new ObjectDeclaration("id", intType, 0);
-				idDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				final ObjectDeclaration idDeclaration = new ObjectDeclaration("id", intType, null);
+				idDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 				eventType_.enclosedScope().declareObject(idDeclaration, null);
 				
-				final ObjectDeclaration keyDeclaration = new ObjectDeclaration("key", intType, 0);
-				keyDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				final ObjectDeclaration keyDeclaration = new ObjectDeclaration("key", intType, null);
+				keyDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 				eventType_.enclosedScope().declareObject(keyDeclaration, null);
 				
-				final ObjectDeclaration keyStringDeclaration = new ObjectDeclaration("keyString", stringType, 0);
-				keyStringDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				final ObjectDeclaration keyStringDeclaration = new ObjectDeclaration("keyString", stringType, null);
+				keyStringDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 				eventType_.enclosedScope().declareObject(keyStringDeclaration, null);
 				
-				final ObjectDeclaration locXDeclaration = new ObjectDeclaration("x", intType, 0);
-				locXDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				final ObjectDeclaration locXDeclaration = new ObjectDeclaration("x", intType, null);
+				locXDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 				eventType_.enclosedScope().declareObject(locXDeclaration, null);
 				
-				final ObjectDeclaration locYDeclaration = new ObjectDeclaration("y", intType, 0);
-				locYDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+				final ObjectDeclaration locYDeclaration = new ObjectDeclaration("y", intType, null);
+				locYDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 				eventType_.enclosedScope().declareObject(locYDeclaration, null);
 				
 				// These need to be coordinated only with what is in the postSetupInitialization
 				// method below, and what is in the driver (GraphicsPanel.java)
 				for (final String attributeName : asList("MOUSE_UP", "MOUSE_DOWN", "MOUSE_ENTER", "MOUSE_EXIT", "MOUSE_DRAG",
 						"MOUSE_MOVE", "KEY_PRESS", "KEY_RELEASE")) {
-					final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, 0);
-					attributeDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), 0);
+					final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, null);
+					attributeDeclaration.setAccess(AccessQualifier.PublicAccess, eventType_.enclosedScope(), null);
 					eventType_.enclosedScope().declareStaticObject(attributeDeclaration);
 					eventType_.declareStaticObject(attributeDeclaration);
 				}

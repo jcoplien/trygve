@@ -163,8 +163,8 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			final info.fulloo.trygve.declarations.Type type = StaticScope.globalScope().lookupTypeDeclaration(rTType.name());
 			final info.fulloo.trygve.declarations.Type eventType = StaticScope.globalScope().lookupTypeDeclaration("Event");
 			final FormalParameterList pl = new FormalParameterList();
-			final ObjectDeclaration self = new ObjectDeclaration("this", type, type.lineNumber());
-			final ObjectDeclaration event = new ObjectDeclaration("e", eventType, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", type, type.token());
+			final ObjectDeclaration event = new ObjectDeclaration("e", eventType, null);
 
 			pl.addFormalParameter(event);
 			pl.addFormalParameter(self);
@@ -208,7 +208,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			final MethodDeclaration methodDecl = method.methodDeclaration();
 			final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
 			final String debugName = null == methodParentScope? "???": methodParentScope.name();
-			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName, method.lineNumber());
+			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName, method.token());
 			retInst.setResultIsConsumed(true);
 			final RTObject event = RTEventObject.ctor1(e);
 

@@ -804,7 +804,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
 					if (null == otherObject) {
 						final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
-						ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
+						ErrorLogger.error(ErrorIncidenceType.Runtime, null,
 								"Attempt to access uninitialized double in argument to `",
 								"compareTo'; calling context may be `",
 								parentScope.name(), "'.");
@@ -931,7 +931,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					retval = stringObject.replaceFirst(regex, replacement);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}
@@ -1048,7 +1048,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					sRetval = thisString.split(rxstring);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}

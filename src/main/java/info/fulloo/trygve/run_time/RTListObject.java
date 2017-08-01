@@ -161,7 +161,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public RTObject get(final int i) {
 		RTObject retval;
 		if (i >= theList_.size()) {
-			ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "List index out-of-range: ",
+			ErrorLogger.error(ErrorIncidenceType.Runtime, null, "List index out-of-range: ",
 					Integer.toString(i), " on list of size ", Integer.toString(theList_.size()));
 			RTMessage.printMiniStackStatus();
 			retval = null;

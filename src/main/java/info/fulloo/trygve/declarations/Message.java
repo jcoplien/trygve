@@ -27,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -39,10 +41,11 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public class Message {
 	public Message(final String selectorName, final ActualArgumentList argumentList,
-			final long lineNumber, final Type enclosingMegaType) {
+			final Token token, final Type enclosingMegaType) {
 		selectorName_ = selectorName;
 		argumentList_ = argumentList;
-		lineNumber_ = lineNumber;
+		token_ = token;
+		lineNumber_ = (null == token_)? 0: token_.getLine();
 		enclosingMegaType_ = enclosingMegaType;
 		
 		// Just a default until it gets filled in - avoid null ptr problems
@@ -56,6 +59,9 @@ public class Message {
 	}
 	public long lineNumber() {
 		return lineNumber_;
+	}
+	public Token token() {
+		return token_;
 	}
 	public String getText() {
 		String argumentListString = null, selectorNameString = null;
@@ -257,9 +263,10 @@ public class Message {
 		return retval;
 	}
 	
-	private String selectorName_;
+	private final String selectorName_;
 	private final Type enclosingMegaType_;
 	private ActualArgumentList argumentList_;
-	private long lineNumber_;
+	private final long lineNumber_;
+	private final Token token_;
 	private Type returnType_;
 }

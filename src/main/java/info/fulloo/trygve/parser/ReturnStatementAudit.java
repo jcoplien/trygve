@@ -26,6 +26,8 @@ package info.fulloo.trygve.parser;
 import java.util.List;
 import java.util.Stack;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
@@ -37,10 +39,10 @@ import info.fulloo.trygve.expressions.Expression.ReturnExpression;
 // This is just a little utility class to audit basic
 // properties of return statements in methods
 public class ReturnStatementAudit {
-	public ReturnStatementAudit(final Type returnType, final ExprAndDeclList exprAndDeclList, final int lineNumber, final Pass1Listener pass) {
+	public ReturnStatementAudit(final Type returnType, final ExprAndDeclList exprAndDeclList, final Token token, final Pass1Listener pass) {
 		super();
 		returnType_ = returnType;
-		lineNumber_ = lineNumber;
+		token_ = token;
 		pass_ = pass;
 		
 		returnExpressions_ = new Stack<ReturnExpression>();
@@ -81,29 +83,29 @@ public class ReturnStatementAudit {
 		for (final ReturnExpression retExpr : returnExpressions_) {
 			if (null == returnType_) {
 				if (null != retExpr.returnExpression() && retExpr.isntError()) {
-					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Attempt to return value of type ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.token(), "Attempt to return value of type ",
 							null == retExpr.type()? "unknown": retExpr.type().name(), " when no return value was expected.", "");
 				}
 			} else if (null == retExpr.type() && retExpr.isntError()) {
-				pass_.errorHook5p2(ErrorIncidenceType.Internal, retExpr.lineNumber(), "Something wrong in your return expression. ",
+				pass_.errorHook5p2(ErrorIncidenceType.Internal, retExpr.token(), "Something wrong in your return expression. ",
 						"Please read nearby error messages carefully.", "", "");
 			} else if (returnType_.canBeConvertedFrom(retExpr.type()) == false) {
 				if (null == retExpr.returnExpression() && returnType_.isntError()) {
-					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with no return type cannot be converted to expected type of ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.token(), "Return statement with no return type cannot be converted to expected type of ",
 							returnType_.getText(), "", "");
 				} else if (retExpr.isntError() && returnType_.isntError()) {
-					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.lineNumber(), "Return statement with return type of ",
+					pass_.errorHook5p2(ErrorIncidenceType.Fatal, retExpr.token(), "Return statement with return type of ",
 							retExpr.type().getText(), " cannot be converted to expected type of ",
 							returnType_.getText());
 				}
 			}
 		}
 		if (somethingFollowedReturn_ && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorIncidenceType.Warning, lineNumber_, "WARNING: Possible missing return statement. ", 
+			pass_.errorHook5p2(ErrorIncidenceType.Warning, token_, "WARNING: Possible missing return statement. ", 
 					"Do you need to parenthesize the return expression?", "", "");
 		}
 		if (0 == returnExpressions_.size() && null != returnType_ && (false == returnType_.name().equals("void"))) {
-			pass_.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber_, "Missing return statement.", "", "", "");
+			pass_.errorHook5p2(ErrorIncidenceType.Fatal, token_, "Missing return statement.", "", "", "");
 		}
 	}
 	
@@ -113,6 +115,6 @@ public class ReturnStatementAudit {
 	private int lastLineNumber_;
 	
 	private Type returnType_;
-	private int lineNumber_;
+	private Token token_;
 	Pass1Listener pass_;
 }

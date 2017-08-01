@@ -76,6 +76,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return 1;
 	}
 	
+	@Override public Token token() {
+		return null;
+	}
+	
 	
 	public static class NullExpression extends Expression {
 		public NullExpression() {
@@ -113,6 +117,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return qualifier_.lineNumber();
 		}
+		@Override public Token token() {
+			return qualifier_.token();
+		}
 		
 		private final Expression qualifier_;
 	}
@@ -142,6 +149,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return qualifier_.lineNumber();
+		}
+		@Override public Token token() {
+			return qualifier_.token();
 		}
 		
 		private final Expression qualifier_;
@@ -198,14 +208,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class MessageExpression extends Expression
 	{
 		public MessageExpression(final Expression object, final Message message,
-				final Type type, final int lineNumber, final boolean isStatic,
+				final Type type, final Token token, final boolean isStatic,
 				final MethodInvocationEnvironmentClass originMethodClass,
 				final MethodInvocationEnvironmentClass targetMethodClass,
 				final boolean isPolymorphic) {
 			super(message.selectorName(), type, message.enclosingMegaType());
 			object_ = object;
 			message_ = message;
-			lineNumber_ = lineNumber;
+			token_ = token;
 			isStatic_ = isStatic;
 			originMessageClass_ = originMethodClass;
 			targetMessageClass_ = targetMethodClass;
@@ -221,7 +231,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return message_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		public Type returnType() {
 			return message_.returnType();
@@ -245,7 +258,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private final MethodInvocationEnvironmentClass originMessageClass_, targetMessageClass_;
 		private final Expression object_;
 		private final Message message_;
-		private final int lineNumber_;
+		private final Token token_;
 		private final boolean isStatic_;
 		private final boolean isPolymorphic_;
 	}
@@ -273,11 +286,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class IdentifierExpression extends Expression
 	{
 		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared,
-				final int lineNumber) {
+				final Token token) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
 
 			scopeWhereDeclared_ = scopeWhereDeclared;
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public String getText() {
 			return name();
@@ -289,11 +302,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return scopeWhereDeclared_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		
 		private final StaticScope scopeWhereDeclared_;
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class RelopExpression extends Expression
@@ -334,6 +350,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
+		}
+		@Override public Token token() {
+			return lhs_.token();
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -377,6 +396,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private final Expression lhs_, rhs_;
 		private final String operator_;
@@ -415,6 +437,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private final Expression lhs_, rhs_;
 		private final String operator_;
@@ -451,6 +476,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
+		}
+		@Override public Token token() {
+			return lhs_.token();
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -490,6 +518,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private final Expression lhs_;
 		private final String operator_;
@@ -507,7 +538,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (type.hasUnaryOperator(operator)) {
 				;		// is O.K.
 			} else {
-				pass.errorHook5p2(ErrorIncidenceType.Fatal, rhs.lineNumber(),
+				pass.errorHook5p2(ErrorIncidenceType.Fatal, rhs.token(),
 						"The unary operator `" + operator,"' does not apply to type ",
 						type.getText(), ".");
 			}
@@ -530,6 +561,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return rhs_.lineNumber();
+		}
+		@Override public Token token() {
+			return rhs_.token();
 		}
 		
 		private final Expression rhs_;
@@ -557,19 +591,22 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return rhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return rhs_.token();
+		}
 		
 		private final Expression rhs_;
 	}
 	
 	public static class AssignmentExpression extends Expression
 	{
-		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass0Listener parser) {
+		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final Token token, final Pass0Listener parser) {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			
 			lhs_ = lhs;
 			rhs_ = rhs;
-			lineNumber_ = lineNumber;
+			token_ = token;
 			doTrivialConversions(parser);
 			rhs_.setResultIsConsumed(true);
 			
@@ -580,7 +617,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			if (null != lhs_ && null != rhs_ && null != lhs_.type() && null != rhs_.type()) {		// error stumbling check
 				if (lhs_.type().name().equals("double")) {
 					if (rhs_.type().name().equals("int")) {
-						parser.errorHook6p2(ErrorIncidenceType.Warning, lineNumber_,
+						parser.errorHook6p2(ErrorIncidenceType.Warning, token_,
 								"WARNING: Substituting double object for `", rhs_.getText(),
 								"' in assignment to `", lhs_.getText(), "'.",
 								"");
@@ -604,7 +641,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 				final Type lhsType = lhs.type(), rhsType = rhs.type();
 				if (lhsType.pathName().equals("int.") || lhsType.pathName().equals("double.") || lhsType.pathName().equals("String.")) {
 					if (lhsType.pathName().equals(rhsType.pathName())) {
-						parser.errorHook6p2(ErrorIncidenceType.Warning, lhs.lineNumber(),
+						parser.errorHook6p2(ErrorIncidenceType.Warning, lhs.token(),
 								"WARNING: Assignment / initialization does not create a new instance. Both `", lhs.name(),
 								"' and `" + rhs.name(), "' will refer to the same object. Use `",
 								rhs.name(), ".clone' to create a separate instance.");
@@ -622,21 +659,24 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			final String retval = lhs_.getText() + " = " + rhs_.getText();
 			return retval;
 		}
-		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, StaticScope scope) {
+		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private Expression rhs_;
 		private final Expression lhs_;
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class InternalAssignmentExpression extends AssignmentExpression {
-		public InternalAssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final int lineNumber, final Pass0Listener parser) {
-			super(lhs, operator, rhs, lineNumber, parser);
+		public InternalAssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final Token token, final Pass0Listener parser) {
+			super(lhs, operator, rhs, token, parser);
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, StaticScope scope) {
 			return codeGenerator.compileInternalAssignmentExpression(this, methodDeclaration, rtTypeDeclaration, scope);
@@ -645,12 +685,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class NewExpression extends Expression
 	{
-		public NewExpression(final Type classType, final Message message, final int lineNumber, final Type enclosingMegaType) {
+		public NewExpression(final Type classType, final Message message, final Token token, final Type enclosingMegaType) {
 			super("new", classType, enclosingMegaType);
 			message_ = message;
 
 			classOrContextType_ = classType;
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		public Type classType() {
 			return classOrContextType_;
@@ -668,12 +708,15 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return codeGenerator.compileNewExpression(this, methodDeclaration, rtTypeDeclaration, scope);
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		
 		private final Type classOrContextType_;
 		private final Message message_;
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class NewArrayExpression extends Expression
@@ -700,6 +743,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return sizeExpression_.lineNumber();
 		}
+		@Override public Token token() {
+			return sizeExpression_.token();
+		}
 		
 		private final Type classOrContextType_;
 		private final Expression sizeExpression_;
@@ -707,14 +753,14 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class ArrayIndexExpression extends Expression {
 		// expr '[' expr ']'
-		public ArrayIndexExpression(final ArrayExpression array, final Expression index, final int lineNumber) {
+		public ArrayIndexExpression(final ArrayExpression array, final Expression index, final Token token) {
 			super(array.getText() + " [ " + index.getText() + " ]", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
 			index_.setResultIsConsumed(true);
 			arrayExpr_ = array;
 			arrayExpr_.setResultIsConsumed(true);
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
@@ -729,19 +775,22 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return arrayExpr_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		
 		private final Expression array_, index_;
 		private final ArrayExpression arrayExpr_;
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class ArrayIndexExpressionUnaryOp extends Expression {
 		// expr '[' expr ']'
 		public ArrayIndexExpressionUnaryOp(final ArrayExpression array, final Expression index,
 				final String operation, final PreOrPost preOrPost,
-				final int lineNumber) {
+				final Token token) {
 			super(array.getText() + " [ " + index.getText() + " ] ++", array.baseType(), array.enclosingMegaType());
 			array_ = array;
 			index_ = index;
@@ -750,7 +799,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			arrayExpr_.setResultIsConsumed(true);
 			preOrPost_ = preOrPost;
 			operation_ = operation;
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public String getText() {
 			return array_.getText() + "[" + index_.getText() + "]";
@@ -771,14 +820,18 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return preOrPost_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
 		}
+		@Override public Token token() {
+			return token_;
+		}
+		
 		
 		private final Expression array_, index_;
 		private final ArrayExpression arrayExpr_;
 		private final PreOrPost preOrPost_;
 		private final String operation_;
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class RoleArrayIndexExpression extends Expression {
@@ -802,6 +855,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return roleNameInvocation_.lineNumber();
+		}
+		@Override public Token token() {
+			return roleNameInvocation_.token();
 		}
 		@Override public String getText() {
 			return roleNameInvocation_.getText() + "[" + indexExpr_.getText() + "]";
@@ -834,6 +890,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return expr_.lineNumber();
 		}
+		@Override public Token token() {
+			return expr_.token();
+		}
+		
 		
 		private final Expression expr_;
 		private final Type baseType_;
@@ -896,13 +956,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return conditional_.lineNumber();
 		}
+		@Override public Token token() {
+			return conditional_.token();
+		}
 		
 		private final Expression conditional_, thenPart_, elsePart_;
 	}
 	
 	public static class ForExpression extends Expression implements BreakableExpression {
 		public ForExpression(final List <ObjectDeclaration> initDecl, final Expression test, final Expression increment, final Expression body,
-				final StaticScope scope, int lineNumber, final ParsingData parsingData) {
+				final StaticScope scope, final Token token, final ParsingData parsingData) {
 			super("for", StaticScope.globalScope().lookupTypeDeclaration("void"),
 					Expression.nearestEnclosingMegaTypeOf(scope));
 			initDecl_ = initDecl;
@@ -919,7 +982,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			thingToIterateOver_ = null;
 			
 			scope_ = scope;
-			lineNumber_ = lineNumber;
+			token_ = token;
 			
 			initExprs_ = new ArrayList<BodyPart>();
 			
@@ -994,7 +1057,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return label_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		public void addInitExprs(List<BodyPart> bodyPart) {
 			initExprs_.addAll(bodyPart);
@@ -1009,16 +1075,16 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		private Expression initializationExpression_, test_, increment_, body_, thingToIterateOver_;
 		private final StaticScope scope_;
 		private final String label_;
-		
-		private int lineNumber_;
+
+		private final Token token_;
 	}
 	
 	public static class WhileExpression extends Expression implements BreakableExpression {
-		public WhileExpression(final Expression test, final Expression body, final int lineNumber, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
+		public WhileExpression(final Expression test, final Expression body, final Token token, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
 			super("while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
-			body_ = body;		
-			lineNumber_ = lineNumber;
+			body_ = body;
+			token_ = token;
 			label_ = this.forgeLabel();
 			if (null != parsingData) {
 				parsingData.addBreakableExpression(label_, this);
@@ -1055,21 +1121,21 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return test_.lineNumber();
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		
 		private Expression test_, body_;
-		
-		@SuppressWarnings("unused")
-		private final int lineNumber_;
-		
+		private final Token token_;
 		private final String label_;
 	}
 	
 	public static class DoWhileExpression extends Expression implements BreakableExpression {
-		public DoWhileExpression(final Expression test, final Expression body, final int lineNumber, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
+		public DoWhileExpression(final Expression test, final Expression body, final Token token, final ParsingData parsingData, final Type nearestEnclosingMegaType) {
 			super("do_while", StaticScope.globalScope().lookupTypeDeclaration("void"), nearestEnclosingMegaType);
 			test_ = test;
-			body_ = body;		
-			lineNumber_ = lineNumber;
+			body_ = body;
+			token_ = token;
 			label_ = this.forgeLabel();
 			if (null != parsingData) {
 				parsingData.addBreakableExpression(label_, this);
@@ -1108,12 +1174,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return test_.lineNumber();
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		
 		private Expression test_, body_;
-		
-		@SuppressWarnings("unused")
-		private final int lineNumber_;
-		
+		private final Token token_;
 		private final String label_;
 	}
 	
@@ -1146,6 +1212,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return expressionAndDeclList_.lineNumber();
+		}
+		@Override public Token token() {
+			return expressionAndDeclList_.token();
 		}
 		@Override public Type type() {
 			return expressionAndDeclList_.type();
@@ -1219,6 +1288,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return expression_.lineNumber();
 		}
+		@Override public Token token() {
+			return expression_.token();
+		}
 		@Override public Type type() {
 			assert null != expressionType_;
 			return expressionType_;
@@ -1241,9 +1313,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	
 	public static class BreakExpression extends Expression
 	{
-		public BreakExpression(final int lineNumber, final Expression loop, final long nestingLevelInsideBreakable) {
+		public BreakExpression(final Token token, final Expression loop, final long nestingLevelInsideBreakable) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
-			lineNumber_ = lineNumber;
+			token_ = token;
 			assert loop instanceof BreakableExpression;
 			loop_ = (BreakableExpression)loop;
 			nestingLevelInsideBreakable_ = nestingLevelInsideBreakable;
@@ -1252,7 +1324,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return "break";
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileBreakExpression(this, methodDeclaration, rtTypeDeclaration, scope);
@@ -1264,15 +1339,15 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return nestingLevelInsideBreakable_;
 		}
 		
-		private final int lineNumber_;
+		private final Token token_;
 		private final BreakableExpression loop_;	// could be a switch statement, too...
 		private final long nestingLevelInsideBreakable_;
 	}
 	public static class ContinueExpression extends Expression
 	{
-		public ContinueExpression(final int lineNumber, final Expression loop, final long nestingLevelInsideBreakable) {
+		public ContinueExpression(final Token token, final Expression loop, final long nestingLevelInsideBreakable) {
 			super("", StaticScope.globalScope().lookupTypeDeclaration("void"), loop.enclosingMegaType());
-			lineNumber_ = lineNumber;
+			token_ = token;
 			assert loop instanceof BreakableExpression;
 			loop_ = (BreakableExpression)loop;
 			assert false == loop_ instanceof SwitchExpression;
@@ -1282,7 +1357,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return "break";
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileContinueExpression(this, methodDeclaration, rtTypeDeclaration, scope);
@@ -1294,7 +1372,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return nestingLevelInsideBreakable_;
 		}
 		
-		private final int lineNumber_;
+		private final Token token_;
 		private final BreakableExpression loop_;	// can NOT be a switch statement
 		private final long nestingLevelInsideBreakable_;
 	}
@@ -1362,7 +1440,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 					if (null != typesScope) {
 						final ActualArgumentList argumentList = new ActualArgumentList();
 						argumentList.addActualArgument(rhs_);
-						final Expression self = new IdentifierExpression("t$his", type, type.enclosedScope(), lhs_.lineNumber());
+						final Expression self = new IdentifierExpression("t$his", type, type.enclosedScope(), lhs_.token());
 						argumentList.addFirstActualParameter(self);
 						
 						final MethodDeclaration methodDecl =
@@ -1384,7 +1462,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 							final List<MethodSignature> newMethodSignatures = requiresSection.get(operator_);
 							if (null != newMethodSignatures) {
 								if (newMethodSignatures.size() > 1) {
-									ErrorLogger.error(ErrorIncidenceType.Fatal, lhs_.lineNumber(),
+									ErrorLogger.error(ErrorIncidenceType.Fatal, lhs_.token(),
 											"Overloading ambiguity in operator `", operator_, "'.", "");
 									retval = new ErrorType();
 								} else {
@@ -1413,6 +1491,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
+		}
+		@Override public Token token() {
+			return lhs_.token();
 		}
 		
 		private final Expression lhs_, rhs_;
@@ -1475,6 +1556,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private Expression lhs_, rhs_;
 		private final String operator_;
@@ -1531,6 +1615,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return lhs_.lineNumber();
 		}
+		@Override public Token token() {
+			return lhs_.token();
+		}
 		
 		private Expression lhs_;
 		private final Expression rhs_;
@@ -1551,7 +1638,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class ReturnExpression extends Expression
 	{
 		public ReturnExpression(final String methodName, final Expression returnExpression,
-				final int lineNumber,
+				final Token token,
 				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
 			super("return from " + methodName + ": returning " + (null !=  returnExpression? " " + returnExpression.getText(): "nothing"),
 				  null != returnExpression? returnExpression.type():
@@ -1559,7 +1646,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 						nearestEnclosingMegaType);
 			
 			returnExpression_ = returnExpression;
-			lineNumber_ = lineNumber;
+			token_ = token;
 			
 			int nestingLevelInsideMethod = 0;
 			
@@ -1591,7 +1678,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return returnExpression_;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileReturnExpression(this, methodDeclaration, rtTypeDeclaration, scope);
@@ -1601,25 +1691,25 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		
 		private final Expression returnExpression_;	// may be null
-		private final int lineNumber_;
+		private final Token token_;
 		private final int nestingLevelInsideMethod_;
 	}
 	
 	public static class DummyReturnExpression extends ReturnExpression
 	{
-		public DummyReturnExpression(final Expression returnExpression, final int lineNumber,
+		public DummyReturnExpression(final Expression returnExpression, final Token token,
 				final Type nearestEnclosingMegaType, final StaticScope enclosingScope) {
-			super("dummmy", returnExpression, lineNumber, nearestEnclosingMegaType, enclosingScope);
+			super("dummmy", returnExpression, token, nearestEnclosingMegaType, enclosingScope);
 		}
 	}
 	
 	public static class BlockExpression extends Expression
 	{
-		public BlockExpression(final int lineNumber, final ExprAndDeclList exprAndDeclList, final StaticScope scope, final Type enclosingMegaType) {
+		public BlockExpression(final Token token, final ExprAndDeclList exprAndDeclList, final StaticScope scope, final Type enclosingMegaType) {
 			super("<block>", null != exprAndDeclList? exprAndDeclList.type():
 				StaticScope.globalScope().lookupTypeDeclaration("void"), enclosingMegaType);
 			exprAndDeclList_ = exprAndDeclList;
-			lineNumber_ = lineNumber;
+			token_ = token;
 			
 			// Assume no initializations. This will be overwritten later if we
 			// find declarations with initialization clauses
@@ -1636,7 +1726,10 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return retval;
 		}
 		@Override public int lineNumber() {
-			return lineNumber_;
+			return (null == token_)? 0: token_.getLine();
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public List<RTCode> compileCodeForInScope(final CodeGenerator codeGenerator, final MethodDeclaration methodDeclaration, final RTType rtTypeDeclaration, final StaticScope scope) {
 			return codeGenerator.compileBlockExpression(this, methodDeclaration, rtTypeDeclaration, scope);
@@ -1703,7 +1796,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			}
 		}
 		
-		private final int lineNumber_;	// may be null
+		private final Token token_;	// may be null
 		private final ExprAndDeclList exprAndDeclList_;
 		private final StaticScope scope_;
 		private List<ObjectDeclaration> initDecl_;
@@ -1723,6 +1816,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return promotee_.lineNumber();
+		}
+		@Override public Token token() {
+			return promotee_.token();
 		}
 		
 		private final Expression promotee_;
@@ -1750,6 +1846,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return enclosingRole_.lineNumber();
+		}
+		@Override public Token token() {
+			return enclosingRole_.token();
 		}
 		
 		final private RoleDeclaration enclosingRole_;
@@ -1781,6 +1880,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		@Override public int lineNumber() {
 			return enclosingRole_.lineNumber();
 		}
+		@Override public Token token() {
+			return enclosingRole_.token();
+		}
 		
 		final private RoleDeclaration enclosingRole_;
 		
@@ -1801,6 +1903,9 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public int lineNumber() {
 			return originalExpression_.lineNumber();
+		}
+		@Override public Token token() {
+			return originalExpression_.token();
 		}
 		@Override public String getText() {
 			return "*Error*";
@@ -1872,7 +1977,8 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		return retval;
 	}
 	
-	public static Type nearestEnclosingMegaTypeOf(StaticScope scope) {	// FIXME? not final
+	public static Type nearestEnclosingMegaTypeOf(final StaticScope scopeArg) {
+		StaticScope scope = scopeArg;
 		Type retval = null;
 		if (null != scope) {
 			while (scope != StaticScope.globalScope()) {

@@ -3,6 +3,8 @@ package info.fulloo.trygve.run_time;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
+
 /*
  * Trygve IDE 2.0
  *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
@@ -67,6 +69,10 @@ public abstract class RTCode implements RTStackable {
 	
 	public int lineNumber() {
 		return 0;
+	}
+	
+	public Token token() {
+		return null;
 	}
 	
 	public List<RTCode> connectedExpressions() {

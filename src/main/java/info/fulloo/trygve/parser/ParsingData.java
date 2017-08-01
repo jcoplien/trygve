@@ -79,7 +79,7 @@ public class ParsingData {
 		breakableRTExpressions_ = new LinkedHashMap<String, RTBreakableExpression>();
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
-		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
+		templateInstantationList_ = new TypeDeclarationList(null);	// argument is lineNumber Token
 		classOrContextDeclarations_ = new Stack<ClassOrContextDeclaration>();
 		
 		variableGeneratorCounter_ = 101;
