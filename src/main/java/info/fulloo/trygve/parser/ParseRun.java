@@ -366,7 +366,7 @@ public class ParseRun {
 						}
 						*/
 
-						if (null != e && false == allExpressions_.containsKey(e.lineNumber())) {
+						if (null != e && false == allExpressions_.containsValue(e)) {
 							exprStack_.push(e);
 						}
 					}

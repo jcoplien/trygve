@@ -3155,7 +3155,7 @@ public abstract class RTExpression extends RTCode {
 			return lineNumber_;
 		}
 		@Override public List<RTCode> connectedExpressions() {
-			List<RTCode> retval = new ArrayList<RTCode>();
+			final List<RTCode> retval = new ArrayList<RTCode>();
 			if (null != nextCode_) retval.add(nextCode_);
 			if (null != part2_) retval.add(part2_);
 			if (null != conditionalExpression_) retval.add(conditionalExpression_);
