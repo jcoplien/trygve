@@ -149,6 +149,10 @@ public class RunTimeEnvironment {
 			return swingWorkerDynamicScopes_;
 		}
 	}
+	public RTDynamicScope swingWorkerDynamicScope() {
+		// dangerous
+		return swingWorkerDynamicScopes_.peek();
+	}
 	private void preDeclareTypes() {
 		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
 		assert null != intClassDecl;

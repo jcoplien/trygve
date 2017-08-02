@@ -20,6 +20,8 @@ import java.util.Stack;
 import javax.swing.*;
 
 
+
+
 // https://www3.ntu.edu.sg/home/ehchua/programming/java/j5e_multithreading.html
 public class RTDebuggerWindow extends JFrame {
    public RTDebuggerWindow(final TextEditorGUI gui) {
@@ -75,17 +77,6 @@ public class RTDebuggerWindow extends JFrame {
          }
       });
       
-      runButton_ = new JButton("Run");
-      runButton_.setEnabled(true);
-      runButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent evt) {
-        	 runButton_.setEnabled(false);
-        	 pauseButton_.setEnabled(true);
-      	     gui_.runButtonActionPerformed(evt);
-         }
-      });
-      
       pauseButton_ = new JButton("Pause");
       pauseButton_.setEnabled(false);
       pauseButton_.addActionListener(new ActionListener() {
@@ -112,6 +103,17 @@ public class RTDebuggerWindow extends JFrame {
          public void actionPerformed(ActionEvent evt) {
       	     messagePanel_.setText("");
       	     messagePanelContent_ = "";
+         }
+      });
+
+      runButton_ = new JButton("Run");
+      runButton_.setEnabled(true);
+      runButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+        	 runButton_.setEnabled(false);
+        	 pauseButton_.setEnabled(true);
+      	     gui_.runButtonActionPerformed(evt);
          }
       });
       
@@ -141,6 +143,8 @@ public class RTDebuggerWindow extends JFrame {
   	  objectScrollPane_ = new javax.swing.JScrollPane(objectOverviewPanel_);
   	  objectScrollPane_.setPreferredSize(new Dimension(350, 300));
   	  
+  	  filterLabel_ = new JLabel("Filter: ");
+  	  
   	  final int columns = 20;
   	  filterText_ = "";
   	  filterField_ = new javax.swing.JTextField(columns);
@@ -149,7 +153,9 @@ public class RTDebuggerWindow extends JFrame {
         public void actionPerformed(ActionEvent evt) {
      	     filterFieldActionPerformed(evt);
         }
-     });
+      });
+  	  
+  	  filterTextAck_ = new JLabel("");
 	  
   	  layout.setAutoCreateGaps(true);
       layout.setHorizontalGroup(
@@ -158,9 +164,10 @@ public class RTDebuggerWindow extends JFrame {
               .addComponent(setBreakpointButton_)
               .addComponent(removeBreakpointButton_)
               .addComponent(continueButton_)
-              .addComponent(runButton_)
               .addComponent(pauseButton_)
-              .addComponent(interruptButton_))
+              .addComponent(interruptButton_)
+              .addGap(100, 300, 1000)
+              .addComponent(runButton_))
           .addGroup(layout.createSequentialGroup()
         	  .addGroup(layout.createParallelGroup()
                           .addComponent(messageScrollPane_)
@@ -168,7 +175,10 @@ public class RTDebuggerWindow extends JFrame {
               .addComponent(tracebackScrollPane_)
               .addGroup(layout.createParallelGroup()
                   .addComponent(objectScrollPane_)
-            	  .addComponent(filterField_)))
+                  .addGroup(layout.createSequentialGroup()
+                		  .addComponent(filterLabel_)
+                		  .addComponent(filterField_)
+                		  .addComponent(filterTextAck_))))
           .addGroup(layout.createSequentialGroup())
       );
  
@@ -196,7 +206,9 @@ public class RTDebuggerWindow extends JFrame {
         			   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
         			   .addGroup(
         				  layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-        				    .addComponent(filterField_))))
+        				    .addComponent(filterLabel_)
+        				    .addComponent(filterField_)
+        				    .addComponent(filterTextAck_))))
       );
 
       // pack();
@@ -339,6 +351,13 @@ public class RTDebuggerWindow extends JFrame {
    
    private void filterFieldActionPerformed(ActionEvent event) {
 	   filterText_ = filterField_.getText();
+	   filterField_.setText("");
+	   filterTextAck_.setText(filterText_);
+	   if (null != breakpointSemaphore_ && breakpointSemaphore_.locked() == false) {
+		   // We're halted. Update the display
+		   objectOverviewPanelContent_ = "";
+		   displayObjectSnapshot(RunTimeEnvironment.runTimeEnvironment_.swingWorkerDynamicScope());
+	   }
    }
    
    public void updateParsingStatus(int numberOfErrors, boolean parseNeeded) {
@@ -396,105 +415,144 @@ public class RTDebuggerWindow extends JFrame {
 	   debuggerWindowMessage("Breakpoint at line " + code.lineNumber() + ". Stopped.\n");
 	   this.stopCommon(code);
    }
-   private String snapshotAnElement(final String name, final RTObject instanceArg, int indent, final boolean printAllBelowArg) {
-	   boolean printAllBelow = printAllBelowArg;
-	   String retval = "";
+   
+   private BTreeElement snapshotAnElement(final String name, final RTObject instanceArg, final int indent) {
+	   BTreeElement retval = null, element = null;
+	   String rowString = "";
 	   RTObject instance = instanceArg;
-	   if (name.startsWith("temp$")) {
-		   return retval;
+	   if (name.startsWith("temp$") || name.startsWith("parseTemp$")) {
+		   return null;
 	   }
 	   for (int i = 0; i < indent; i++) {
-		   retval += "    ";
+		   rowString += SPACES;
 	   }
 	   if (false == name.equalsIgnoreCase("context$info")) {
-		   retval += name + ": ";
+		   rowString += name + ": ";
 	   }
 	   final RTType type = instance.rTType();
 	   if (type instanceof RTStringClass) {
 		   final RTStringObject stringObject = (RTStringObject) instance;
-		   retval += "\"" + stringObject.toString() + "\"\n";
+		   rowString += "\"" + stringObject.toString() + "\"\n";
+		   retval = tree_.new Row(tree_, rowString);
 	   } else if (type instanceof RTIntegerClass) {
 		   final RTIntegerObject integerObject = (RTIntegerObject) instance;
-		   retval += integerObject.toString() + "\n";
+		   rowString += integerObject.toString() + "\n";
+		   retval = tree_.new Row(tree_, rowString);
 	   } else if (instance instanceof RTListObject) {
-		   retval += instance.rTType().name() + "\n"; // instance.toString();
+		   rowString += instance.rTType().name() + "\n"; // instance.toString();
+		   retval = tree_.new Row(tree_, rowString);
+		   
 		   final RTListObject list = (RTListObject) instance;
 		   for (int i = 0; i < list.size(); i++) {
 			   final RTObject listElement = list.get(i);
-			   retval += snapshotAnElement(Integer.toString(i), listElement, indent + 1, printAllBelow);
+			   element = snapshotAnElement(Integer.toString(i), listElement, indent + 1);
+			   retval.addChild(element);
 		   }
 	   } else if (instance.getClass().getSimpleName().equals("RTObjectCommon")) {
 		   // Is a class object
 		   // Put type out on this line
-		   retval += "instance of class " + type.name() + "\n";
+		   rowString += "instance of class " + type.name() + "\n";
+		   retval = tree_.new Row(tree_, rowString);
+		   rowString = "";
+		   
 		   final RTObjectCommon rtocInstance = (RTObjectCommon) instance;
 		   final Map<String,RTObject> objectMembers = rtocInstance.objectMembers();
 		   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
 		   while (objectNameIter.hasNext()) {
 			   final String identifierName = objectNameIter.next();
 			   instance = objectMembers.get(identifierName);
-			   retval += snapshotAnElement(identifierName, instance, indent + 1, printAllBelow);
+			   element = snapshotAnElement(identifierName, instance, indent + 1);
+			   retval.addChild(element);
 		   }
 	   } else if (instance instanceof RTContextObject) {
 		   // Is a Context object
-		   retval += "instance of context " + type.name() + "\n";
+		   rowString += "instance of Context " + type.name() + "\n";
+		   retval = tree_.new Row(tree_, rowString);
+		   rowString = "";
+		   
 		   final RTContextObject rtcoInstance = (RTContextObject) instance;
 		   final Map<String,RTObject> objectMembers = rtcoInstance.objectMembers();
 		   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
 		   while (objectNameIter.hasNext()) {
 			   final String identifierName = objectNameIter.next();
 			   instance = objectMembers.get(identifierName);
-			   retval += snapshotAnElement(identifierName, instance, indent + 1, printAllBelow);
+			   element = snapshotAnElement(identifierName, instance, indent + 1);
+			   retval.addChild(element);
 		   }
 	   } else if (instance instanceof RTContextInfo) {
 		   final RTContextInfo contextInfo = (RTContextInfo) instance;
 		   final Map<String, RTObject> rolePlayers = contextInfo.rolePlayers();
 		   final Map<String, RTObject> stagePropPlayers = contextInfo.rolePlayers();
 		   
+		   // For RTContextInfo, there is nothing printed above in this cycle.
+		   // rowString is a set of one-level indented blanks, and if we put
+		   // it as an argument to Row it screws things up in the output...
+		   retval = tree_.new Row(tree_);
+		   
 		   for (final String roleName: rolePlayers.keySet() ) {
+			   rowString = "";
+			   for (int i = 0; i < indent; i++) {
+				   rowString += SPACES;
+			   }
 			   final RTObject rolePlayer = rolePlayers.get(roleName);
 			   final String typeName = null == rolePlayer.rTType()? "<NULL>": rolePlayer.rTType().name();
-			   retval += "Role " +
+			   rowString += "Role " +
 					   roleName + " bound to object of type " + typeName +
 					   "\n";
-			   retval += snapshotAnElement(roleName, rolePlayer, indent + 1, printAllBelow);
+
+			   final PrintedBTree.Row newRow = tree_.new Row(tree_, rowString);
+			   retval.addChild(newRow);
+			   element = snapshotAnElement(roleName, rolePlayer, indent + 1);
+			   newRow.addChild(element);
 		   }
 		   
-		   for (int i = 0; i < indent; i++) {
-			   retval += "    ";
-		   }
 		   for (final String stagePropName: stagePropPlayers.keySet() ) {
+			   rowString = "";
+			   for (int i = 0; i < indent; i++) {
+				   rowString += SPACES;
+			   }
 			   final RTObject stagePropPlayer = stagePropPlayers.get(stagePropName);
 			   final String typeName = null == stagePropPlayer.rTType()? "<NULL>": stagePropPlayer.rTType().name();
-			   retval += "Stageprop " +
+			   rowString += "Stageprop " +
 					   stagePropName + " bound to object of type " + typeName +
 					   "\n";
-			   retval += snapshotAnElement(stagePropName, stagePropPlayer, indent + 1, printAllBelow);
+			   final PrintedBTree.Row newRow = tree_.new Row(tree_, rowString);
+			   retval.addChild(newRow);
+			   element = snapshotAnElement(stagePropName, stagePropPlayer, indent + 1);
+			   newRow.addChild(element);
 		   }
 	   } else {
-		   retval += instance.toString() + "\n";
+		   rowString += instance.toString() + "\n";
+		   retval = tree_.new Row(tree_, rowString);
 	   }
 	   return retval;
    }
-   private void displayObjectSnapshot(RTDynamicScope scope) {
-	   if (null != scope) {
-		   Map<String,RTObject> objectMembers = scope.objectMembers();
-		   Iterator<String> objectNameIter = objectMembers.keySet().iterator();
+   private void displayObjectSnapshot(final RTDynamicScope scope) {
+	   tree_ = new PrintedBTree();
+	   displayObjectSnapshotRecur(scope);
+   }
+   private void displayObjectSnapshotRecur(final RTDynamicScope scopeArg) {
+	   BTreeElement element = null;
+	   if (null != scopeArg) {
+		   RTDynamicScope scope = scopeArg;
+		   final Map<String,RTObject> objectMembers = scope.objectMembers();
+		   final Iterator<String> objectNameIter = objectMembers.keySet().iterator();
 		   while (objectNameIter.hasNext()) {
 			   final String identifierName = objectNameIter.next();
 			   final RTObject instance = objectMembers.get(identifierName);
-			   final String thisMember = snapshotAnElement(identifierName, instance, 0, false);
-			   if (0 == filterText_.length() || -1 != thisMember.indexOf(filterText_)) {
-				   objectOverviewPanelContent_ += thisMember;
-			   }
+			   element = snapshotAnElement(identifierName, instance, 0);
+			   tree_.addChild(element);
 		   }
 		   scope = scope.parentScope();
-		   displayObjectSnapshot(scope);
+		   displayObjectSnapshotRecur(scope);
 		   if (null == scope || scope.isARealMethodScope()) {
 			   // Now dump it in the window
+			   // old: objectOverviewPanelContent_ = tree_.toString();
+			   objectOverviewPanelContent_ = tree_.filterTraverse(filterText_);	// new
 			   objectOverviewPanel_.setText(objectOverviewPanelContent_);
 			   final JScrollBar vertical = objectScrollPane_.getVerticalScrollBar();
 			   vertical.setValue( vertical.getMaximum() );
+			   objectOverviewPanel_.updateUI();
 		   }
 	   }
    }
@@ -576,6 +634,123 @@ public class RTDebuggerWindow extends JFrame {
 		vertical.setValue( vertical.getMaximum() );
 	}
    
+   
+	public interface BTreeElement {
+		public String toString();
+		public void addChild(final BTreeElement element);
+		public void setParent(final BTreeElement element);
+		public BTreeElement parent();
+		public ArrayList<BTreeElement> children();
+		public void mark();
+		public void markAll();
+		public boolean marked();
+		public void unmarkAll();
+		public String localToString();
+		public boolean thisLevelMatchesKey(final String filter);
+	}
+	public abstract class PrintedBTreeCommon implements BTreeElement {
+		@Override public void mark() { marked_ = true; }
+		@Override public boolean marked() { return marked_; }
+		@Override public void unmarkAll() {
+			marked_ = false;
+			for (BTreeElement element: children()) element.unmarkAll();
+		}
+		@Override public void markAll() {
+			marked_ = true;
+			for (BTreeElement element: children()) element.markAll();
+		}
+		@Override public boolean thisLevelMatchesKey(final String filter) {
+			return -1 != localToString().indexOf(filter);
+		}
+		@Override public BTreeElement parent() { return parent_; }
+		@Override public void setParent(final BTreeElement element) { parent_ = element; }
+		
+		protected BTreeElement parent_;
+		protected boolean marked_ = false;
+	}
+	public class PrintedBTree extends PrintedBTreeCommon implements BTreeElement {
+		public PrintedBTree() {
+			tree_ = new Row(null);
+		}
+		public class Row extends PrintedBTreeCommon implements BTreeElement {
+			public Row(final BTreeElement parent) {
+				localString_ = "";
+				row_ = new ArrayList<BTreeElement>();
+				parent_ = parent;
+			}
+			public Row(final BTreeElement parent, final String string) {
+				row_ = new ArrayList<BTreeElement>();
+				addChild(new Atom(this, string));
+				parent_ = parent;
+				localString_ = string;
+			}
+			@Override public String toString() {
+				String retval = "";
+				for (final BTreeElement printable: row_) {
+					if (null != printable) {
+						retval += printable.toString();
+					}
+				}
+				return retval;
+			}
+			@Override public String localToString() { return localString_; }
+			@Override public void addChild(final BTreeElement element) { if (null == element) return; element.setParent(this); row_.add(element); }
+			@Override public ArrayList<BTreeElement> children() { return row_; }
+			
+			private final ArrayList<BTreeElement> row_;
+			private final String localString_;
+		}
+		public class Atom extends PrintedBTreeCommon implements BTreeElement {
+			public Atom(final BTreeElement parent, final String string) {
+				string_ = string;
+				parent_ = parent;
+			}
+			@Override public String toString() { return string_; }
+			@Override public void addChild(final BTreeElement element) { assert false; }
+			@Override public ArrayList<BTreeElement> children() { return new ArrayList<BTreeElement>(); }
+			@Override public String localToString() { return string_; }
+			private final String string_;
+		}
+		@Override public BTreeElement parent() { return tree_.parent(); }
+		@Override public void setParent(final BTreeElement parent) { tree_.setParent(parent); }
+		@Override public String toString() { return tree_.toString(); }
+		          public String filterTraverse(final String filter) {
+		        	  unmarkAll();
+		        	  String retval = recursiveFilterTraverse(this, filter);
+		        	  return retval;
+		          }
+		          private String recursiveFilterTraverse(final BTreeElement element, final String filter) {
+		        	  String retval = "";
+		        	  if (false == marked()) {
+		        		  // See if just this level matches the key
+		        		  if (0 == filter.length() || element.thisLevelMatchesKey(filter)) {
+		        			  // We have a winner:
+		        			  final Stack<String> pathToTop = new Stack<String>();
+		        			  for (BTreeElement walker = element.parent(); null!= walker; walker = walker.parent()) {
+		        				  if (walker.marked()) break;		// risky, but might be pretty
+		        				  final String thisPath = walker.localToString();
+		        				  walker.mark();
+		        				  pathToTop.push(thisPath);
+		        			  }
+		        			  while (false == pathToTop.isEmpty()) {
+		        				  retval += pathToTop.pop();
+		        			  }
+		        			  element.markAll();
+		        			  retval += element.toString();
+		        		  } else {
+		        			  for (final BTreeElement element2: element.children()) {
+		        				  retval += recursiveFilterTraverse(element2, filter);
+		        			  }
+		        		  }
+		        	  }
+		        	  return retval;
+		          }
+		@Override public String localToString() { return tree_.localToString(); }
+		@Override public void addChild(final BTreeElement element) { if (null == element) return; element.setParent(this); tree_.addChild(element); }
+		@Override public ArrayList<BTreeElement> children() { return tree_.children(); }
+		private final BTreeElement tree_;
+	}
+   
    private final static long serialVersionUID = 438512109;
    private final JButton setBreakpointButton_;
    private final JButton removeBreakpointButton_;
@@ -584,6 +759,7 @@ public class RTDebuggerWindow extends JFrame {
    private final JButton interruptButton_;
    private final JButton clearButton_;
    private final JButton pauseButton_;
+   private final JLabel filterLabel_, filterTextAck_;
    private final JTextField filterField_;
    private       String filterText_;
    private final TextEditorGUI gui_;
@@ -597,4 +773,6 @@ public class RTDebuggerWindow extends JFrame {
    private final JTextArea objectOverviewPanel_;
    private String messagePanelContent_ = "", tracebackScrollContent_ = "", objectOverviewPanelContent_ = "";
    private final ArrayList<RTCode> allBreakpointedExpressions_;
+   private       PrintedBTree tree_;
+   private String SPACES = "    ";
 }

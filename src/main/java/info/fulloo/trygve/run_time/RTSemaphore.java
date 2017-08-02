@@ -12,5 +12,9 @@ public class RTSemaphore {
 	    while(!this.signal) wait();
 	    this.signal = false;
 	  }
+	  
+	  public synchronized boolean locked() {
+		  return signal;
+	  }
 
 	}

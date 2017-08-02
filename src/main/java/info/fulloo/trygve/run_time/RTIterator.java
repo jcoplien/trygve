@@ -24,6 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.Iterator;
+
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 
 public abstract class RTIterator extends RTCommonRunTimeCrap {
@@ -41,6 +42,11 @@ public abstract class RTIterator extends RTCommonRunTimeCrap {
 	
 	@Override public String getText() {
 		return "<iterator>";
+	}
+	
+	
+	public RTType rTType() {
+		return null;	// a lie, but looks reasonable in debugging
 	}
 	
 	public static class RTArrayIterator extends RTIterator {
