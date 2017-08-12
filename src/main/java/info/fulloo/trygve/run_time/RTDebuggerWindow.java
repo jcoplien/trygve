@@ -18,13 +18,57 @@ import java.util.Map;
 import java.util.Stack;
 
 import javax.swing.*;
+import javax.swing.text.Caret;
+import javax.swing.text.DefaultCaret;
 
 
 
 
 // https://www3.ntu.edu.sg/home/ehchua/programming/java/j5e_multithreading.html
 public class RTDebuggerWindow extends JFrame {
-   public RTDebuggerWindow(final TextEditorGUI gui) {
+	
+	// These My* classes are here to wrap the text elements of the debugger window.
+	// There seems to be some kind of asynchronous bug, perhaps related to thread
+	// safety, that causes the cursor object to disappear for text fields
+	// when there is an interaction between the debugger and the program. It
+	// might also owe to the program erasing the cursor when outputting. Who
+	// knows. But it causes the program to die while being repainted in
+	// response to some event linked to the breakpoint, because the paint
+	// logic wants there to be a cursor there. The problem showed up in
+	// getSelectionStart and getSelectionEnd, so we provide our own version
+	// of those that provide a default cursor if there is none in place.
+	public class MyJTextField extends JTextField {
+		public MyJTextField(final int columns) {
+			super(columns);
+		}
+		@Override public int getSelectionStart() {
+			return 0;
+		}
+		private final static long serialVersionUID = 237718234;
+	}
+	public class MyJTextArea extends JTextArea {
+	   private static final long serialVersionUID = 1L;
+	   public MyJTextArea(int h, int w) {
+		   super(h, w);
+	   }
+	   @Override public int getSelectionStart() {
+		   final Caret caret = super.getCaret();
+		   if (null == caret) {
+			   setCaret(new DefaultCaret());
+		   }
+		   final int start = null == caret? 0: Math.min(caret.getDot(), caret.getMark());
+		   return start;
+	   }
+	   @Override public int getSelectionEnd() {
+		   final Caret caret = super.getCaret();
+		   if (null == caret) {
+			   setCaret(new DefaultCaret());
+		   }
+		   final int end = null == caret? 0: Math.max(caret.getDot(), caret.getMark());
+		   return end;
+	   }
+	}
+	public RTDebuggerWindow(final TextEditorGUI gui) {
 	  gui_ = gui;
 	  allBreakpointedExpressions_ = new ArrayList<RTCode>();
       final Container cp = getContentPane();
@@ -117,7 +161,7 @@ public class RTDebuggerWindow extends JFrame {
          }
       });
       
-      messagePanel_ = new javax.swing.JTextArea(15, 35);
+      messagePanel_ = new MyJTextArea(15, 35);
   	  messagePanel_.setMargin(new java.awt.Insets(3, 3, 3, 3));
       messagePanel_.setBackground(new java.awt.Color(233, 228, 242));
   	  messagePanel_.setSize(550, 300);
@@ -126,7 +170,7 @@ public class RTDebuggerWindow extends JFrame {
   	  javax.swing.JFrame.setDefaultLookAndFeelDecorated(true);
   	  messageScrollPane_.setPreferredSize(new Dimension(350, 300));
   	  
-  	  tracebackPanel_ = new javax.swing.JTextArea(15, 35);
+  	  tracebackPanel_ = new MyJTextArea(15, 35);
   	  tracebackPanel_.setMargin(new java.awt.Insets(3, 3, 3, 3));
   	  tracebackPanel_.setBackground(new java.awt.Color(233, 228, 242));
   	  tracebackPanel_.setSize(600, 300);
@@ -135,7 +179,7 @@ public class RTDebuggerWindow extends JFrame {
 	  tracebackScrollPane_.setPreferredSize(new Dimension(350, 300));
 	  javax.swing.JFrame.setDefaultLookAndFeelDecorated(true);
   	  
-  	  objectOverviewPanel_ = new javax.swing.JTextArea(15, 35);
+  	  objectOverviewPanel_ = new MyJTextArea(15, 35);
   	  objectOverviewPanel_.setMargin(new java.awt.Insets(3, 3, 3, 3));
   	  objectOverviewPanel_.setBackground(new java.awt.Color(233, 228, 242));
   	  objectOverviewPanel_.setSize(600, 300);
@@ -147,14 +191,15 @@ public class RTDebuggerWindow extends JFrame {
   	  
   	  final int columns = 20;
   	  filterText_ = "";
-  	  filterField_ = new javax.swing.JTextField(columns);
+  	  filterField_ = new MyJTextField(columns);
+  	  filterField_.setText("");
   	  filterField_.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent evt) {
      	     filterFieldActionPerformed(evt);
         }
       });
-  	  
+
   	  filterTextAck_ = new JLabel("");
 	  
   	  layout.setAutoCreateGaps(true);
