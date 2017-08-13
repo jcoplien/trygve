@@ -37,13 +37,32 @@ public class RTDebuggerWindow extends JFrame {
 	// logic wants there to be a cursor there. The problem showed up in
 	// getSelectionStart and getSelectionEnd, so we provide our own version
 	// of those that provide a default cursor if there is none in place.
+	//
+	// Another possible reason: Multiple threads may be updating the same
+	// JTextArea in the main window
+	//
+	// The problem seems to be more with JTextArea than JTextField, but for
+	// completeness we cover them both.
 	public class MyJTextField extends JTextField {
 		public MyJTextField(final int columns) {
 			super(columns);
 		}
-		@Override public int getSelectionStart() {
-			return 0;
-		}
+		 @Override public int getSelectionStart() {
+			   final Caret caret = super.getCaret();
+			   if (null == caret) {
+				   setCaret(new DefaultCaret());
+			   }
+			   final int start = null == caret? 0: Math.min(caret.getDot(), caret.getMark());
+			   return start;
+		   }
+		   @Override public int getSelectionEnd() {
+			   final Caret caret = super.getCaret();
+			   if (null == caret) {
+				   setCaret(new DefaultCaret());
+			   }
+			   final int end = null == caret? 0: Math.max(caret.getDot(), caret.getMark());
+			   return end;
+		   }
 		private final static long serialVersionUID = 237718234;
 	}
 	public class MyJTextArea extends JTextArea {
