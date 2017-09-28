@@ -24,6 +24,5 @@ context C1 {
 line 13: WARNING: Declaring a Role parameter `x' for Context script `test' is unorthodox. The script should directly access the Role `R' instead.
 1 warning, 0 errors.
 ___________________________________________________________
-
 foo
 */
