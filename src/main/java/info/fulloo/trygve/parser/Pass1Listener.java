@@ -1197,6 +1197,23 @@ public class Pass1Listener extends Pass0Listener {
 			parsingData_.currentFormalParameterList().addFormalParameter(currentContext);
 		}
 		
+		final boolean isAConstructor = classOrRoleOrContextType.name().equals(parsingData_.currentMethodSignature().name());
+		if (classOrRoleOrContextType instanceof ContextType && false == isAConstructor) {
+			// Issue 65. See if any of the parameters is a Role type
+			for (int i = 0; i < parsingData_.currentFormalParameterList().count(); i++) {
+				final Declaration parameterDeclaration = parsingData_.currentFormalParameterList().parameterAtPosition(i);
+				if (parameterDeclaration.type() instanceof RoleType) {
+					errorHook6p2(ErrorIncidenceType.Warning, ctx.getStart(),
+							"WARNING: Declaring a Role parameter `",
+							parameterDeclaration.name(), "' for Context script `",
+							parsingData_.currentMethodSignature().name(),
+							String.format("' is unorthodox. The script should directly access the Role `%s' instead.",
+									parameterDeclaration.type().name()),
+							"");
+				}
+			}
+		}
+		
 		for (int i = 0; i <  parsingData_.currentFormalParameterList().count(); i++) {
 			final Declaration objectDeclaration = parsingData_.currentFormalParameterList().parameterAtPosition(i);
 			
