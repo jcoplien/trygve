@@ -62,11 +62,14 @@ class_declaration
         
 interface_declaration
         : 'interface' JAVA_ID '{' interface_body '}'
+        | 'interface' JAVA_ID type_parameters '{' interface_body '}'
         ;
         
 implements_list
 		: 'implements' JAVA_ID
+		| 'implements' JAVA_ID type_list
 		| implements_list ',' JAVA_ID
+		| implements_list ',' JAVA_ID type_list
 		;
 
 type_parameters

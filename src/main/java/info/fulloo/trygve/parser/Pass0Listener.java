@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.TemplateTypeForAnInterface;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
@@ -133,7 +134,8 @@ public class Pass0Listener extends KantBaseListener {
 			}
 			
 			if (null != ctx.type_parameters()) {
-				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart());
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, false, ctx.getStart());
+				currentScope_.declareTemplate(newTemplate);
 				currentScope_ = newTemplate.enclosedScope();
 				parsingData_.pushTemplateDeclaration(newTemplate);
 			} else {
@@ -149,11 +151,18 @@ public class Pass0Listener extends KantBaseListener {
 	@Override public void enterInterface_declaration(KantParser.Interface_declarationContext ctx)
 	{
 		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
-		final String name = ctx.JAVA_ID().getText();
-	
+		//                       | 'interface' JAVA_ID type_parameters '{' interface_body '}'
+
 		if (null != ctx.interface_body()) {
-			currentInterface_ = this.lookupOrCreateInterfaceDeclaration(name, ctx.getStart());
-			currentScope_ = currentInterface_.enclosedScope();
+			String typeName = ctx.JAVA_ID().getText();
+			if (null != ctx.type_parameters() && 0 < ctx.type_parameters().getText().length()) {
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(typeName, null, null, true, ctx.getStart());
+				currentScope_ = newTemplate.enclosedScope();
+				parsingData_.pushTemplateDeclaration(newTemplate);
+			} else {
+				currentInterface_ = this.lookupOrCreateInterfaceDeclaration(typeName, ctx.getStart());
+				currentScope_ = currentInterface_.enclosedScope();
+			}
 		} else {
 			assert false;
 		}
@@ -483,7 +492,7 @@ public class Pass0Listener extends KantBaseListener {
 	
 	protected void createNewInterfaceTypeSuitableToPass(final InterfaceDeclaration newInterface, final String name, final StaticScope newScope) {
 		// Pass1 only
-		final InterfaceType newInterfaceType = new InterfaceType(name, newScope);
+		final InterfaceType newInterfaceType = new InterfaceType(name, newScope, false);
 		currentScope_.declareType(newInterfaceType);
 		newScope.setDeclaration(newInterface);
 		newInterface.setType(newInterfaceType);
@@ -575,27 +584,38 @@ public class Pass0Listener extends KantBaseListener {
 		return contextDecl;
 	}
 	
-	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final Token token) {
+	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType,
+			final boolean isInterface, final Token token) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
-		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, token);
+		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, token, isInterface);
 		newScope.setDeclaration(newTemplate);
 		currentScope_.declareTemplate(newTemplate);
-		this.createNewTemplateTypeSuitableToPass(newTemplate, name, newScope, (ClassType)baseType);
+		this.createNewTemplateTypeSuitableToPass(newTemplate, name, newScope, (ClassType)baseType, isInterface);
 		currentScope_ = newScope;
 		return newTemplate;
 	}
 	
-	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name, final StaticScope newScope, final ClassType baseType) {
+	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name,
+			final StaticScope newScope, final ClassType baseType, boolean isInterface) {
 		// Pass1 only
-		final TemplateType newTemplateType = new TemplateType(name, newScope, baseType);
+		final TemplateType newTemplateType = isInterface?
+				new TemplateTypeForAnInterface(name, newScope, baseType):
+					new TemplateType(name, newScope, baseType);
 		currentScope_.declareType(newTemplateType);
 		newScope.setDeclaration(newTemplate);
 		newTemplate.setType(newTemplateType);
 	}
 	
-    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope, final TypeDeclaration rawBaseClass, final Token token) {
-    	return new TemplateDeclaration(name, newScope, rawBaseClass, token);
+    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope,
+    		final TypeDeclaration rawBaseClass, final Token token, final boolean isInterface) {
+    	TemplateDeclaration retval = null;
+    	if (isInterface) {
+    		retval = new TemplateDeclaration(name, newScope, rawBaseClass, token);
+    	} else {
+    		retval = new TemplateDeclaration(name, newScope, rawBaseClass, token);
+    	}
+    	return retval;
 	}
 	
 	protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
@@ -617,6 +637,9 @@ public class Pass0Listener extends KantBaseListener {
 		/* Nothing */
 	}
 	public void errorHook5p2(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
+		/* nothing */
+	}
+	public void errorHook5p2SpecialHook(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
 		/* nothing */
 	}
 	protected void errorHook6p1(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {

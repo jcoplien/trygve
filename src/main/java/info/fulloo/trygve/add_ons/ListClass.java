@@ -103,7 +103,7 @@ public final class ListClass {
 			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
 			classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
 					baseClassDecl, null);
-			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo);
+			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo, null);
 			final Type rawNewType = classDeclaration.type();
 			assert rawNewType instanceof ClassType;
 			final ClassType newType = (ClassType)rawNewType;

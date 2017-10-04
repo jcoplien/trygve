@@ -819,6 +819,16 @@ public class StaticScope {
 		}
 	}
 	
+	public void undeclareInterface(final InterfaceDeclaration decl) {
+		final String interfaceName = decl.name();
+		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
+			assert interfaceDeclarationDictionary_.containsValue(decl);
+			interfaceDeclarationDictionary_.remove(interfaceName);
+		} else {
+			assert false;
+		}
+	}
+	
 	public void declareTemplate(final TemplateDeclaration decl) {
 		final String templateName = decl.name();
 		if (templateDeclarationDictionary_.containsKey(templateName)) {
@@ -879,6 +889,9 @@ public class StaticScope {
 		return retval;
 	}
 	public void declareInterface(final InterfaceDeclaration decl) {
+		if (null == decl) {
+			assert (null != decl);
+		}
 		final String interfaceName = decl.name();
 		if (interfaceDeclarationDictionary_.containsKey(interfaceName)) {
 			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of interface ", interfaceName, " in ", name());

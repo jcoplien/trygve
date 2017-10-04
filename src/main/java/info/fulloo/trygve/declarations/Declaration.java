@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Hashtable;
 
 import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
@@ -320,7 +321,9 @@ public abstract class Declaration implements BodyPart {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
 		}
-		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final TemplateInstantiationInfo newTypes) {
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final TemplateInstantiationInfo newTypes,
+				Token token) {
 			templateDeclaration_ = templateDeclaration;
 			
 			// This turns a TemplateDeclaration into a class
@@ -330,7 +333,7 @@ public abstract class Declaration implements BodyPart {
 			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
 					this, newTypes);
 			final ClassType newClassType = new ClassType(name(), myEnclosedScope_, baseClassType);
-			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, myEnclosedScope_, this);
+			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, myEnclosedScope_, this, token);
 			this.setType(newClassType);
 		}
 		public TemplateDeclaration generatingTemplate() {
@@ -370,7 +373,8 @@ public abstract class Declaration implements BodyPart {
 		      private int argumentPosition_;
 	}
 	
-	public static class TemplateDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class TemplateDeclaration extends TypeDeclarationCommon
+				implements TypeDeclaration
 	{
 		public TemplateDeclaration(final String name, final StaticScope myEnclosedScope, final TypeDeclaration baseClass, final Token token) {
 			super(name, token, myEnclosedScope);
@@ -417,15 +421,17 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 		
-		private final TypeDeclaration baseClass_;
-		private final List<TypeParameter> typeParameters_;
-		private       int argumentPositionCounter_;
+		protected final TypeDeclaration baseClass_;
+		private   final List<TypeParameter> typeParameters_;
+		private         int argumentPositionCounter_;
 	}
 	
-	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
+	public static class InterfaceDeclaration extends TypeDeclarationCommon
+			implements TypeDeclaration{
 		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final Token token) {
 			super(name, token, enclosedScope);
 			signatures_ = new LinkedHashMap<String, MethodSignature>();
+			methodsHaveBodyParts_ = false;
 		}
 		public void setType(final Type t) {
 			assert t instanceof InterfaceType;
@@ -453,11 +459,32 @@ public abstract class Declaration implements BodyPart {
 		public Map<String, MethodSignature> signatureMap() {
 			return signatures_;
 		}
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final TemplateInstantiationInfo newTypes,
+				Token token) {
+			// This turns a TemplateDeclaration into a class
+			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
+					this, newTypes);
+			
+			// We don't yet allow base types for template interfaces — just use Object
+			final ClassType objectType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Object").type();
+			final InterfaceType newInterfaceType = new InterfaceType(name(), myEnclosedScope_, true);
+			newInterfaceType.elaborateFromTemplate(templateDeclaration, objectType, myEnclosedScope_, this, token);
+			this.setType(newInterfaceType);
+		}
+		public boolean methodsHaveBodyParts() {
+			return methodsHaveBodyParts_;
+		}
+		public void setMethodsHaveBodyParts(final boolean tf) {
+			methodsHaveBodyParts_ = tf;
+		}
 		
 		protected final Map<String, MethodSignature> signatures_;
+		private boolean methodsHaveBodyParts_;
 	}
 	
-	public static class RoleDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class RoleDeclaration extends TypeDeclarationCommon
+			implements TypeDeclaration
 	{
 		public RoleDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
 			super(name, token, myEnclosedScope);

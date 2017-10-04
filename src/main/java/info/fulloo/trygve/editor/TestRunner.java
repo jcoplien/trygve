@@ -180,6 +180,8 @@ public class TestRunner {
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
 		"issue65.k",
+		"templatetest1.k",
+		"templatetest2.k",
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",

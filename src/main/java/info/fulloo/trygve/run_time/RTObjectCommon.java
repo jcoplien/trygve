@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
@@ -36,6 +37,7 @@ import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleArrayIndexExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
 
@@ -1018,8 +1020,16 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTIntegerObject end = (RTIntegerObject)rTEnd;
 			final long iStart = start.intValue();
 			final long iEnd = end.intValue();
-			final String sRetval = foobar_.substring((int)iStart, (int)iEnd);
-			retval = new RTStringObject(sRetval);
+			if (0 > iStart || foobar_.length() < iEnd) {
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "substring index out-of-range: (",
+						Integer.toString((int)iStart) + ", " + Integer.toString((int)iEnd),
+						") on String of length ", Integer.toString(foobar_.length()));
+				RTMessage.printMiniStackStatus();
+				retval = null;
+			} else {
+				final String sRetval = foobar_.substring((int)iStart, (int)iEnd);
+				retval = new RTStringObject(sRetval);
+			}
 			return retval;
 		}
 		public RTStringObject replaceFirst(final RTObject regexArg, final RTObject replacementArg) {

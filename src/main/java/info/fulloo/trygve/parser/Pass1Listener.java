@@ -76,6 +76,7 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.TemplateTypeForAnInterface;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -153,6 +154,7 @@ import info.fulloo.trygve.parser.KantParser.Switch_bodyContext;
 import info.fulloo.trygve.parser.KantParser.Switch_exprContext;
 import info.fulloo.trygve.parser.KantParser.Type_and_expr_and_decl_listContext;
 import info.fulloo.trygve.parser.KantParser.Type_declarationContext;
+import info.fulloo.trygve.parser.KantParser.Type_listContext;
 import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -266,13 +268,27 @@ public class Pass1Listener extends Pass0Listener {
 	@Override public void enterInterface_declaration(KantParser.Interface_declarationContext ctx)
 	{
 		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
-		final String name = ctx.JAVA_ID().getText();
+		//                       | 'interface' JAVA_ID type_parameters '{' interface_body '}'
 
 		if (null != ctx.interface_body()) {
-			currentInterface_ = this.lookupOrCreateInterfaceDeclaration(name, ctx.getStart());
-			currentScope_ = currentInterface_.enclosedScope();
+			String typeName = ctx.JAVA_ID().getText();
+			if (null != ctx.type_parameters() && 0 < ctx.type_parameters().getText().length()) {
+				final StaticScope globalScope = StaticScope.globalScope();
+				final ClassDeclaration objectBaseClassDecl = globalScope.lookupClassDeclaration("Object");
+				
+				final Type objectBaseClassType = StaticScope.globalScope().lookupTypeDeclaration("Object");
+				assert null != objectBaseClassType;
+				assert objectBaseClassType instanceof ClassType;
+				
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(typeName, objectBaseClassDecl, objectBaseClassType, true, ctx.getStart());
+				currentScope_ = newTemplate.enclosedScope();
+				parsingData_.pushTemplateDeclaration(newTemplate);
+			} else {
+				currentInterface_ = this.lookupOrCreateInterfaceDeclaration(typeName, ctx.getStart());
+				currentScope_ = currentInterface_.enclosedScope();
+			}
 		} else {
-			assert false;	// need diagnostic message for user later
+			assert false;
 		}
 	}
 	
@@ -288,9 +304,13 @@ public class Pass1Listener extends Pass0Listener {
 		assert null != currentScope_;	// maybe turn into an error message later
 		return contextDecl;
 	}
-	@Override  protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final Token token) {
+	@Override protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType,
+			final boolean isInterface, final Token token) {
 		// Pass 1 - 3 version
-		final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
+		TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
+		if (null == newTemplate) {
+			assert false;	// something wrong
+		}
 		return newTemplate;
 	}
 	@Override protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final Token token) {
@@ -480,7 +500,7 @@ public class Pass1Listener extends Pass0Listener {
 			}
 			
 			if (null != ctx.type_parameters()) {
-				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart());
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, false, ctx.getStart());
 				currentScope_ = newTemplate.enclosedScope();
 				parsingData_.pushTemplateDeclaration(newTemplate);
 			} else {
@@ -544,17 +564,77 @@ public class Pass1Listener extends Pass0Listener {
 		// nothing on pass one
 	}
 	
+	private String buildFullTypeName(KantParser.Implements_listContext ctx, final List<String> typeArguments) {
+		ParseTree thing = null;
+		String fullInstantiatedTypeName = ctx.JAVA_ID().getText();
+		switch (ctx.getChildCount()) {
+		case 3:
+			thing = ctx.getChild(2);
+			break;
+		case 4:
+			thing = ctx.getChild(3);
+			break;
+		}
+		
+		if (thing instanceof Type_listContext) {
+			fullInstantiatedTypeName += "<";
+			for (int i = 0 + 1; i < thing.getChildCount() - 1; i++) {
+				final String typeParameter = thing.getChild(i).getText();
+				fullInstantiatedTypeName += typeParameter;
+				typeArguments.add(typeParameter);
+				if (i < thing.getChildCount() - 1 - 1) {
+					fullInstantiatedTypeName += ",";
+				}
+			}
+			fullInstantiatedTypeName += ">";
+		}
+		return fullInstantiatedTypeName;
+	}
+	
+	@Override public void enterImplements_list(KantParser.Implements_listContext ctx) {
+		// : 'implements' JAVA_ID
+		// : 'implements' JAVA_ID type_list
+		// | implements_list ',' JAVA_ID
+		// | implements_list ',' JAVA_ID type_list
+
+		final List<String> typeNameList = new ArrayList<String>();
+		
+		/* (void) */ this.buildFullTypeName(ctx, typeNameList);
+
+		if (0 < typeNameList.size()) {
+			// Create the new interface and put it in the symbol table
+			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart(),
+					typeNameList);
+			if (null == type) {
+				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart(),
+						"No Type returned from commonTemplateInstantiationHandling: ",
+						"instantiating a type in an expression: `",
+						ctx.getText(),
+						"'."
+						);
+			}
+		}
+	}
+	
 	@Override public void exitImplements_list(KantParser.Implements_listContext ctx) {
 		// : 'implements' JAVA_ID
+		// : 'implements' JAVA_ID implements_list
 		// | implements_list ',' JAVA_ID
+		// | implements_list ',' JAVA_ID implements_list
 		
-		final String interfaceName = ctx.JAVA_ID().getText();
+		String interfaceName = ctx.JAVA_ID().getText();
 		InterfaceDeclaration anInterface = currentScope_.lookupInterfaceDeclarationRecursive(interfaceName);
 		
 		if (null == anInterface) {
-			errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart(),
-					"Interface ", interfaceName, " is not declared.", "", "", "");
-			anInterface = new InterfaceDeclaration(" error", null, ctx.getStart());
+			final List<String> typeArguments = new ArrayList<String>();
+			interfaceName = this.buildFullTypeName(ctx, typeArguments);
+			anInterface = currentScope_.lookupInterfaceDeclarationRecursive(interfaceName);
+			
+			if (null == anInterface) {
+				errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart(),
+						"Interface `", interfaceName, "' is not declared.", "", "", "");
+				anInterface = new InterfaceDeclaration(" error", null, ctx.getStart());
+			}
 		}
 		
 		final ClassOrContextType classOrContextType = (ClassOrContextType)parsingData_.currentClassOrContextDeclaration().type();
@@ -1079,18 +1159,31 @@ public class Pass1Listener extends Pass0Listener {
 		if (null != contextForSignature) {
 			final MethodSignature signature = parsingData_.popMethodSignature();
 			final FormalParameterList plInProgress = parsingData_.popFormalParameterList();
+			final Declaration associatedDeclaration = currentScope_.associatedDeclaration();
+			if (null == associatedDeclaration) {
+				assert null != associatedDeclaration;
+			}
+			final Type classOrRoleOrContextType = associatedDeclaration.type();
 		
 			// Add a declaration of "this." These are class instance methods, never
 			// role methods, so there is no need to add a current$context argument
-			final ObjectDeclaration self = new ObjectDeclaration("this", currentInterface_.type(), ctx.getStart());
+			final ObjectDeclaration self = new ObjectDeclaration("this", classOrRoleOrContextType, ctx.getStart());
 			plInProgress.addFormalParameter(self);
 		
 			signature.addParameterList(plInProgress);
-			currentInterface_.addSignature(signature);
 			
-			// Add it to type, too
-			final InterfaceType interfaceType = (InterfaceType)currentInterface_.type();
-			this.addSignatureSuitableToPass(interfaceType, signature);
+			// This is a kludge. Has to be a better way. FIXME.
+			if (null != currentInterface_) {
+				currentInterface_.addSignature(signature);
+				
+				// Add it to type, too
+				final InterfaceType interfaceType = (InterfaceType)currentInterface_.type();
+				this.addSignatureSuitableToPass(interfaceType, signature);
+			} else {
+				final String name = classOrRoleOrContextType.name();
+				final TemplateDeclaration newTemplate = currentScope_.lookupTemplateDeclarationRecursive(name);
+				this.addTemplateSignatureSuitableToPass((TemplateType)newTemplate.type(), signature);
+			}	
 		}
 		
 		if (printProductionsDebug) {
@@ -1106,6 +1199,9 @@ public class Pass1Listener extends Pass0Listener {
 	}
 	
 	protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
+		// nothing in pass 1
+	}
+	protected void addTemplateSignatureSuitableToPass(final TemplateType interfaceType, final MethodSignature signature) {
 		// nothing in pass 1
 	}
 
@@ -4129,10 +4225,108 @@ public class Pass1Listener extends Pass0Listener {
 		// caller may reset currentScope - NOT us
 	}
 	
-	protected Type lookupOrCreateTemplateInstantiation(final String templateName, final List<String> parameterTypeNames, final Token token) {
+	protected Type lookupOrCreateTemplateInstantiation(final String templateName,
+			final List<String> parameterTypeNames, final Token token) {
 		// This varies by pass. On the last pass we first remove the instantiation, so that the
 		// new one picks up the body created in Pass 3.
 		return lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, token);
+	}
+	
+
+	private Type instantiateClass(final List<String> parameterTypeNames, final String typeName,
+			final TemplateDeclaration templateDeclaration, Token token) {
+		Type retval = null;
+		final StaticScope templateScope = templateDeclaration.enclosingScope();
+		
+		final TypeDeclaration baseClass = templateDeclaration.baseClass();
+		final String baseClassName = null == baseClass? "void": baseClass.name();
+		final ClassDeclaration baseClassDecl = null == baseClass? null:
+							templateScope.lookupClassDeclarationRecursive(baseClassName);
+		
+		ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
+		if (null == classDeclaration) {
+			// Create a new type vector from the type parameters
+			final TemplateInstantiationInfo newTypes = new TemplateInstantiationInfo(templateDeclaration, typeName);
+			for (final String aTypeName : parameterTypeNames) {
+				final Type correspondingType = currentScope_.lookupTypeDeclarationRecursive(aTypeName);
+				if (null == correspondingType) {
+					errorHook5p2(ErrorIncidenceType.Fatal, token,
+						"Cannot find type named ", aTypeName, " in instantiation of ", templateDeclaration.name());
+					newTypes.add(new ErrorType());
+				} else {
+					newTypes.add(correspondingType);
+				}
+			}
+		
+			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
+			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
+			final StaticScope templateEnclosedScope = templateDeclaration.enclosedScope();
+			classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
+				baseClassDecl, token);
+			classDeclaration.elaborateFromTemplate(templateDeclaration, newTypes, token);
+			final Type rawNewType = classDeclaration.type();
+			assert rawNewType instanceof ClassType;
+			final ClassType newType = (ClassType)rawNewType;
+			newTypes.setClassType(newType);
+
+			templateScope.declareType(newType);
+			templateScope.declareClass(classDeclaration);
+
+			retval = newType;
+		
+			// Here's where we queue template instantiatons for code generation
+			parsingData_.currentTemplateInstantiationList().addDeclaration(classDeclaration);
+		} else {
+			retval = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			assert null != retval;
+		}
+		return retval;
+	}
+	
+	private Type instantiateInterface(final List<String> parameterTypeNames, final String typeName, final TemplateDeclaration templateDeclaration,
+			Token token) {
+		Type retval = null;
+		final StaticScope templateScope = templateDeclaration.enclosingScope();
+	
+		InterfaceDeclaration interfaceDeclaration = currentScope_.lookupInterfaceDeclarationRecursive(typeName);
+		if (null == interfaceDeclaration) {
+			// Create a new type vector from the type parameters
+			final TemplateInstantiationInfo newTypes = new TemplateInstantiationInfo(templateDeclaration, typeName);
+			for (final String aTypeName : parameterTypeNames) {
+				final Type correspondingType = currentScope_.lookupTypeDeclarationRecursive(aTypeName);
+				if (null == correspondingType) {
+					errorHook5p2(ErrorIncidenceType.Fatal, token,
+						"Cannot find type named ", aTypeName, " in instantiation of ", templateDeclaration.name());
+					newTypes.add(new ErrorType());
+				} else {
+					newTypes.add(correspondingType);
+				}
+			}
+		
+			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
+			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
+			final StaticScope templateEnclosedScope = templateDeclaration.enclosedScope();
+
+			interfaceDeclaration = new InterfaceDeclaration(typeName, templateEnclosedScope,
+				token);
+			interfaceDeclaration.elaborateFromTemplate(templateDeclaration, newTypes, token);
+			final Type rawNewType = interfaceDeclaration.type();
+			assert rawNewType instanceof InterfaceType;
+			final InterfaceType newType = (InterfaceType)rawNewType;
+			newTypes.setInterfaceType(newType);
+
+			templateScope.declareType(newType);
+			templateScope.declareInterface(interfaceDeclaration);
+
+			retval = newType;
+		
+			// Here's where we queue template instantiatons for code generation
+			parsingData_.currentTemplateInstantiationList().addDeclaration(interfaceDeclaration);
+		} else {
+			retval = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			assert null != retval;
+		}
+		return retval;
 	}
 	
 	protected Type lookupOrCreateTemplateInstantiationCommon(final String templateName, final List<String> parameterTypeNames, final Token token) {
@@ -4155,48 +4349,10 @@ public class Pass1Listener extends Pass0Listener {
 			stringBuffer.append(">");
 			final String typeName = stringBuffer.toString();
 			
-			final StaticScope templateScope = templateDeclaration.enclosingScope();
-			final StaticScope templateEnclosedScope = templateDeclaration.enclosedScope();
-			final TypeDeclaration baseClass = templateDeclaration.baseClass();
-			final String baseClassName = null == baseClass? "void": baseClass.name();
-			final ClassDeclaration baseClassDecl = null == baseClass? null:
-								templateScope.lookupClassDeclarationRecursive(baseClassName);
-			
-			ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
-			if (null == classDeclaration) {
-				// Create a new type vector from the type parameters
-				final TemplateInstantiationInfo newTypes = new TemplateInstantiationInfo(templateDeclaration, typeName);
-				for (final String aTypeName : parameterTypeNames) {
-					final Type correspondingType = currentScope_.lookupTypeDeclarationRecursive(aTypeName);
-					if (null == correspondingType) {
-						errorHook5p2(ErrorIncidenceType.Fatal, token,
-								"Cannot find type named ", aTypeName, " in instantiation of ", templateDeclaration.name());
-						newTypes.add(new ErrorType());
-					} else {
-						newTypes.add(correspondingType);
-					}
-				}
-				
-				// templateEnclosedScope isn't really used, because a new enclosedScope_ object
-				// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
-				classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
-						baseClassDecl, token);
-				classDeclaration.elaborateFromTemplate(templateDeclaration, newTypes);
-				final Type rawNewType = classDeclaration.type();
-				assert rawNewType instanceof ClassType;
-				final ClassType newType = (ClassType)rawNewType;
-				newTypes.setClassType(newType);
-
-				templateScope.declareType(newType);
-				templateScope.declareClass(classDeclaration);
-
-				retval = newType;
-				
-				// Here's where we queue template instantiatons for code generation
-				parsingData_.currentTemplateInstantiationList().addDeclaration(classDeclaration);
+			if (templateDeclaration.type() instanceof TemplateTypeForAnInterface) {
+				retval = this.instantiateInterface(parameterTypeNames, typeName, templateDeclaration, token);
 			} else {
-				retval = currentScope_.lookupTypeDeclarationRecursive(typeName);
-				assert null != retval;
+				retval = this.instantiateClass(parameterTypeNames, typeName, templateDeclaration, token);
 			}
 		}
 		return retval;
@@ -5157,11 +5313,20 @@ public class Pass1Listener extends Pass0Listener {
 						"' not declared in Context `", contextDecl.name() + "'.");
 			}
 		} else if (null != interfaceDecl) {
+			// Methods aren't filled in for template interfaces until Pass 4,
+			// so don't gripe about problems until then
+			boolean cutItSomeSlack = false;
+			final InterfaceType interfaceType = (InterfaceType)interfaceDecl.type();
+			cutItSomeSlack = interfaceType.isTemplateInstantiation();
+			cutItSomeSlack &= !(this instanceof Pass4Listener);
+			
 			final MethodSignature methodSignature = interfaceDecl.lookupMethodSignatureDeclaration(methodSelectorName, actualArgumentList);
 			if (null == methodSignature) {
-				if (actualArgumentList.isntError()) {
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
-						"' not declared in Interface `", interfaceDecl.name() + "'.");
+				if (false == cutItSomeSlack) {
+					if (actualArgumentList.isntError()) {
+						errorHook5p2SpecialHook(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", methodSelectorName + actualArgumentList.selflessGetText(),
+								"' not declared in Interface `", interfaceDecl.name() + "'.");
+					}
 				}
 				returnType = new ErrorType();
 			} else {

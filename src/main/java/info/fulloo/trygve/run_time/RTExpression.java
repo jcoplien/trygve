@@ -4666,6 +4666,7 @@ public abstract class RTExpression extends RTCode {
 						// of NullExpression. We leave the code here in case we find we
 						// really need it, but the null check should probably be replaced
 						// with some kind of sentinel check.
+						assert false;
 						thereIsAReturnExpression = false;
 					} else {
 						thereIsAReturnExpression = true;

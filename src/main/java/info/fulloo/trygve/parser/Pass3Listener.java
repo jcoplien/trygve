@@ -32,6 +32,7 @@ import info.fulloo.trygve.declarations.Declaration.ClassOrContextDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
+import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ExprAndDeclList;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -163,6 +164,9 @@ public class Pass3Listener extends Pass2Listener {
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
 		// nothing in pass 3, 4
 	}
+	@Override protected void addTemplateSignatureSuitableToPass(final TemplateType interfaceType, final MethodSignature signature) {
+		// nothing in pass 3, 4
+	}
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
 		// nothing in pass 3, 4
 	}
@@ -174,6 +178,7 @@ public class Pass3Listener extends Pass2Listener {
 	@Override public void errorHook5p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) { }
 	@Override public void errorHook6p1(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
 	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) { }
+	@Override public void errorHook5p2SpecialHook(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) { }
 	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) { }
 	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, t, s1, s2, s3, s4);

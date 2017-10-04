@@ -905,11 +905,16 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTObject from = dynamicScope.getObject("start");
 				final RTObject to = dynamicScope.getObject("end");
 				final RTStringObject retval = stringObject.substring(from, to);
-
-				addRetvalTo(dynamicScope);
-				dynamicScope.setObject("ret$val", retval);
 				
-				return super.nextCode();
+				if (null == retval) {
+					// something went wrong
+					return null;
+				} else {
+					addRetvalTo(dynamicScope);
+					dynamicScope.setObject("ret$val", retval);
+					
+					return super.nextCode();
+				}
 			}
 		}
 		public static class RTReplaceFirstCode extends RTStringCommon {

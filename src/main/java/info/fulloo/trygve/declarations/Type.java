@@ -423,7 +423,8 @@ public abstract class Type implements ExpressionStackAPI
 			return retval;
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final ClassType baseClass,
-				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration) {
+				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration,
+				final Token token) {
 			super.updateBaseType(baseClass);
 			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
 			assert null != newEnclosedScope.parentScope();
@@ -516,6 +517,27 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 		private ClassType baseClass_;
 	}
+	public static class TemplateTypeForAnInterface extends TemplateType {
+		public TemplateTypeForAnInterface(final String name, final StaticScope scope, final ClassType baseClass) {
+			super(name, scope, baseClass);
+			selectorSignatureMap_ = new LinkedHashMap<String, List<MethodSignature>>();
+		}
+		public void addSignature(final MethodSignature signature) {
+			List<MethodSignature> signatures = null;
+			if (selectorSignatureMap_.containsKey(signature.name())) {
+				signatures = selectorSignatureMap_.get(signature.name());
+			} else {
+				signatures = new ArrayList<MethodSignature>();
+				selectorSignatureMap_.put(signature.name(), signatures);
+			}
+			signatures.add(signature);
+		}
+		public Map<String, List<MethodSignature>> selectorSignatureMap() {
+			return selectorSignatureMap_;
+		}
+		
+		private Map<String, List<MethodSignature>> selectorSignatureMap_;
+	}
 	public static class ContextType extends ClassOrContextType {
 		public ContextType(final String name, final StaticScope scope, final ClassType baseClass) {
 			super(name, scope, baseClass);
@@ -529,9 +551,10 @@ public abstract class Type implements ExpressionStackAPI
 		}
 	}
 	public static class InterfaceType extends Type {
-		public InterfaceType(final String name, final StaticScope enclosedScope) {
+		public InterfaceType(final String name, final StaticScope enclosedScope, final boolean isTemplateInstantiation) {
 			super(enclosedScope);
 			name_ = name;
+			isTemplateInstantiation_ = isTemplateInstantiation;
 			selectorSignatureMap_ = new LinkedHashMap<String, List<MethodSignature>>();
 		}
 		@Override public String name() {
@@ -714,9 +737,83 @@ public abstract class Type implements ExpressionStackAPI
 		public final Map<String, List<MethodSignature>> selectorSignatureMap() {
 			return selectorSignatureMap_;
 		}
+		
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final ClassType baseClass,
+				final StaticScope newEnclosedScope,
+				final Declaration newAssociatedDeclaration,
+				final Token token) {
+			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
+			assert null != newEnclosedScope.parentScope();
+			enclosedScope_ = newEnclosedScope;
+			staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
+			for (Map.Entry<String,ObjectDeclaration> iter : nominalType.staticObjectDeclarationDictionary_.entrySet()) {
+				final String name = iter.getKey();
+				final ObjectDeclaration decl = iter.getValue();
+				final ObjectDeclaration declCopy = decl.copy();
+				staticObjectDeclarationDictionary_.put(new String(name), declCopy);
+			}
+			
+			// The Meat
+			final TemplateTypeForAnInterface interfaceType = (TemplateTypeForAnInterface)templateDeclaration.type();
+			final Map<String, List<MethodSignature>> signatureMap = interfaceType.selectorSignatureMap();
+			
+			final TemplateInstantiationInfo instantiationInfo = enclosedScope().templateInstantiationInfo();
+			for (final String signatureName : signatureMap.keySet()) {
+				final List<MethodSignature> signatureList = signatureMap.get(signatureName);
+				if (null == signatureList) {
+					assert null != signatureList;
+				}
+				for (final MethodSignature aSignature : signatureList) {
+					final String returnTypeName = aSignature.type().name();
+					Type returnType = instantiationInfo.classSubstitionForTemplateTypeNamed(returnTypeName);
+					returnType = null != returnType? returnType: aSignature.type();
+
+					final MethodSignature newSignature = new MethodSignature(aSignature.name(), returnType,
+							aSignature.accessQualifier(), token, aSignature.isStatic());
+					final FormalParameterList formalParameterList = new FormalParameterList();
+					newSignature.addParameterList(formalParameterList);
+					
+					// Add a formal "this" parameter
+					if (false == aSignature.isStatic()) {
+						final ObjectDeclaration self = new ObjectDeclaration("this", this, token);
+						formalParameterList.addFormalParameter(self);
+					}
+					
+					// Update the types (return types and parameters) in the signature
+					newSignature.setReturnType(returnType);	// redundant...
+					
+					final FormalParameterList formalParams = newSignature.formalParameterList();
+					formalParams.mapTemplateParameters(instantiationInfo);
+					
+					// Add the signature to selectorSignatureMap_
+					this.addSignature(newSignature);
+				}
+			}
+			
+			// No static objects in terfaces for now, I think,
+			// so maybe this code can go.
+			staticObjects_ = new LinkedHashMap<String, RTCode>();
+			for (final Map.Entry<String,RTCode> iter : nominalType.staticObjects_.entrySet()) {
+				final String name = iter.getKey();
+				final RTCode programElement = iter.getValue();
+				
+				// We really should do a copy here of program element, but
+				// we'll presume that code isn't modified and cross our
+				// fingers. Adding a dup() function to that class hierarchy
+				// would be quite a chore...
+				final String stringCopy = name.substring(0, name.length() - 1);
+				staticObjects_.put(stringCopy, programElement);
+			}
+		}
+		
+		public boolean isTemplateInstantiation() {
+			return isTemplateInstantiation_;
+		}
 
 		
 		private final String name_;
+		private final boolean isTemplateInstantiation_;
 		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
 	}
 	public static class BuiltInType extends Type {

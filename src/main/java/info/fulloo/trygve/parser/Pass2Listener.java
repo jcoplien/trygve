@@ -44,6 +44,7 @@ import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
+import info.fulloo.trygve.declarations.Type.TemplateTypeForAnInterface;
 import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
@@ -107,7 +108,7 @@ public class Pass2Listener extends Pass1Listener {
 		return currentScope_.lookupClassDeclarationRecursive(name);
 	}
 	
-	@Override protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newClass, final String name, final StaticScope newScope, final ClassType baseType) {
+	@Override protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newClass, final String name, final StaticScope newScope, final ClassType baseType, boolean isInterface) {
 	}
 
 	@Override protected void lookupOrCreateRoleDeclaration(final String roleName, final Token token, final boolean isRoleArray) {
@@ -886,6 +887,15 @@ public class Pass2Listener extends Pass1Listener {
 		MethodSignature methodSignature = null;
 		boolean isOKMethodSignature = false;
 		
+		// Methods aren't filled in for template interfaces until Pass 4,
+		// so don't gripe about problems until then
+		boolean cutItSomeSlack = false;
+		if (objectType instanceof InterfaceType) {
+			final InterfaceType interfaceType = (InterfaceType)objectType;
+			cutItSomeSlack = interfaceType.isTemplateInstantiation();
+			cutItSomeSlack &= !(this instanceof Pass4Listener);
+		}
+		
 		if (objectType.name().equals("Class")) {
 			// Static method invocation. The "object" is really a class name.
 			
@@ -1137,10 +1147,10 @@ public class Pass2Listener extends Pass1Listener {
 						null;
 				if (null == methodSignature) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					if (argumentList.isntError()) {
+					if (argumentList.isntError() && false == cutItSomeSlack) {
 						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
 								"Script `",
-								methodSelectorName + argumentList.getText(),
+								methodSelectorName + ((ActualArgumentList)argumentList).selflessGetText(),
 								"' not declared in Interface `",
 								classObjectType.name() + "'.");
 					}
@@ -1201,7 +1211,7 @@ public class Pass2Listener extends Pass1Listener {
 							"\t", badMethod, "", "");
 				}
 			}
-		} else if (null == methodDeclaration && isOKMethodSignature == false) {
+		} else if (null == methodDeclaration && false == isOKMethodSignature && false == cutItSomeSlack) {
 			if (message.argumentList().isntError()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
 						methodSelectorName + message.argumentList().selflessGetText(),
@@ -1757,6 +1767,7 @@ public class Pass2Listener extends Pass1Listener {
 					null;
 		
 		if (null != currentTemplateInstantiationInfo) {
+			newTemplateInstantiationInfo.setInterfaceType(currentTemplateInstantiationInfo.interfaceType());
 			newTemplateInstantiationInfo.setClassType(currentTemplateInstantiationInfo.classType());
 		
 			for (final String typeName: typeNameList) {
@@ -1794,6 +1805,15 @@ public class Pass2Listener extends Pass1Listener {
 	@Override protected void addSignatureSuitableToPass(final InterfaceType interfaceType, final MethodSignature signature) {
 		interfaceType.addSignature(signature);
 	}
+	@Override protected void addTemplateSignatureSuitableToPass(final TemplateType templateType, final MethodSignature signature) {
+		// Only for interface templates (hence, it's about signatures...)
+		if (templateType instanceof TemplateTypeForAnInterface) {
+			final TemplateTypeForAnInterface interfaceTemplateType = (TemplateTypeForAnInterface) templateType;
+			interfaceTemplateType.addSignature(signature);
+		} else {
+			assert false;	// shouldn't get here?
+		}
+	}
 	@Override protected void addInterfaceTypeSuitableToPass(final ClassOrContextType classOrContextType, final InterfaceType interfaceType) {
 		classOrContextType.addInterfaceType(interfaceType);
 	}
@@ -1807,6 +1827,9 @@ public class Pass2Listener extends Pass1Listener {
 		/* Nothing */
 	}	
 	@Override public void errorHook5p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
+		ErrorLogger.error(errorType, t, s1, s2, s3, s4);
+	}
+	@Override public void errorHook5p2SpecialHook(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		ErrorLogger.error(errorType, t, s1, s2, s3, s4);
 	}
 	@Override public void errorHook6p2(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
