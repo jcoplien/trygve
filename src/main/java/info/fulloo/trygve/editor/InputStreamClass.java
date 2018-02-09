@@ -286,7 +286,7 @@ public class InputStreamClass {
 	        } else if (len == 0) {
 	            return 0;
 	        }
-	        
+	       
 	        int c = read();
 	        int i = 0;
 	        
