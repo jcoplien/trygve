@@ -182,6 +182,7 @@ public class TestRunner {
 		"issue65.k",
 		"templatetest1.k",
 		"templatetest2.k",
+		"scopeCheck1.k",
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",

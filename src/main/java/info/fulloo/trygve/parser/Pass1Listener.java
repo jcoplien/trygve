@@ -4775,6 +4775,18 @@ public class Pass1Listener extends Pass0Listener {
 						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
 								"Cannot access expression `", expression.getText(),
 								"' with `", odeclAsOdecl.accessQualifier_.asString(), "' access qualifier.", "");
+					} else if (ConfigurationOptions.enforceObjectEncapsulation() &&
+							AccessQualifier.PrivateAccess == odeclAsOdecl.accessQualifier_) {
+						// Can access private only if it is self
+						if ("IdentifierExpression".equals(qualifier.getClass().getSimpleName())) {
+							final IdentifierExpression ie = (IdentifierExpression)qualifier;
+							final String identifierName = ie.name();
+							if (!"this".equals(identifierName)) {
+								errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
+										"Cannot access expression `", expression.getText(),
+										"' with `private' access qualifier across instances: violates encapsulation.", "", "", "");
+							}
+						}
 					}
 				} else if (odecl.isntError()) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,

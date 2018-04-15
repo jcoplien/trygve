@@ -54,6 +54,9 @@ public class ConfigurationOptions {
 	public static boolean redirectStandardErrorToConsole() {
 		return false;
 	}
+	public static boolean enforceObjectEncapsulation() {
+		return true;
+	}
 	
 	static {
 		  boolean assertsEnabled = false;

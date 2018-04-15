@@ -1,47 +1,24 @@
-interface AnIterator<T> {
-    boolean hasNext() const;
-    T next();
+class Class1 {
+   public void roleMethod1(boolean b) { }
+   public void roleMethod2(boolean b) { }
 }
 
-class StringIterator implements AnIterator<String> {
-    public StringIterator(String s) {
-        i_ = 0;
-        s_ = s.clone;
-    }
-
-    public boolean hasNext() const {
-        return i_ < s_.length();
-    }
-
-    public String next() {
-        ++i_;
-        return s_.substring(i_-1, i_);
-    }
-
-    private int i_;
-    private String s_;
+context Context {
+   role Role1 {
+      void roleMethod1(int i, String c) {
+      }
+      void roleMethod2(boolean b) { }
+   }
+   public Context(Class1 object) {
+      Role1 = object
+   }
 }
 
-{
-    StringIterator si = new StringIterator("abcdefg");
 
-    while(si.hasNext())
-        System.out.println(si.next());
-
-    AnIterator<String> ais = si;
-    boolean hn = ais.hasNext();
-	 System.out.println(hn)
-}
+(new Context(new Class1()))
 
 /* GOLD:
-0 warnings, 0 errors.
+line 13: WARNING: Both class `Class1' and Role `Role1' contain the same script signature `roleMethod2(boolean)'. This results in several scripts of the same name in the same object and may not behave as you expected.
+1 warning, 0 errors.
 ___________________________________________________________
-a
-b
-c
-d
-e
-f
-g
-false
 */
