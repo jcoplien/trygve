@@ -89,7 +89,7 @@ public class RTDateObject extends RTObjectCommon {
 		return dateType_;
 	}
 	public RTObject getYear() {
-		final int year = theDate_.get(Calendar.YEAR) + 1900;
+		final int year = theDate_.get(Calendar.YEAR);
 		return new RTIntegerObject(year);
 	}
 	public RTObject getMonth() {
@@ -109,7 +109,7 @@ public class RTDateObject extends RTObjectCommon {
 		return new RTStringObject(string);
 	}
 	public void setYear(final RTObject year) {
-		theDate_.set(Calendar.YEAR, (int)((RTIntegerObject)year).intValue() - 1900);
+		theDate_.set(Calendar.YEAR, (int)((RTIntegerObject)year).intValue());
 	}
 	public void setMonth(final RTObject month) {
 		theDate_.set(Calendar.MONTH, (int)((RTIntegerObject)month).intValue() - 1);

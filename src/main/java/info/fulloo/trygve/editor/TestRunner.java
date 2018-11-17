@@ -138,6 +138,7 @@ public class TestRunner {
 		"money_transfer3.k",
 		"matt_money_xfer.k",
 		"date_test.k",
+		"datetest2.k",
 		"number_test0.k",
 		"number_test1.k",
 		"role_and_double_test.k",
