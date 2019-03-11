@@ -97,7 +97,6 @@ public final class MathClass {
 			addSimpleStaticMethodDeclaration("sqrt", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(intType), intType);
-			addSimpleStaticMethodDeclaration("round", asList("x"), asList(intType), intType);
 			addSimpleStaticMethodDeclaration("round", asList("x"), asList(doubleType), intType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(doubleType, doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(intType, intType), intType);
