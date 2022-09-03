@@ -273,7 +273,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		    case LookingForField:
 		    	if (true == backgroundColor.equals(Color.cyan)) {
 		    		state = State.InField;
-		    		retval.add(new Integer(i));
+		    		retval.add(Integer.valueOf(i));
 		    	}
 		    	break;
 		    case InField:

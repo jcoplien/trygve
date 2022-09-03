@@ -11,9 +11,9 @@ Clone or download the repo, then build and execute with `gradlew run`.
 
 Here's a quick-and-dirty guide from Andreas Söderlund for an initial bring-up on Windows:
 
-1. Download the Java JDK from http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html (one of the Windows x64/x86 versions) and install it.
-2. For git, download the full package from http://cmder.net/ (a nice console emulator) and install it.
-3. Start cmder, cd to an appropriate directory and execute:
+1. Download the OpenJava JDK from https://jdk.java.net/18/
+2. Install git: https://git-scm.com/downloads
+3. cd to an appropriate directory and execute:
 
 ```
 git clone https://github.com/jcoplien/trygve.git
@@ -37,8 +37,6 @@ An online version is available at http://fulloo.info/Documents/trygve/trygve1.ht
 ## Developing
 
 Import as a Gradle project into your IDE. (Or as a regular project if you wish.) Then run or debug `info.fulloo.trygve.editor.Main`.
-
-To rebuild ANTLR parser run `gradlew antlr`.
 
 To build a distribution `gradlew build`.
 

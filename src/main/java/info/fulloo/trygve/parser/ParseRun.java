@@ -377,7 +377,7 @@ public class ParseRun {
 	public RTCode expressionForByteOffsetInBuffer(int byteOffset, TextEditorGUI gui) {
 		RTCode retval = null;
 		final int lineNumber = gui.lineNumberForBufferOffset(byteOffset);
-		retval = (RTCode)allExpressions_.get(new Integer(lineNumber));
+		retval = (RTCode)allExpressions_.get(Integer.valueOf(lineNumber));
 		return retval;
 	}
 	

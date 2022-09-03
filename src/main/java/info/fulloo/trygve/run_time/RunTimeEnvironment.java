@@ -260,7 +260,7 @@ public class RunTimeEnvironment {
 	}
 	public synchronized void setFramePointer() {
 		final int stackSize = theStack().size();
-		framePointerStack().push(new Integer(stackSize));
+		framePointerStack().push(Integer.valueOf(stackSize));
 	}
 	
 	public RTStackable popDownToFramePointer() {
@@ -518,7 +518,7 @@ public class RunTimeEnvironment {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
 				}
 			}
-			if (framePointerStack().contains(new Integer(i-1))) {
+			if (framePointerStack().contains(Integer.valueOf(i-1))) {
 				System.err.format(" <== frame pointer (%d)", i+1);
 			}
 			System.err.format("\n");
