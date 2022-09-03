@@ -26,8 +26,6 @@ package info.fulloo.trygve.lntextpane;
 import javax.swing.text.*;
 import javax.swing.text.Element;
 
-import info.fulloo.trygve.lntextpane.NumberedParagraphView;
-
 class NumberedViewFactory implements ViewFactory {
     public View create(Element elem) {
         String kind = elem.getName();

@@ -732,11 +732,11 @@ public class RTDebuggerWindow extends JFrame {
 		protected BTreeElement parent_;
 		protected boolean marked_ = false;
 	}
-	public class PrintedBTree extends PrintedBTreeCommon implements BTreeElement {
+	public class PrintedBTree extends PrintedBTreeCommon {
 		public PrintedBTree() {
 			tree_ = new Row(null);
 		}
-		public class Row extends PrintedBTreeCommon implements BTreeElement {
+		public class Row extends PrintedBTreeCommon {
 			public Row(final BTreeElement parent) {
 				localString_ = "";
 				row_ = new ArrayList<BTreeElement>();
@@ -764,7 +764,7 @@ public class RTDebuggerWindow extends JFrame {
 			private final ArrayList<BTreeElement> row_;
 			private final String localString_;
 		}
-		public class Atom extends PrintedBTreeCommon implements BTreeElement {
+		public class Atom extends PrintedBTreeCommon {
 			public Atom(final BTreeElement parent, final String string) {
 				string_ = string;
 				parent_ = parent;

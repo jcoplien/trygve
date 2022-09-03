@@ -46,7 +46,7 @@ import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
 // http://www.nomachetejuggling.com/2008/06/04/getting-a-java-objects-reference-id/
 
 // Doubles for classes and contexts
-public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
+public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInstance {
 	public RTObjectCommon(final RTType classs) {
 		super();
 		classOrContext_ = classs;
@@ -315,7 +315,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 
-	public static class RTContextObject extends RTObjectCommon implements RTObject {
+	public static class RTContextObject extends RTObjectCommon {
 		public RTContextObject(final RTType classs) {
 			super(classs);
 			nameToRoleMap_ = new LinkedHashMap<String, RTRole>();
@@ -683,7 +683,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
 	}
 	
-	public static class RTIntegerObject extends RTObjectCommon implements RTObject {
+	public static class RTIntegerObject extends RTObjectCommon {
 		public RTIntegerObject(final long foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("int"));
 			foobar_ = foobar;
@@ -832,12 +832,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		
 		private long foobar_;
 	}
-	public static class RTBigIntegerObject extends RTIntegerObject implements RTObject {
+	public static class RTBigIntegerObject extends RTIntegerObject {
 		public RTBigIntegerObject(final int foobar) {
 			super(foobar, "Integer");
 		}
 	}
-	public static class RTDoubleObject extends RTObjectCommon implements RTObject {
+	public static class RTDoubleObject extends RTObjectCommon {
 		public RTDoubleObject(final double foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("double"));
 			foobar_ = foobar;
@@ -974,7 +974,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		final double EPSILON = 0.00001;
 		private double foobar_;
 	}
-	public static class RTStringObject extends RTObjectCommon implements RTObject {
+	public static class RTStringObject extends RTObjectCommon {
 		public RTStringObject(final String foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelClassNamed("String"));
 			foobar_ = foobar;
@@ -1085,7 +1085,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		private final String foobar_;
 	}
 	
-	public static class RTBooleanObject extends RTObjectCommon implements RTObject {
+	public static class RTBooleanObject extends RTObjectCommon {
 		public RTBooleanObject(final boolean foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("boolean"));
 			foobar_ = foobar;
@@ -1146,7 +1146,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		
 		private boolean foobar_;
 	}
-	public static class RTNullObject extends RTObjectCommon implements RTObject {
+	public static class RTNullObject extends RTObjectCommon {
 		public RTNullObject() {
 			super((RTClass)null);
 		}

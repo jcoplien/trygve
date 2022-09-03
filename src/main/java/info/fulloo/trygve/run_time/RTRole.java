@@ -31,7 +31,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 
 
-public class RTRole extends RTClassAndContextCommon implements RTType {
+public class RTRole extends RTClassAndContextCommon {
 	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		associatedDeclaration_ = associatedDeclaration;

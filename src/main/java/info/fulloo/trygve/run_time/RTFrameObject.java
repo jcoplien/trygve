@@ -49,7 +49,7 @@ import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class RTFrameObject extends RTObjectCommon implements RTObject {
+public class RTFrameObject extends RTObjectCommon {
 	public RTFrameObject(final RTType frameType) {
 		super(frameType);
 		frameType_ = frameType;	// e.g. an instance of RTClass

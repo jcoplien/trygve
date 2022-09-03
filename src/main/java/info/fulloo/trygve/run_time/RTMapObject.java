@@ -37,7 +37,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTMapIterator;
 
-public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTMapObject extends RTObjectCommon implements RTIterable {
 	@Override public RTObject getObject(final RTObject theIndexObject) {
 		final RTObject retval = theMap_.get(theIndexObject);
 		return retval;

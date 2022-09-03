@@ -34,7 +34,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.graphics.GraphicsPanel;
 
-public class RTPanelObject extends RTObjectCommon implements RTObject {
+public class RTPanelObject extends RTObjectCommon {
 	public RTPanelObject(final RTType panelType) {
 		super(panelType);
 		panelType_ = panelType;	// e.g. an instance of RTClass

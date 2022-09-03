@@ -37,7 +37,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
 
-public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTListObject extends RTObjectCommon implements RTIterable {
 	public RTListObject(final RTType listType) {
 		super(listType);	// 
 		listType_ = listType;	// e.g. an instance of RTClass

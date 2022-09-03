@@ -36,7 +36,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class RTEventObject extends RTObjectCommon implements RTObject {
+public class RTEventObject extends RTObjectCommon {
 	public RTEventObject(final RTType eventType) {
 		super(eventType);
 		eventType_ = eventType;	// e.g. an instance of RTClass

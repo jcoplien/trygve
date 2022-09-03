@@ -224,7 +224,7 @@ public final class PointClass {
 		}
 	}
 	
-	public static class RTPointObject extends RTObjectCommon implements RTObject {
+	public static class RTPointObject extends RTObjectCommon {
 		public RTPointObject(final Point point) {
 			super(InterpretiveCodeGenerator.scopeToRTTypeDeclaration(
 					StaticScope.globalScope().lookupTypeDeclaration("Point").enclosedScope()));

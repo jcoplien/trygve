@@ -37,7 +37,7 @@ import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList {
+public class ActualArgumentList extends ParameterListCommon {
 	public ActualArgumentList() {
 		super(new SimpleList());
 	}

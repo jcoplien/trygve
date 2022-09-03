@@ -230,7 +230,7 @@ public abstract class Declaration implements BodyPart {
 		protected final List<BodyPart> inSituInitializations_;
 	}
 	
-	public static class ClassOrContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration {
+	public static class ClassOrContextDeclaration extends ObjectSubclassDeclaration {
 		public ClassOrContextDeclaration(final String name, final StaticScope myEnclosedScope,
 				final ClassDeclaration baseClass, Token token) {
 			super(name, myEnclosedScope, baseClass, token);
@@ -284,7 +284,7 @@ public abstract class Declaration implements BodyPart {
 		}
 	}
 	
-	public static class ContextDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
+	public static class ContextDeclaration extends ClassOrContextDeclaration
 	{
 		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, Token token) {
 			super(name, myEnclosedScope, StaticScope.globalScope().lookupClassDeclaration("Object"), token);
@@ -303,7 +303,7 @@ public abstract class Declaration implements BodyPart {
 		private ContextDeclaration parentContext_;
 	}
 	
-	public static class ClassDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
+	public static class ClassDeclaration extends ClassOrContextDeclaration
 	{
 		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final Token token) {
 			super(name, myEnclosedScope, baseClass, token);
@@ -374,7 +374,6 @@ public abstract class Declaration implements BodyPart {
 	}
 	
 	public static class TemplateDeclaration extends TypeDeclarationCommon
-				implements TypeDeclaration
 	{
 		public TemplateDeclaration(final String name, final StaticScope myEnclosedScope, final TypeDeclaration baseClass, final Token token) {
 			super(name, token, myEnclosedScope);
@@ -426,8 +425,7 @@ public abstract class Declaration implements BodyPart {
 		private         int argumentPositionCounter_;
 	}
 	
-	public static class InterfaceDeclaration extends TypeDeclarationCommon
-			implements TypeDeclaration{
+	public static class InterfaceDeclaration extends TypeDeclarationCommon{
 		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final Token token) {
 			super(name, token, enclosedScope);
 			signatures_ = new LinkedHashMap<String, MethodSignature>();
@@ -484,7 +482,6 @@ public abstract class Declaration implements BodyPart {
 	}
 	
 	public static class RoleDeclaration extends TypeDeclarationCommon
-			implements TypeDeclaration
 	{
 		public RoleDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
 			super(name, token, myEnclosedScope);
@@ -605,7 +602,7 @@ public abstract class Declaration implements BodyPart {
 		protected final Map<String, MethodSignature> publishedSignatures_;
 	}
 	
-	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {
+	public static class RoleArrayDeclaration extends RoleDeclaration {
 		public RoleArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
 			super(name, myEnclosedScope, context, token);
 		}
@@ -614,7 +611,7 @@ public abstract class Declaration implements BodyPart {
 		}
 	}
 	
-	public static class StagePropDeclaration extends RoleDeclaration implements TypeDeclaration
+	public static class StagePropDeclaration extends RoleDeclaration
 	{
 		public StagePropDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
 			super(name, myEnclosedScope, context, token);
@@ -624,7 +621,7 @@ public abstract class Declaration implements BodyPart {
 		}
 	}
 	
-	public static class StagePropArrayDeclaration extends StagePropDeclaration implements TypeDeclaration {
+	public static class StagePropArrayDeclaration extends StagePropDeclaration {
 		public StagePropArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
 			super(name, myEnclosedScope, context, token);
 		}

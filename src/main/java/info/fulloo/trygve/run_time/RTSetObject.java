@@ -37,7 +37,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTSetIterator;
 
-public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTSetObject extends RTObjectCommon implements RTIterable {
 	public RTSetObject(final RTType setType) {
 		super(setType);	// 
 		setType_ = setType;	// e.g. an instance of RTClass
