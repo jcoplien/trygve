@@ -20,6 +20,13 @@ application {
 
     // enable assertions by default
     applicationDefaultJvmArgs = ["-ea"]
+
+}
+
+build {
+    configure {
+        dependsOn generateGrammarSource
+    }
 }
 
 // make it executable
