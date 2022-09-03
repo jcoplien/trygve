@@ -11,6 +11,10 @@ dependencies {
     antlr "org.antlr:antlr4:4.10"
 }
 
+generateGrammarSource {
+    outputDirectory = new File("${project.projectDir}/src/main/java/info/fulloo/trygve/parser")
+}
+
 application {
     mainClass = "info.fulloo.trygve.editor.Main"
 
@@ -24,15 +28,6 @@ jar {
         attributes(
             'Main-Class': "info.fulloo.trygve.editor.Main"
         )
-    }
-}
-
-// extra files that need to be compiled
-sourceSets {
-    main {
-        java {
-            srcDir 'build/generated-src/antlr/main'
-        }
     }
 }
 
