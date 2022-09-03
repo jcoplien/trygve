@@ -36,7 +36,9 @@ An online version is available at http://fulloo.info/Documents/trygve/trygve1.ht
 
 ## Developing
 
-Import as a Gradle project into your IDE. (Or as a regular project if you wish.) Then run or debug `info.fulloo.trygve.editor.Main`.
+VS Code is a very accessible way to develop trygve. Installation instructions [are available here](https://code.visualstudio.com/docs/languages/java).
+
+For other environments, import this repository as a Gradle project into your IDE. (Or as a regular project if you wish.) Then run or debug `info.fulloo.trygve.editor.Main`.
 
 To build a distribution `gradlew build`.
 
