@@ -1,7 +1,6 @@
-// Generated from Kant.g4 by ANTLR 4.5.1
-package info.fulloo.trygve.parser;
+// Generated from Kant.g4 by ANTLR 4.10
 
-    // package info.fulloo.trygve.parser;
+package info.fulloo.trygve.parser;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

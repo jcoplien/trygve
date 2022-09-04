@@ -33,7 +33,7 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 
-public class RTColorObject extends RTObjectCommon implements RTObject {
+public class RTColorObject extends RTObjectCommon {
 	public RTColorObject(final RTType colorType, final String colorName) {
 		super(colorType);
 		colorType_ = colorType;	// e.g. an instance of RTClass

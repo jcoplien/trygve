@@ -30,7 +30,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 
-public class RTStageProp extends RTClassAndContextCommon implements RTType {
+public class RTStageProp extends RTClassAndContextCommon {
 	public RTStageProp(final StagePropDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		associatedDeclaration_ = associatedDeclaration;

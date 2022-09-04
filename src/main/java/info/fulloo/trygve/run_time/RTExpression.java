@@ -3270,7 +3270,7 @@ public abstract class RTExpression extends RTCode {
 		private final int lineNumber_;
 	}
 	
-	public static class RTTraditionalFor extends RTForCommon implements RTBreakableExpression {
+	public static class RTTraditionalFor extends RTForCommon {
 		public RTTraditionalFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();
@@ -3496,7 +3496,7 @@ public abstract class RTExpression extends RTCode {
 		final RTIterationForTestRunnerPart2 part2_;
 		final private int lineNumber_;
 	}
-	public static class RTIterationFor extends RTForCommon implements RTBreakableExpression {
+	public static class RTIterationFor extends RTForCommon {
 		public RTIterationFor(final ForExpression expr, final RTType nearestEnclosingType) {
 			super(expr, nearestEnclosingType);
 			final ParsingData parsingData = InterpretiveCodeGenerator.interpretiveCodeGenerator.parsingData();

@@ -28,7 +28,7 @@ import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 
 
-public class RTInterface extends RTClassAndContextCommon implements RTType {
+public class RTInterface extends RTClassAndContextCommon {
 	public RTInterface(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof InterfaceDeclaration;

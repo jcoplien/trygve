@@ -33,7 +33,7 @@ import info.fulloo.trygve.declarations.Type.VarargsType;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 
-public class FormalParameterList extends ParameterListCommon implements ActualOrFormalParameterList {
+public class FormalParameterList extends ParameterListCommon {
 	public FormalParameterList() {
 		super(new SimpleList());
 	}

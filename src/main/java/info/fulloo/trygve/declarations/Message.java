@@ -29,7 +29,6 @@ import java.util.Map;
 
 import org.antlr.v4.runtime.Token;
 
-import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;

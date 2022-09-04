@@ -387,7 +387,7 @@ public class InputStreamClass {
 	    @Override public void checkIOIntegration(final Event e) { }
 	}
 	
-	public static class PanelInputStream extends DocInputStream implements KeyListener, GraphicsEventHandler {
+	public static class PanelInputStream extends DocInputStream {
 	    protected PanelInputStream(final RTObject rTPanel) {
 	    	super();
 			

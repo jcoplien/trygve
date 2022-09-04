@@ -59,7 +59,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 
-public class RTClass extends RTClassAndContextCommon implements RTType {
+public class RTClass extends RTClassAndContextCommon {
 	public RTClass(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof ClassDeclaration;

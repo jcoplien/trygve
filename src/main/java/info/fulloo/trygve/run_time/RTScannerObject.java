@@ -36,7 +36,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 
-public class RTScannerObject extends RTObjectCommon implements RTObject {
+public class RTScannerObject extends RTObjectCommon {
 	public RTScannerObject(final RTType scannerType) {
 		super(scannerType);	// 
 		scannerType_ = scannerType;	// e.g. an instance of RTClass
