@@ -3,15 +3,15 @@
 	"tasks": [
 		{
 			"type": "gradle",
-			"id": "e:\\Projects\\ACTIVE\\trygvebuildtrygve",
+			"id": "trygvebuildtrygve",
 			"script": "build",
 			"description": "Assembles and tests this project.",
 			"group": "build",
 			"project": "trygve",
-			"buildFile": "E:\\Projects\\ACTIVE\\trygve\\build.gradle",
+			"buildFile": "${workspaceFolder}\\build.gradle",
 			"rootProject": "trygve",
-			"projectFolder": "e:\\Projects\\ACTIVE\\trygve",
-			"workspaceFolder": "e:\\Projects\\ACTIVE\\trygve",
+			"projectFolder": "${workspaceFolder}",
+			"workspaceFolder": "${workspaceFolder}",
 			"args": "",
 			"javaDebug": false,
 			"problemMatcher": [
