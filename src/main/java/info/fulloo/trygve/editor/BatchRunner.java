@@ -35,7 +35,7 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
  */
 
 public class BatchRunner {
-	public void processBatch(final String[] args) {
+	public int processBatch(final String[] args) {
 		programText_ = "";
 		processArgs(args);
 		if (programText_.length() > 0) {
@@ -44,14 +44,15 @@ public class BatchRunner {
 			virtualMachine_ = parseRun_.virtualMachine();
 			final int errorCount = ErrorLogger.numberOfFatalErrors();
 			compiledWithoutError_ = errorCount == 0;
-			System.err.format("%d errors\n", errorCount);
-			if (compiledWithoutError_) {
-				if (runFlag_) {
-					simpleRun();
-				}
+			if (compiledWithoutError_ && runFlag_) {
+				simpleRun();
+				return 0;
 			}
+			System.err.format("%d errors\n", errorCount);
+			return compiledWithoutError_ ? 0 : 1;
 		} else {
 			System.err.format("No program source.\n");
+			return 2;
 		}
 	}
 	public void simpleRun() {

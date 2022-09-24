@@ -244,13 +244,8 @@ public class ParseRun {
 	public static class BatchParseRun extends ParseRun {
 		public BatchParseRun(final String input, final BatchRunner batchRunner) {
 			super(input);
-	        try {
-	        	commonInit();
-	    		this.generateCode(parsingData_, null);
-	        }
-		    finally {
-		    	System.err.println("Compilation complete");
-		    }
+			commonInit();
+			this.generateCode(parsingData_, null);
 		}
 	}
 	

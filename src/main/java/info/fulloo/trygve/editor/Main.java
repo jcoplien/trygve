@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "3.19";
+	public static final String TRYGVE_VERSION = "3.20";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way
@@ -47,7 +47,7 @@ public class Main {
 				}
 			});
 		} else if (args[0].startsWith("-c")) {
-			new BatchRunner().processBatch(args);
+			System.exit(new BatchRunner().processBatch(args));
 		} else if (args[0].startsWith("-v")) {
 			System.out.print("trygve version ");
 			System.out.println(Main.TRYGVE_VERSION);
