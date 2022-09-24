@@ -27,6 +27,7 @@ build {
     configure {
         dependsOn generateGrammarSource
     }
+    finalizedBy "installDist"
 }
 
 // make it executable
