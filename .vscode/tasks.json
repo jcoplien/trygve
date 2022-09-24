@@ -8,7 +8,7 @@
 			"description": "Assembles and tests this project.",
 			"group": "build",
 			"project": "trygve",
-			"buildFile": "${workspaceFolder}\\build.gradle",
+			"buildFile": "${workspaceFolder}/build.gradle",
 			"rootProject": "trygve",
 			"projectFolder": "${workspaceFolder}",
 			"workspaceFolder": "${workspaceFolder}",
