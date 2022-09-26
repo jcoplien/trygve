@@ -12,6 +12,7 @@ dependencies {
     implementation "org.antlr:antlr4-runtime:4.10"
 }
 
+// exclude antlr, we only need its runtime in the dist.
 configurations.implementation {
     exclude group: "org.antlr", module: "antlr4"
 }
@@ -32,6 +33,7 @@ build {
     configure {
         dependsOn generateGrammarSource
     }
+    // automatically install the distribution in build/install/trygve
     finalizedBy "installDist"
 }
 
