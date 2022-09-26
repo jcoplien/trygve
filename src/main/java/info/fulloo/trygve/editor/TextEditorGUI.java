@@ -349,9 +349,13 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	return console_.getIn();
     }
     
+		public TextEditorGUI() {
+			this(true);
+		}
+
     /** Creates new form TextEditorGUI */
-    public TextEditorGUI() {
-    	super();
+    public TextEditorGUI(boolean visible) {
+    	super(visible);
     	underscores_ = "___________________________________________________________";
     	worker_ = null;
     	parseRun_ = null;
@@ -1789,6 +1793,11 @@ public int underscoresLength() {
 
 public String lastMatch() { return lastMatch_; }
 public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch; }
+
+public void setParseRun(ParseRun parseRun) {
+	parseRun_ = parseRun;
+	virtualMachine_ = parseRun_.virtualMachine();
+}
 
 // ------------- Private data ----------------------
 

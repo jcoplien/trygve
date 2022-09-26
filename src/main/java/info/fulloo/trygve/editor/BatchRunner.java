@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.Timer;
 
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.parser.ParseRun.BatchParseRun;
+import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
 import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
@@ -39,22 +42,73 @@ public class BatchRunner {
 		programText_ = "";
 		processArgs(args);
 		if (programText_.length() > 0) {
+			final var needsGUI = runFlag_ && programText_.matches("[\\s\\S]*\\bnew\\s+Frame\\s*\\([\\s\\S]*");
+			//System.out.println("Needs GUI: " + needsGUI);
+			if(needsGUI) {
+				java.awt.EventQueue.invokeLater(new Runnable() {
+					@Override public void run() {
+						guiRun();
+					}
+				});	
+				return -1;
+			} else {
 		    parseRun_  = new BatchParseRun(programText_, this);
 		    assert parseRun_ != null;
-			virtualMachine_ = parseRun_.virtualMachine();
-			final int errorCount = ErrorLogger.numberOfFatalErrors();
-			compiledWithoutError_ = errorCount == 0;
-			if (compiledWithoutError_ && runFlag_) {
-				simpleRun();
-				return 0;
+				virtualMachine_ = parseRun_.virtualMachine();
+				final int errorCount = ErrorLogger.numberOfFatalErrors();
+				compiledWithoutError_ = errorCount == 0;
+				if (compiledWithoutError_ && runFlag_) {
+					simpleRun();
+					return 0;
+				}
+				System.err.format("%d errors\n", errorCount);
+				return compiledWithoutError_ ? 0 : 1;
 			}
-			System.err.format("%d errors\n", errorCount);
-			return compiledWithoutError_ ? 0 : 1;
 		} else {
 			System.err.format("No program source.\n");
 			return 2;
 		}
 	}
+
+	private void resetStreams() {
+		System.setOut(out_);
+		System.setErr(err_);
+	}
+
+	public void guiRun() {
+		var gui = new TextEditorGUI(false);
+
+		resetStreams();
+
+		final var parseRun = new GuiParseRun(programText_, gui);
+		assert parseRun != null;
+
+		// Reset output streams again after parsing
+		resetStreams();
+		
+		final int errorCount = ErrorLogger.numberOfFatalErrors();
+		if(errorCount > 0) {
+			System.err.format("%d errors\n", errorCount);
+			System.exit(1);
+		} else {
+			gui.setParseRun(parseRun);
+			gui.runButtonActionPerformed(null);
+			
+			// A final reset
+			resetStreams();
+
+			class WaitForClose extends java.util.TimerTask {
+				@Override public void run() {		
+					if(!gui.userWindowsAreOpen()) {
+						System.exit(0);
+					}		
+				}
+			}
+
+			new Timer().schedule(new WaitForClose(), 100, 100);
+		}
+	}
+
 	public void simpleRun() {
 		final RTExpression rTMainExpr = parseRun_.mainExpr();
 		virtualMachine_.reboot();
@@ -94,6 +148,8 @@ public class BatchRunner {
 		}
 	}
 	
+	static PrintStream out_ = System.out;
+	static PrintStream err_ = System.err;
 	ParseRun parseRun_;
 	RunTimeEnvironment virtualMachine_;
 	boolean compiledWithoutError_, runFlag_;

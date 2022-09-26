@@ -47,7 +47,10 @@ public class Main {
 				}
 			});
 		} else if (args[0].startsWith("-c")) {
-			System.exit(new BatchRunner().processBatch(args));
+			int exitCode = new BatchRunner().processBatch(args);
+			if(exitCode >= 0) {
+				System.exit(exitCode);
+			}
 		} else if (args[0].startsWith("-v")) {
 			System.out.print("trygve version ");
 			System.out.println(Main.TRYGVE_VERSION);

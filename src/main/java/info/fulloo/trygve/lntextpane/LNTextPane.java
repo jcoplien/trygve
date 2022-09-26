@@ -63,6 +63,10 @@ public class LNTextPane extends JFrame {
 	}
 	
     public LNTextPane() {
+        this(true);
+    }
+
+    public LNTextPane(boolean visible) {
         edit_ = new MyJEditorPane();
         edit_.setEditorKit(new NumberedEditorKit());
 
@@ -72,7 +76,7 @@ public class LNTextPane extends JFrame {
         getContentPane().add(scroll_);
         setSize(300, 300);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
+        setVisible(visible);
     }
     public JScrollPane scrollPane()
     {
