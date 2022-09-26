@@ -30,7 +30,7 @@ gradlew run
 
 ## User manual
 
-Available in the repository, `trygve1.docx`. Many docx viewers are available, here is [the official one](https://apps.microsoft.com/store/detail/doc-viewer/9N69KFJDS28Z) for Windows.
+Available in the repository, `trygve1.docx`. Many docx viewers are available, here is a free one [from Softonic](https://free-docx-viewer.en.softonic.com).
 
 An online version is available at http://fulloo.info/Documents/trygve/trygve1.html
 
