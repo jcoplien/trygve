@@ -75,7 +75,7 @@ public class LNTextPane extends JFrame {
         scroll_ = new JScrollPane(edit_);
         getContentPane().add(scroll_);
         setSize(300, 300);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(visible);
     }
     public JScrollPane scrollPane()
