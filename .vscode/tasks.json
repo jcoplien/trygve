@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "gradle",
+			"id": "trygvebuildtrygve",
+			"script": "build",
+			"description": "Assembles and tests this project.",
+			"group": "build",
+			"project": "trygve",
+			"buildFile": "${workspaceFolder}/build.gradle",
+			"rootProject": "trygve",
+			"projectFolder": "${workspaceFolder}",
+			"workspaceFolder": "${workspaceFolder}",
+			"args": "",
+			"javaDebug": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"label": "gradle: build",
+			"presentation": {
+				"reveal": "silent"
+			}
+		}
+	]
+}
