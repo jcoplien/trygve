@@ -17,7 +17,10 @@
 			"problemMatcher": [
 				"$gradle"
 			],
-			"label": "gradle: build"
+			"label": "gradle: build",
+			"presentation": {
+				"reveal": "silent"
+			}
 		}
 	]
 }
