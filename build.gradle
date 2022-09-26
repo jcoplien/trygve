@@ -9,6 +9,11 @@ repositories {
 
 dependencies {
     antlr "org.antlr:antlr4:4.10"
+    implementation "org.antlr:antlr4-runtime:4.10"
+}
+
+configurations.implementation {
+    exclude group: "org.antlr", module: "antlr4"
 }
 
 generateGrammarSource {
@@ -37,6 +42,13 @@ jar {
             'Main-Class': "info.fulloo.trygve.editor.Main"
         )
     }
+
+    /*
+    // Make a fat jar
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    */
 }
 
 // default arguments for "gradlew run"
@@ -54,11 +66,4 @@ distZip {
     }
 }
 
-distTar {
-    into(project.name) {
-        from '.'
-        include 'examples/*'
-        include 'tests/*'
-        include 'LICENSE'
-    }
-}
+distTar.enabled = false
