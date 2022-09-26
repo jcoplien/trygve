@@ -97,15 +97,18 @@ public class BatchRunner {
 			// A final reset
 			resetStreams();
 
+			var checkClosed = new Timer();
+
 			class WaitForClose extends java.util.TimerTask {
 				@Override public void run() {		
 					if(!gui.userWindowsAreOpen()) {
-						System.exit(0);
+						checkClosed.cancel();
+						gui.dispose();
 					}		
 				}
 			}
 
-			new Timer().schedule(new WaitForClose(), 100, 100);
+			checkClosed.schedule(new WaitForClose(), 100, 100);
 		}
 	}
 
