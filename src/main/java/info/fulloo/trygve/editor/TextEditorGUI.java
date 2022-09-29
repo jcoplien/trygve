@@ -361,8 +361,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	parseNeeded_ = true;
     	compiledWithoutError_ = false;
     	
-		initComponents();
-        loadFile(defaultFile);
+			initComponents();
+
+			Preferences prefs = Preferences.userNodeForPackage(TextEditorGUI.class);			
+			String lastFile = prefs.get("editor.lastFile", defaultFile);
+			lastFile = lastFile.length() > 0 ? lastFile : defaultFile;
+
+			loadFile(lastFile);
+			fileSystemTextField.setText(lastFile);
         
         appWindowsExtantMap_ = new HashMap<RTWindowRegistryEntry, Boolean>();
     	
@@ -893,14 +899,14 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        openFileButton.setText("Open File ➜");
+        openFileButton.setText("Open File ->");
         openFileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 openFileButtonActionPerformed(evt);
             }
         });
         
-        saveFileButton.setText("⬅︎ Save File");
+        saveFileButton.setText("<- Save File");
         saveFileButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveFileButtonActionPerformed(evt);
@@ -935,7 +941,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
         
-        fileSystemTextField.setText(defaultFile);
         saveFileButton.setEnabled(true);
         fileSystemTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1124,6 +1129,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		 * Preferences:
 		 *   window.state = NORMAL|MAXIMIZED_BOTH
 		 *   window.x|y|w|h = int
+		 *   editor.lastFile = String
 		 */
 		private void loadPreferences() {
 			Preferences prefs = Preferences.userNodeForPackage(TextEditorGUI.class);
@@ -1161,6 +1167,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 						prefs.putInt("window.w", getWidth());
 						prefs.putInt("window.h", getHeight());
 					}
+
+					prefs.put("editor.lastFile", fileSystemTextField.getText());
 				}
 			});
 		}
