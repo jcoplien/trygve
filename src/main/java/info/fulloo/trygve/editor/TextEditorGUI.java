@@ -36,11 +36,14 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.prefs.Preferences;
 
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
@@ -782,7 +785,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         jSeparator1 = new javax.swing.JSeparator();
         exampleTextMenu = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("trygve");
         setName("trygve"); // NOI18N
 
@@ -1114,8 +1117,54 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         );
 
         pack();
+				loadPreferences();
     }// </editor-fold>//GEN-END:initComponents
-    
+
+		/*
+		 * Preferences:
+		 *   window.state = NORMAL|MAXIMIZED_BOTH
+		 *   window.x|y|w|h = int
+		 */
+		private void loadPreferences() {
+			Preferences prefs = Preferences.userNodeForPackage(TextEditorGUI.class);
+
+			int x = prefs.getInt("window.x", 0);
+			int y = prefs.getInt("window.y", 0);
+			int w = prefs.getInt("window.w", 0);
+			int h = prefs.getInt("window.h", 0);
+			
+			setBounds(
+				x > 0 ? x : getX(),
+				y > 0 ? y : getY(),
+				w > 0 ? w : getWidth(),
+				h > 0 ? h : getHeight()
+			);
+
+			int state = prefs.getInt("window.state", NORMAL);
+			setExtendedState(state);
+
+			addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent e) {
+					int currentState = getExtendedState();
+
+					// Only allow maximized and normal state, so window 
+					// won't be hidden at startup with minimized.
+					prefs.putInt("window.state", 
+						currentState == MAXIMIZED_BOTH ? currentState : NORMAL
+					);
+
+					// Don't save the maximized position, so it will restore properly
+					// when switching from maximized to normal.
+					if(currentState != MAXIMIZED_BOTH) {
+						prefs.putInt("window.x", getX());
+						prefs.putInt("window.y", getY());
+						prefs.putInt("window.w", getWidth());
+						prefs.putInt("window.h", getHeight());
+					}
+				}
+			});
+		}
+		
     private void initLoadTestMenu() {
     	final int numberOfTestCases = TestRunner.numberOfTestCases();
     	
