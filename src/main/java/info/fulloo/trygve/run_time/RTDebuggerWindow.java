@@ -1,6 +1,7 @@
 package info.fulloo.trygve.run_time;
 
 import info.fulloo.trygve.editor.TextEditorGUI;
+import info.fulloo.trygve.graphics.GraphicsPanel;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.run_time.RTClass.RTIntegerClass;
 import info.fulloo.trygve.run_time.RTClass.RTStringClass;
@@ -108,6 +109,13 @@ public class RTDebuggerWindow extends JFrame {
         		 setBreakpointAt(byteOffset, lineNumber, parseRun);
         	 }
          }
+      });
+      
+      // When the debugger closes, notify the main IDE
+      addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				gui_.debuggerClosed();
+			}
       });
       
       removeBreakpointButton_ = new JButton("Delete Breakpoint");
@@ -493,8 +501,21 @@ public class RTDebuggerWindow extends JFrame {
 	   if (false == name.equalsIgnoreCase("context$info")) {
 		   rowString += name + ": ";
 	   }
-	   final RTType type = instance.rTType();
-	   if (type instanceof RTStringClass) {
+	   
+	   // We need to treat GraphicsPanel differently. GraphicsPanel
+	   // is managed internally but has the appearance of a user-
+	   // defined type, so it does not honor the same RTType protocol
+	   // as other built-ins. That means that calling rTType on
+	   // instance results in an assertion. But users can subclass
+	   // GraphicsPanel, so it can show up here.
+	   final RTType type = instanceArg instanceof GraphicsPanel?
+			   null:
+			   instance.rTType();
+	   
+	   if (instanceArg instanceof GraphicsPanel) {
+		   rowString += instance.toString() + "\n";
+		   retval = tree_.new Row(tree_, rowString);
+	   } else if (type instanceof RTStringClass) {
 		   final RTStringObject stringObject = (RTStringObject) instance;
 		   rowString += "\"" + stringObject.toString() + "\"\n";
 		   retval = tree_.new Row(tree_, rowString);

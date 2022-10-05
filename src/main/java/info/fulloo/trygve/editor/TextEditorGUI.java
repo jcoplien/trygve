@@ -379,8 +379,12 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	
 		String pathOfFileToLoad = lastFileLoaded_;
 		assert (false == pathOfFileToLoad.startsWith("http"));
-		if (pathOfFileToLoad.startsWith("file:") || pathOfFileToLoad.startsWith("/")) {
-			pathOfFileToLoad = trygve + "/" + pathOfFileToLoad;
+		if (pathOfFileToLoad.startsWith("file:/")) {
+			pathOfFileToLoad = pathOfFileToLoad.substring(5);
+		} else if (pathOfFileToLoad.startsWith("file:")) {
+			pathOfFileToLoad = trygve + "/" + pathOfFileToLoad.substring(5);
+		} else if (pathOfFileToLoad.startsWith("/")) {
+			;
 		} else {
 			pathOfFileToLoad = lastCWD_ + "/" + pathOfFileToLoad;
 		}
@@ -395,7 +399,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		// editor.lastFileLoadedType, editor.lastFileSystemPaneText, and
 		//    editor.lastURLPaneText are already set properly
 		
-		final int numberOfLines = this.editPaneNumberOfLines();
 		final int numberOfBytes = this.editPaneNumberOfBytes();
 		final int caretPosition = prefs_.getInt("editor.textPane.caretPosition", numberOfBytes);
 		final int linesPerScreen = 21;
@@ -403,8 +406,6 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		
 		editPane.setCaretPosition(middleCaretPosition);
 		editPane.moveCaretPosition(middleCaretPosition);
-		// editPane.setCaretPosition(caretPosition);
-		// editPane.moveCaretPosition(caretPosition);
 	
         appWindowsExtantMap_ = new HashMap<RTWindowRegistryEntry, Boolean>();
     	
@@ -1740,7 +1741,7 @@ public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) 
 	prefs_.put("editor.lastFileSystemPaneText", lastFileLoaded_);
 	lastFileLoaded_ = fileSystemTextField.getText();
 	prefs_.put("editor.lastFile", lastFileLoaded_);
-	loadFile(lastFileLoaded_);
+	loadFile(trimFilePrefixFrom(lastFileLoaded_));
 	saveFileButton.setEnabled(true);
 	prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", true);
 }//GEN-LAST:event_openFileButtonActionPerformed
@@ -1779,6 +1780,18 @@ private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerfo
 	testRunner.runTests();	
 	enableInterruptButton(false);
 }//GEN-LAST:event_saveFileButtonActionPerformed
+
+public void debuggerClosed() {
+	// Callback from debugger when its window closes
+	// Kill the running process and clean up
+	setRunButtonState(RunButtonState.Idle);
+	debugButton.setEnabled(false);
+	enableInterruptButton(false);
+	testButton.setEnabled(true);
+	interruptButtonActionPerformed(null);
+	enableRunButton(false);
+	unregisterDebugger();
+}
 
 private void showWButtonActionPerformed() {//GEN-FIRST:event_showWButtonActionPerformed
 	System.out.println("\n\n                                            NO WARRANTY\n\n" + 
@@ -1837,18 +1850,16 @@ public MessageConsole console() {
 }
 
 private void urlTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_urlTextFieldActionPerformed
-
-	final URLGet urlTest = new URLGet();
-    
 	final String url = urlTextField.getText();
 	
 	if (url.startsWith("file:")) {
 		lastFileLoaded_ = url;
 		prefs_.put("editor.lastFile", lastFileLoaded_);
-		loadFile(url);
+		loadFile(trimFilePrefixFrom(url));
 		saveFileButton.setEnabled(false);
 		prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", false);
 	} else {
+		final URLGet urlTest = new URLGet();
 		this.editPane.setText(urlTest.getSite2(url));
 	}
 }//GEN-LAST:event_urlTextFieldActionPerformed
@@ -1858,7 +1869,7 @@ private void fileSystemTextFieldActionPerformed(final java.awt.event.ActionEvent
 	prefs_.put("editor.lastFileSystemPaneText", lastFileLoaded_);
 	lastFileLoaded_ = pathName;
 	prefs_.put("editor.lastFile", lastFileLoaded_);
-	loadFile(pathName);
+	loadFile(trimFilePrefixFrom(pathName));
 	saveFileButton.setEnabled(true);
 	prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", true);
 }//GEN-LAST:event_fileSystemTextFieldActionPerformed

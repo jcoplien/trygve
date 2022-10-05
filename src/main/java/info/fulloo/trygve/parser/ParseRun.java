@@ -168,6 +168,7 @@ public class ParseRun {
         final Collection<RTClass> allClasses = RunTimeEnvironment.runTimeEnvironment_.allRTClasses();
         for (final RTClass aClassDecl: allClasses) {
         	final Collection<RTMethod> allRTMethods = aClassDecl.allRTMethods();
+
         	for (final RTCode aMethod: allRTMethods) {
         		buildExpressionMapFor(aMethod);
         	}
@@ -309,29 +310,37 @@ public class ParseRun {
 		RTCode anExpr = null;
 		while(exprStack_.size() > 0){
 			anExpr = exprStack_.pop();
-			if (null != anExpr) {
+			if (null != anExpr && 0 < anExpr.lineNumber()) {
 				if (false == allExpressions_.containsValue(anExpr)) {
-					allExpressions_.put(anExpr.lineNumber(), anExpr);
+					
+					final int debuglineNumber = anExpr.lineNumber();
+					allExpressions_.put(debuglineNumber, anExpr);
 					List<RTCode> connectedExpressions = anExpr.connectedExpressions();
 					
 					// Don't stack singletons - just do them now
-					while (1 == connectedExpressions.size()) {
+					                // while (1 == connectedExpressions.size()) { // old - ???
+					while (0 < connectedExpressions.size()) {
 						anExpr = connectedExpressions.get(0);
 						assert (null != anExpr);
 						final int lineNumber = anExpr.lineNumber();
-						if (false == allExpressions_.containsKey(lineNumber)) {
-							// First entry for this line
-							allExpressions_.put(lineNumber, anExpr);
-						} else {
-							final RTCode existingExpr = allExpressions_.get(lineNumber);
-							final Token token1 = anExpr.token(), token2 = existingExpr.token();
-							if (null != token1 && null != token2) {
-								if (token1.getStartIndex() < token2.getStartIndex()) {
-									// Take just the first one on every line
-									allExpressions_.put(lineNumber, anExpr);
+						
+						// Honor only that code that has a genuine
+						// source language appearance
+						if (0 != lineNumber) {
+							if (false == allExpressions_.containsKey(lineNumber)) {
+								// First entry for this line
+								allExpressions_.put(lineNumber, anExpr);
+							} else {
+								final RTCode existingExpr = allExpressions_.get(lineNumber);
+								final Token token1 = anExpr.token(), token2 = existingExpr.token();
+								if (null != token1 && null != token2) {
+									if (token1.getStartIndex() < token2.getStartIndex()) {
+										// Take just the first one on every line
+										allExpressions_.put(lineNumber, anExpr);
+									}
 								}
 							}
-						}
+						} 
 						connectedExpressions = anExpr.connectedExpressions();
 					}
 					
@@ -367,7 +376,11 @@ public class ParseRun {
 						*/
 
 						if (null != e && false == allExpressions_.containsValue(e)) {
-							exprStack_.push(e);
+							// Remember only that object code that has
+							// a genuine source code appearance
+							if (0 < e.lineNumber()) {
+								exprStack_.push(e);
+							}
 						}
 					}
 				}

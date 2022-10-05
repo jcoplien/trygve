@@ -387,6 +387,11 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			
 			return retval;
 		}
+		public String toString() {
+			// TODO: Maybe we should eventually just print
+			// no annotations for these hidden data
+			return "<Internal-Context-Info>";  // for the trygve debugger
+		}
 		
 		// For debugger only
 		public final Map<String, RTObject> rolePlayers() {
