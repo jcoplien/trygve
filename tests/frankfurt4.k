@@ -31,6 +31,7 @@ new C().doit
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 doit
 this is MyClass.f: 1
 */

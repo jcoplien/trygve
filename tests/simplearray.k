@@ -39,6 +39,7 @@ class ArrayTest {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 123
 AClass (0)
 AClass (1)

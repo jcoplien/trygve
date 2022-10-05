@@ -5,8 +5,8 @@ package info.fulloo.trygve.editor;
 */
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.0
+ *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,11 +31,47 @@ package info.fulloo.trygve.editor;
 import java.net.*;
 import java.io.*;
 
+// EXPERIMENTAL
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+// END EXPERIMENTAL
+
 /**
 *
 * @author pawel
 */
 public class URLGet {
+	// EXPERIMENTAL
+	 public String getSite2(final String urlArg)  // throws IOException, InterruptedException
+			 {
+		 
+		    String url = urlArg;
+		    if (url.startsWith("http") && url.endsWith(".k")) {
+		    	url = url.substring(0, url.length() - 2) + ".html";
+		    }
+	        HttpClient client = HttpClient.newHttpClient();
+	        HttpRequest request = HttpRequest.newBuilder()
+	                .uri(URI.create(url))
+	                .GET() // GET is default
+	                .build();
+
+	        HttpResponse<String> response = null;
+			try {
+				response = client.send(request,
+				        HttpResponse.BodyHandlers.ofString());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+	        // System.out.println(response.body());
+	        return response.body();
+	    }
+	// END EXPERIMENTAL
 
    public String getSite(final String url) {
 

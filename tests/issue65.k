@@ -25,5 +25,6 @@ line 13: WARNING: Declaring a Role parameter `x' for Context script `test' is un
 1 warning, 0 errors.
 ___________________________________________________________
 
+
 foo
 */

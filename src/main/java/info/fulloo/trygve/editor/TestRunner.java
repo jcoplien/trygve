@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.0
+ *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -331,6 +331,7 @@ public class TestRunner {
 		} else {
 			final int s1Length = s1.length(), s2Length = s2.length();
 			final int shortest = Math.min(s1Length, s2Length);
+			
 			for (int i = 0; i < shortest; i++) {
 				if (s1.charAt(i) == s2.charAt(i)) {
 					continue;
@@ -350,11 +351,19 @@ public class TestRunner {
 		}
 		/**/
 	}
-
+	
+	private String trimBoudingNewlinesFrom(final String sArg) {
+		String s = sArg;
+		while (s.length() > 0 && (s.startsWith("\n") || s.startsWith(" "))) s = s.substring(1);
+		while (s.length() > 0 && (s.endsWith("\n") || s.endsWith(" "))) s = s.substring(0, s.length() - 1);
+		return s;
+	}
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
-		final String testResults = thisTestResults(lastTestResults, rawTestResults);
-		final String goldContents = thisRunGoldContents();
+		String testResults = thisTestResults(lastTestResults, rawTestResults);
+		String goldContents = thisRunGoldContents();
 
+		testResults = trimBoudingNewlinesFrom(testResults);
+		goldContents = trimBoudingNewlinesFrom(goldContents);
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
 			System.err.println("Test passed");
@@ -382,10 +391,14 @@ public class TestRunner {
 			testResults = testResults.substring(plusses_.length());
 			final int indexOfDelimitingSpace = testResults.indexOf(' ');
 			final String fileName = testResults.substring(0, indexOfDelimitingSpace);
+			
 			testResults = testResults.substring(fileName.length());
-			if (testResults.length() > 10 && testResults.substring(0,plusses_.length()).equals(plusses_)) {
+			if (testResults.length() > 10 && testResults.startsWith(plusses_)) {
 				// +1 for newline after plusses, +1 for newline after underscores
 				testResults = testResults.substring(plusses_.length() + 1);
+				if (testResults.startsWith("\n")) {
+					testResults = testResults.substring(1);
+				}
 			}
 		} else {
 			;

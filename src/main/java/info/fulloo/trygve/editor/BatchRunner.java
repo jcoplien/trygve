@@ -12,8 +12,8 @@ import info.fulloo.trygve.run_time.RTExpression;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.0
+ *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by

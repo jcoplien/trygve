@@ -6,8 +6,8 @@ package info.fulloo.trygve.editor;
  *
  * Created on 1 wrzesień 2008, 22:00
  * 
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.0
+ *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ package info.fulloo.trygve.editor;
  */
 
 import java.awt.Color;
+
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -77,6 +78,9 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.Element;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 enum RunButtonState { Idle, Running, Disabled } ;
 
@@ -87,6 +91,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	private final static String defaultFile = "tests/datetest2.k";
     
     private File fileName = new File("noname");
+    
+    private Preferences prefs_ = null;
     
     public int currentByteOffset() {
     	return editPane.getCaretPosition();
@@ -361,15 +367,45 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     	parseNeeded_ = true;
     	compiledWithoutError_ = false;
     	
-			initComponents();
+		initComponents();
+		assert (null != prefs_);
+		lastFileLoaded_ = prefs_.get("editor.lastFile", defaultFile);
+		lastFileLoaded_ = lastFileLoaded_.length() > 0 ? lastFileLoaded_ : defaultFile;
+		lastFileLoaded_ = trimFilePrefixFrom(lastFileLoaded_);
 
-			Preferences prefs = Preferences.userNodeForPackage(TextEditorGUI.class);			
-			String lastFile = prefs.get("editor.lastFile", defaultFile);
-			lastFile = lastFile.length() > 0 ? lastFile : defaultFile;
-
-			loadFile(lastFile);
-			fileSystemTextField.setText(lastFile);
-        
+		lastCWD_ = prefs_.get("editor.cwd", Paths.get("").toAbsolutePath().toString());
+		final File mainWD = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+		final String trygve = mainWD.getParentFile().getParent();
+	
+		String pathOfFileToLoad = lastFileLoaded_;
+		assert (false == pathOfFileToLoad.startsWith("http"));
+		if (pathOfFileToLoad.startsWith("file:") || pathOfFileToLoad.startsWith("/")) {
+			pathOfFileToLoad = trygve + "/" + pathOfFileToLoad;
+		} else {
+			pathOfFileToLoad = lastCWD_ + "/" + pathOfFileToLoad;
+		}
+		
+		loadFile(pathOfFileToLoad);
+		final String lastFileSystemPaneText = prefs_.get("editor.lastFileSystemPaneText", "");
+		fileSystemTextField.setText(lastFileSystemPaneText);
+		final String lastURLPaneText = prefs_.get("editor.lastURLPaneText", "");
+		urlTextField.setText(lastURLPaneText);
+		final boolean lastSaveFileButtonEnabledState = prefs_.getBoolean("editor.lastSaveFileButtonEnabledState", false);
+		saveFileButton.setEnabled(lastSaveFileButtonEnabledState);
+		// editor.lastFileLoadedType, editor.lastFileSystemPaneText, and
+		//    editor.lastURLPaneText are already set properly
+		
+		final int numberOfLines = this.editPaneNumberOfLines();
+		final int numberOfBytes = this.editPaneNumberOfBytes();
+		final int caretPosition = prefs_.getInt("editor.textPane.caretPosition", numberOfBytes);
+		final int linesPerScreen = 21;
+		final int middleCaretPosition = caretPositionAtIndexPlusNLines(caretPosition, linesPerScreen / 2);
+		
+		editPane.setCaretPosition(middleCaretPosition);
+		editPane.moveCaretPosition(middleCaretPosition);
+		// editPane.setCaretPosition(caretPosition);
+		// editPane.moveCaretPosition(caretPosition);
+	
         appWindowsExtantMap_ = new HashMap<RTWindowRegistryEntry, Boolean>();
     	
         updateButtons();
@@ -379,7 +415,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(Main.TRYGVE_VERSION);
-    	System.out.println(". Copyright (c)2017 James O. Coplien, jcoplien@gmail.com.");
+    	System.out.println(". Copyright (c)2022 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
@@ -395,11 +431,38 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 	private javax.swing.text.JTextComponent errorPanel = null;
 	private javax.swing.text.JTextComponent searchPane = null;
 	
-	public String errorPanelContents() {
+	public final String errorPanelContents() {
 		return errorPanel.getText();
 	}
-	public String editPanelContents() {
+	public final String editPanelContents() {
 		return editPane.getText();
+	}
+	public final int editPaneNumberOfLines() {
+		int index = 0, lineCount = 0;
+		final String text = this.editPanelContents();
+		do {
+			index = text.indexOf('\n', index + 1);
+			lineCount++;
+		} while (index > 0);
+		return lineCount;
+	}
+	public final int editPaneNumberOfBytes() {
+		final String text = this.editPanelContents();
+		return text.length();
+	}
+	public final int caretPositionAtIndexPlusNLines(int caretPosition, int nlines)
+	{
+		int retCaretPosition = caretPosition;
+		final String text = this.editPanelContents();
+		for (int i = 0; i < nlines; i++) {
+			while (retCaretPosition < text.length()) {
+				if (text.charAt(retCaretPosition++) == '\n') {
+					i++;
+					break;
+				}
+			}
+		}
+		return retCaretPosition > text.length()? text.length() - 1: retCaretPosition;
 	}
 	
 	private class MouseKeyListener implements MouseListener {
@@ -934,7 +997,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
             }
         });
 
-        urlTextField.setText("http://fulloo.info/Examples/TrygveExamples/complex1.k");
+        urlTextField.setText("https://fulloo.info/Examples/TrygveExamples-raw/borrow_library_panel5.k");
         urlTextField.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 urlTextFieldActionPerformed(evt);
@@ -1122,7 +1185,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         );
 
         pack();
-				loadPreferences();
+		loadPreferences();
     }// </editor-fold>//GEN-END:initComponents
 
 		/*
@@ -1130,14 +1193,20 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		 *   window.state = NORMAL|MAXIMIZED_BOTH
 		 *   window.x|y|w|h = int
 		 *   editor.lastFile = String
+		 *   editor.lastURLPaneText = String
+		 *   editor.lastFileSystemPaneText = String
+		 *	 editor.lastFileLoadedType = pseudo-enumerated int
+		 *	 editor.lastSaveFileButtonEnabledState = boolean
+		 *	 editor.textPane.caretPosition = int
+		 *	 editor.cwd = String
 		 */
 		private void loadPreferences() {
-			Preferences prefs = Preferences.userNodeForPackage(TextEditorGUI.class);
-
-			int x = prefs.getInt("window.x", 0);
-			int y = prefs.getInt("window.y", 0);
-			int w = prefs.getInt("window.w", 0);
-			int h = prefs.getInt("window.h", 0);
+			prefs_ = Preferences.userNodeForPackage(TextEditorGUI.class);
+			assert (null != prefs_);
+			int x = prefs_.getInt("window.x", 0);
+			int y = prefs_.getInt("window.y", 0);
+			int w = prefs_.getInt("window.w", 0);
+			int h = prefs_.getInt("window.h", 0);
 			
 			setBounds(
 				x > 0 ? x : getX(),
@@ -1146,7 +1215,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 				h > 0 ? h : getHeight()
 			);
 
-			int state = prefs.getInt("window.state", NORMAL);
+			int state = prefs_.getInt("window.state", NORMAL);
 			setExtendedState(state);
 
 			addWindowListener(new WindowAdapter() {
@@ -1155,24 +1224,40 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 					// Only allow maximized and normal state, so window 
 					// won't be hidden at startup with minimized.
-					prefs.putInt("window.state", 
-						currentState == MAXIMIZED_BOTH ? currentState : NORMAL
-					);
+					prefs_.putInt("window.state", 
+							currentState == MAXIMIZED_BOTH ? currentState : NORMAL
+							);
 
 					// Don't save the maximized position, so it will restore properly
 					// when switching from maximized to normal.
 					if(currentState != MAXIMIZED_BOTH) {
-						prefs.putInt("window.x", getX());
-						prefs.putInt("window.y", getY());
-						prefs.putInt("window.w", getWidth());
-						prefs.putInt("window.h", getHeight());
+						prefs_.putInt("window.x", getX());
+						prefs_.putInt("window.y", getY());
+						prefs_.putInt("window.w", getWidth());
+						prefs_.putInt("window.h", getHeight());
 					}
 
-					prefs.put("editor.lastFile", fileSystemTextField.getText());
+					if (null != lastFileLoaded_ && lastFileLoaded_.length() > 0) {
+						prefs_.put("editor.lastFile", trimFilePrefixFrom(lastFileLoaded_));
+						prefs_.put("editor.lastURLPaneText", urlTextField.getText());
+			        	prefs_.put("editor.lastFileSystemPaneText", fileSystemTextField.getText());
+						prefs_.putInt("editor.lastFileLoadedType", lastFileLoadedType_);
+						prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", saveFileButton.isEnabled());
+						prefs_.putInt("editor.textPane.caretPosition", editPane.getCaretPosition());
+						final Path currentRelativePath = Paths.get("");
+						prefs_.put("editor.cwd", currentRelativePath.toAbsolutePath().toString());
+					}
 				}
 			});
 		}
 		
+	private String trimFilePrefixFrom(final String fileName) {
+		if (fileName.length() > 5 && fileName.substring(0, 5).equals("file:")) {
+			return fileName.substring(5);
+		} else {
+			return fileName;
+		}
+	}
     private void initLoadTestMenu() {
     	final int numberOfTestCases = TestRunner.numberOfTestCases();
     	
@@ -1335,6 +1420,12 @@ private void loadTestCaseMenuActionPerformed(final java.awt.event.ActionEvent ev
 	enableInterruptButton(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
+	lastFileLoadedType_ = TestCase;
+	assert (null != lastFileLoaded_);
+	prefs_.put("editor.lastFile", trimFilePrefixFrom(lastFileLoaded_));
+	prefs_.put("editor.lastURLPaneText", urlTextField.getText());
+	prefs_.put("editor.lastFileSystemPaneText", fileSystemTextField.getText());
+	prefs_.putInt("editor.lastFileLoadedType", lastFileLoadedType_);
 }
 private void loadExampleMenuActionPerformed(final java.awt.event.ActionEvent evt) {
 	enableRunButton(false);
@@ -1342,6 +1433,12 @@ private void loadExampleMenuActionPerformed(final java.awt.event.ActionEvent evt
 	enableInterruptButton(true);
 	urlTextField.setText(evt.getActionCommand());
 	this.wwwButtonActionPerformed(evt);
+	lastFileLoadedType_ = Example;
+	assert (null != lastFileLoaded_);
+	prefs_.put("editor.lastFile", trimFilePrefixFrom(lastFileLoaded_));
+	prefs_.put("editor.lastURLPaneText", urlTextField.getText());
+	prefs_.put("editor.lastFileSystemPaneText", fileSystemTextField.getText());
+	prefs_.putInt("editor.lastFileLoadedType", lastFileLoadedType_);
 }
 
 private void loadMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadMenuActionPerformed
@@ -1358,6 +1455,11 @@ private void loadMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GE
             this.fileName = fileChooser.getSelectedFile();
             fileSystemTextField.setText(this.fileName.getAbsolutePath());
             saveFileButton.setEnabled(true);
+      
+            prefs_.put("editor.lastFile", trimFilePrefixFrom(fileSystemTextField.getText()));
+        	prefs_.put("editor.lastURLPaneText", urlTextField.getText());
+        	prefs_.put("editor.lastFileSystemPaneText", fileSystemTextField.getText());
+        	prefs_.putInt("editor.lastFileLoadedType", lastFileLoadedType_);
         }
         catch (IOException ioe) {
             this.editPane.setText("Pardon. Can't open file. Please contact with: pkrawczak@gmail.com");
@@ -1595,34 +1697,52 @@ public void wwwButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
     
     final String url = urlTextField.getText();
     lastFileLoaded_ = url.toString();
+    lastFileLoadedType_ = URL;
     
-    this.editPane.setText(urlTest.getSite(url));
+    if (url.startsWith("file:")) {
+    	prefs_.put("editor.lastFile", lastFileLoaded_);
+		loadFile(trimFilePrefixFrom(url));
+		saveFileButton.setEnabled(false);
+		prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", false);
+	} else {
+		this.editPane.setText(urlTest.getSite2(url));
+		this.fileSystemTextField.setText("");
+	}
+    
     this.fileSystemTextField.setText("");
+    prefs_.put("editor.lastFileSystemPaneText", "");
+    
     saveFileButton.setEnabled(false);
 }//GEN-LAST:event_wwwButtonActionPerformed
 
-public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
-	final String pathName = fileSystemTextField.getText();
-
-    final StringBuilder stringBuilder = new StringBuilder();
+private void loadFile(final String pathName) {
+	final StringBuilder stringBuilder = new StringBuilder();
     try {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
         while (reader.ready()) {
-            stringBuilder.append(reader.readLine() + "\n");
+        	final String aLine = new String(reader.readLine() + System.getProperty("line.separator"));
+            stringBuilder.append(aLine);
         }
         reader.close();
         this.editPane.setText(stringBuilder.toString());
         this.fileName = new File(pathName);
-        saveFileButton.setEnabled(true);
+        lastFileLoadedBaseName_ = this.fileName.getName();
         parseButton.setEnabled(true);
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
     }
 
-    this.fileName = new File(pathName);
-    
-    saveFileButton.setEnabled(true);
+    this.fileName = new File(lastFileLoaded_);
+}
+
+public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
+	prefs_.put("editor.lastFileSystemPaneText", lastFileLoaded_);
+	lastFileLoaded_ = fileSystemTextField.getText();
+	prefs_.put("editor.lastFile", lastFileLoaded_);
+	loadFile(lastFileLoaded_);
+	saveFileButton.setEnabled(true);
+	prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", true);
 }//GEN-LAST:event_openFileButtonActionPerformed
 
 public boolean compiledWithoutError() {
@@ -1641,12 +1761,15 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
 	
     try {
         final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
-        writer.write(this.editPane.getText());
+        final String fileText = this.editPane.getText();
+        writer.write(fileText);
         writer.close();
+        prefs_.put("editor.lastFileSystemPaneText", lastFileLoaded_);
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't write file. Ask Cope to have a look at the code");
     }
+   
 }//GEN-LAST:event_saveFileButtonActionPerformed
 
 private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerformed
@@ -1718,31 +1841,26 @@ private void urlTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {
 	final URLGet urlTest = new URLGet();
     
 	final String url = urlTextField.getText();
-    
-    this.editPane.setText(urlTest.getSite(url));
+	
+	if (url.startsWith("file:")) {
+		lastFileLoaded_ = url;
+		prefs_.put("editor.lastFile", lastFileLoaded_);
+		loadFile(url);
+		saveFileButton.setEnabled(false);
+		prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", false);
+	} else {
+		this.editPane.setText(urlTest.getSite2(url));
+	}
 }//GEN-LAST:event_urlTextFieldActionPerformed
-
-private void loadFile(final String pathName) {
-	final StringBuilder stringBuilder = new StringBuilder();
-    try {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
-        while (reader.ready()) {
-        	final String aLine = new String(reader.readLine() + System.getProperty("line.separator"));
-            stringBuilder.append(aLine);
-        }
-        reader.close();
-        this.editPane.setText(stringBuilder.toString());
-        this.fileName = new File(pathName);
-        lastFileLoaded_ = this.fileName.getName();
-    }
-    catch (IOException ioe) {
-        this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
-    }
-}
 
 private void fileSystemTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_urlTextFieldActionPerformed
 	final String pathName = fileSystemTextField.getText();
+	prefs_.put("editor.lastFileSystemPaneText", lastFileLoaded_);
+	lastFileLoaded_ = pathName;
+	prefs_.put("editor.lastFile", lastFileLoaded_);
 	loadFile(pathName);
+	saveFileButton.setEnabled(true);
+	prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", true);
 }//GEN-LAST:event_fileSystemTextFieldActionPerformed
 
 private void saveAsMenuActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAsMenuActionPerformed
@@ -1906,7 +2024,17 @@ public void setLastMatch(final String newLastMatch) { lastMatch_ = newLastMatch;
     private TextEditorGUI this_;
     
     @SuppressWarnings("unused")
-    private String lastFileLoaded_;
+    private String lastFileLoaded_, lastFileLoadedBaseName_;
+    
+    private final String lastCWD_;
+    
+    // File source types
+    final int None = 0;
+    final int URL = 1;
+    final int TestCase = 2;
+    final int Example = 3;
+
+    int lastFileLoadedType_;
     private final String underscores_;
     
     MessageConsole console_;

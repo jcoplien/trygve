@@ -81,6 +81,7 @@ class Account {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 Line 34: Assertion failed: Insufficient funds
 	In script `Object.assert'
 	Called from script `SourceAccount.withdraw'

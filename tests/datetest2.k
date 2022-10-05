@@ -21,6 +21,7 @@ class DateTest {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 Date 1:
 year=2015, month=12, date=25
 
