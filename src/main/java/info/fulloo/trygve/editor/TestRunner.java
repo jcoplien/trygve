@@ -325,7 +325,6 @@ public class TestRunner {
 	/**/
 	
 	private void analyzeFailure(final String s1, final String s2) {
-		/**/
 		if (s1.equals(s2)) {
 			return;
 		} else {
@@ -349,7 +348,6 @@ public class TestRunner {
 				}
 			}
 		}
-		/**/
 	}
 	
 	private String trimBoudingNewlinesFrom(final String sArg) {
@@ -364,6 +362,12 @@ public class TestRunner {
 
 		testResults = trimBoudingNewlinesFrom(testResults);
 		goldContents = trimBoudingNewlinesFrom(goldContents);
+		
+		// de-Microsoft everything
+		goldContents = testResults. replaceAll("\r\n", "\n");
+		goldContents = goldContents.replaceAll("\r\n", "\n");
+				
+				
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
 			System.err.println("Test passed");
