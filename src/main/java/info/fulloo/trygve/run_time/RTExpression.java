@@ -402,7 +402,15 @@ public abstract class RTExpression extends RTCode {
 					// the reference count. Pops do not. At the beginning of this method
 					// we popped it. Undo the reference count manipulation.
 					
-					qualifier.decrementReferenceCount();
+					// REF_COUNT_TAG_BUG_1 / Issue 133:
+					// 
+					// See associated comment in RTObjectCommon, at
+					// tag REF_COUNT_TAG_BUG_1.
+					//
+					// If we comment out this line, we never encounter the problem in
+					// RTObjectCommon
+
+					// qualifier.decrementReferenceCount();
 					
 					retval = nextCode_;
 				}

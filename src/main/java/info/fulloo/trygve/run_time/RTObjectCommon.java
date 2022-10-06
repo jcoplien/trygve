@@ -647,12 +647,47 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
 				unbindAllRolesAndStageProps();
+				cleanedUp_ = true;
 			} else if (1 == referenceCount() && this == RTExpression.lastExpressionResult()) {
 				contextInfo.removeAllRoleAndStagePropPlayers();
 				unbindAllRolesAndStageProps();
 				RTExpression.setLastExpressionResult(new RTNullObject(), 0);
 			} else if (0 > referenceCount()) {
-				assert false;
+				// REF_COUNT_TAG_BUG_1 / Issue 133:
+				//
+				// Something was formally very badly wrong here, because
+				// we DO get to this code with test example
+				// examples/keypad.k
+				//
+				// This was formerly a stop-the-train assertion, but
+				// on looking into it, it should never happen
+				//
+				// This may be related to a reference count issue
+				// in RTQualifiedIdentifierPart2.run. See tag REF_COUNT_TAG_BUG_1
+				// in RTExpression.java. If we remove a reference count decrement
+				// there, then testing seems to have a hard time getting us to
+				// the former assertion here.
+				//
+				// I'm keeping the code here until we really figure out
+				// what is going on with reference count for qualified
+				// identifiers that get pushed onto the evaluation stack
+				// FIXME.
+				if (!cleanedUp_) {
+					// this is here as a safety valve to help keep
+					// running, even if the counts do get out of line.
+					// testing so far does not reach this code
+					//
+					// This of course should never happen, and with the
+					// fix to Issue 133, we cannot reproduce execution at
+					// this code block.
+					contextInfo.removeAllRoleAndStagePropPlayers();
+					unbindAllRolesAndStageProps();
+					cleanedUp_ = true;
+				} else {
+					// however, this seems to be where we ended up sometimes
+					// (before we made the change in RTQualifiedIdentifierPart2.run)
+					;
+				}
 			}
 		}
 		@Override public String getText() {
@@ -681,6 +716,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 		private final Map<String, RTStageProp> nameToStagePropMap_;
 		private       Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
+		private boolean cleanedUp_ = false;
 	}
 	
 	public static class RTIntegerObject extends RTObjectCommon {

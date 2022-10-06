@@ -52,9 +52,9 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		return back_.g != null;
 	}
 
-	public void setColor(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
+	public void setColor(final RTObject colorObject) {
+		assert colorObject instanceof RTColorObject;
+		final Color color = ((RTColorObject)colorObject).color();
 
 		if (canDraw()){
 			back_.g.setColor(color);
