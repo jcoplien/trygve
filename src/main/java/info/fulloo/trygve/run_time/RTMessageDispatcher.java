@@ -434,7 +434,8 @@ public abstract class RTMessageDispatcher {
 			// Push the activation record onto the activation record stack
 			// (I think this is the only place in the code where activation
 			// records are pushed)
-			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
+			final StaticScope declarationsStaticScope = typeOfThisParameterToCalledMethod.enclosedScope();
+			final RTDynamicScope activationRecord = new RTDynamicScope(declarationsStaticScope, methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			this.populateActivationRecord(methodDecl_, activationRecord);
@@ -470,7 +471,7 @@ public abstract class RTMessageDispatcher {
 					// 	is instantiated (around line 155). Trying to call
 					// 	SpellCheck.Text.isFinished.
 					//
-					// See cotnext_role_bug1.k
+					// See context_role_bug1.k
 					//
 					// Role Text is of type TextFile, which is also a Context
 					assert null != theStageProp;
@@ -480,7 +481,9 @@ public abstract class RTMessageDispatcher {
 				assert null != theRole;
 				methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
 			}
-			assert null != methodDecl;
+			if (null == methodDecl) {
+				assert null != methodDecl;
+			}
 		} else if (contextOfRoleOfInvokingMethod instanceof RTObjectCommon) {
 			// The "this" parameter is a pointer to the Role Player, typed
 			// in terms of the Role Player's type.
@@ -595,11 +598,12 @@ public abstract class RTMessageDispatcher {
 		}
 		return methodDecl;
 	}
-	
+
 	private RTMethod genericPolymorphicMethodLookup(final RTType rTTypeOfSelf, final Type typeOfThisParameterToMethod,
 			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
 		// Give a direct match the first chance
 		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		
 		if (null == methodDecl) {
 			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
 			if (null == methodDecl) {
@@ -1108,7 +1112,10 @@ public abstract class RTMessageDispatcher {
 			} else {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
-					assert self instanceof RTContextObject == false;
+
+					// Not sure why this assertion was here: it seems
+					// like it is inappropriate. Flag with DEBUG for now
+					// assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());

@@ -183,7 +183,14 @@ public class RTSetObject extends RTObjectCommon implements RTIterable {
 		return theSet_.iterator();
 	}
 	
-	private final Set<RTObject> theSet_;
+	// This is used in the logic for Map's key method
+	// (RTMapKeysCode.runDetails, in MapClass.java)
+	// to set up a return type
+	public void setSet(final Set<RTObject> set) {
+		theSet_ = set;
+	}
+	
+	private       Set<RTObject> theSet_;
 	private final Type baseType_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
 	private final RTType setType_;

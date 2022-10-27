@@ -24,6 +24,7 @@ package info.fulloo.trygve.parser;
  */
 
 import java.util.ArrayList;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
-
 import info.fulloo.trygve.configuration.ConfigurationOptions;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
@@ -159,6 +159,8 @@ import info.fulloo.trygve.parser.KantParser.While_exprContext;
 import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
+import info.fulloo.trygve.add_ons.SetClass;
+
 
 
 public class Pass1Listener extends Pass0Listener {
@@ -858,7 +860,7 @@ public class Pass1Listener extends Pass0Listener {
 							"Published signature for `",
 							signature.getText(),
 							"' doesn't match that in the `requires' section (line ",
-							String.format("%d", requiresSignature.token()), ").", "");
+							String.format("%d", requiresSignature.token().getLine()), ").", "");
 				}
 			}
 		}
@@ -4476,9 +4478,17 @@ public class Pass1Listener extends Pass0Listener {
 			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(j);
 			      Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
+	
 
-			if (null != declarationType && null != expressionType &&
-					declarationType.canBeConvertedFrom(expressionType)) {
+			// MAP>>KEYS
+			boolean okForNow = false;
+			if (declarationType instanceof ClassType &&
+					(expressionType instanceof TemplateType || expressionType instanceof ClassType)) {
+				okForNow = true;
+			}
+
+			if (okForNow || (null != declarationType && null != expressionType &&
+					declarationType.canBeConvertedFrom(expressionType))) {
 				
 				// Still need this, though old initialization framework is gone
 				objectDecls.add(objDecl);
@@ -4895,7 +4905,39 @@ public class Pass1Listener extends Pass0Listener {
 					}
 				}
 				
-				retval = new MessageExpression((Expression) object, message, methodDecl.returnType(),
+				// MAP>>KEYS
+				Type methodReturnType = methodDecl.returnType();
+				
+				if (message.selectorName().equals("keys")) {
+					if (methodReturnType instanceof TemplateType) {
+						final String templateName = methodReturnType.name();
+						assert (objectType.name().startsWith("Map<"));
+						String keyName = objectType.name().substring(4);
+						final int indexOfComma = keyName.indexOf(',');
+						keyName = keyName.substring(0, indexOfComma);
+						final String returnTypeName = methodReturnType.name() + "<" + keyName + ">";
+					
+						// We want the type Declaration for the Set<int>
+						Type type = StaticScope.globalScope().lookupTypeDeclaration(returnTypeName);
+						if (null == type) {
+							// Then we need to declare it
+							type = SetClass.addSetOfXTypeNamedY(null, returnTypeName);
+						}
+						final StaticScope returnTypeScope = type.enclosedScope();
+						final Declaration returnTypeDeclaration = returnTypeScope.associatedDeclaration();
+						      ClassDeclaration returnTypeClassDeclaration = null;
+						if (returnTypeDeclaration instanceof ClassDeclaration) {
+							returnTypeClassDeclaration = (ClassDeclaration) returnTypeDeclaration;
+							// ... else it is a reportable error?
+						}
+						
+						// Actually, getting "type" above is probably enough
+						methodReturnType = returnTypeDeclaration.type();
+					}
+
+				}
+				
+				retval = new MessageExpression((Expression) object, message, methodReturnType,
 						token, isStatic, originMethodClass, targetMethodClass, isPolymorphic);
 			}
 		}
@@ -5677,6 +5719,47 @@ public class Pass1Listener extends Pass0Listener {
 	protected void reportMismatchesWith(final Token token, final RoleType lhsType, final Type rhsType) {
 		/* Nothing */
 	}
+	private void checkTemplateParameterTypeCompatibilityOf(final Token token, final Type lhs, final Type rhs) {
+		boolean error = false;
+		final Type lhsType = lhs.type(), rhsType = rhs.type();
+		final String lhsTypeName = lhsType.name();
+		final String rhsTypeName = rhsType.name();
+		final int index1 = lhsTypeName.indexOf('<');
+		final String lhsArgList = lhsTypeName.substring(index1 + 1, lhsTypeName.length() - index1 + 2);
+		final String rhsArgList = rhsTypeName.substring(index1 + 1, rhsTypeName.length() - index1 + 2);
+		final String [] lhsParameters = lhsArgList.split(",");
+		final String [] rhsParameters = rhsArgList.split(",");
+		final int l = rhsParameters.length;
+		if (l == lhsParameters.length) {
+			for (int i = 0; i < l; i++) {
+				final String lhsParameterTypeName = lhsParameters[i];
+				final String rhsParameterTypeName = rhsParameters[i];
+				if (lhsParameterTypeName.equals(rhsParameterTypeName) ) {
+					continue;
+				} else {
+					final ClassDeclaration c1decl = currentScope_.lookupClassDeclarationRecursive(lhsParameterTypeName);
+					final ClassDeclaration c2decl = currentScope_.lookupClassDeclarationRecursive(rhsParameterTypeName);
+					if (c1decl != null && c2decl != null) {
+						final Type c1type = c1decl.type(), c2type = c2decl.type();
+						final boolean tf = c1type.canBeConvertedFrom(c2type, token, this);
+						if (false == tf) {
+							error = true;
+							break;
+						}
+					} else {
+						error = true;
+						break;
+					}
+				}
+			}
+		} else {
+			error = true;
+		}
+		if (error) {
+			errorHook6p2(ErrorIncidenceType.Fatal, token, "Type of `", lhs.getText(),
+				"' is incompatible with expression type `", rhsType.name(), "'.", "");
+		}
+	}
 	public <ContextArgType extends ParserRuleContext> Expression assignmentExpr(final Expression lhs, final String operator, final Expression rhs,
 			final ContextArgType ctx) {
 		// abelian_expr ASSIGN expr
@@ -5759,8 +5842,17 @@ public class Pass1Listener extends Pass0Listener {
 			this.checkRoleClassNameCollision((RoleType)lhsType, rhsType, token);
 		} else if (null != lhsType && null != rhsType && lhsType.canBeConvertedFrom(rhsType) == false
 				&& lhs.isntError() && rhs.isntError() && rhsType.isntError()) {
-			errorHook6p2(ErrorIncidenceType.Fatal, token, "Type of `", lhsType.name(),
+			final String lhsTypeName = lhsType.name();
+			final String rhsTypeName = rhsType.name();
+			final boolean lhsIsTemplateType = lhsTypeName.indexOf("<") > 0  && lhsTypeName.indexOf(">") > 0;
+			final boolean rhsIsTemplateType = rhsTypeName.indexOf("<") > 0  && rhsTypeName.indexOf(">") > 0;
+			if (lhsIsTemplateType && rhsIsTemplateType) {
+				// Look for covariance in template argument types
+				checkTemplateParameterTypeCompatibilityOf(token, lhsType, rhsType);
+			} else {
+				errorHook6p2(ErrorIncidenceType.Fatal, token, "Type of `", lhsTypeName,
 					"' is incompatible with expression type `", rhsType.name(), "'.", "");
+			}
 		} else if (lhs instanceof ArrayIndexExpression) {
 			final Type anotherLhsType = ((ArrayIndexExpression)lhs).baseType();
 			if (null != anotherLhsType && null != rhsType &&

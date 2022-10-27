@@ -266,6 +266,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
 
 		final RTDynamicScope activationRecord = new RTDynamicScope(
+				null,
 				method.name(),
 				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
 				true);

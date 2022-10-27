@@ -31,6 +31,7 @@ import java.util.Map;
 import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.code_generation.CodeGenerator;
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.BodyPart;
 import info.fulloo.trygve.declarations.Declaration;
@@ -53,11 +54,15 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
+import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
+import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.parser.Pass0Listener;
 import info.fulloo.trygve.parser.Pass1Listener;
 import info.fulloo.trygve.run_time.RTCode;
+import info.fulloo.trygve.run_time.RTContext;
+import info.fulloo.trygve.run_time.RTRole;
 import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RTExpression.*;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
@@ -119,6 +124,35 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		}
 		@Override public Token token() {
 			return qualifier_.token();
+		}
+		
+		public static Expression makeContextIdentifier(final IdentifierExpression ident,
+				final RTType typeEnclosingExprInvocation) {
+
+			// The main job is to create the qualifier. It can be either current$context
+			// from within a role, or just "this" from within a Context instance
+			// method
+			
+			Expression qualifiedID = null;
+			if (typeEnclosingExprInvocation instanceof RTRole) {
+				final RTRole scope = (RTRole)typeEnclosingExprInvocation;
+				final RoleDeclaration roleDecl = scope.associatedDeclaration();
+				
+				// scopeWhereDeclared must be a method scope
+				final MethodDeclaration currentMethodBeingCompiled = InterpretiveCodeGenerator.currentMethodBeingCompiled();
+				final StaticScope methodScope = currentMethodBeingCompiled.enclosedScope();
+				
+				final Expression currentContext = new IdentifierExpression("current$context",
+						roleDecl.contextDeclaration().type(), methodScope, null);
+				qualifiedID = new QualifiedIdentifierExpression(currentContext,
+						ident.name(), roleDecl.type());
+			} else if (typeEnclosingExprInvocation instanceof RTContext) {
+				// this seems to all work out O.K.
+				qualifiedID = ident;
+			} else {
+				qualifiedID = ident;
+			}
+			return qualifiedID;
 		}
 		
 		private final Expression qualifier_;
@@ -279,7 +313,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public Expression objectToClone() {
 			return object_;
 		}
-		
 		private final Expression object_;
 	}
 	
@@ -288,7 +321,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared,
 				final Token token) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
-
 			scopeWhereDeclared_ = scopeWhereDeclared;
 			token_ = token;
 		}

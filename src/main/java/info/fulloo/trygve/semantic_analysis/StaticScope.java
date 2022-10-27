@@ -801,6 +801,7 @@ public class StaticScope {
 	
 	public void declareClass(final ClassDeclaration decl) {
 		final String className = decl.name();
+
 		if (classDeclarationDictionary_.containsKey(className)) {
 			ErrorLogger.error(ErrorIncidenceType.Fatal, "Multiple definitions of class ", className, " in ", name());
 		} else {

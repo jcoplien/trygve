@@ -217,6 +217,7 @@ public class RTFrameObject extends RTObjectCommon {
 			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
 			
 			final RTDynamicScope activationRecord = new RTDynamicScope(
+					null,
 					method.name(),
 					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
 					true);

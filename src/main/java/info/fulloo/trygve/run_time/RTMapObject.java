@@ -24,6 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -36,6 +37,8 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTMapIterator;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.declarations.TypeDeclaration;
 
 public class RTMapObject extends RTObjectCommon implements RTIterable {
 	@Override public RTObject getObject(final RTObject theIndexObject) {
@@ -44,9 +47,25 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 	}
 	public RTMapObject(final RTType mapType) {
 		super(mapType);
+		
+		// MAP>>KEYS
+		RTClass classMapType = null;
+		TypeDeclaration declaration = null;
+		
+		if (mapType instanceof RTClass) {
+			classMapType = (RTClass)mapType;
+			declaration = classMapType.typeDeclaration();
+		}
+		final String mapTypeName = declaration.name();
+		String keyTypeName = mapTypeName.substring(4);
+		final int commaIndex = keyTypeName.indexOf(',');
+		keyTypeName = keyTypeName.substring(0, commaIndex);
+		keyType_ = StaticScope.globalScope().lookupTypeDeclaration(keyTypeName);	
 		mapType_ = mapType;	// e.g. an instance of RTClass
-		keyType_ = null;
+		
+		// need to do Value Type eventually, too, like keyTyoe_ above
 		valueType_ = null;
+		
 		theMap_ = new HashMap<RTObject,RTObject>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
@@ -192,6 +211,12 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 	public Iterator<RTObject> RTIterator() {
 		final Set<RTObject> keySet = theMap_.keySet();
 		return keySet.iterator();
+	}
+	
+	// MAP>>KEYS
+	public Set<RTObject> keys() {
+		final Set<RTObject> keySet = theMap_.keySet();
+		return keySet;
 	}
 	
 	private final Map<RTObject, RTObject> theMap_;

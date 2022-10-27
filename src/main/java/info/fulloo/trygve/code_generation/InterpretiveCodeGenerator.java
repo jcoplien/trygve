@@ -490,6 +490,30 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("containsValue")) {
 			mapCode.add(new MapClass.RTContainsValueCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("keys")) {
+			// MAP>>KEYS
+			final String mapName = typeDeclaration.name();
+			assert(mapName.startsWith("Map<"));
+			String keyName = mapName.substring(4);
+			final int indexOfComma = keyName.indexOf(',');
+			keyName = keyName.substring(0, indexOfComma);
+			final String returnTypeName = "Set<" + keyName + ">";
+
+			// We want the type Declaration for the Set<int>
+			Type type = StaticScope.globalScope().lookupTypeDeclaration(returnTypeName);
+			if (null == type) {
+				type = SetClass.addSetOfXTypeNamedY(null, returnTypeName);
+			}
+			final StaticScope returnTypeScope = type.enclosedScope();
+			final Declaration returnTypeDeclaration = returnTypeScope.associatedDeclaration();
+			ClassDeclaration returnTypeClassDeclaration = null;
+			if (returnTypeDeclaration instanceof ClassDeclaration) {
+				returnTypeClassDeclaration = (ClassDeclaration) returnTypeDeclaration;
+				// ... else it is a reportable error?
+			}
+
+			mapCode.add(new MapClass.RTMapKeysCode(methodDeclaration.enclosedScope(), returnTypeClassDeclaration));
+			retvalType = RetvalTypes.usingTemplate;
 		} else {
 			retvalType = RetvalTypes.undefined;
 			assert false;	// error message instead? Should be caught earlier
@@ -1533,6 +1557,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// are the regularBodyParts which is just the ordinary method body.
 		// They come together in odd orders during parsing; here, during code
 		// generation, we just pick all of them off and put them back together.
+		currentMethodBeingCompiled_ = methodDeclaration;
 		final Declaration associatedMegaTypeDeclaration = scope.associatedDeclaration();
 		List<BodyPart> initializationBodyParts = null;
 		final boolean isCtor = methodDeclaration.name().equals(associatedMegaTypeDeclaration.name());
@@ -2210,7 +2235,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	public ParsingData parsingData() {
 		return parsingData_;
 	}
+	public static MethodDeclaration currentMethodBeingCompiled() {
+		return currentMethodBeingCompiled_;
+	}
 	
+	private static MethodDeclaration currentMethodBeingCompiled_= null;
 	private Program program_;
 	private RunTimeEnvironment virtualMachine_;
 	private RTExpression rTMainExpr_;

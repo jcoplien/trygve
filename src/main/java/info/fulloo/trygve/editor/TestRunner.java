@@ -185,6 +185,7 @@ public class TestRunner {
 		"templatetest2.k",
 		"scopeCheck1.k",
 		"math_round.k",
+		"DijkstraProcedural.k"
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",
@@ -366,8 +367,7 @@ public class TestRunner {
 		// de-Microsoft everything
 		goldContents = testResults. replaceAll("\r\n", "\n");
 		goldContents = goldContents.replaceAll("\r\n", "\n");
-				
-				
+
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
 			System.err.println("Test passed");

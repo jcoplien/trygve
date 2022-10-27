@@ -179,7 +179,8 @@ public abstract class RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
-		return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
+		// return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
+		return this.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodName, pl, null);	// DEBUG
 	}
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
 		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true, -1);
@@ -232,6 +233,7 @@ public abstract class RTClassAndContextCommon implements RTType {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
+			
 			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
 				final FormalParameterList declaredMethodSignature = aPair.getKey();
 				

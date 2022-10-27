@@ -1110,10 +1110,19 @@ public abstract class Type implements ExpressionStackAPI
 							if (null != t && (t instanceof RoleType || t instanceof StagePropType)) {
 								final RoleType otherAsRole = (RoleType)t;
 								final Map<String, List<MethodSignature>> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+								assert (otherSignatures != null);
 								
 								// Any one of the "otherSignatures" will do if it matches
 								boolean found = false;
 								final List<MethodSignature> appearancesOfThisSignatureInOther = otherSignatures.get(methodName);
+								
+								if (null == appearancesOfThisSignatureInOther || appearancesOfThisSignatureInOther.size() == 0) {
+									// Nothing there to satisfy the signature, so no dice
+									// (delicious find)
+									retval = false;
+									break;
+								}
+								
 								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
 									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();

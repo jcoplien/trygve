@@ -193,7 +193,7 @@ public class ParsingData {
 	public WhileExpression 		 currentWhileExpression() { return whileExpressionStack_.peek(); }
 	public Expression            nearestContinuableLoop() {
 		                             Expression retval = null;
-		                             final int loopExpressionsStackSize = loopExpressionStack_.size();
+		                             final int loopExpressionsStackSize = loopExpressionStack_.size() - 1;
 		                             for (int i = loopExpressionsStackSize; i >= 0; --i) {
 		                            	 final Expression expr = loopExpressionStack_.get(i);
 		                            	 if (expr instanceof ForExpression || expr instanceof WhileExpression ||

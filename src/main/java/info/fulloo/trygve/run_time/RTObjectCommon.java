@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -40,6 +41,7 @@ import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleArrayIndexExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 // For future reference:
 // Integer.toHexString(System.identityHashCode(object))
@@ -95,7 +97,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 			// The user has provided a compareTo function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope, true);
+			final StaticScope staticScope = null;
+			RTDynamicScope activationRecord = new RTDynamicScope(staticScope, "compareTo", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
@@ -145,8 +148,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 		if (null != toString) {
 			// The user has provided a toString function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			final StaticScope staticScope = null;
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope, true);
+			RTDynamicScope activationRecord = new RTDynamicScope(staticScope,"toString", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
@@ -710,6 +714,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 				retval = true;
 			}
 			return retval;
+		}
+		public StaticScope staticScope() {
+			RTType a = this.rTType();
+			ContextDeclaration b = (ContextDeclaration)((RTContext)a).typeDeclaration_;
+			return b.enclosedScope();
 		}
 		
 		private final Map<String, RTRole> nameToRoleMap_;

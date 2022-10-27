@@ -215,7 +215,7 @@ public class RunTimeEnvironment {
 		final RTExpression exitNode = new RTHalt();
 		mainExpr.setNextCode(exitNode);
 		
-		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null, true);
+		final RTDynamicScope firstActivationRecord = new RTDynamicScope(null, "_main", null, true);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
 		firstActivationRecord.incrementReferenceCount();
@@ -276,7 +276,11 @@ public class RunTimeEnvironment {
 			@SuppressWarnings("unused")
 			final RTStackable popped = theStack().pop();	// save value here for debugging only
 		}
-		retval = theStack().peek();
+		if (theStack().size() > 0) {
+			retval = theStack().peek();
+		} else {
+			retval = null;
+		}
 		return retval;
 	}
 	public RTStackable popDownToFramePointerMinus1() {

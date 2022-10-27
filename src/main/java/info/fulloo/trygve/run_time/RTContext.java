@@ -414,6 +414,9 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 		retval.addAll(nameToRoleObjectMap_.values());
 		return retval;
 	}
+	public StaticScope staticScope() {
+		return typeDeclaration_.enclosedScope();
+	}
 	
 	private Map<String, RTContext> stringToContextDeclMap_;
 	private Map<String, RTClass> stringToClassDeclMap_;

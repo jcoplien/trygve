@@ -1145,7 +1145,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
                 				.addComponent(runButton)
                 				.addComponent(interruptButton)
                 				.addComponent(testButton))
-                		.addComponent(errorScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE))
+                		.addComponent(errorScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 700, Short.MAX_VALUE))
                 .addContainerGap())
         );
         layout.setVerticalGroup(

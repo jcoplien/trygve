@@ -1,9 +1,12 @@
 package info.fulloo.trygve.add_ons;
 
 import java.util.ArrayList;
+
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
@@ -19,6 +22,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTMapObject;
@@ -27,7 +31,9 @@ import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.run_time.RTSetObject;
 import static java.util.Arrays.asList;
+
 
 /*
  * Trygve IDE 4.0
@@ -122,6 +128,7 @@ public final class MapClass {
 			typeDeclarationList_.add(templateDecl);
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
+			final Type setType = globalScope.lookupTypeDeclaration("Set");
 			
 			// these arguments are backwards
 			declareMapMethod("Map", mapType_, null, null, false);
@@ -143,6 +150,9 @@ public final class MapClass {
 			declareMapMethod("remove", V, asList("key"), asList(K), false);
 			
 			declareMapMethod("size", intType, null, null, true);
+			
+			// MAP>>KEYS
+			declareMapMethod("keys", setType, null, null, true);
 			
 			// Declare the type
 			globalScope.declareType(mapType_);
@@ -261,7 +271,7 @@ public final class MapClass {
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject value = activationRecord.getObject("key");
+			final RTObject value = activationRecord.getObject("value");
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final RTStackable answer = (RTStackable)theMapObject.containsValue(value);
 			assert answer instanceof RTObject;
@@ -305,6 +315,30 @@ public final class MapClass {
 
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", (RTObject)answer);
+			
+			return super.nextCode();
+		}
+	}
+	// MAP>>KEYS
+	public static class RTMapKeysCode extends RTMapCommon {
+		public RTMapKeysCode(final StaticScope enclosingMethodScope, final ClassDeclaration returnTypeDeclaration) {
+			super("Map", "keys", null, null, enclosingMethodScope, returnTypeDeclaration.type());
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final Type K = theMapObject.keyType();
+			final String setTypeName = "Set<" + K.name() + ">";
+			final Type type = StaticScope.globalScope().lookupTypeDeclaration(setTypeName);
+			final RTType RTreturnType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(type.enclosedScope());
+			final RTSetObject retval = new RTSetObject(RTreturnType);
+			retval.ctor();
+				
+			final Set<RTObject> keySet = theMapObject.keys();
+			retval.setSet(keySet);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)retval);
 			
 			return super.nextCode();
 		}
