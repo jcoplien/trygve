@@ -59,10 +59,10 @@ public class FormalParameterList extends ParameterListCommon {
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, true, -1);
 	}
 	
-	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList pl1,
-			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
-		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
-				pl2, paramToIgnore, conversionAllowed, -1);
+	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList formals,
+			final ActualOrFormalParameterList actuals, final String paramToIgnore, final boolean conversionAllowed) {
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(formals,
+				actuals, paramToIgnore, conversionAllowed, -1);
 	}
 	
 	public static boolean alignsWithParameterListIgnoringParamNamedWithRequiresCheck(final ActualOrFormalParameterList formals,
@@ -160,9 +160,6 @@ public class FormalParameterList extends ParameterListCommon {
 				for (int i = 0; i < actualsCount; i++) {
 					final String pl1Name = formals.nameOfParameterAtPosition(i),
 							     pl2Name = actuals.nameOfParameterAtPosition(i);
-					if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
-						continue;
-					}
 					
 					// We really should be a bit more dutiful about knowing whether it's pl1 or
 					// pl2 we're checking. But it's almost always "this" and since it's a

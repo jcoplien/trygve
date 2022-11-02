@@ -23,6 +23,8 @@ package info.fulloo.trygve.run_time;
  *
  */
 
+import java.util.List;
+import java.util.ArrayList;
 import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
@@ -601,16 +603,30 @@ public abstract class RTMessageDispatcher {
 
 	private RTMethod genericPolymorphicMethodLookup(final RTType rTTypeOfSelf, final Type typeOfThisParameterToMethod,
 			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
+		final List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		actualParameterStaticTypes.add(rTTypeOfSelf);	// NEW
+		
 		// Give a direct match the first chance
-		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(
+				methodSelectorName,
+				actualParameterStaticTypes,
+				actualParameters, "this");
 		
 		if (null == methodDecl) {
-			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(
+					methodSelectorName,
+					actualParameterStaticTypes,
+					actualParameters,
+					"this");
 			if (null == methodDecl) {
 				if (typeOfThisParameterToMethod instanceof RoleType) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(
+							methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, 0);
 					if (null == methodDecl) {
-						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName,
+								actualParameterStaticTypes, actualParameters, 0);
 					}
 				}
 				
@@ -625,7 +641,8 @@ public abstract class RTMessageDispatcher {
 						if (null != baseClassDecl) {
 							final RTType rTBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(baseClassDecl);
 							assert rTBaseClassType instanceof RTClass;
-							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+									actualParameterStaticTypes, actualParameters, "this");
 							// No. methodDecl = rTBaseClassType.lookupBaseClassMethodLiskovCompliantTo(methodSelectorName, actualParameters);
 							if (null == methodDecl) {
 								selfType = rTBaseClassType;
@@ -639,11 +656,15 @@ public abstract class RTMessageDispatcher {
 					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
 					if (null == methodDecl) {
 						methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
-						assert null != methodDecl;
+						if (null != methodDecl) {
+							assert null != methodDecl;
+						}
 					}
 				}
 			}
-			assert null != methodDecl;
+			if (null == methodDecl) {
+				assert null != methodDecl;
+			}
 		}
 		return methodDecl;
 	}
@@ -652,14 +673,25 @@ public abstract class RTMessageDispatcher {
 			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
 		// Give a direct match the only chance
 		final RTType rTTypeOfLocalSelf = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
-;		RTMethod methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		final List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		actualParameterStaticTypes.add(rTTypeOfLocalSelf);
+		RTMethod methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureNamed(
+			methodSelectorName,
+			actualParameterStaticTypes,
+			actualParameters,
+			"this");
 		if (null == methodDecl) {
-			methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+					actualParameterStaticTypes, actualParameters, "this");
 			if (null == methodDecl) {
 				if (typeOfThisParameterToMethod instanceof RoleType) {
-					methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterAtPosition(
+							methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, 0);
 					if (null == methodDecl) {
-						methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+						methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName,
+								actualParameterStaticTypes, actualParameters, 0);
 					}
 				}
 				if (null == methodDecl) {
@@ -996,10 +1028,18 @@ public abstract class RTMessageDispatcher {
 					}
 				}
 				
+				List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+				actualParameterStaticTypes.add(rTTypeOfSelf);
 				// Give a direct match the first chance
-				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(
+						methodSelectorName,
+						actualParameterStaticTypes,
+						actualParameters,
+						"this");
 				if (null == methodDecl) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, "this");
 					if (null == methodDecl) {
 						if (typeOfThisParameterToMethod instanceof RoleType) {
 							assert false;

@@ -72,6 +72,7 @@ public class Pass3Listener extends Pass2Listener {
 		} else {
 			expression = new ErrorExpression(null);
 		}
+		
 		assert null != expression;
 		parsingData_.pushExpression(expression);
 	}	

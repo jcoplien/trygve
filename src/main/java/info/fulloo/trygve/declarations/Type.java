@@ -313,6 +313,15 @@ public abstract class Type implements ExpressionStackAPI
 		
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
+			
+			if (!(t instanceof ClassType) && !(t instanceof ErrorType) && !(t instanceof BuiltInType) &&
+					!(t instanceof ArrayType) && !(t instanceof ContextType) &&
+					!(t instanceof RoleType)) {
+				assert (t instanceof ClassType || t instanceof ErrorType || t instanceof BuiltInType ||
+						t instanceof ArrayType || t instanceof ContextType ||
+						t instanceof RoleType);
+			}
+			
 			if (null == t || null == t.pathName() || null == pathName()) {
 				assert false;
 			} else if (name().equals("Object")) {
@@ -328,11 +337,18 @@ public abstract class Type implements ExpressionStackAPI
 						final String thisParameterName = isTemplate(this);
 						final String tParameterName = isTemplate(t);
 						Type thisType = enclosedScope().lookupTypeDeclarationRecursive(thisParameterName);
+						boolean thisTypeIsList = false, thisTypeIsSet = false, tTypeIsSet = false, tTypeIsList = false;
 						if (null == thisType) {
 							if (this.name().startsWith("List<")) {
 								final StaticScope enclosedScope = this.enclosedScope();
 								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
 								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+								thisTypeIsList = true;
+							} else if (this.name().startsWith("Set<")) {
+								final StaticScope enclosedScope = this.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+								thisTypeIsSet = true;
 							}
 						}
 						Type tType = enclosedScope().lookupTypeDeclarationRecursive(tParameterName);
@@ -341,11 +357,29 @@ public abstract class Type implements ExpressionStackAPI
 								final StaticScope enclosedScope = t.enclosedScope();
 								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
 								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
+							} else if (t.name().startsWith("Set<")) {
+								final StaticScope enclosedScope = t.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
 							}
 						}
 						assert null != tType;
 						assert null != thisType;
-						retval = thisType.canBeConvertedFrom(tType);
+						retval = thisTypeIsList == tTypeIsList && thisTypeIsSet == tTypeIsSet &&
+								thisType.canBeConvertedFrom(tType);
+					} else if (t instanceof RoleType && this instanceof ClassType) {
+						// Does class have all the methods needed by the role?
+						retval = true;
+						final RoleDeclaration roleDecl = (RoleDeclaration)t.enclosedScope().associatedDeclaration();
+						for (final String a : roleDecl.requiredSignatures().keySet()) {
+							final List<MethodSignature> roleExpectations = roleDecl.requiredSelfSignatures().get(a);
+							for (final MethodSignature a2: roleExpectations) {
+								if (null == this.enclosedScope().lookupMethodDeclaration(a2.name(), null, true)) {
+									retval = false;
+									break;
+								}
+							}
+						}
 					} else if (t instanceof ClassType || t instanceof ContextType) {
 						// Base class check
 						final ClassOrContextType classyT = (ClassOrContextType)t;
@@ -355,6 +389,28 @@ public abstract class Type implements ExpressionStackAPI
 								break;
 							}
 						}
+					} else if (this instanceof ClassType && t instanceof BuiltInType) {
+						retval = false;
+						for (MethodDeclaration methodDecl : enclosedScope().methodDeclarations()) {
+							if (methodDecl.name().equals(name())) {
+								// Is a constructor
+								final MethodSignature methodSignature = methodDecl.signature();
+								final FormalParameterList parameterList = methodSignature.formalParameterList();
+								if (1 == parameterList.userParameterCount()) {
+									final Declaration parameter = parameterList.parameterAtPosition(1);
+									if (parameter.type().pathName().equals(t.pathName())) {
+										retval = true;
+										break;
+									}
+								}
+							}
+						}
+					} else if (t instanceof ErrorType) {
+						retval = false;
+					} else if (t instanceof ArrayType) {
+						retval = false;
+					} else {
+						assert (false);	// missing case?
 					}
 				}
 			}
@@ -476,6 +532,12 @@ public abstract class Type implements ExpressionStackAPI
 			
 			// For now, just deal with Lists. We'll have to deal with Maps later
 			if (typeName.startsWith("List<")) {
+				if (typeName.matches("[a-zA-Z]<.*>") || typeName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+					final int indexOfDelimeter = typeName.indexOf('<');
+					final int l = typeName.length();
+					retval = typeName.substring(indexOfDelimeter + 1, l - 1);
+				}
+			} else if (typeName.startsWith("Set<")) {
 				if (typeName.matches("[a-zA-Z]<.*>") || typeName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
 					final int indexOfDelimeter = typeName.indexOf('<');
 					final int l = typeName.length();

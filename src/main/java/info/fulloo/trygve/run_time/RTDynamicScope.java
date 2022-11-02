@@ -70,8 +70,15 @@ public final class RTDynamicScope extends RTObjectCommon {
 			if (null != oldValue) {
 				oldValue.decrementReferenceCount();
 			}
+		} else if (null != staticScope() && null != staticScope().lookupRoleOrStagePropDeclaration(name)) {
+			final RTObject oldBinding = nameToRoleBindingMap_.get(name);
+			if (null != oldBinding) {
+				oldBinding.decrementReferenceCount();
+			}
+			this.setRoleBinding(name, value);
 		} else {
-			assert false;		// maybe need additional logic for roles
+			assert false;		// maybe need additional logic if
+								//   it can't find the object/role
 		}
 	}
 	
@@ -115,6 +122,10 @@ public final class RTDynamicScope extends RTObjectCommon {
 		RTDynamicScope retval = this;
 		do {
 			if (retval.objectMembers_.containsKey(name)) {
+				break;
+			} else if (null != retval.nameToRoleBindingMap_.get(name)) {
+				break;
+			} else if (null != retval.staticScope() && null != retval.staticScope().lookupRoleOrStagePropDeclaration(name)) {
 				break;
 			} else {
 				retval = retval.parentScope();

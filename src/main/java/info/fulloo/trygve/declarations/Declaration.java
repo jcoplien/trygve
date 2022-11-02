@@ -533,6 +533,9 @@ public abstract class Declaration implements BodyPart {
 		public void addPublishedSignature(final MethodSignature signature) {
 			publishedSignatures_.put(signature.name(), signature);
 		}
+		public Map<String,MethodSignature> requiredSignatures() {
+			return requiredSelfSignatures_;
+		}
 		public MethodSignature lookupPublishedSignatureDeclaration(final String name) {
 			return publishedSignatures_.get(name);
 		}

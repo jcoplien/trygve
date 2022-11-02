@@ -24,7 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.Map;
-
+import java.util.List;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 
 public interface RTType {
@@ -36,11 +36,11 @@ public interface RTType {
 	public void addStageProp(final String objectName, final RTStageProp stagePropType);
 	public void addRole(final String objectName, final RTRole roleType);
 	public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl);
-	public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName, final ActualOrFormalParameterList pl, final String paramToIgnore);
-	public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName, final ActualOrFormalParameterList pl, final int paramToIgnore);
-	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final ActualOrFormalParameterList pl, final String paramToIgnore);
+	public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName, final List<RTType> actualParameterStaticTypes, final ActualOrFormalParameterList pl, final String paramToIgnore);
+	public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName, final List<RTType> actualParameterStaticTypes, final ActualOrFormalParameterList pl, final int paramToIgnore);
+	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final List<RTType> actualParameterStaticTypes, final ActualOrFormalParameterList pl, final String paramToIgnore);
 	public RTMethod lookupBaseClassMethodLiskovCompliantTo(final String methodName, final ActualOrFormalParameterList pl);
-	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName, final ActualOrFormalParameterList pl, final int paramToIgnore);
+	public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName, final List<RTType> actualParameterStaticTypes, final ActualOrFormalParameterList pl, final int paramToIgnore);
 	public Map<String, RTType> objectDeclarations();
 	public void setObject(final String objectName, final RTObject object);
 	public RTObject getObject(final String objectName);

@@ -25,6 +25,7 @@ package info.fulloo.trygve.run_time;
 
 
 import java.util.Map;
+import java.util.List;
 
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
@@ -78,8 +79,11 @@ public class RTArrayType implements RTType {
 		return null;
 	}
 
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName,
-			final ActualOrFormalParameterList pl, final String paramToIgnore) {
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(
+			final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList pl,
+			final String paramToIgnore) {
 		RTMethod retval = null;
 		if (methodName.equals("size") && pl.count() == 1) {
 			// This is part of the kludge to give naked array appearances
@@ -99,13 +103,18 @@ public class RTArrayType implements RTType {
 		return retval;
 	}
 	
-	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName,
-			final ActualOrFormalParameterList pl, final int paramToIgnore) {
-		return lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
+	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(
+			final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList pl,
+			final int paramToIgnore) {
+		return lookupMethodIgnoringParameterInSignatureNamed(methodName, actualParameterStaticTypes, pl, null);
 	}
 	
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName,
-			final ActualOrFormalParameterList pl, final String paramToIgnore) {
+			List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList pl,
+			final String paramToIgnore) {
 		assert false;
 		return null;
 	}
@@ -116,8 +125,11 @@ public class RTArrayType implements RTType {
 		return null;
 	}
 	
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName,
-			final ActualOrFormalParameterList pl, final int paramToIgnore) {
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(
+			final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList pl,
+			final int paramToIgnore) {
 		assert false;
 		return null;
 	}

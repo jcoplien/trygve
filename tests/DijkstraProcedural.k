@@ -180,11 +180,17 @@ context Dijkstra {
 	Dijkstra dijkstra = new Dijkstra(graph)
 	dijkstra.doit
 
+
+   List<String> pathComponents = new List<String>()
 	Nameable walker = graph.endNode
 	do {
-		System.out.print(walker.name)
+		pathComponents.add(walker.name)
 		walker = dijkstra.pathTo(walker)
 	} while (walker != null)
+
+	for (int j = pathComponents.size - 1; j >= 0; --j) {
+	   System.out.print(pathComponents.at(j)).print(" ")
+	}
 
 	System.out.println
 }
@@ -192,5 +198,5 @@ context Dijkstra {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
-ihgda
+a d g h i 
 */

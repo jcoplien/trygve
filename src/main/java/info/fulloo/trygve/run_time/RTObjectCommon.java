@@ -92,7 +92,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, null);
 		pl.addActualArgument(otherVar);
 		
-		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo", pl, null);
+		List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo",
+				actualParameterStaticTypes, pl, null);
 		if (null != compareTo) {
 			// The user has provided a compareTo function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
@@ -328,6 +330,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 			nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 			isRoleArrayMap_ = new LinkedHashMap<String, String>();
 			isStagePropArrayMap_ = new LinkedHashMap<String, String>();
+			
+			uniqueID_ = ++idGenerator_;
 			
 			// context$info is used to track things like
 			// who our role-players are. It kind of seemed like this
@@ -720,6 +724,15 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 			ContextDeclaration b = (ContextDeclaration)((RTContext)a).typeDeclaration_;
 			return b.enclosedScope();
 		}
+		
+		public int uniqueID() {
+			// Used in debugging
+			return uniqueID_;
+		}
+
+		// These used mainly for debugging
+		final private int uniqueID_;
+		private static int idGenerator_ = 0;
 		
 		private final Map<String, RTRole> nameToRoleMap_;
 		private final Map<String, RTStageProp> nameToStagePropMap_;

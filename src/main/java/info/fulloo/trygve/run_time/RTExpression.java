@@ -269,6 +269,22 @@ public abstract class RTExpression extends RTCode {
 		}
 		return retval;
 	}
+	private static RTObject tryARoleAtScope(final String id, final RTDynamicScope scope) {
+		RTObject retval = null;
+		assert null != scope;
+		final StaticScope itsStaticScope = scope.staticScope();
+		final Declaration roleDecl = null == itsStaticScope?
+				null:
+				itsStaticScope.lookupRoleOrStagePropDeclaration(id);
+		if (null != roleDecl) {
+			// Get the associated object
+			retval = scope.getRoleBinding(id);
+			if (null == retval) {
+				retval = scope.getStagePropBinding(id);
+			}
+		}
+		return retval;
+	}
 	protected static RTObject getObjectUpToMethodScopeFrom(final String id, final RTDynamicScope scopeArg) {
 		// Like getObjectRecursive, but it stops at method scope
 		RTObject retval = null;
@@ -276,6 +292,9 @@ public abstract class RTExpression extends RTCode {
 		do {
 			assert null != scope;
 			retval = scope.getObject(id);
+			if (null == retval) {
+				retval = tryARoleAtScope(id, scope);
+			}
 			if (scope.isARealMethodScope()) break;
 			scope = scope.parentScope();
 		} while (null == retval && null != scope && scope.rTType() instanceof RTMethod == false);
@@ -323,7 +342,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTQualifiedIdentifier extends RTExpression {
         public RTQualifiedIdentifier(final String name, final Expression expr, final RTType nearestEnclosingTypeAroundExpression) {
             super();
-
+            
             boolean useOldAlgorithm = !(expr.enclosingMegaType() instanceof Type.ContextType);
             if (useOldAlgorithm) {
                 token_ = expr.token();
@@ -395,6 +414,7 @@ public abstract class RTExpression extends RTCode {
                     		} else {
                     			assert (false);
                     		}
+                    	// DEBUG  TODO! } else if (null != qualifier1.type().enclosedScope().lookupObjectDeclaration()) {
                     	} else {
                     		assert (false);
                     	}            
@@ -458,6 +478,7 @@ public abstract class RTExpression extends RTCode {
 
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
+            
 			return RunTimeEnvironment.runTimeEnvironment_.runner(qualifier_);
 		}
 		public RTDynamicScope dynamicScope() {
@@ -488,6 +509,7 @@ public abstract class RTExpression extends RTCode {
 				// Pop the expression off the stack
 				RTCode retval = null;
 				final RTObject qualifier = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
+
 				if (qualifier == null) {
 					// Run-time error
 					ErrorLogger.error(ErrorIncidenceType.Runtime, token_, "INTERNAL Error: Unitialized reference to object `",
@@ -495,7 +517,7 @@ public abstract class RTExpression extends RTCode {
 					retval = new RTHalt();
 				} else {
 					// Find out what it is
-					RTObject value = qualifier.getObject(idName_);	
+					RTObject value = qualifier.getObject(idName_);
 					
 					if (qualifier instanceof RTDynamicScope) {
 						assert false;	// just checking to see if this ever happens
@@ -1293,6 +1315,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTIdentifier extends RTExpression {
 		static RTIdentifier makeIdentifier(final String name, final IdentifierExpression expression) {
 			RTIdentifier retval = null;
+			
 			assert null != expression;
 			final StaticScope declaringScope = expression.scopeWhereDeclared();
 			if (null != declaringScope) {		// mainly in user program error situations
@@ -1347,11 +1370,11 @@ public abstract class RTExpression extends RTCode {
 			
 			setResultIsConsumed(expression.resultIsConsumed());
 		}
-		private RTDynamicScope findVariableScope() {
-			final StaticScope staticScope = declaringScope_;
+		private RTDynamicScope findVariableScope() {	// NEW stuff
 			RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			StaticScope associatedStaticScope = scope.staticScope();
-			while (scope != null && associatedStaticScope != staticScope) {
+			while (scope != null && associatedStaticScope != declaringScope_ &&
+					null == scope.objectDeclarations().get(idName_)) {
 				scope = scope.parentScope();
 				associatedStaticScope = scope == null? null: scope.staticScope();
 			}
@@ -1368,6 +1391,7 @@ public abstract class RTExpression extends RTCode {
 				// It's just in the local activation record
 				final RTDynamicScope activationRecord = currentDynamicScope;
 				assert null != activationRecord;
+				
 				value = RTExpression.getObjectUpToMethodScopeFrom(idName_, activationRecord);
 				
 				
@@ -2182,7 +2206,7 @@ public abstract class RTExpression extends RTCode {
 	public static class RTAssignment extends RTExpression {
 		public RTAssignment(final AssignmentExpression expr, final RTType nearestEnclosedType) {
 			super();
-			
+
 			if (nearestEnclosedType instanceof RTClass) {
 				final RTClass rtTypeDeclAsRTClass = (RTClass)nearestEnclosedType;
 				this.setTemplateInstantiationInfo(rtTypeDeclAsRTClass.templateInstantiationInfo());
@@ -2267,6 +2291,7 @@ public abstract class RTExpression extends RTCode {
 				// TODO: Add QualifiedClassMemberExpression
 				RTDynamicScope dynamicScope = null;
 				String name = null;
+				
 				if (lhs_ instanceof RTRoleIdentifier) {
 					final StaticScope declaringScope = ((RTRoleIdentifier)lhs_).declaringScope();
 					final RoleDeclaration lhsDecl = declaringScope.lookupRoleOrStagePropDeclaration(((RTRoleIdentifier)lhs_).name());
@@ -2342,8 +2367,16 @@ public abstract class RTExpression extends RTCode {
 					
 					final RTCode restOfLhs = RunTimeEnvironment.runTimeEnvironment_.runner(lhs_);
 					part2b_.setRhs(rhs);
-					
+
+					final RTStackable topOfStack = RunTimeEnvironment.runTimeEnvironment_.peekStack();
+					if (topOfStack instanceof RTContextObject) {
+						final RTContextObject contextQualifier = (RTContextObject)topOfStack;
+						part2b_.setPreviouslyComputedContextQualifier(contextQualifier);
+					}
+
 					return restOfLhs;
+					
+					// We'll EVENTUALLY end up in part2B
 				} else if (lhs_ instanceof RTArrayIndexExpression) {
 					final RTArrayIndexExpression indexedExpression = (RTArrayIndexExpression) lhs_;
 					
@@ -2489,6 +2522,7 @@ public abstract class RTExpression extends RTCode {
 					super();
 					lineNumber_ = lineNumber;
 					lhs_ = lhs;
+					previouslyComputedQualifier_ = null;
 				}
 				@Override public RTCode run() {
 					// LHS evaluation is just a qualified identifier.
@@ -2499,23 +2533,64 @@ public abstract class RTExpression extends RTCode {
 					RTDynamicScope dynamicScope = lhs.dynamicScope();
 					final String name = lhs.name();	// often the simple, unqualified part of the name
 					
-					// Here is where things go wrong. Why does this come back
-					// with a scope for something called "v"?	DEBUG
-					dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
-					assert null != dynamicScope;
-					
-					// Reference count increment is done within the dynamic scope object
-					// (NOTE: setNamedSlotToValue decrements the count of the
-					// previous occupant)
-					dynamicScope.setNamedSlotToValue(name, rhs_);
-					
-					if (this.resultIsConsumed()) {
-						RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs_);
+					if (null != this.previouslyComputedQualifier_ && previouslyComputedQualifier_ instanceof RTContextObject) {
+						if (previouslyComputedQualifier_ instanceof RTContextObject) {
+							final RTContextObject context = (RTContextObject)previouslyComputedQualifier_;
+							final RTObject classObject = context.getObject(name);
+							final RTObject roleObject = context.getRoleOrStagePropBinding(name);
+							      RTObject value = null;
+							if (null != classObject) {
+								context.setObject(name, rhs_);
+								value = rhs_;
+							} else if (null != roleObject) {
+								context.setRoleBinding(name, rhs_);
+								value = rhs_;
+							} else {
+								assert (false);
+							}
+							
+							if (this.resultIsConsumed()) {
+								RunTimeEnvironment.runTimeEnvironment_.pushStack(value);
+							}
+							
+							setLastExpressionResult(value, lineNumber_);
+							
+							value.decrementReferenceCount();
+						} else {
+							assert (false);		// more cases need to be added
+						}
+						
+						previouslyComputedQualifier_ = null;
+					} else {
+						// Here is where things go wrong. Why does this come back
+						// with a scope for something called "v"?	DEBUG
+						// if (null == dynamicScope.nearestEnclosingScopeDeclaring(name)) {
+						// 	assert null != dynamicScope;
+						// }
+						
+						dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
+						if (null == dynamicScope) {
+							dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+							dynamicScope = dynamicScope.nearestEnclosingScopeDeclaring(name);
+						}
+
+						if (null == dynamicScope) {
+							assert null != dynamicScope;
+						}
+						
+						// Reference count increment is done within the dynamic scope object
+						// (NOTE: setNamedSlotToValue decrements the count of the
+						// previous occupant)
+						dynamicScope.setNamedSlotToValue(name, rhs_);
+
+						if (this.resultIsConsumed()) {
+							RunTimeEnvironment.runTimeEnvironment_.pushStack(rhs_);
+						}
+						
+						setLastExpressionResult(rhs_, lineNumber_);
+						
+						rhs_.decrementReferenceCount();
 					}
-					
-					setLastExpressionResult(rhs_, lineNumber_);
-					
-					rhs_.decrementReferenceCount();
 					
 					return nextCode_;
 				}
@@ -2534,9 +2609,14 @@ public abstract class RTExpression extends RTCode {
 					return retval;
 				}
 				
+				public void setPreviouslyComputedContextQualifier(final RTObject qualifier) {
+					previouslyComputedQualifier_ = qualifier;
+				}
+				
 				private final RTExpression lhs_;
 				private RTObject rhs_;
 				private final int lineNumber_;
+				RTObject previouslyComputedQualifier_;
 			}
 			
 			public String getText() {
@@ -3289,6 +3369,7 @@ public abstract class RTExpression extends RTCode {
 			@Override public RTCode run() {
 				// The condition is on the stack
 				RTCode retval = null;
+				
 				final RTObject conditionalExpression = (RTObject)RunTimeEnvironment.runTimeEnvironment_.popStack();
 				assert conditionalExpression instanceof RTBooleanObject;
 				final RTBooleanObject booleanExpression = (RTBooleanObject) conditionalExpression;

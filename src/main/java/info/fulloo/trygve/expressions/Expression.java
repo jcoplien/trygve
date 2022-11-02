@@ -104,6 +104,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class QualifiedIdentifierExpression extends Expression {
 		public QualifiedIdentifierExpression(final Expression qualifier, final String id, final Type idType) {
 			super(id, idType, qualifier.enclosingMegaType());
+			
 			qualifier_ = qualifier;
 			if (null == idType) {
 				assert null != idType;
@@ -321,6 +322,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public IdentifierExpression(final String id, final Type type, final StaticScope scopeWhereDeclared,
 				final Token token) {
 			super(id, type, Expression.nearestEnclosingMegaTypeOf(scopeWhereDeclared));
+			
 			scopeWhereDeclared_ = scopeWhereDeclared;
 			token_ = token;
 		}
@@ -636,6 +638,11 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
 			
+			if (("[" + lhs.getText() + " = " + rhs.getText() + "]").equals("[aNode = current$context.Current]")) {
+				int k = 0;
+				k++;
+			}
+			
 			lhs_ = lhs;
 			rhs_ = rhs;
 			token_ = token;
@@ -937,6 +944,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			super("if (" + conditional.getText() + ")", null != elsePart? thenPart.type(): StaticScope.globalScope().lookupTypeDeclaration("void"),
 					conditional.enclosingMegaType());
 			conditional_ = conditional;
+			
 			conditional_.setResultIsConsumed(true);
 			thenPart_ = thenPart;
 			elsePart_ = elsePart;

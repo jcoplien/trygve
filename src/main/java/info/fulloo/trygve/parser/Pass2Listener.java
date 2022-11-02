@@ -29,7 +29,7 @@ import java.util.Map;
 import org.antlr.v4.runtime.RuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.TerminalNode;
-
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;	// NEW
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -1523,6 +1523,18 @@ public class Pass2Listener extends Pass1Listener {
 		return retval;
 	}
 	
+	private boolean isContextMethod(final String name) {
+		boolean retval = false;
+		final StaticScope parentScope = currentScope_.parentScope();
+		final Declaration associatedDeclaration = parentScope.associatedDeclaration();
+		if (associatedDeclaration instanceof MethodDeclaration) {
+			// Is it a context method?
+			final StaticScope methodParentScope = ((MethodDeclaration) associatedDeclaration).enclosingScope();
+			retval = methodParentScope.associatedDeclaration() instanceof ContextDeclaration;
+		}
+		return retval;
+	}
+	
 	@Override public Expression idExpr(final TerminalNode ctxJAVA_ID, final Token ctxGetStart) {
 		// | JAVA_ID
 		// Special version for pass 2 and 3
@@ -1534,6 +1546,7 @@ public class Pass2Listener extends Pass1Listener {
 		final StaticScope globalScope = StaticScope.globalScope();
 		final String idText = ctxJAVA_ID.getText();
 		ObjectDeclaration objectDecl = null;
+		final MethodDeclaration currentMethodBeingCompiled = InterpretiveCodeGenerator.currentMethodBeingCompiled();
 		
 		final ObjectDeclaration objdecl = currentScope_.lookupObjectDeclarationRecursive(idText);
 		if (null != objdecl) {
@@ -1547,12 +1560,34 @@ public class Pass2Listener extends Pass1Listener {
 				megaTypeScope = globalScope;
 			}
 			
+			final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_); // NEW
+			
 			if (declaringScope == megaTypeScope) {
+				IdentifierExpression self = null;	// NEW
+				final boolean isFromWithinRoleMethod = null != enclosingMethodScope && enclosingMethodScope.associatedDeclaration() instanceof RoleDeclaration;
+				
 				// Then it's a member of an object of the current class / context
 				// Probably better to make it a qualified identifier
-				final StaticScope enclosingMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 				final Declaration associatedDeclaration = declaringScope.associatedDeclaration();
-				final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart);
+				// (NEW) final IdentifierExpression self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart);
+				 
+				// NEW
+				if (null != enclosingMethodScope && null != enclosingMethodScope.lookupObjectDeclaration(idText)) {
+					assert (false);	// needs work
+				} else if (null != megaTypeScope.lookupObjectDeclaration(idText)) {
+					// Accessing a member of the enclosing megatype...
+					if (isFromWithinRoleMethod) {
+						// ... from within one of the context's role methods
+						self = new IdentifierExpression("current$context", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart);
+					} else {
+						// ... has to be from within a context method
+							self = new IdentifierExpression("this", associatedDeclaration.type(), enclosingMethodScope, ctxGetStart);
+					}
+				} else {
+					assert (false);
+				}
+				// END NEW
+				
 				retval = new QualifiedIdentifierExpression(self, idText, type);
 				
 				// Further checks
@@ -1607,7 +1642,99 @@ public class Pass2Listener extends Pass1Listener {
 					Expression.nearestEnclosingMethodScopeAround(currentScope_),	// scope where *declared*
 					ctxGetStart);
 			self.setResultIsConsumed(true);
-			retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
+			// (NEW) retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
+			
+			// NEW
+			StaticScope methodEnclosedScope = null == currentMethodBeingCompiled? null: currentMethodBeingCompiled.enclosedScope();
+			if (null != methodEnclosedScope && methodEnclosedScope.associatedDeclaration() instanceof RoleDeclaration) {
+				if (null != currentMethodBeingCompiled && null != currentMethodBeingCompiled.enclosedScope().lookupObjectDeclaration(idText)) {
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
+				} else if (null != currentScope_.lookupObjectDeclaration(idText)) {
+					if (currentScope_.associatedDeclaration() instanceof ContextDeclaration) {
+						final IdentifierExpression currentContext = new IdentifierExpression("current$context",		// name
+							Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+							Expression.nearestEnclosingMethodScopeAround(currentScope_),	// scope where *declared*
+							ctxGetStart);
+						retval = new QualifiedIdentifierExpression(currentContext, idText, objectDecl.type());
+					} else {
+						assert (false);		// there may be other cases; need to write the code
+					}
+				} else {
+					final Type megaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+					objectDecl = megaType.enclosedScope().lookupObjectDeclaration(idText);
+					if (null != objectDecl) {
+						if (megaType instanceof ClassType) {
+							final IdentifierExpression currentClassThis = new IdentifierExpression("this",		// name
+									Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+									Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+							retval = new QualifiedIdentifierExpression(currentClassThis, idText, objectDecl.type());
+						} else if (megaType instanceof ContextType) {
+							final IdentifierExpression currentContext = new IdentifierExpression("current$context",		// name
+									Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+									Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+							retval = new QualifiedIdentifierExpression(currentContext, idText, objectDecl.type());
+						} else {
+							assert (false);	// missing case?
+						}
+					} else {
+						assert(false);	// missing case!!!
+					}
+				}
+			} else {
+				if (null != currentMethodBeingCompiled && null != currentMethodBeingCompiled.enclosedScope().lookupObjectDeclaration(idText)) {
+					retval = new IdentifierExpression(ctxJAVA_ID.getText(), type, declaringScope, ctxGetStart);
+				} else if (null != currentScope_.lookupObjectDeclaration(idText)) {
+					if (currentScope_.associatedDeclaration() instanceof ClassDeclaration) {
+						retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
+					} else if (currentScope_.associatedDeclaration() instanceof ContextDeclaration) {
+						retval = new QualifiedIdentifierExpression(self, idText, objectDecl.type());
+					} else {
+						assert (false);		// there may be other cases; need to write the code
+					}
+				} else {
+					final Type megaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+					if (megaType instanceof ClassType) {
+						final IdentifierExpression currentClassThis = new IdentifierExpression("this",		// name
+								Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+								Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+						retval = new QualifiedIdentifierExpression(currentClassThis, idText, objectDecl.type());
+					} else if (megaType instanceof ContextType) {
+						final boolean invocationIsFromRoleMethod = megaType instanceof RoleType;
+						if (invocationIsFromRoleMethod) {
+							final IdentifierExpression currentContext = new IdentifierExpression("current$context",		// name
+									Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+									Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+							retval = new QualifiedIdentifierExpression(currentContext, idText, objectDecl.type());
+						} else {
+							final IdentifierExpression currentContext = new IdentifierExpression("this",		// name
+									Expression.nearestEnclosingMegaTypeOf(currentScope_),			// type of identifier
+									Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+							retval = new QualifiedIdentifierExpression(currentContext, idText, objectDecl.type());
+						}
+					} else if (megaType instanceof RoleType) {
+						final IdentifierExpression currentContext = new IdentifierExpression("current$context",		// name
+								currentContext_.type(),			// type of identifier
+								Expression.nearestEnclosingMethodScopeAround(currentScope_),ctxGetStart);	// scope where *declared*
+						retval = new QualifiedIdentifierExpression(currentContext, idText, objectDecl.type());
+					} else {
+						assert (false);	// missing case?
+					}
+				}
+			}
+		} else if (null == currentScope_.associatedDeclaration() && isContextMethod(idText)) {
+			// We're accessing a variable from inside a non-role context method
+			// Could be a role or context instance object
+			final IdentifierExpression self = new IdentifierExpression("this", currentContext_.type(),
+					Expression.nearestEnclosingMethodScopeAround(currentScope_), ctxGetStart);
+			self.setResultIsConsumed(true);
+			Declaration idDeclaration = currentContext_.enclosedScope().lookupRoleOrStagePropDeclaration(idText);
+			if (null == idDeclaration) {
+				idDeclaration = currentContext_.enclosedScope().lookupObjectDeclaration(idText);
+			}
+			if (null != idDeclaration) {
+				retval = new QualifiedIdentifierExpression(self, idText, idDeclaration.type());
+			}
+			// END NEW
 		} else if (null != Expression.nearestEnclosingMegaTypeOf(currentScope_)
 				&& null != Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope()
 				&& null != (aRoleDecl = Expression.nearestEnclosingMegaTypeOf(currentScope_).enclosedScope().lookupRoleOrStagePropDeclarationRecursive(idText))) {
@@ -1675,6 +1802,7 @@ public class Pass2Listener extends Pass1Listener {
 				}
 			}
 		}
+		
 		return retval;
     }
 

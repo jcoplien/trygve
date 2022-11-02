@@ -2070,7 +2070,7 @@ public class Pass1Listener extends Pass0Listener {
 			expression = new ErrorExpression(null);
 			if (printProductionsDebug) { System.err.println("expr : <internal error>"); }
 		}
-		
+
 		parsingData_.pushExpression(expression);
 		
 		if (stackSnapshotDebug) stackSnapshotDebug();
@@ -4910,7 +4910,6 @@ public class Pass1Listener extends Pass0Listener {
 				
 				if (message.selectorName().equals("keys")) {
 					if (methodReturnType instanceof TemplateType) {
-						final String templateName = methodReturnType.name();
 						assert (objectType.name().startsWith("Map<"));
 						String keyName = objectType.name().substring(4);
 						final int indexOfComma = keyName.indexOf(',');
