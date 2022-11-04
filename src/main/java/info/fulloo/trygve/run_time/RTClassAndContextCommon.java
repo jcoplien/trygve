@@ -179,9 +179,8 @@ public abstract class RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
-		// return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, actualParameterStaticTypes, pl, null);
 		List<RTType> actualStaticParameterDeclarations = new ArrayList<RTType>();
-		return this.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodName, actualStaticParameterDeclarations, pl, null);	// DEBUG
+		return this.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodName, actualStaticParameterDeclarations, pl, null);
 	}
 	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName,
 			final List<RTType> actualParameterStaticTypes,

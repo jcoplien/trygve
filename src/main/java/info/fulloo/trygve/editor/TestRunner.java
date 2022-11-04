@@ -185,7 +185,8 @@ public class TestRunner {
 		"templatetest2.k",
 		"scopeCheck1.k",
 		"math_round.k",
-		"DijkstraProcedural.k"
+		"DijkstraProcedural.k",
+		"DCIDijkstra1.k"
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",
@@ -199,6 +200,7 @@ public class TestRunner {
 		"keypad.k",
 		"simple_list.k",
 		"july_money_transfer.k",
+		"DCIDijkstra1.k"
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

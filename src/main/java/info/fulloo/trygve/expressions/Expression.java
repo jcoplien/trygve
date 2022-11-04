@@ -1040,12 +1040,12 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			increment_ = increment;
 			body_ = body;
 		}
-		public void reInitIterativeFor(final ObjectDeclaration JAVA_ID, final Expression thingToIterateOver, final Expression body) {
+		public void reInitIterativeFor(final Declaration JAVA_ID, final Expression thingToIterateOver, final Expression body) {
 			thingToIterateOver_ = thingToIterateOver;
 			iterationVariable_ = JAVA_ID;
 			body_ = body;
 		}
-		public ObjectDeclaration iterationVariable() {
+		public Declaration iterationVariable() {
 			return iterationVariable_;
 		}	
 		public Expression thingToIterateOver() {
@@ -1109,7 +1109,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 			return initExprs_;
 		}
 		
-		private ObjectDeclaration iterationVariable_;
+		private Declaration iterationVariable_;
 		private List<ObjectDeclaration> initDecl_;
 		private final List<BodyPart> initExprs_;
 		private Expression initializationExpression_, test_, increment_, body_, thingToIterateOver_;

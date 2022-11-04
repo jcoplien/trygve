@@ -1,7 +1,7 @@
 package info.fulloo.trygve.editor;
 
 /*
- * Trygve IDE 4.0
+ * Trygve IDE 4.2
  *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "4.1.3";
+	public static final String TRYGVE_VERSION = "4.2";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way

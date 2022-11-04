@@ -1152,10 +1152,6 @@ public abstract class RTMessageDispatcher {
 			} else {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
-
-					// Not sure why this assertion was here: it seems
-					// like it is inappropriate. Flag with DEBUG for now
-					// assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());

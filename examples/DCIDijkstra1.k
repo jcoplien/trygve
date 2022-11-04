@@ -54,7 +54,7 @@ class NodeGraphInfo {
 
 context Dijkstra {
 	public Dijkstra(NodeGraphInfo graph) {
-		tentativeDistances_ = new Map<Nameable, int>()
+		TentativeDistances = new Map<Nameable, int>()
 		Graph = graph
 		EndNode = graph.endNode
 		StartNode = graph.startNode
@@ -91,7 +91,6 @@ context Dijkstra {
 				if (unvisiteds_.contains(n)) retval.add(n)
 			return retval
 		}
-		String name();
 	} requires {
 		String name()
 	}
@@ -107,12 +106,21 @@ context Dijkstra {
 		String name()
 	}
 
+	role TentativeDistances {
+		public int at(Nameable n);
+		void atPut(Nameable n, int d)
+	} requires {
+		int at(Nameable n);
+		void atPut(Nameable n, int d)
+	}
+
 	role Neighbor {
 		public int distanceTo(Node n) {
-			return Graph.distanceBetween(this, n)
+			int retval = Graph.distanceBetween(n, this)
+			return retval
 		}
 		public int tentativeDistance() {
-			return tentativeDistances_.at(this)
+			return TentativeDistances.at(this)
 		}
 	} requires {
 		String name()
@@ -121,11 +129,12 @@ context Dijkstra {
 	Nameable unvisitedNodeWithMinimumDistance() {
 		int min = new Infinity().value
 		Nameable retval = null
-		for (Nameable n: unvisiteds_)
-			if (tentativeDistances_.at(n) < min) {
-				min = tentativeDistances_.at(n)
+		for (Nameable n: unvisiteds_) {
+			if (TentativeDistances.at(n) < min) {
+				min = TentativeDistances.at(n)
 				retval = n
 			}
+		}
 		return retval
 	}
 
@@ -133,14 +142,14 @@ context Dijkstra {
 		assert (Current != null)
 		Set<Nameable> currentsUnvisitedNeighbors = Current.unvisitedNeighbors()
 		assert (currentsUnvisitedNeighbors != null)
-		int myTentativeDistance = tentativeDistances_.at(Current)
+		int myTentativeDistance = TentativeDistances.at(Current)
 		for (Neighbor: currentsUnvisitedNeighbors) {
 			int distanceIncrement = Neighbor.distanceTo(Current)
 			int itsDistance = Neighbor.tentativeDistance()
 			int netDistance = myTentativeDistance + distanceIncrement
 
 			if (netDistance < itsDistance) {
-				tentativeDistances_.atPut(Neighbor, netDistance)
+				TentativeDistances.atPut(Neighbor, netDistance)
 				pathTo_.atPut(Neighbor, Current)
 			}
 		}
@@ -155,8 +164,8 @@ context Dijkstra {
 
 	public void doit() {
 		for (Nameable n : Graph.nodes)
-			tentativeDistances_.atPut(n, new Infinity().value)
-		tentativeDistances_.atPut(StartNode, 0)
+			TentativeDistances.atPut(n, new Infinity().value)
+			TentativeDistances.atPut(StartNode, 0)
 		unvisiteds_ = Graph.nodes
 		Current = StartNode
 		recur()
@@ -167,7 +176,6 @@ context Dijkstra {
 		return retval
 	}
 
-	Map<Nameable, int> tentativeDistances_
 	Set<Object> unvisiteds_
 	Map<Nameable, Nameable> pathTo_
 }
@@ -236,3 +244,9 @@ context Dijkstra {
 
 	System.out.println
 }
+
+/* GOLD:
+0 warnings, 0 errors.
+___________________________________________________________
+a d g h i 
+*/

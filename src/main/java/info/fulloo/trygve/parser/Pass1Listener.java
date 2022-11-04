@@ -3810,10 +3810,17 @@ public class Pass1Listener extends Pass0Listener {
 			final Expression body = parsingData_.popExpression();
 			final Expression thingToIncrementOver = parsingData_.popExpression();
 			final String JAVA_IDasString = ctx.JAVA_ID().getText();
-			final ObjectDeclaration JAVA_ID_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
-			if (null == JAVA_ID_DECL) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Loop identifier `", JAVA_IDasString,
-						"' is not declared", "");
+			      Declaration JAVA_OBJECT_OR_ROLE_DECL = currentScope_.lookupObjectDeclarationRecursive(JAVA_IDasString);
+			if (null == JAVA_OBJECT_OR_ROLE_DECL) {
+				// Could it be a role?
+				if (null != currentContext_) {
+					final StaticScope contextScope = currentContext_.enclosedScope();
+					JAVA_OBJECT_OR_ROLE_DECL = contextScope.lookupRoleOrStagePropDeclaration(JAVA_IDasString);
+				}
+				if (null == JAVA_OBJECT_OR_ROLE_DECL) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Loop identifier `", JAVA_IDasString,
+							"' is not declared", "");
+				}
 			}
 			expression = parsingData_.popForExpression();
 			
@@ -3831,7 +3838,7 @@ public class Pass1Listener extends Pass0Listener {
 				}
 			}
 			
-			expression.reInitIterativeFor(JAVA_ID_DECL, thingToIncrementOver, body);
+			expression.reInitIterativeFor(JAVA_OBJECT_OR_ROLE_DECL, thingToIncrementOver, body);
 		} else if ((null != ctx.trivial_object_decl()) && (ctx.expr().size() == 2)) {
 			//  | 'for' '(' trivial_object_decl ':' expr ')' expr
 			

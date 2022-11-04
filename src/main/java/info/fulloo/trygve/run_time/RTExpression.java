@@ -462,7 +462,6 @@ public abstract class RTExpression extends RTCode {
                 	int y = 0;
                 	y++;
                 } else {
-                	Declaration DEBUG = discriminatorDecl.enclosingScope().associatedDeclaration();
                 	assert (false);
                 }
                 
@@ -1371,14 +1370,46 @@ public abstract class RTExpression extends RTCode {
 			setResultIsConsumed(expression.resultIsConsumed());
 		}
 		private RTDynamicScope findVariableScope() {	// NEW stuff
-			RTDynamicScope scope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			StaticScope associatedStaticScope = scope.staticScope();
-			while (scope != null && associatedStaticScope != declaringScope_ &&
-					null == scope.objectDeclarations().get(idName_)) {
-				scope = scope.parentScope();
-				associatedStaticScope = scope == null? null: scope.staticScope();
+			RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			StaticScope associatedStaticScope = dynamicScope.staticScope();
+			
+			while (dynamicScope != null && associatedStaticScope != declaringScope_ &&
+					null == dynamicScope.objectDeclarations().get(idName_)) {
+				dynamicScope = dynamicScope.parentScope();
+				associatedStaticScope = dynamicScope == null? null: dynamicScope.staticScope();
 			}
-			return scope;
+			
+			if (null != associatedStaticScope &&
+					associatedStaticScope.associatedDeclaration() instanceof ContextDeclaration) {
+				// Is a context member
+				dynamicScope = null;
+			}
+			
+			return dynamicScope;
+		}
+		private RTContextObject findContextMemberScope() {	// NEW stuff
+			RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			RTObject contextObject = null;
+			
+			// Find the context object. The dynamic scope is probably the
+			// scope of the FOR body. If we are in a context method, we want
+			// to use "this" as a handle to the context. If we are in a
+			// role method, use current$context.
+			RTDynamicScope fscope;
+			for (fscope = dynamicScope; null != fscope && !fscope.isARealMethodScope();
+						fscope = fscope.parentScope()) {}
+			if (null != fscope) {
+				contextObject = fscope.getObject("current$context");
+				if (null == contextObject) {
+					contextObject = fscope.getObject("this");
+				}
+			}
+			
+			if (!isLocal_ && null != contextObject && !(contextObject instanceof RTContextObject)) {
+				assert (isLocal_ || null == contextObject || contextObject instanceof RTContextObject);
+			}
+
+			return (contextObject instanceof RTContextObject)? (RTContextObject)contextObject: null;
 		}
 		
 		@Override public RTCode run() {
@@ -1386,6 +1417,7 @@ public abstract class RTExpression extends RTCode {
 			RTObject value = null;
 			final RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			RTDynamicScope whereTheIdentifierLives = findVariableScope();
+			RTContextObject whereTheContextMemberLives = findContextMemberScope();
 			
 			if (isLocal_) {
 				// It's just in the local activation record
@@ -1427,10 +1459,34 @@ public abstract class RTExpression extends RTCode {
 					}
 				}
 			} else if (null != whereTheIdentifierLives) {
-				// This is new, experimental
-				RTObject theQualifierValue = null;
-				value = whereTheIdentifierLives.getObject(idName_);
-				assert (null != value);
+				// This is NEW, experimental
+				final RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final StaticScope associatedStaticScope = dynamicScope.staticScope();
+				
+				if (associatedStaticScope instanceof StaticScope.StaticRoleScope) {
+					assert (false);
+				} else {
+					value = whereTheIdentifierLives.getObject(idName_);
+				}
+				if (null == value) {
+					assert (null != value);
+				}
+			} else if (null != whereTheContextMemberLives) {
+				// This is NEW, experimental
+				final RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+				final StaticScope associatedStaticScope = dynamicScope.staticScope();
+				
+				if (associatedStaticScope instanceof StaticScope.StaticRoleScope) {
+					value = whereTheContextMemberLives.getRoleOrStagePropBinding(idName_);
+					if (null == value) {
+						value = whereTheContextMemberLives.getObject(idName_);
+					}
+				} else {
+					assert (false);
+				}
+				if (null == value) {
+					assert (null != value);
+				}
 			} else {
 				// WARNING. This is a bit presumptuous and needs work. TODO.
 				// Maybe will fail if there is a nested declaration of an
@@ -3664,7 +3720,7 @@ public abstract class RTExpression extends RTCode {
 	}
 	
 	private static class RTIterationForTestRunner extends RTExpression {
-		public RTIterationForTestRunner(final RTExpression body, final RTPopDynamicScope popScope, final ObjectDeclaration iterationVariable) {
+		public RTIterationForTestRunner(final RTExpression body, final RTPopDynamicScope popScope, final Declaration iterationVariable) {
 			super();
 			popScope_ = popScope;
 			part2_ = new RTIterationForTestRunnerPart2(body, iterationVariable);
@@ -3689,7 +3745,7 @@ public abstract class RTExpression extends RTCode {
 		}
 		
 		private static class RTIterationForTestRunnerPart2 extends RTExpression {
-			RTIterationForTestRunnerPart2(final RTExpression body, final ObjectDeclaration iterationVariable) {
+			RTIterationForTestRunnerPart2(final RTExpression body, final Declaration iterationVariable) {
 				super();
 				body_ = body;
 				iterationVariable_ = iterationVariable;
@@ -3702,23 +3758,52 @@ public abstract class RTExpression extends RTCode {
 				final RTDynamicScope dynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 				final RTDynamicScope scope = dynamicScope.nearestEnclosingScopeDeclaring(iterationIdentifierName);
 				
-				if (null == scope) {
-					ErrorLogger.error(ErrorIncidenceType.Internal, null, "INTERNAL: Cannot find loop variable ",
-							iterationIdentifierName, ".", "");
-					RTMessage.printMiniStackStatus();
-					
-					// Halt the machine
-					return new RTHalt();
-				} else if (null != valueFromIteration) {
-					scope.setObject(iterationIdentifierName, valueFromIteration);
+				if (iterationVariable_ instanceof ObjectDeclaration) {
+					if (null == scope) {
+						ErrorLogger.error(ErrorIncidenceType.Internal, null, "INTERNAL: Cannot find loop variable ",
+								iterationIdentifierName, ".", "");
+						RTMessage.printMiniStackStatus();
+						
+						// Halt the machine
+						return new RTHalt();
+					} else if (null != valueFromIteration) {
+						scope.setObject(iterationIdentifierName, valueFromIteration);
+						return body_;
+					} else {
+						ErrorLogger.error(ErrorIncidenceType.Internal, null, "Runtime: `",
+								iterationIdentifierName, "' has been bound to an uninitialized object.", "");
+						RTMessage.printMiniStackStatus();
+						
+						// Halt the machine
+						return new RTHalt();
+					}
+				} else if (iterationVariable_ instanceof RoleDeclaration) {
+					// Find the context object. The dynamic scope is probably the
+					// scope of the FOR body. If we are in a context method, we want
+					// to use "this" as a handle to the context. If we are in a
+					// role method,use current$context.
+					final RoleDeclaration roleDeclaration = (RoleDeclaration) iterationVariable_;
+					final String roleName = roleDeclaration.name();
+					RTDynamicScope fscope;
+					RTObject contextObject = null;
+					for (fscope = dynamicScope; null != fscope && !fscope.isARealMethodScope();
+								fscope = fscope.parentScope()) {}
+					if (null != fscope) {
+						contextObject = fscope.getObject("current$context");
+						if (null == contextObject) {
+							contextObject = fscope.getObject("this");
+						}
+					}
+					if (contextObject instanceof RTContextObject) {
+						((RTContextObject) contextObject).setRoleBinding(roleName, valueFromIteration);
+					} else {
+						assert (false);		// some kind of internal error
+					}
+				
 					return body_;
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Internal, null, "Runtime: `",
-							iterationIdentifierName, "' has been bound to an uninitialized object.", "");
-					RTMessage.printMiniStackStatus();
-					
-					// Halt the machine
-					return new RTHalt();
+					scope.setObject(iterationIdentifierName, valueFromIteration);
+					return body_;
 				}
 			}
 			
@@ -3733,7 +3818,7 @@ public abstract class RTExpression extends RTCode {
 			}
 			
 			final RTExpression body_;
-			final ObjectDeclaration iterationVariable_;
+			final Declaration iterationVariable_;
 			final private int lineNumber_;
 		}
 		

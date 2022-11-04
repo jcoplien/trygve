@@ -204,6 +204,9 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 			classOrContext_.setObject(name, object);
 		}
 	}
+	private RTType classOrContext() {
+		return classOrContext_;
+	}
 	@Override public Map<String, RTType> objectDeclarations() { return rTTypeMap_; }
 	          public Map<String,RTObject> objectMembers() { return objectMembers_; }
 	@Override public void addObjectDeclaration(final String name, final RTType type) {
