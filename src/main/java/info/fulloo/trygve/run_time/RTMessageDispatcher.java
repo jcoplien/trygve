@@ -233,6 +233,7 @@ public abstract class RTMessageDispatcher {
 
 	protected RTStackable pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
 			final int indexForThisExtraction) {
+		
 		RTCode pc = start;
 		startingStackIndex_ = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 		RTObject self = null;
@@ -785,7 +786,9 @@ public abstract class RTMessageDispatcher {
 		assert rawTargetContext instanceof ContextDeclaration;
 		final ContextDeclaration targetContext = (ContextDeclaration) rawTargetContext;
 		final RTType rawrTTypeOfTargetContext = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(targetContext);
-		assert rawrTTypeOfTargetContext instanceof RTContext;
+		if (!(rawrTTypeOfTargetContext instanceof RTContext)) {
+			assert rawrTTypeOfTargetContext instanceof RTContext;
+		}
 		final RTContext rTTypeOfTargetContext = (RTContext)rawrTTypeOfTargetContext;
 		
 		RTRole theRole = rTTypeOfTargetContext.getRole(typeOfThisParameterToMethod.name());

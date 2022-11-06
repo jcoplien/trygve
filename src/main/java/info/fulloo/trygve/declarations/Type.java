@@ -316,10 +316,10 @@ public abstract class Type implements ExpressionStackAPI
 			
 			if (!(t instanceof ClassType) && !(t instanceof ErrorType) && !(t instanceof BuiltInType) &&
 					!(t instanceof ArrayType) && !(t instanceof ContextType) &&
-					!(t instanceof RoleType)) {
+					!(t instanceof RoleType) &&!(t instanceof InterfaceType)) {
 				assert (t instanceof ClassType || t instanceof ErrorType || t instanceof BuiltInType ||
 						t instanceof ArrayType || t instanceof ContextType ||
-						t instanceof RoleType);
+						t instanceof RoleType  || t instanceof InterfaceType);
 			}
 			
 			if (null == t || null == t.pathName() || null == pathName()) {

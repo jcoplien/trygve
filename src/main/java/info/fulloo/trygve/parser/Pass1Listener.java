@@ -160,6 +160,7 @@ import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
 import info.fulloo.trygve.add_ons.SetClass;
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 
 
 
@@ -4810,6 +4811,31 @@ public class Pass1Listener extends Pass0Listener {
 							"Cannot access expression `", expression.getText(),
 							"' with non-object type declaration", "");
 				}
+			} else if (objectType instanceof InterfaceType) {
+				// Could be a method invocation without the paren. NEW-
+				final InterfaceType interfaceType = (InterfaceType) objectType;
+				final StaticScope interfaceTypeScope = interfaceType.enclosedScope();
+				final InterfaceDeclaration interfaceDeclaration =
+							(InterfaceDeclaration)interfaceTypeScope.associatedDeclaration();
+				final MethodSignature methodSignature = interfaceDeclaration.lookupMethodSignatureDeclaration(javaIdString, null);
+				if (null != methodSignature) {
+					// If it is a message shorthand it should have no user parameter
+					if (0 == methodSignature.formalParameterList().userParameterCount()) {
+						// This is it. NEW.
+						final Type objectMegatype = object.nearestEnclosingMegaTypeOf(currentScope_);
+						final ActualArgumentList argList = new ActualArgumentList();
+						argList.addActualArgument(object);
+						final boolean isPolymorphic = true;	// a guess...
+						final MethodInvocationEnvironmentClass invokingEnvironment = currentScope_.methodInvocationEnvironmentClass();
+						final Message message = new Message(javaIdString, argList, ctxGetStart, objectMegatype);
+						expression = new MessageExpression(object, message,
+								methodSignature.type(), ctxGetStart, false, invokingEnvironment,
+								object.type().enclosedScope().methodInvocationEnvironmentClass(),
+								isPolymorphic);
+					}
+				} else {
+					assert (false);		// worth investigating
+				}
 			} else if (null == (expression = degenerateProcedureCheck(qualifier, objectType, javaIdString, ctxGetStart))){
 				if (object.isntError() && object.type().isntError()) {
 					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Field `", javaIdString,
@@ -4842,6 +4868,7 @@ public class Pass1Listener extends Pass0Listener {
 			} else {
 				argumentList.addFirstActualParameter((Expression)object);
 			}
+			
 			MethodDeclaration methodDecl = objectType.enclosedScope().lookupMethodDeclarationRecursive(
 					methodSelectorName, argumentList, false);
 			if (null == methodDecl) {

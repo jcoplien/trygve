@@ -54,8 +54,6 @@ import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.StagePropType;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
-import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
-import info.fulloo.trygve.expressions.Expression.QualifiedIdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.parser.ParsingData;
 import info.fulloo.trygve.parser.Pass0Listener;
@@ -104,7 +102,6 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class QualifiedIdentifierExpression extends Expression {
 		public QualifiedIdentifierExpression(final Expression qualifier, final String id, final Type idType) {
 			super(id, idType, qualifier.enclosingMegaType());
-			
 			qualifier_ = qualifier;
 			if (null == idType) {
 				assert null != idType;
@@ -301,7 +298,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 	public static class DupMessageExpression extends Expression
 	{
 		public DupMessageExpression(final Expression object, final Type type) {
-			super("clone", type, object.enclosingMegaType());
+			super(object.name(), type, object.enclosingMegaType());
 			object_ = object;
 			object_.setResultIsConsumed(true);
 		}
@@ -637,12 +634,7 @@ public abstract class Expression implements BodyPart, ExpressionStackAPI {
 		public AssignmentExpression(final Expression lhs, final String operator, final Expression rhs, final Token token, final Pass0Listener parser) {
 			super("[" + lhs.getText() + " = " + rhs.getText() + "]", lhs.type(), lhs.enclosingMegaType());
 			assert operator.equals("=");
-			
-			if (("[" + lhs.getText() + " = " + rhs.getText() + "]").equals("[aNode = current$context.Current]")) {
-				int k = 0;
-				k++;
-			}
-			
+
 			lhs_ = lhs;
 			rhs_ = rhs;
 			token_ = token;

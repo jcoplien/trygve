@@ -342,9 +342,9 @@ public abstract class RTExpression extends RTCode {
 	public static class RTQualifiedIdentifier extends RTExpression {
         public RTQualifiedIdentifier(final String name, final Expression expr, final RTType nearestEnclosingTypeAroundExpression) {
             super();
-            
+     
             boolean useOldAlgorithm = !(expr.enclosingMegaType() instanceof Type.ContextType);
-            if (useOldAlgorithm) {
+            if (useOldAlgorithm || name.equals("id") || expr.name().equals("e")) { // DEBUG
                 token_ = expr.token();
                 lineNumber_ = expr.lineNumber();
 
@@ -365,87 +365,115 @@ public abstract class RTExpression extends RTCode {
                 setResultIsConsumed(expr.resultIsConsumed());
                 part2_.setResultIsConsumed(expr.resultIsConsumed());
             } else {
-            	RTExpression qualifier = null;
+            	RTExpression rTQualifier = null;
             	final MethodDeclaration methodBeingCompiled = InterpretiveCodeGenerator.currentMethodBeingCompiled();
-                token_ = expr.token();
+                final StaticScope methodScope = methodBeingCompiled.enclosedScope();
+                StaticScope enclosingScope = methodScope;
+                for (; enclosingScope != StaticScope.globalScope()
+                			&& null != enclosingScope; enclosingScope = enclosingScope.parentScope()) {
+                	if (enclosingScope.associatedDeclaration() instanceof ClassDeclaration) {
+                		break;
+                	} else if (enclosingScope.associatedDeclaration() instanceof ContextDeclaration) {
+                		break;
+                	}
+                }
+                
+            	token_ = expr.token();
                 lineNumber_ = expr.lineNumber();
                      
                 // Should probably pass in static scope of qualifier
                 // By "scope of qualifier" we mean the context or class rather than
                 // the scope or activation record of the qualifier identifier
-                final Type enclosingMegaTypeAroundExpression = expr.enclosingMegaType();
+                
+                final Type enclosingMegaTypeAroundExpression = enclosingScope.associatedDeclaration().type();
+                
                 final StaticScope staticScopeOfTypeOfQualifier = null == enclosingMegaTypeAroundExpression? null: enclosingMegaTypeAroundExpression.enclosedScope();
+
                 part2_ = new RTQualifiedIdentifierPart2(staticScopeOfTypeOfQualifier, name, token());
                 final QualifiedIdentifierExpression qie = (QualifiedIdentifierExpression) expr;
                 stringRep_ = qie.getText();
 
-                final Expression qualifier1EX = qie.qualifier();
+                final Expression qualifier1EX = qie.qualifier().promoteTo(enclosingMegaTypeAroundExpression);
+                Expression ultimateQualifier = null;
                 TypeDeclaration enclosingTypeDecl = null;
-                assert (qualifier1EX instanceof IdentifierExpression);
-                IdentifierExpression qualifier1 = (IdentifierExpression) qualifier1EX;
-                if (nearestEnclosingTypeAroundExpression instanceof RTClass) {
-                     enclosingTypeDecl = ((RTClass)nearestEnclosingTypeAroundExpression).typeDeclaration();
-                } else if (nearestEnclosingTypeAroundExpression instanceof RTContext) {
-                     enclosingTypeDecl = ((RTContext)nearestEnclosingTypeAroundExpression).typeDeclaration();
-                } else {
-                     assert (false);
+
+                IdentifierExpression qualifierThatIsIdentifier = null;
+                if (qualifier1EX instanceof IdentifierExpression) {
+	                qualifierThatIsIdentifier = (IdentifierExpression) qualifier1EX;
+	                if (nearestEnclosingTypeAroundExpression instanceof RTClass) {
+	                     enclosingTypeDecl = ((RTClass)nearestEnclosingTypeAroundExpression).typeDeclaration();
+	                } else if (nearestEnclosingTypeAroundExpression instanceof RTContext) {
+	                     enclosingTypeDecl = ((RTContext)nearestEnclosingTypeAroundExpression).typeDeclaration();
+	                } else {
+	                     assert (false);
+	                }
                 }
                 
                 // Find where the member is declared
                 ObjectDeclaration discriminatorDecl = methodBeingCompiled.enclosedScope().lookupObjectDeclarationRecursive(name);
                 
-                if ((null == discriminatorDecl) &&
-                		(null != enclosingTypeDecl.enclosedScope().lookupObjectDeclaration(name))) {
+                if (qualifier1EX instanceof QualifiedIdentifierExpression) {
+                	ultimateQualifier = qualifier1EX;
+                } else if (null == discriminatorDecl &&
+                		    null != enclosingTypeDecl &&
+                		    null != enclosingTypeDecl.enclosedScope().lookupObjectDeclaration(name)) {
                 	// Not found in local scope, but it's in the larger object
                 	discriminatorDecl = enclosingTypeDecl.enclosedScope().lookupObjectDeclaration(name);
-                	if (qualifier1 instanceof IdentifierExpression) {
-                    	final StaticScope methodScope = methodBeingCompiled.enclosedScope();
-                    	if (null != methodScope.lookupObjectDeclaration(qualifier1.name())) {
+                	if (qualifierThatIsIdentifier instanceof IdentifierExpression) {
+                    	if (null != methodScope.lookupObjectDeclaration(qualifierThatIsIdentifier.name())) {
                     		// It's local
                     		if (nearestEnclosingTypeAroundExpression instanceof RTContext) {
                     			// We're accessing a Context instance from within a Context method
-    	                		qualifier1 = new IdentifierExpression("this",
-    	                                qualifier1.type(), methodScope, null);
+    	                		qualifierThatIsIdentifier = new IdentifierExpression("this",
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
                     		} else if (nearestEnclosingTypeAroundExpression instanceof RTClass) {
+                    			// See examples/pong2.k. The qualifier is a method parameter
                     			assert (false);	// shouldn't get here
                     		} else if (nearestEnclosingTypeAroundExpression instanceof RTRole) {
-                    			qualifier1 = new IdentifierExpression("current$context",
-    	                                qualifier1.type(), methodScope, null);
+                    			qualifierThatIsIdentifier = new IdentifierExpression("current$context",
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
                     		} else {
                     			assert (false);
                     		}
                     	// DEBUG  TODO! } else if (null != qualifier1.type().enclosedScope().lookupObjectDeclaration()) {
                     	} else {
                     		assert (false);
-                    	}            
+                    	}
+                    	ultimateQualifier = qualifierThatIsIdentifier;
                 	}
+                } else if ((null == discriminatorDecl) &&
+                		null != enclosingTypeDecl &&
+                		null == enclosingTypeDecl.enclosedScope().lookupRoleOrStagePropDeclaration(name)) {
+                	// "name" is not declared in enclosingTypeDecl.
+                	// is it declared in methodScope?
+                	final ObjectDeclaration qualifierDeclaration = methodScope.lookupObjectDeclaration(qualifierThatIsIdentifier.name());
+                	if (null != qualifierDeclaration) {
+                		qualifierThatIsIdentifier = new IdentifierExpression(qualifierThatIsIdentifier.name(),
+                				qualifierThatIsIdentifier.type(), methodScope, null);
+                	}
+                	ultimateQualifier = qualifierThatIsIdentifier;
                 } else if (null == discriminatorDecl  &&
-                		(null != enclosingTypeDecl.enclosedScope().lookupRoleOrStagePropDeclaration(name))) {
+                			null != enclosingTypeDecl &&
+                			(null != enclosingTypeDecl.enclosedScope().lookupRoleOrStagePropDeclaration(name))) {
                 	// Great; it's a role or StageProp
-                	final RoleDeclaration roleDecl = enclosingTypeDecl.enclosedScope().lookupRoleOrStagePropDeclaration(name);
-                	if (qualifier1 instanceof IdentifierExpression) {
-                		final StaticScope methodScope = methodBeingCompiled.enclosedScope();
-                    	qualifier1 = new IdentifierExpression("current$context",
-    	                                qualifier1.type(), methodScope, null);
-                	} else {
-                		assert (false);
-                	}
+                    qualifierThatIsIdentifier = new IdentifierExpression("current$context",
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
+                	ultimateQualifier = qualifierThatIsIdentifier;
                 } else if (null != discriminatorDecl && discriminatorDecl.enclosingScope()
                 		.associatedDeclaration() instanceof Declaration.ContextDeclaration) {
-                	if (qualifier1 instanceof IdentifierExpression) {
-                    	final StaticScope methodScope = methodBeingCompiled.enclosedScope();
-                    	if (null != methodScope.lookupObjectDeclaration(qualifier1.name())) {
+                	if (qualifierThatIsIdentifier instanceof IdentifierExpression) {
+                    	if (null != methodScope.lookupObjectDeclaration(qualifierThatIsIdentifier.name())) {
                     		// It's local
                     		if (nearestEnclosingTypeAroundExpression instanceof RTContext) {
                     			// We're accessing a Context instance from within a Role method
-    	                		qualifier1 = new IdentifierExpression("this",
-    	                                qualifier1.type(), methodScope, null);
+    	                		qualifierThatIsIdentifier = new IdentifierExpression("this",
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
                     		} else if (nearestEnclosingTypeAroundExpression instanceof RTClass) {
-                    			qualifier1 = new IdentifierExpression(qualifier1.name(),
-    	                                qualifier1.type(), methodScope, null);
+                    			qualifierThatIsIdentifier = new IdentifierExpression(qualifierThatIsIdentifier.name(),
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
                     		} else if (nearestEnclosingTypeAroundExpression instanceof RTRole) {
-                    			qualifier1 = new IdentifierExpression("curent$context",
-    	                                qualifier1.type(), methodScope, null);
+                    			qualifierThatIsIdentifier = new IdentifierExpression("curent$context",
+    	                                qualifierThatIsIdentifier.type(), methodScope, null);
                     		} else {
                     			assert (false);
                     		}
@@ -455,29 +483,37 @@ public abstract class RTExpression extends RTCode {
                     		y++;
                     	}
                 	}
-                } else if (null != discriminatorDecl && discriminatorDecl.enclosingScope().associatedDeclaration() instanceof Declaration.RoleDeclaration) {
+                	ultimateQualifier = qualifierThatIsIdentifier;
+                } else if (null != discriminatorDecl &&
+                		discriminatorDecl.enclosingScope().associatedDeclaration()
+                		instanceof Declaration.RoleDeclaration) {
                 	int y = 0;
                 	y++;
-                } else if (null != discriminatorDecl && discriminatorDecl.enclosingScope().associatedDeclaration() instanceof Declaration.ClassDeclaration) {
+                } else if (null != discriminatorDecl && discriminatorDecl.enclosingScope().associatedDeclaration()
+                		instanceof Declaration.ClassDeclaration) {
                 	int y = 0;
                 	y++;
+                } else if (qualifier1EX instanceof MessageExpression) {
+                	ultimateQualifier = qualifier1EX;	// NEW
+                } else if (qie.qualifier().type() instanceof ClassType &&
+                		true) {
+                	ultimateQualifier = qie.qualifier();
                 } else {
                 	assert (false);
                 }
                 
-                final List<BodyPart> intermediate = qualifier1.bodyParts();
+                final List<BodyPart> intermediate = ultimateQualifier.bodyParts();
                 final RTType enclosingMegaRTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(enclosingMegaTypeAroundExpression.enclosedScope());
-                qualifier = RTExpression.bodyPartsToRTExpressionList(intermediate, enclosingMegaRTType);
-                qualifier.setNextCode(part2_);
+                rTQualifier = RTExpression.bodyPartsToRTExpressionList(intermediate, enclosingMegaRTType);
+                rTQualifier.setNextCode(part2_);
                 setResultIsConsumed(expr.resultIsConsumed());
                 part2_.setResultIsConsumed(expr.resultIsConsumed());
-                qualifier_ = qualifier;
+                qualifier_ = rTQualifier;
         	}
         }
 
 		@Override public RTCode run() {
 			// Evaluate the expression, leaving the result on the stack
-            
 			return RunTimeEnvironment.runTimeEnvironment_.runner(qualifier_);
 		}
 		public RTDynamicScope dynamicScope() {
@@ -534,6 +570,10 @@ public abstract class RTExpression extends RTCode {
 					if (null == value && qualifier instanceof RTContextObject) {
 						final RTContextObject contextQualifier = (RTContextObject) qualifier;
 						value = contextQualifier.getRoleOrStagePropBinding(idName_);
+						if (null == value) {
+							// Never seem to get here ...
+							value = contextQualifier.getObject(idName_);
+						}
 					}
 					
 					if (null == value) {
@@ -929,7 +969,7 @@ public abstract class RTExpression extends RTCode {
 		}
 
 		@Override public RTCode run() {
-			RTMessageDispatcher dispatcher =
+			final RTMessageDispatcher dispatcher =
 				RTMessageDispatcher.makeDispatcher(messageExpr_, methodSelectorName_, argPush_, postReturnProcessing_, expressionsCountInArguments_,
 					actualParameters_, isStatic(), nearestEnclosingType_, originMessageClass(), targetMessageClass());
             
@@ -1233,9 +1273,27 @@ public abstract class RTExpression extends RTCode {
 			lineNumber_ = expr.lineNumber();
 			Expression objectToClone = expr.objectToClone();
 			
+			if (objectToClone instanceof IdentifierExpression == false) {
+				// some kind of warning about cloning expressions - it's not meaningful
+			}
+			
 			if (objectToClone instanceof IdentifierExpression) {
-				final Expression.IdentifierExpression idexpr = (Expression.IdentifierExpression) objectToClone;
-				objectToClone = QualifiedIdentifierExpression.makeContextIdentifier(idexpr, enclosingMegaType);
+				final MethodDeclaration methodBeingCompiled = InterpretiveCodeGenerator.currentMethodBeingCompiled();
+				
+				// Is it a local variable / parameter?   NEW
+				
+				final ObjectDeclaration nameDeclForObjectToBeCloned =
+						methodBeingCompiled.enclosedScope().lookupObjectDeclaration(objectToClone.name());
+				
+				if (null != nameDeclForObjectToBeCloned) {
+					final IdentifierExpression idExpr = new IdentifierExpression(name, nameDeclForObjectToBeCloned.type(),
+							nameDeclForObjectToBeCloned.enclosingScope(), nameDeclForObjectToBeCloned.token());
+					objectToClone = idExpr;
+				} else {
+					final Expression.IdentifierExpression idexpr = (Expression.IdentifierExpression) objectToClone;
+					objectToClone = QualifiedIdentifierExpression.makeContextIdentifier(idexpr, enclosingMegaType);
+					assert (null != objectToClone);// Probably a lot more to do here
+				}
 			}
 			
 			final List<BodyPart> intermediate = objectToClone.bodyParts();
@@ -1314,7 +1372,6 @@ public abstract class RTExpression extends RTCode {
 	public static class RTIdentifier extends RTExpression {
 		static RTIdentifier makeIdentifier(final String name, final IdentifierExpression expression) {
 			RTIdentifier retval = null;
-			
 			assert null != expression;
 			final StaticScope declaringScope = expression.scopeWhereDeclared();
 			if (null != declaringScope) {		// mainly in user program error situations
@@ -2798,9 +2855,10 @@ public abstract class RTExpression extends RTCode {
 				rTType_ = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
 			}
 			
-			rtNewCommon(expr, classScope);
+			rtNewCommon(expr, classScope, nearestEnclosingType);
 		}
-		private void rtNewCommon(final NewExpression expr, final StaticScope classScope) {
+		private void rtNewCommon(final NewExpression expr, final StaticScope classScope,
+				final RTType nearestEnclosingType) {
 			final ActualArgumentList actualArguments = expr.argumentList();
 			final Message message = expr.message();
 			
@@ -2837,8 +2895,8 @@ public abstract class RTExpression extends RTCode {
 				
 				// The selectorName() will be the name of the class. The messageExpression
 				// carries the constructor arguments
-				final RTType classScopesrTType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(classScope);
-				rTConstructor_ = RTMessage.makeRTMessage(message.selectorName(), messageExpression, classScopesrTType, classScope, messageExpression.isStatic());
+				rTConstructor_ = RTMessage.makeRTMessage(message.selectorName(), messageExpression, nearestEnclosingType,
+						classScope, messageExpression.isStatic());
 				
 				// In the past, there was code in RTContext.run that checked to see if
 				// rTConstructor was set and, if so, put t$his in the activation record

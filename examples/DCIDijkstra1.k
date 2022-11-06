@@ -139,7 +139,6 @@ context Dijkstra {
 	}
 
 	void recur() {
-		assert (Current != null)
 		Set<Nameable> currentsUnvisitedNeighbors = Current.unvisitedNeighbors()
 		assert (currentsUnvisitedNeighbors != null)
 		int myTentativeDistance = TentativeDistances.at(Current)
