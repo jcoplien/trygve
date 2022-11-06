@@ -344,7 +344,7 @@ public abstract class RTExpression extends RTCode {
             super();
      
             boolean useOldAlgorithm = !(expr.enclosingMegaType() instanceof Type.ContextType);
-            if (useOldAlgorithm || name.equals("id") || expr.name().equals("e")) { // DEBUG
+            if (useOldAlgorithm) {
                 token_ = expr.token();
                 lineNumber_ = expr.lineNumber();
 

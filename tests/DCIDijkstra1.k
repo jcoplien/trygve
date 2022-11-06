@@ -1,10 +1,10 @@
 class Infinity { public int value() { return 999999 } }
 
-class Nameable {
-	public String name() { return null }
+interface Nameable {
+	public String name()
 }
 
-class Thing extends Nameable {
+class Thing implements Nameable {
 	public Thing(String name) {
 		name_ = name.clone
 	}

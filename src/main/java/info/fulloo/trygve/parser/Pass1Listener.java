@@ -4812,19 +4812,22 @@ public class Pass1Listener extends Pass0Listener {
 							"' with non-object type declaration", "");
 				}
 			} else if (objectType instanceof InterfaceType) {
-				// Could be a method invocation without the paren. NEW-
+				// Could be a method invocation without the paren. NEW
 				final InterfaceType interfaceType = (InterfaceType) objectType;
 				final StaticScope interfaceTypeScope = interfaceType.enclosedScope();
 				final InterfaceDeclaration interfaceDeclaration =
 							(InterfaceDeclaration)interfaceTypeScope.associatedDeclaration();
-				final MethodSignature methodSignature = interfaceDeclaration.lookupMethodSignatureDeclaration(javaIdString, null);
+				final ActualArgumentList argList = new ActualArgumentList();
+				argList.addActualArgument(object);
+				final MethodSignature methodSignature = interfaceDeclaration.lookupMethodSignatureDeclaration(javaIdString, argList);
 				if (null != methodSignature) {
 					// If it is a message shorthand it should have no user parameter
 					if (0 == methodSignature.formalParameterList().userParameterCount()) {
 						// This is it. NEW.
-						final Type objectMegatype = object.nearestEnclosingMegaTypeOf(currentScope_);
-						final ActualArgumentList argList = new ActualArgumentList();
-						argList.addActualArgument(object);
+						final Type objectMegatype = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+						// if (objectMegatype == null) {
+						// 	assert (objectMegatype != null);
+						// }
 						final boolean isPolymorphic = true;	// a guess...
 						final MethodInvocationEnvironmentClass invokingEnvironment = currentScope_.methodInvocationEnvironmentClass();
 						final Message message = new Message(javaIdString, argList, ctxGetStart, objectMegatype);

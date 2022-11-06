@@ -416,7 +416,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(Main.TRYGVE_VERSION);
-    	System.out.println(". Copyright (c)2022 James O. Coplien, jcoplien@gmail.com.");
+    	System.out.println(". Copyright (c)2023 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
@@ -787,11 +787,11 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         		private static final long serialVersionUID = -129124812;
         	};
         	
-        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "search");
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "search");
         	editPane.getInputMap().put(KeyStroke.getKeyStroke("control S"), "search");
         	editPane.getInputMap().put(KeyStroke.getKeyStroke("control R"), "search");
         	editPane.getActionMap().put("search", search);
-        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()), "save");
+        	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "save");
         	editPane.getActionMap().put("save", save);
         	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
         	editPane.getActionMap().put("escape", escape);

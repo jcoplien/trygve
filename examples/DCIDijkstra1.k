@@ -1,10 +1,10 @@
 class Infinity { public int value() { return 999999 } }
 
-class Nameable {
-	public String name() { return null }
+interface Nameable {
+	public String name()
 }
 
-class Thing extends Nameable {
+class Thing implements Nameable {
 	public Thing(String name) {
 		name_ = name.clone
 	}
@@ -38,6 +38,10 @@ class NodeGraphInfo {
 	public void setDistanceFor(Nameable from, Nameable to, int d) {
 		Map<Object, int> distanceMap = pathsFrom_.at(from)
 		distanceMap.atPut(to, d)
+	}
+	public void setSymmetricDistanceFor(Nameable from, Nameable to, int d) {
+		setDistanceFor(from, to, d)
+		setDistanceFor(to, from, d)
 	}
 	public void setStartAndEnd(Nameable start, Nameable endNode) {
 		start_ = start; endNode_ = endNode
@@ -139,6 +143,7 @@ context Dijkstra {
 	}
 
 	void recur() {
+		assert (Current != null)
 		Set<Nameable> currentsUnvisitedNeighbors = Current.unvisitedNeighbors()
 		assert (currentsUnvisitedNeighbors != null)
 		int myTentativeDistance = TentativeDistances.at(Current)
@@ -210,20 +215,20 @@ context Dijkstra {
 			if (node1 is node2)
 				continue
 			else
-				graph.setDistanceFor(node1, node2, new Infinity().value)
+				graph.setSymmetricDistanceFor(node1, node2, new Infinity().value)
 	
 
-	graph.setDistanceFor(a, b, 2)
-	graph.setDistanceFor(b, c, 3)
-	graph.setDistanceFor(c, f, 1)
-	graph.setDistanceFor(f, i, 4)
-	graph.setDistanceFor(b, e, 2)
-	graph.setDistanceFor(e, f, 1)
-	graph.setDistanceFor(a, d, 1)
-	graph.setDistanceFor(d, g, 2)
-	graph.setDistanceFor(g, h, 1)
-	graph.setDistanceFor(h, i, 2)
-	graph.setDistanceFor(d, e, 1)
+	graph.setSymmetricDistanceFor(a, b, 2)
+	graph.setSymmetricDistanceFor(b, c, 3)
+	graph.setSymmetricDistanceFor(c, f, 1)
+	graph.setSymmetricDistanceFor(f, i, 4)
+	graph.setSymmetricDistanceFor(b, e, 2)
+	graph.setSymmetricDistanceFor(e, f, 1)
+	graph.setSymmetricDistanceFor(a, d, 1)
+	graph.setSymmetricDistanceFor(d, g, 2)
+	graph.setSymmetricDistanceFor(g, h, 1)
+	graph.setSymmetricDistanceFor(h, i, 2)
+	graph.setSymmetricDistanceFor(d, e, 1)
 
 	graph.setStartAndEnd(a, i)
 

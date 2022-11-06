@@ -771,6 +771,7 @@ public abstract class Type implements ExpressionStackAPI
 						retval = signature;
 						break;
 					}
+					assert (argumentList != null);
 				}
 			} else {
 				final Declaration potentialInterfaceDecl = null == enclosedScope()? null:
