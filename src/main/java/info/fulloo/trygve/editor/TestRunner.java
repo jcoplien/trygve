@@ -34,6 +34,7 @@ public class TestRunner {
 	private final static String urlTestPrefix_ = "file:" + testPrefix_;
 	private final static String localTestDir_ = "file:" + testPrefix_;
 	private final static String urlExamplePrefix_ = "file:" + examplePrefix_;
+	public final static String htmlBase_ = "https://fulloo.info/Examples/TrygveExamples-raw/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
 		"exprtest.k",

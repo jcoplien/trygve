@@ -29,7 +29,8 @@ package info.fulloo.trygve.editor;
  */
 
 import java.awt.Color;
-
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -39,6 +40,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +66,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
@@ -375,7 +379,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
 		lastCWD_ = prefs_.get("editor.cwd", Paths.get("").toAbsolutePath().toString());
 		final File mainWD = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-		final String trygve = mainWD.getParentFile().getParent();
+		final String trygve = null == mainWD || null== mainWD.getParentFile() ?
+				"/": mainWD.getParentFile().getParent();
 	
 		String pathOfFileToLoad = lastFileLoaded_;
 		assert (false == pathOfFileToLoad.startsWith("http"));
@@ -1187,7 +1192,47 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 
         pack();
 		loadPreferences();
+		manageResizing();
     }// </editor-fold>//GEN-END:initComponents
+    
+    private void manageResizing() {
+    	if (false) {
+    	// Check for window resize, and adjust the editor panes accordingly.
+    	this.addComponentListener(new ComponentAdapter() {
+    	        @Override
+    	        public void componentResized(final ComponentEvent e) {
+    	          System.out.println(e);
+    	          final Dimension editPaneSize = editPane.size();
+    	          final Dimension searchPaneSize = searchPane.size();
+    	          final Dimension jScrollSize = jScrollPane1.size();
+    	          final Point errorScrollLocation = errorScrollPane.location();
+    	          final Point jScrollPane1Location = jScrollPane1.location();
+    	          final Point editPaneLocation = editPane.location();
+    	          int hmargins = 5;
+    	          final int scrollPaneWidth = jScrollSize.width;
+    	          final int totalWidth = (editPaneSize.width + scrollPaneWidth - hmargins)/2;
+
+    	          editPane.resize(totalWidth, 100);//editPaneSize.height-200);
+    	          Dimension newEditPaneSize = editPaneSize;
+    	          newEditPaneSize.width = totalWidth - hmargins - 200;
+    	          newEditPaneSize.height = jScrollSize.height;
+    	          jScrollPane1.resize(editPaneSize);
+    	          Dimension minimumSize = editPaneSize;
+    	          minimumSize.width = 50;
+    	          minimumSize.height = 50;
+    	          jScrollPane1.setMinimumSize(minimumSize);
+    	          editPane.setMinimumSize(minimumSize);
+    	          Dimension newErrorScrollPaneSize = newEditPaneSize;
+    	          errorScrollPane.resize(totalWidth/2 - hmargins, newEditPaneSize.height);
+    	          errorScrollPane.setLocation(editPaneLocation.x + totalWidth/2+200, errorScrollLocation.y);
+    	          Dimension newSearchPaneSize = searchPaneSize;
+    	          newSearchPaneSize.width = totalWidth;
+    	          searchPane.setSize(newSearchPaneSize);
+    	        }
+   
+        });
+      }
+    }
 
 		/*
 		 * Preferences:
@@ -1702,7 +1747,18 @@ public void wwwButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
     
     if (url.startsWith("file:")) {
     	prefs_.put("editor.lastFile", lastFileLoaded_);
-		loadFile(trimFilePrefixFrom(url));
+    	if (false == loadFile(trimFilePrefixFrom(url))) {
+			String baseName = trimFilePrefixFrom(url);
+			int theIndex;
+			while ((theIndex = baseName.indexOf("/")) >= 0) {
+				baseName = baseName.substring(theIndex + 1);
+			}
+			final int l = baseName.length();
+			baseName = baseName.substring(0, l - 2) + ".html";
+			final String cloudFile = TestRunner.htmlBase_ + baseName;
+			urlTest = new URLGet();
+			this.editPane.setText(urlTest.getSite2(cloudFile));
+		}
 		saveFileButton.setEnabled(false);
 		prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", false);
 	} else {
@@ -1716,7 +1772,8 @@ public void wwwButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
     saveFileButton.setEnabled(false);
 }//GEN-LAST:event_wwwButtonActionPerformed
 
-private void loadFile(final String pathName) {
+private boolean loadFile(final String pathName) {
+	boolean retval = true;
 	final StringBuilder stringBuilder = new StringBuilder();
     try {
         final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(pathName), "UTF-8"));
@@ -1732,9 +1789,11 @@ private void loadFile(final String pathName) {
     }
     catch (IOException ioe) {
         this.editPane.setText("Pardon. Can't open file. Cope needs to check his code");
+        retval = false;
     }
 
     this.fileName = new File(lastFileLoaded_);
+    return retval;
 }
 
 public void openFileButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GEN-FIRST:event_wwwButtonActionPerformed
@@ -1855,7 +1914,21 @@ private void urlTextFieldActionPerformed(final java.awt.event.ActionEvent evt) {
 	if (url.startsWith("file:")) {
 		lastFileLoaded_ = url;
 		prefs_.put("editor.lastFile", lastFileLoaded_);
-		loadFile(trimFilePrefixFrom(url));
+		
+		// If it isn't here with the distributed version,
+		// check the web site
+		if (false == loadFile(trimFilePrefixFrom(url))) {
+			String baseName = trimFilePrefixFrom(url);
+			int theIndex;
+			while ((theIndex = baseName.indexOf("/")) >= 0) {
+				baseName = baseName.substring(theIndex + 1);
+			}
+			final int l = baseName.length();
+			baseName = baseName.substring(0, l - 2) + ".html";
+			final String cloudFile = TestRunner.htmlBase_ + baseName;
+			final URLGet urlTest = new URLGet();
+			this.editPane.setText(urlTest.getSite2(cloudFile));
+		}
 		saveFileButton.setEnabled(false);
 		prefs_.putBoolean("editor.lastSaveFileButtonEnabledState", false);
 	} else {
@@ -1942,7 +2015,7 @@ public void windowCloseDown(final RTWindowRegistryEntry window) {
 }
 
 public boolean userWindowsAreOpen() {
-	return appWindowsExtantMap_.size() > 0;
+	return null != appWindowsExtantMap_ && appWindowsExtantMap_.size() > 0;
 }
 
 private void killAppWindows() {
