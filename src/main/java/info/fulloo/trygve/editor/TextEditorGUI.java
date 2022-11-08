@@ -1836,7 +1836,48 @@ private void testButtonActionPerformed() {//GEN-FIRST:event_wwwButtonActionPerfo
 	this.errorPanel.setText("");
 	final TestRunner testRunner = new TestRunner(this);
 	enableInterruptButton(true);
-	testRunner.runTests();	
+	
+	
+	worker_ = new SwingWorker<Integer, Void>() {
+	    @Override public Integer doInBackground() {
+	    	setRunButtonState(RunButtonState.Running);
+	    	setInterruptButtonState(RunButtonState.Running);
+	    	parseButton.setEnabled(false);
+	    	testButton.setEnabled(false);
+	    	try {
+	    		testRunner.runTests();
+	    	} catch (Exception e) {
+	    		System.err.format("Exception: Testing aborted because of internal trygve error: %s\n", e.toString());
+	    		RTMessage.printMiniStackStatus();
+	    		e.printStackTrace(System.err);
+	    		testRunner.printTestSummary();
+	    	} catch (Error e) {
+	    		System.err.format("Error: Testing aborted because of internal trygve error: %s\n", e.toString());
+	    		RTMessage.printMiniStackStatus();
+	    		e.printStackTrace(System.err);
+	    		testRunner.printTestSummary();
+	    	} finally {
+	    		cancelAllThreads();
+	    	}
+	    	parseButton.setEnabled(true);
+	    	testButton.setEnabled(true);
+	    	setRunButtonState(RunButtonState.Idle);
+	    	setInterruptButtonState(RunButtonState.Idle);
+	    	parseButton.setEnabled(true);
+	        return Integer.valueOf(JOptionPane.PLAIN_MESSAGE);
+	    }
+
+	    @Override public void done() {
+	       // Just wrap up.
+	       setRunButtonState(RunButtonState.Idle);
+	       parseButton.setEnabled(true);
+	       setInterruptButtonState(RunButtonState.Idle);
+	       worker_ = null;
+	    }
+	};
+
+	worker_.execute();
+
 	enableInterruptButton(false);
 }//GEN-LAST:event_saveFileButtonActionPerformed
 

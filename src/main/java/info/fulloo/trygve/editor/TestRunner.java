@@ -280,6 +280,25 @@ public class TestRunner {
 			gui_.setFileNameField(testPrefix_ + firstFailure);
 		}
 	}
+	private int testsPassed() {
+		return passCounter_;
+	}
+	private int testsFailed() {
+		return failCounter_;
+	}
+	private int totalTestCount() {
+		return fileNames_.length;
+	}
+	public void printTestSummary() {
+		System.err.println();
+		System.err.print("At test termination, ");
+		System.err.print(testsPassed());
+		System.err.print(" tests passed; ");
+		System.err.print(testsFailed());
+		System.err.print(" tests failed, with ");
+		System.err.print(totalTestCount());
+		System.err.println(" total in the test suite.");
+	}
 	private void loadTestFile(final String filename) {
 		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
 		gui_.setWWWFileNameField(urlTestPrefix_ + filename);
