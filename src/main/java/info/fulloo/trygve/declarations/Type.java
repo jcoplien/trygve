@@ -156,6 +156,7 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		return retval;
 	}
+	public void pass2Instantiations() { /* NOP */ }
 	public static class ClassOrContextType extends Type {
 		public ClassOrContextType(final String name, final StaticScope enclosedScope,
 				final ClassType baseType) {
@@ -177,6 +178,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
+		@Override public void pass2Instantiations() { /* NOP */ }
 		public ClassType baseClass() {
 			return baseClass_;
 		}
@@ -463,6 +465,20 @@ public abstract class Type implements ExpressionStackAPI
 				retval = false;
 			}
 			return retval;
+		}
+		@Override public void pass2Instantiations() {
+			// For List template instantiations, we need to repair
+			// the return type in the method declaration for "reverse."
+			// In a way it's a kludge, but it kind of makes sense.
+			if (name().startsWith("List<")) {
+				final StaticScope scope = enclosedScope();
+				final ActualOrFormalParameterList paramList = new FormalParameterList();
+				final MethodDeclaration reverse = scope.lookupMethodDeclaration(
+						"reverse", paramList, true
+				);
+				assert(null != reverse);
+				reverse.setReturnType(this);
+			}
 		}
 		@Override public boolean isBaseClassOf(final Type aDerived) {
 			// IMPROPER base class!!

@@ -238,8 +238,15 @@ context Dijkstra {
 
 	pathComponents.add(graph.startNode.name)
 
-	for (String s : pathComponents.reverse()) {
-	   System.out.print(s).print(" ")
+	for (int j = pathComponents.size - 1; j >= 0; --j) {
+	   System.out.print(pathComponents.at(j)).print(" ")
+	}
+
+	System.out.println
+
+	List<String> rev = pathComponents.reverse()
+	for (int j = rev.size - 1; j >= 0; --j) {
+	   System.out.print(rev.at(j)).print(" ")
 	}
 
 	System.out.println

@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
@@ -135,8 +136,8 @@ public class RTListObject extends RTObjectCommon implements RTIterable {
 		theList_ = new ArrayList<RTObject>();
 		baseType_ = baseType;
 		listType_ = listType;
-		for (int j = 0; j < theList_.size(); j++) {
-			theList_.set(j, theList_.get(j));
+		for (int j = 0; j < theList.size(); j++) {
+			theList_.add(theList.get(j));
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
@@ -221,6 +222,16 @@ public class RTListObject extends RTObjectCommon implements RTIterable {
     }
 	public void sort() {
 		Collections.sort(theList_, new RTObjectComparator());
+	}
+	public RTListObject reverse() {
+		final List<RTObject> newList = new ArrayList<RTObject>();
+		final ListIterator<RTObject> iter = theList_.listIterator(theList_.size());
+		while (iter.hasPrevious()) {
+			final RTObject element = iter.previous();
+			newList.add(element);
+		}
+		final RTListObject retval = new RTListObject(newList, baseType_, listType_);
+		return retval;
 	}
 	
 	private final List<RTObject> theList_;

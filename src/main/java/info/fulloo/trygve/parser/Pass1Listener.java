@@ -4290,6 +4290,9 @@ public class Pass1Listener extends Pass0Listener {
 			retval = currentScope_.lookupTypeDeclarationRecursive(typeName);
 			assert null != retval;
 		}
+		
+		retval.pass2Instantiations();
+		
 		return retval;
 	}
 	

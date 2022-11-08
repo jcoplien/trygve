@@ -31,6 +31,8 @@ import java.util.Hashtable;
 
 import org.antlr.v4.runtime.Token;
 
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
+import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
@@ -202,6 +204,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
+		public void pass2Instantiations() { /* NOP */ }
 
 		private final int lineNumber_;
 		private final Token token_;

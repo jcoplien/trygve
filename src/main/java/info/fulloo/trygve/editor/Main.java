@@ -25,7 +25,7 @@ package info.fulloo.trygve.editor;
 
 public class Main {
 
-	public static final String TRYGVE_VERSION = "4.2.4";
+	public static final String TRYGVE_VERSION = "4.2.5";
 
 	public static void main(String[] args) {
 		// We adopt a Windows-like line formatting, uniformly, as a way

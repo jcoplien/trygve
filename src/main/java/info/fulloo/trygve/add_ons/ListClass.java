@@ -36,7 +36,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 4.0
+ * Trygve IDE 4.2
  *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -82,7 +82,7 @@ public final class ListClass {
 		listType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
-	private static Type addListOfXTypeNamedY(final Type type, final String typeName) {
+	public static Type addListOfXTypeNamedY(final Type type, final String typeName) {
 		Type retval = null;
 		final TemplateDeclaration listDecl = (TemplateDeclaration)listType_.enclosedScope().associatedDeclaration();
 			
@@ -175,6 +175,8 @@ public final class ListClass {
 			declareListMethod("isEmpty", booleanType, null, null, true);
 			
 			declareListMethod("sort", voidType, null, null, false);
+
+			declareListMethod("reverse", listType_, null, null, true);
 			
 			// kludge.
 			assert null != stringType;
@@ -492,6 +494,22 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			
 			theListObject.sort();
+	
+			return super.nextCode();
+		}
+	}
+	public static class RTReverseCode extends RTListCommon {
+		public RTReverseCode(final StaticScope enclosingMethodScope, Type returnTypeDecl) {
+			super("List", "reverse", null, null, enclosingMethodScope, returnTypeDecl);
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			      RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			
+			theListObject = theListObject.reverse();
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", theListObject);
 	
 			return super.nextCode();
 		}

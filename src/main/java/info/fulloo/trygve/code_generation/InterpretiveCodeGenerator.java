@@ -407,6 +407,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("sort")) {
 			listCode.add(new ListClass.RTSortCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("reverse")) {
+			final RTClass classDecl = (RTClass)rtListTypeDeclaration;
+			final TypeDeclaration returnTypeDecl = classDecl.typeDeclaration();
+			final Type returnType = returnTypeDecl.type();
+			listCode.add(new ListClass.RTReverseCode(methodDeclaration.enclosedScope(), returnType));
+			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("remove")) {
 			if (methodDeclaration.returnType().name().equals("boolean")) {
 				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
