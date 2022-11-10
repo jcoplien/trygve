@@ -50,6 +50,7 @@ distZip {
         include 'examples/*'
         include 'tests/*'
         include 'LICENSE'
+        include 'doc/*'
     }
 }
 
@@ -59,5 +60,6 @@ distTar {
         include 'examples/*'
         include 'tests/*'
         include 'LICENSE'
+        include 'doc/*'
     }
 }

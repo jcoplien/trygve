@@ -227,6 +227,7 @@ public class TestRunner {
 		passCounter_ = failCounter_ = 0;
 		testSource_ = TestSource.UseLocalFile;
 		failures_ = new ArrayList<String>();
+		testInProgress_ = "*none*";
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
@@ -236,6 +237,7 @@ public class TestRunner {
 		String lastTestResults = testResults;
 		passCounter_ = failCounter_ = 0;
 		for (final String filename : fileNames_) {
+			testInProgress_ = filename;
 			runATest(filename);
 			if (false == gui_.compiledWithoutError()) {
 				// break;
@@ -250,6 +252,8 @@ public class TestRunner {
 			
 			lastTestResults = gui_.errorPanelContents();
 		}
+		
+		testInProgress_ = "*none*";
 		
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 		gui_.printBreak();
@@ -290,6 +294,7 @@ public class TestRunner {
 		return fileNames_.length;
 	}
 	public void printTestSummary() {
+		gui_.console().redirectErr(java.awt.Color.RED, null);
 		System.err.println();
 		System.err.print("At test termination, ");
 		System.err.print(testsPassed());
@@ -298,6 +303,10 @@ public class TestRunner {
 		System.err.print(" tests failed, with ");
 		System.err.print(totalTestCount());
 		System.err.println(" total in the test suite.");
+		System.err.print("Test in progress at termination was: \"");
+		System.err.print(testInProgress_);
+		System.err.println("\".");
+		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 	}
 	private void loadTestFile(final String filename) {
 		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
@@ -450,4 +459,5 @@ public class TestRunner {
 	private int passCounter_, failCounter_;
 	private String currentTestName_;
 	private List<String> failures_;
+	private String testInProgress_ = "*none*";
 }
