@@ -484,7 +484,10 @@ public class RunTimeEnvironment {
 			pauseFlag_ = false;
 			rTDebugger_.pauseAt(code);
 		}
-		final RTCode retval = isRunning()? code.run(): null;
+		RTCode retval = null;
+		if (isRunning()) {
+			retval = code.run();
+		}
 		// Thread.yield();		// be a good citizen
 		return retval;
 	}

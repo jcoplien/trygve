@@ -72,6 +72,7 @@ public abstract class RTMessageDispatcher {
 			final MethodInvocationEnvironmentClass targetMessageClass
 			) {
 		RTMessageDispatcher retval = null;
+		
 		switch (originMessageClass) {
 		case ClassEnvironment:
 			switch(targetMessageClass) {
@@ -1080,7 +1081,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-
+						
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 			
@@ -1138,7 +1139,6 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 
@@ -1227,7 +1227,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-			
+
 			final int indexForThisExtraction = 1;	// seems very temperamental about being generalised...
 			// final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
@@ -1339,7 +1339,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-			
+
 			final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 
@@ -1413,7 +1413,6 @@ public abstract class RTMessageDispatcher {
 					nearestEnclosingType);
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 
@@ -1480,7 +1479,6 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 

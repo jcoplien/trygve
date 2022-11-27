@@ -316,6 +316,10 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
 			
+			if (t instanceof BuiltInType) {
+				return t.name().equals(name());
+			}
+			
 			if (!(t instanceof ClassType) && !(t instanceof ErrorType) && !(t instanceof BuiltInType) &&
 					!(t instanceof ArrayType) && !(t instanceof ContextType) &&
 					!(t instanceof RoleType) &&!(t instanceof InterfaceType)) {

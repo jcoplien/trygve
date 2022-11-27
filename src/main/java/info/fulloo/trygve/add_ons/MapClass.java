@@ -214,6 +214,7 @@ public final class MapClass {
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final RTObject rawKey = activationRecord.getObject("key");
 			final RTObject rawValue = activationRecord.getObject("value");
+			assert (rawValue != null);
 			theMapObject.put(rawKey, rawValue);
 			return super.nextCode();
 		}

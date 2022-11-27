@@ -1629,72 +1629,95 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("System")) {
 				processSystemMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("InputStream")) {
 				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Color")) {
 				processColorMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Thread")) {
 				processThreadMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Panel")) {
 				processPanelMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Frame")) {
 				processFrameMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Event")) {
 				processEventMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("MouseInfo")) {
 				processMouseInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("PointerInfo")) {
 				processPointerInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Point")) {
 				processPointDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("Set<")) {
 				processSetMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("Map<")) {
 				processMapMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Math")) {
 				processMathMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Date")) {
 				processDateMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("String")) {
 				processStringMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("double")) {
 				processDoubleMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("int")) {
 				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Integer")) {
 				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("boolean")) {
 				processBooleanMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Object")) {
 				processObjectMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -1728,6 +1751,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
+		currentMethodBeingCompiled_ = null;
 	}
 	
 	private List<RTCode> compileDeclarationForMethodOfTypeInScope(final Declaration declaration, final MethodDeclaration methodDeclaration,

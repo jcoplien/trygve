@@ -23,6 +23,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Date;
 
 import static java.util.Arrays.asList;
 
@@ -109,7 +111,19 @@ public final class MathClass {
 			// Declare the type
 			globalScope.declareType(mathType_);
 			globalScope.declareClass(mathDecl);
+			
+			random_ = new Random();
+			
+			
+			reseed();
 		}
+	}
+	public static void reseed() {
+		// Tweak this code for reproducible debugging of
+		// user code that uses Math.random
+		// long s = 24;
+        // random_.setSeed(s);
+		random_.setSeed((new Date()).getTime());
 	}
 	public static class RTMathCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTMathCommon(final String className, final String methodName,
@@ -154,7 +168,7 @@ public final class MathClass {
 			super("Math", "random", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {
-			final RTDoubleObject answer = new RTDoubleObject(Math.random());
+			final RTDoubleObject answer = new RTDoubleObject(random_.nextDouble());
 			
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			this.addRetvalTo(activationRecord);
@@ -484,4 +498,5 @@ public final class MathClass {
 
 	private static List<TypeDeclaration> typeDeclarationList_;
 	private static Type mathType_;
+	private static Random random_;
 }

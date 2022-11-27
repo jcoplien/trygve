@@ -8,15 +8,15 @@ Please contact cope@gertrudandcope.com if you are considering working up to a pu
 
 Your changes should compile and run in your IDE using Java SE 18 as a run-time environment. The trygve environment should pass all smoke tests after you have made your change. Start the environment and press the "Run Tests" button. If it succeeds, you're good.
 
-Include a nice suite of tests that validate that your contribution works. Include any new tests in the test folder. Tests are ordinary trygve source files intended to be parsed and run. There is a comment field at the end of each test (q.v.) documenting the expected output from the test. At this writing, tests may not create grahical window, nor may they ask for keyboard or mouse input.
+Include a nice suite of tests that validate that your contribution works. Include any new tests in the test folder. Tests are ordinary trygve source files intended to be parsed and run. There is a comment field at the end of each test (q.v.) documenting the expected output from the test. At this writing, tests may not create graphical windows, nor may they ask for keyboard or mouse input.
 
-You also need to update the user manual as appropriate (trygve1.docx).
+You also need to update the user manual as appropriate (trygve.md).
 
 ## General Coding Guidelines
 
 Please adhere to the established code formatting and naming conventions. Class instance member data tend to be named with a trailing underscore. Be attentive to good formatting. Don't hesitate to clean up other code you feel needs it (and I know there is some).
 
-If you find a bug on your journies through trygve, you are welcome aslo to fix it. Whether you do or not, please file a GitHub issue describing the problem. It's really important to include an example that reproduces the problem. The recommded spot for such examples is in the tests/ folder.
+If you find a bug on your journeys through trygve, you are welcome also to fix it. Whether you do or not, please file a GitHub issue describing the problem. It's really important to include an example that reproduces the problem. The recommended spot for such examples is in the tests/ folder.
 
 ## Ownership
 

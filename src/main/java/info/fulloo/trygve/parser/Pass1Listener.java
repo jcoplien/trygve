@@ -2777,7 +2777,8 @@ public class Pass1Listener extends Pass0Listener {
 				
 				if (null != lhsType && null != rhsType) {
 					if (lhsType.canBeConvertedFrom(rhsType) == false && lhs.isntError() &&
-							lhsType.isntError() && rhs.isntError() && rhsType.isntError()) {
+							lhsType.isntError() && rhs.isntError() && rhsType.isntError() &&
+							!(rhs instanceof NullExpression)) {
 						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(),
 								"Expression `" + rhs.getText(), "' is not of the right type (",
 								lhs.type().getText(), ").");
@@ -2797,7 +2798,7 @@ public class Pass1Listener extends Pass0Listener {
 				parameterList.addActualArgument(lhs);
 				parameterList.addActualArgument(rhs);
 				if (null != lhs && null != rhs && null != lhsType && (lhsType instanceof InterfaceType) == false &&
-						lhs.isntError() && rhs.isntError() && lhsType.isntError() && rhsType.isntError() &&
+						lhs.isntError() && rhs.isntError() && lhsType.isntError() && null != rhsType && rhsType.isntError() &&
 						(operationAsString.equals("<") || operationAsString.equals(">") ||
 								operationAsString.equals("<=") || operationAsString.equals(">=") ||
 								operationAsString.equals("==") || operationAsString.equals("!=")) &&
@@ -3415,7 +3416,6 @@ public class Pass1Listener extends Pass0Listener {
 		} else if ((null == ctx.abelian_atom()) && (null == ctx.abelian_expr()) && null != ctx.message()) {
 			//	| /* this. */ message
 			// This routine actually does pop the expressions stack (and the Message stack)
-
 			expression = this.messageSend(ctx.getStart(), null, null);
 									
 			if (printProductionsDebug) { System.err.println("abelian_atom : /* this. */ message");}
@@ -4499,7 +4499,8 @@ public class Pass1Listener extends Pass0Listener {
 			}
 
 			if (okForNow || (null != declarationType && null != expressionType &&
-					declarationType.canBeConvertedFrom(expressionType))) {
+					declarationType.canBeConvertedFrom(expressionType)) ||
+					initializationExpression instanceof NullExpression) {	// GNU
 				
 				// Still need this, though old initialization framework is gone
 				objectDecls.add(objDecl);
@@ -5096,12 +5097,17 @@ public class Pass1Listener extends Pass0Listener {
 			object = new IdentifierExpression(theType.name(), classType, classType.enclosedScope().parentScope(),
 						ctxGetStart);
 		} else {
+			// This fix means that you can't call "assert" naked
+			// from _main any more (did it ever work?)
 			final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 			enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-			if (null == enclosingMegaType) {
+			if (null == enclosingMegaType || null == nearestMethodScope) {
+				errorHook5p1(ErrorIncidenceType.Fatal, ctxGetStart, "Method `", ctxGetStart.getText(),
+									"' cannot be found.", "");
 				object = new ErrorExpression(null);
 			} else {
 				object = new IdentifierExpression("this", enclosingMegaType, nearestMethodScope, ctxGetStart);
+	
 			}
 		}
 		assert null != object;

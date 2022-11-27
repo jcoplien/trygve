@@ -25,7 +25,7 @@ package info.fulloo.trygve.run_time;
 
 import java.util.ArrayList;
 
-import java.util.HashMap;
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -66,7 +66,7 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 		// need to do Value Type eventually, too, like keyTyoe_ above
 		valueType_ = null;
 		
-		theMap_ = new HashMap<RTObject,RTObject>();
+		theMap_ = new LinkedHashMap<RTObject,RTObject>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
@@ -133,12 +133,12 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 	}
 	private RTMapObject(final Map<RTObject, RTObject> theMap, final Type keyType, final Type valueType, final RTType mapType) {
 		super(mapType);
-		theMap_ = new HashMap<RTObject, RTObject>();
+		theMap_ = new LinkedHashMap<RTObject, RTObject>();
 		keyType_ = keyType;
 		valueType_ = valueType;
 		mapType_ = mapType;
 		for (final RTObject k : theMap_.keySet()) {
-			theMap_.put(k, theMap_.get(k));
+			theMap_.put(k, theMap.get(k));
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
@@ -187,6 +187,7 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 		}
 	}
 	public void put(final RTObject key, final RTObject value) {
+		assert (null != value);
 		theMap_.put(key, value);
 		key.incrementReferenceCount();
 		value.incrementReferenceCount();
@@ -218,6 +219,9 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 		final Set<RTObject> keySet = theMap_.keySet();
 		return keySet;
 	}
+	
+	// DEBUG
+	public Map<RTObject, RTObject> theMap() { return theMap_; }
 	
 	private final Map<RTObject, RTObject> theMap_;
 	private final Type keyType_, valueType_;	// unused? FIXME

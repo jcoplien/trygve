@@ -52,6 +52,7 @@ import java.util.prefs.Preferences;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.lntextpane.LNTextPane;
+import info.fulloo.trygve.add_ons.MathClass;
 import info.fulloo.trygve.parser.ParseRun;
 import info.fulloo.trygve.parser.ParseRun.GuiParseRun;
 import info.fulloo.trygve.run_time.RTDebuggerWindow;
@@ -66,7 +67,6 @@ import javax.swing.BorderFactory;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingWorker;
 import javax.swing.event.DocumentEvent;
@@ -725,6 +725,30 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		@Override public void keyTyped(final KeyEvent keyEvent) { keyEvent.consume(); }
 	}
 	
+	private class EnterCommandProcessor implements KeyListener {
+		public EnterCommandProcessor() { }
+		@Override public void keyPressed(final KeyEvent keyEvent) {
+			return;
+		}
+		@Override public void keyReleased(final KeyEvent keyEvent) {
+			char c = keyEvent.getKeyChar();
+			int nextLocation = 0;
+			if (c != KeyEvent.VK_ENTER) {
+				editPane.removeKeyListener(this);
+			}
+			
+			switch (c) {
+			case KeyEvent.VK_ENTER:
+				editPane.removeKeyListener(this);
+				return;
+			default: return;
+			}
+		}
+		@Override public void keyTyped(final KeyEvent keyEvent) {
+			keyEvent.consume();
+		}
+	}
+	
     private void initComponents() {
     	worker_ = null;
         copyButton = new javax.swing.JButton();
@@ -791,6 +815,13 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         		}
         		private static final long serialVersionUID = -129124812;
         	};
+        	// final Action enter = new AbstractAction() {
+        	//	@Override public void actionPerformed(final ActionEvent e) {
+        	//		final EnterCommandProcessor enterCommandProcessor = new EnterCommandProcessor();
+        	//		editPane.addKeyListener(enterCommandProcessor);
+        	//	}
+        	//	private static final long serialVersionUID = -214567812;
+        	// };
         	
         	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()), "search");
         	editPane.getInputMap().put(KeyStroke.getKeyStroke("control S"), "search");
@@ -800,6 +831,8 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
         	editPane.getActionMap().put("save", save);
         	editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
         	editPane.getActionMap().put("escape", escape);
+        	// editPane.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
+        	// editPane.getActionMap().put("enter", enter);
         	
         	// https://stackoverflow.com/questions/3953208/value-change-listener-to-jtextfield
         	editPane.getDocument().addDocumentListener(new DocumentListener() {
@@ -1589,11 +1622,15 @@ public void runButtonActionPerformed(final java.awt.event.ActionEvent evt) {//GE
 		worker_ = null;
 	}
 	
+	MathClass.reseed();
+	
 	final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
 	if (null != debugger) {
 		debugger.plantAllBreakpointsAccordingToGUIMarkers(parseRun_);
 		debugger.running();
 	}
+	
+	// Put DebugManager setup here
 	
 	worker_ = new SwingWorker<Integer, Void>() {
 	    @Override public Integer doInBackground() {

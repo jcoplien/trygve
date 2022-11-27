@@ -124,10 +124,15 @@ public class Pass3Listener extends Pass2Listener {
 							expressionReturned.type().getText(), " is incompatible with method that returns no value.", "");
 					expressionReturned = new ErrorExpression(null);
 				}
-			} else if (methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
+			} else if (expressionReturned != null && methodDecl.returnType().canBeConvertedFrom(expressionReturned.type())) {
 				;
+			} else if (expressionReturned == null) {
+				ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart,
+						"Missing return expression of type ",
+						methodDecl.returnType().getText(), "' on return statement.", "", "", "");
+				expressionReturned = new ErrorExpression(expressionReturned);
 			} else {
-				if (expressionReturned.isntError()) {
+				if (expressionReturned != null && expressionReturned.isntError()) {
 					ErrorLogger.error(ErrorIncidenceType.Fatal, ctxGetStart,
 							"Return expression `" + expressionReturned.getText(),
 							"`' of type `", expressionReturned.type().getText(),
