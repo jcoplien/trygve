@@ -1,51 +1,29 @@
+// In "The Self-Organization Game" we ask people to stand in a
+// circle and to silently choose two other players in their
+// mind. Then we ask them to self-organize so that each player
+// is the same distance from the two players that he or she
+// picked. This program simulates that game.
+
 class DPoint {
-	public DPoint(double x, double y) {
-		x_ = x.clone(); y_ = y.clone()
-	}
+	public DPoint(double x, double y) { x_ = x.clone; y_ = y.clone }
 	public double x() { return x_.clone() }
 	public double y() { return y_.clone() }
-	
 	public double distanceTo(DPoint p) {
 		double xdist = p.x() - x_
 		double ydist = p.y() - y_
-		return Math.sqrt(
-			xdist*xdist + ydist*ydist
-		)
+		return Math.sqrt(xdist*xdist + ydist*ydist)
 	}
-
 	public double x_, y_
 }
 
-class Vector {
-	public double x, y;
-
-	public Vector(double vx, double vy){ setxy(vx, vy); }
-	public void set(Vector v){ setxy(v.x, v.y); }
-	public void setxy(double vx, double vy){ x = vx.clone; y = vy.clone; }
-
-	public Vector add(Vector b) { return new Vector(x + b.x, y + b.y); }
-	public Vector sub(Vector b) { return new Vector(x - b.x, y - b.y); }
-	public double length() { return Math.sqrt(x*x + y*y); }
-	public double length2() { return x*x + y*y; }
-}
-
 class Player {
-	public Player(String name, double x, double y) {
-		centre_ = new DPoint(x, y)
-		name_ = name.clone
-	}
-
+	public Player(String name, double x, double y) { centre_ = new DPoint(x, y); name_ = name.clone }
 	public DPoint center() { return centre_ }
-
 	public double x() { return centre_.x() }
 	public double y() { return centre_.y() }
-
-	public void moveTo(DPoint c) {
-		centre_ = c
-	}
+	public void moveTo(DPoint c) { centre_ = c }
 	public Color color() { return theColor_ }
 	public void setColor(Color c) { theColor_ = new Color(c.getRed(), c.getBlue(), c.getGreen()) }
-
 	public String name() { return name_ }
 
 	DPoint centre_
@@ -54,31 +32,19 @@ class Player {
 }
 
 class DisplayClass {
-	private Panel panel_;
-	private Frame frame_;
-	private Vector size_;
-
-	private Vector offset_;
-
 	public DisplayClass(){
-		size_ = new Vector(640.0, 480.0);
-		offset_ = new Vector(0.0, 0.0);
+		size_ = new DPoint(640.0, 480.0);
+		offset_ = new DPoint(0.0, 0.0);
 		panel_ = new Panel();
-
 		frame_ = new Frame("");
 		frame_.add("Center", panel_);
 		frame_.resize(floor(size_.x) + 20, floor(size_.y) + 40);
-
 		frame_.setVisible(true);
 	}
-
-	public Vector size() { return size_; }
-	public Vector offset() { return offset_; }
-
+	public void drawLine(int x1, int y1, int x2, int y2) { panel_.drawLine(x1, y1, x2, y2) }
 	public void clear()   { panel_.clear(); }
 	public void repaint() { panel_.repaint(); }
-
-	private int floor(double v) { return v.toInteger(); }
+	public int floor(double v) { return v.toInteger(); }
 	public void oval(DPoint center, double halfsize) {
 		panel_.fillOval(
 			floor(center.x - halfsize + offset_.x),
@@ -86,54 +52,27 @@ class DisplayClass {
 			floor(2.0*halfsize),
 			floor(2.0*halfsize));
 	}
-
-	private void drawConnections(List<Player> players, Map<String, List<Player>> neighbors) {
-		for (Player p : players) {
-			List<Player> neighborList = neighbors.at(p.name())
-			if (!(neighborList is null)) {
-				panel_.setColor(p.color())
-				Player neighbor1 = neighborList.at(0)
-				Player neighbor2 = neighborList.at(1)
-				panel_.drawLine(floor(p.x()*400), floor(p.y()*400),
-					floor(neighbor1.x()*400), floor(neighbor1.y()*400))
-				panel_.drawLine(floor(p.x()*400), floor(p.y()*400),
-					floor(neighbor2.x()*400), floor(neighbor2.y()*400))
-			} else {
-				System.out.print("neighbor list is null for ").println(p.name())
-			}
-		}
-	}
-
-	public void draw(List<Player> players, Map<String, List<Player>> neighbors) {
-		for (Player p : players) {
-			double x = p.x() * 400
-			double y = p.y() * 400
-			DPoint c = new DPoint(x, y)
-			if (!(p.color() is null)) panel_.setColor(p.color())
-			oval(c, PlayerSize)
-		}
-		drawConnections(players, neighbors)
-	}
-
 	public void setColor(Color c) { panel_.setColor(c) }
-	private double PlayerSize = 10.0
+
+	private Panel panel_;
+	private Frame frame_;
+	private DPoint size_;
+
+	private DPoint offset_;
 }
 
 context Game {
-	public double DELTA() { return 0.02 }
+	public double DELTA() { return 0.005 }
 	public int moveCount() { return moveCount_++ }
 
 	int moveCount_ = 0
 
-	public boolean isMoving(Player p) {
-		return isMoving_.at(p.name())
-	}
-	public void setIsMoving(Player p, boolean tf) {
-		isMoving_.atPut(p.name(), tf)
-	}
+	public boolean isMoving(Player p) { return isMoving_.at(p.name()) }
+	public void setIsMoving(Player p, boolean tf) { isMoving_.atPut(p.name(), tf) }
 
 	public Game(List<Player> players, Map<String, List<Player>> neighbors, DisplayClass display) {
 		neighbors_ = neighbors
+		Neighbors = neighbors
 		players_ = players
 		Display = display
 		GameData = this
@@ -147,23 +86,11 @@ context Game {
 	}
 
 	role PlayerMoveCount {
-		public int moveCountForPlayer() {
-			int retval = this.at(CurrentPlayer.name())
-			if(retval is null) {
-				retval = 0
-			}
-			return retval
-		}
-		public void incrementCountForPlayer() {
-			this.atPut(CurrentPlayer.name(), this.at(CurrentPlayer.name()) + 1)
-			assert(this.at(CurrentPlayer.name()) != null)
-		}
-		public void resetMoveCountForPlayer() {
-			assert(this.at(CurrentPlayer.name()) != null)
-			this.atPut(CurrentPlayer.name(), 0)
-			assert(this.at(CurrentPlayer.name()) != null)
-		}
-		public int atPut(String p, int i);
+		public int moveCountForPlayer() { return this.at(name()) }
+		public void incrementCountForPlayer() { atPut(name(), this.at(name()) + 1) }
+		public void resetMoveCountForPlayer() { atPut(name(), 0) }
+		String name() { return CurrentPlayer.name }
+		int atPut(String p, int i);
 	} requires {
 		int at(String p);
 		void atPut(String p, int i);
@@ -171,83 +98,92 @@ context Game {
 
 	role GameData {
 		public double DELTA();
-		public Map<String, List<Player> > neighbors();
 		public List<Player> players();
 		public int moveCount();
 		public void setIsMoving(Player p, boolean b);
 		public boolean isMoving(Player p);
-		public List<Player> neighborOf(Player p) {
-			return neighbors().at(p.name())
-		}
 	} requires {
 		double DELTA();
-		Map<String, List<Player> > neighbors();
 		List<Player> players();
 		int moveCount();
 		void setIsMoving(Player p, boolean b);
 		public boolean isMoving(Player p)
 	}
-	public Map<String, List<Player>> neighbors() { return neighbors_ }
+
 	public List<Player> players() { return players_ }
 
 	role Display {
-		public void draw(List<Player> players, Map<String, List<Player>> neighbors);
 		public void clear();
 		public void repaint();
 		public void setColor(Color c);
+		private void drawConnections() {
+			for (Player p : GameData.players) {
+				List<Player> neighborList = Neighbors.of(p)
+				setColor(p.color())
+				Player neighbor1 = neighborList[0]
+				Player neighbor2 = neighborList[1]
+				drawLine(floor(p.x()*400), floor(p.y()*400),
+						floor(neighbor1.x()*400), floor(neighbor1.y()*400))
+				drawLine(floor(p.x()*400), floor(p.y()*400),
+						floor(neighbor2.x()*400), floor(neighbor2.y()*400))
+			}
+		}
+		public void draw() {
+			for (Player p : GameData.players) {
+				double x = p.x() * 400, y = p.y() * 400
+				DPoint c = new DPoint(x, y)
+				setColor(p.color())
+				oval(c, PlayerSize())
+			}
+			drawConnections()
+		}
+		private double PlayerSize { return 10.0 }
 	} requires {
-		void draw(List<Player> players, Map<String, List<Player>> neighbors);
+		int floor(double v);
 		void clear();
 		void repaint();
 		void setColor(Color c);
+		void oval(DPoint center, double halfsize);
+		void drawLine(int x1, int y1, int x2, int y2)
 	}
 
 	role CurrentPlayer {
-		void startDebug() { }
 		public boolean moved() {
-			if (GameData.isMoving(this)) {
-				return false
-			} else {
-				GameData.setIsMoving(this, true);
-			}
-
-			if (PlayerMoveCount.moveCountForPlayer() > 10) {
-				// move it to the center and get out
-				PlayerMoveCount.resetMoveCountForPlayer()
-				DPoint newCenter = new DPoint(0.7, 0.5)
-				moveTo(newCenter)	// is this the culprit?
-				return true
-			}
-
-			if (GameData.moveCount() % 5 == 0) {
-				Display.clear()
-				Display.draw(GameData.players(), GameData.neighbors())
-				Display.repaint()
-				Thread.sleep(50)
-			}
 			boolean retval = false
-			List<Player> neighborList = GameData.neighbors().at(name())
+			if (!amIMoving()) {
+				setIAmMoving(true)
 
-			if (!(neighborList is null)) {
-				Player player1 = neighborList.at(0)
-				Player player2 = neighborList.at(1)
-				assert(GameData.neighbors().at(player1.name()) != null)
-				assert(GameData.neighbors().at(player2.name()) != null)
-				double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
-				if (Math.abs(distance1 - distance2) > 0.1) {
-					PlayerMoveCount.incrementCountForPlayer();
-					moveBetweenNeighbors(player1, player2)
-					CurrentPlayer = player1
-					assert(GameData.neighbors().at(CurrentPlayer.name()) != null)
-					CurrentPlayer.moved()
-					CurrentPlayer = player2
-					assert(GameData.neighbors().at(CurrentPlayer.name()) != null)
-					CurrentPlayer.moved()
+				if (PlayerMoveCount.moveCountForPlayer() > 10) {
+					// move it to the center and get out
+					PlayerMoveCount.resetMoveCountForPlayer()
+					DPoint newCenter = new DPoint(0.7, 0.5)
+					moveTo(newCenter)	
 					retval = true
-				}
- 			}
+				} else {
+					if (GameData.moveCount() % 5 == 0) {
+						Display.clear
+						Display.draw
+						Display.repaint
+						Thread.sleep(50)
+					}
 
-			GameData.setIsMoving(this, false);
+					List<Player> neighborList = Neighbors.of(this)
+					Player player1 = neighborList.at(0)
+					Player player2 = neighborList.at(1)
+					double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
+					if (Math.abs(distance1 - distance2) > 0.1) {
+						PlayerMoveCount.incrementCountForPlayer();
+						moveBetweenNeighbors(player1, player2)
+						CurrentPlayer = player1
+						CurrentPlayer.moved
+						CurrentPlayer = player2
+						CurrentPlayer.moved
+						retval = true
+					}
+
+					setIAmMoving(false)
+				}
+			}
 
 			return retval
 		}
@@ -282,31 +218,37 @@ context Game {
 			if (retval < 0.1) retval = 0.1 + Math.random() / 10.0
 			return retval
 		}
-		private double distanceTo(Player p) {
-			return center().distanceTo(p.center())
-		}
+		private double distanceTo(Player p) { return center().distanceTo(p.center()) }
+		private void setIAmMoving(boolean tf) { GameData.setIsMoving(this, tf) }
+		private boolean amIMoving() { return GameData.isMoving(this) }
 		public String name();
 	} requires {
 		double x();
 		double y();
 		DPoint center();
 		void moveTo(DPoint c);
-		String name()
+		String name();
+		void setColor(Color c);
+		Color color()
+	}
+
+	stageprop Neighbors {
+		public Player of(Player p) { return at(p.name()) }
+	} requires {
+		Player at(String name) const
 	}
 
 	public void play() {
-		Display.setColor(Color.green)
 		boolean done = false
 		while (!done) {
 			done = true
-			for (Player p : players_) {
-				CurrentPlayer = p
+			for (CurrentPlayer : players_) {
 				if (CurrentPlayer.moved()) {
 					done = false
 				}
 			}
 		}
-		Display.draw(GameData.players(), GameData.neighbors())
+		Display.draw
 	}
 
 	private Map<String, List<Player> > neighbors_
@@ -316,7 +258,7 @@ context Game {
 }
 
 {
-	int NumberOfPlayers = 40
+	int NumberOfPlayers = 10
 	String [] names = new String[NumberOfPlayers]
 	for (int i = 0; i < NumberOfPlayers; i++) {
 		names[i] = (i + 65).to1CharString()
@@ -339,11 +281,10 @@ context Game {
 	Map<String, List<Player>> neighbors = new Map<String, List<Player>>()
 	for (int i = 0; i < NumberOfPlayers; i++) {
 		Player player = players.at(i)
-		int otherPlayer1Index = 0
+		int otherPlayer1Index = 0, otherPlayer2Index = 0;
 		do {
 			otherPlayer1Index = (Math.random() * NumberOfPlayers).toInteger();
 		} while (otherPlayer1Index == i || otherPlayer1Index >= NumberOfPlayers)
-		int otherPlayer2Index = 0;
 		do {
 			otherPlayer2Index = (Math.random() * NumberOfPlayers).toInteger();
 		} while (otherPlayer1Index == otherPlayer2Index || otherPlayer2Index == i ||
@@ -355,11 +296,10 @@ context Game {
 		neighborList.add(otherPlayer1)
 		neighborList.add(otherPlayer2)
 		neighbors.atPut(player.name(), neighborList)
-		otherPlayer1.assert(neighbors.at(player.name()) != null)
 	}
 
 	DisplayClass display = new DisplayClass()
 	Game game = new Game(players, neighbors, display);
 	game.play()
-	System.out.println("exit")
+	System.out.println("exit (please close the graphical display)")
 }

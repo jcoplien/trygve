@@ -220,9 +220,6 @@ public class RTMapObject extends RTObjectCommon implements RTIterable {
 		return keySet;
 	}
 	
-	// DEBUG
-	public Map<RTObject, RTObject> theMap() { return theMap_; }
-	
 	private final Map<RTObject, RTObject> theMap_;
 	private final Type keyType_, valueType_;	// unused? FIXME
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;

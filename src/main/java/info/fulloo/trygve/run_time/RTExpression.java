@@ -30,9 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
 import org.antlr.v4.runtime.Token;
-
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;

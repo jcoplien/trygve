@@ -369,7 +369,7 @@ public class Pass2Listener extends Pass1Listener {
 			selectorName = typeName.name();
 		} else {
 			assert false;
-		}	
+		}
 
 		final Token token = ctx.getStart();
 		
@@ -429,10 +429,58 @@ public class Pass2Listener extends Pass1Listener {
 			expression = new ErrorExpression(rawArrayBase);
 		} else if (baseType instanceof ErrorType) {
 			;		// it happens
+		} else if (baseType.name().startsWith("List<")) {
+			expression = makeListSubscriptExpression(token, rawArrayBase, indexExpr);
 		} else {
 			assert false;
 		}
 		return expression;
+	}
+	
+	private Expression makeListSubscriptExpression(
+			final Token token,
+			final Expression object,
+			final Expression indexExpr) {
+		Expression retval = null;
+		if (indexExpr.type().name().equals("int")) {
+			MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+			if (object.enclosingMegaType() instanceof ContextType) {
+				callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+			} else if (object.enclosingMegaType() instanceof RoleType) {
+				callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+			} else {
+				callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
+			}
+			
+			final int l = object.type().name().length();
+			String returnTypeName = object.type().name();
+			returnTypeName = returnTypeName.substring(5,l-1);
+			final Type returnType = object.enclosingMegaType().enclosedScope().lookupTypeDeclarationRecursive(returnTypeName);
+			ActualArgumentList paramList = new ActualArgumentList();
+			paramList.addActualArgument(object);
+			paramList.addActualArgument(indexExpr);
+			indexExpr.setResultIsConsumed(true);
+			
+			Message message = new Message("at",
+					paramList,
+					token,
+					object.enclosingMegaType());
+			
+			retval = new MessageExpression(
+					object,
+					message,
+					returnType,
+					token,
+					false, /*isStatic*/
+					callerEnvClass,
+					MethodInvocationEnvironmentClass.ClassEnvironment,
+					true /*isPolymorphic*/ );
+		} else {
+			errorHook5p2(ErrorIncidenceType.Fatal, token, "Type of index expression for a List must be an integer.", "", "", "");
+			retval = new ErrorExpression(indexExpr);
+		}
+
+		return retval;
 	}
 	
 	@Override protected void checkExprDeclarationLevel(RuleContext ctxParent, Token ctxGetStart) {
