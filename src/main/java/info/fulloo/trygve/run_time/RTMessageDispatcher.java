@@ -2,7 +2,7 @@ package info.fulloo.trygve.run_time;
 
 /*
  * Trygve IDE 4.0
- *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ public abstract class RTMessageDispatcher {
 		RTMessageDispatcher retval = null;
 		
 		switch (originMessageClass) {
+		case GlobalEnvironment:
 		case ClassEnvironment:
 			switch(targetMessageClass) {
 			case ClassEnvironment:

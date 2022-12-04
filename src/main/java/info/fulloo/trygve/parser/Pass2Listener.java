@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE 4.0
- *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -397,15 +397,23 @@ public class Pass2Listener extends Pass1Listener {
 		// to a type). Here on pass 2 we're a bit more anal
 		final Type baseType = rawArrayBase.type();
 		if (baseType instanceof RoleType) {
-			final String roleName = rawArrayBase.name();
-			final RoleType roleBaseType = (RoleType)baseType;
+			String roleName = rawArrayBase.name();
+			RoleType roleBaseType = (RoleType)baseType;
 			// Look up the actual array. It is in the current scope as a type
-			final StaticScope contextScope = roleBaseType.contextDeclaration().type().enclosedScope();
-			final RoleDeclaration roleDecl = contextScope.lookupRoleOrStagePropDeclaration(roleName);
+			StaticScope contextScope = roleBaseType.contextDeclaration().type().enclosedScope();
+			RoleDeclaration roleDecl = contextScope.lookupRoleOrStagePropDeclaration(roleName);
 			if (null == roleDecl) {
-				assert false;
+				// It might be something like this.name() inside of a Role script
+				final Type expressionType = rawArrayBase.type();
+				if (expressionType instanceof RoleType) {
+					roleName = expressionType.name();
+					roleBaseType = (RoleType)expressionType;	// not a role array!
+					contextScope = roleBaseType.contextDeclaration().type().enclosedScope();
+					roleDecl = contextScope.lookupRoleOrStagePropDeclaration(roleName);
+				}
+				expression = makeRoleSubscriptExpression(token, rawArrayBase, indexExpr);
 			} else {
-				// do something useful
+				// do something useful. It is a role vector after all.
 				
 				final Type contextType = Expression.nearestEnclosingMegaTypeOf(roleDecl.enclosedScope());
 				final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
@@ -431,10 +439,24 @@ public class Pass2Listener extends Pass1Listener {
 			;		// it happens
 		} else if (baseType.name().startsWith("List<")) {
 			expression = makeListSubscriptExpression(token, rawArrayBase, indexExpr);
+		} else if (baseType.name().startsWith("Map<")) {
+			expression = makeMapSubscriptExpression(token, rawArrayBase, indexExpr);
 		} else {
 			assert false;
 		}
 		return expression;
+	}
+	
+	private Expression makeRoleSubscriptExpression(
+			final Token token,
+			final Expression object,
+			final Expression indexExpr) {
+		
+		errorHook5p2(ErrorIncidenceType.Fatal, token,
+				"Unimplemented: ", "[]", ". Use `at.", "");
+		Expression retval = new ErrorExpression(indexExpr);
+	
+		return retval;
 	}
 	
 	private Expression makeListSubscriptExpression(
@@ -446,22 +468,28 @@ public class Pass2Listener extends Pass1Listener {
 			MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 			if (object.enclosingMegaType() instanceof ContextType) {
 				callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+			} else if (object.enclosingMegaType() instanceof ClassType) {
+				callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 			} else if (object.enclosingMegaType() instanceof RoleType) {
 				callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
 			} else {
-				callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
+				// cheating...
+				callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
 			}
 			
 			final int l = object.type().name().length();
 			String returnTypeName = object.type().name();
 			returnTypeName = returnTypeName.substring(5,l-1);
-			final Type returnType = object.enclosingMegaType().enclosedScope().lookupTypeDeclarationRecursive(returnTypeName);
-			ActualArgumentList paramList = new ActualArgumentList();
+			
+			final Type returnType = (object.enclosingMegaType() == null?
+					StaticScope.globalScope(): object.enclosingMegaType().enclosedScope()).
+					lookupTypeDeclarationRecursive(returnTypeName);
+			final ActualArgumentList paramList = new ActualArgumentList();
 			paramList.addActualArgument(object);
 			paramList.addActualArgument(indexExpr);
 			indexExpr.setResultIsConsumed(true);
 			
-			Message message = new Message("at",
+			final Message message = new Message("at",
 					paramList,
 					token,
 					object.enclosingMegaType());
@@ -477,6 +505,90 @@ public class Pass2Listener extends Pass1Listener {
 					true /*isPolymorphic*/ );
 		} else {
 			errorHook5p2(ErrorIncidenceType.Fatal, token, "Type of index expression for a List must be an integer.", "", "", "");
+			retval = new ErrorExpression(indexExpr);
+		}
+
+		return retval;
+	}
+	
+	private boolean isTemplateTypeName(final String typeName) {
+		boolean retval = false;
+		for (int i = 1; i < typeName.length()-2; i++) {
+			if (typeName.substring(i,i).equals("<")) {
+				retval = true;
+				break;
+			}
+		}
+		return retval;
+	}
+	
+	
+	private Expression makeMapSubscriptExpression(
+			final Token token,
+			final Expression object,
+			final Expression indexExpr) {
+		Expression retval = null;
+		
+		MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+		final Type enclosingType = object.enclosingMegaType();
+		if (enclosingType instanceof ContextType) {
+			callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+		} else if (object.enclosingMegaType() instanceof RoleType) {
+			callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+		} else if (object.enclosingMegaType() instanceof ClassType) {
+			callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+		} else {
+			callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
+		}
+		
+		final int l = object.type().name().length();
+		final String typeName = object.type().name();
+		String keyTypeName = typeName.substring(4,l-1);
+		int index1 = keyTypeName.indexOf(",");
+		keyTypeName = keyTypeName.substring(0,index1);
+		
+		final Type declaredKeyType = currentScope_.lookupTypeDeclarationRecursive(keyTypeName);
+		final Type indexType = indexExpr.type();
+		
+		if (indexType == null) {
+			errorHook5p2(ErrorIncidenceType.Fatal, token, "Bad type for ", 
+					indexExpr.toString(), "", "");
+			retval = new ErrorExpression(indexExpr);
+		} else if (declaredKeyType.canBeConvertedFrom(indexType)) {
+			index1 = typeName.indexOf(",");
+			final int index2 = isTemplateTypeName(typeName)?
+					typeName.indexOf(">"): typeName.length() - 2;
+			final int len = index2 - index1 + 1;
+			final String returnTypeName = typeName.substring(index1+1, index1+len);
+			final Type returnType = object.enclosingMegaType().enclosedScope().lookupTypeDeclarationRecursive(returnTypeName);
+			if (returnType == null) {
+				errorHook5p2(ErrorIncidenceType.Fatal, token, "Expression type ", 
+						returnTypeName, " not declared.", "");
+				retval = new ErrorExpression(indexExpr);
+			} else {
+				final ActualArgumentList paramList = new ActualArgumentList();
+				paramList.addActualArgument(object);
+				paramList.addActualArgument(indexExpr);
+				indexExpr.setResultIsConsumed(true);
+				
+				final Message message = new Message("at",
+						paramList,
+						token,
+						object.enclosingMegaType());
+				
+				retval = new MessageExpression(
+						object,
+						message,
+						returnType,
+						token,
+						false, /*isStatic*/
+						callerEnvClass,
+						MethodInvocationEnvironmentClass.ClassEnvironment,
+						true /*isPolymorphic*/ );
+			}
+		} else {
+			errorHook5p2(ErrorIncidenceType.Fatal, token, "Index expression for this Map must be of type ", 
+					keyTypeName, "", "");
 			retval = new ErrorExpression(indexExpr);
 		}
 

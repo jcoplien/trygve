@@ -2,7 +2,7 @@ package info.fulloo.trygve.parser;
 
 /*
  * Trygve IDE 4.0
- *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -4511,6 +4511,9 @@ public class Pass1Listener extends Pass0Listener {
 				
 				// New initialization association
 				objDecl.setInitialization(initialization);
+			} else if (expressionType == null) {
+				int k=0;
+				k++;
 			} else if (expressionType.isntError() && declarationType.isntError() && initializationExpression.isntError()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, objDecl.token(),
 						"Type mismatch in initialization of `",

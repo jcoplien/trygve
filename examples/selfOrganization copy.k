@@ -24,7 +24,7 @@ class NodeGraphInfo {
 		nodes_.add(n)
 	}
 	public void addPathBetween(Nameable m, Nameable n) {
-		Map<Object, int> distanceMap = pathsFrom_.at(m)
+		Map<Object, int> distanceMap = pathsFrom_[m]
 		distanceMap.atPut(n, new Infinity().value)
 	}
 	public int distanceBetween(Object m, Object n) {
@@ -36,7 +36,7 @@ class NodeGraphInfo {
 		return distanceMap.keys
 	}
 	public void setDistanceFor(Nameable from, Nameable to, int d) {
-		Map<Object, int> distanceMap = pathsFrom_[from]
+		Map<Object, int> distanceMap = pathsFrom_.at(from)
 		distanceMap.atPut(to, d)
 	}
 	public void setStartAndEnd(Nameable start, Nameable endNode) {

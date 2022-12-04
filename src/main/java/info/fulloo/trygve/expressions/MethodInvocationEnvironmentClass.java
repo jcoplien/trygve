@@ -2,7 +2,7 @@ package info.fulloo.trygve.expressions;
 
 /*
  * Trygve IDE 4.0
- *   Copyright (c)2022 James O. Coplien, jcoplien@gmail.com
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,5 +24,5 @@ package info.fulloo.trygve.expressions;
  */
 
 public enum MethodInvocationEnvironmentClass {
-	RoleEnvironment, ContextEnvironment, ClassEnvironment, Unknown
+	RoleEnvironment, ContextEnvironment, ClassEnvironment, GlobalEnvironment, Unknown
 }

@@ -62,7 +62,7 @@ class DisplayClass {
 }
 
 context Game {
-	public double DELTA() { return 0.005 }
+	public double DELTA() { return 0.001 }
 	public int moveCount() { return moveCount_++ }
 
 	int moveCount_ = 0
@@ -121,7 +121,7 @@ context Game {
 				List<Player> neighborList = Neighbors.of(p)
 				setColor(p.color())
 				Player neighbor1 = neighborList[0]
-				Player neighbor2 = neighborList[1]
+				Player neighbor2 = neighborList.at(1)
 				drawLine(floor(p.x()*400), floor(p.y()*400),
 						floor(neighbor1.x()*400), floor(neighbor1.y()*400))
 				drawLine(floor(p.x()*400), floor(p.y()*400),
@@ -137,7 +137,7 @@ context Game {
 			}
 			drawConnections()
 		}
-		private double PlayerSize { return 10.0 }
+		public double PlayerSize { return 10.0 }
 	} requires {
 		int floor(double v);
 		void clear();
@@ -154,10 +154,10 @@ context Game {
 				setIAmMoving(true)
 
 				if (PlayerMoveCount.moveCountForPlayer() > 10) {
-					// move it to the center and get out
+					// move it to the center and get out - get it unstuckk
 					PlayerMoveCount.resetMoveCountForPlayer()
-					DPoint newCenter = new DPoint(0.7, 0.5)
-					moveTo(newCenter)	
+					DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
+					moveTo(nonoverlapping(newCenter))	
 					retval = true
 				} else {
 					if (GameData.moveCount() % 5 == 0) {
@@ -204,7 +204,7 @@ context Game {
 				midpoint = new DPoint((newYPoint.x() + ((INERTIA-1)*x())) / INERTIA,
 												(newYPoint.y() + ((INERTIA-1)*y())) / INERTIA)
 			}
-			moveTo(midpoint);
+			moveTo(nonoverlapping(midpoint));
 		}
 		private double suitableNewXFixingYAt(double y, Player p1, Player p2) {
 			double retval = ((-p1.x()*p1.x()) + (2*p1.y()*y) - (p1.y()*p1.y()) + (p2.x()*p2.x()) -
@@ -217,6 +217,28 @@ context Game {
 					(p2.x()*p2.x()) + (p2.y()*p2.y())) / (2 * (p2.y() - p1.y()))
 			if (retval < 0.1) retval = 0.1 + Math.random() / 10.0
 			return retval
+		}
+		private DPoint nonoverlapping(DPoint xy) {
+			moveTo(xy)
+			boolean moved = false
+			do {
+				moved = false
+				for (Player p: GameData.players()) {
+					if (!(p is this)) {
+						double distanceToPlayer = distanceTo(p)
+						if (distanceToPlayer < Display.PlayerSize()/400) {
+							// Overlap
+							double xdist = Math.max(x() - p.x(), Display.PlayerSize()/100),
+										ydist = Math.max(y() - p.y(), Display.PlayerSize()/100)
+							double newX = x() + xdist + Math.random()/400
+							double newY = y() + ydist + Math.random()/400
+							moveTo( new DPoint(newX, newY) )
+							moved = true
+						}
+					}
+				}
+			} while (moved)
+			return center()
 		}
 		private double distanceTo(Player p) { return center().distanceTo(p.center()) }
 		private void setIAmMoving(boolean tf) { GameData.setIsMoving(this, tf) }
@@ -268,10 +290,6 @@ context Game {
 	for (int i = 0; i < NumberOfPlayers; i++) {
 		double randX = Math.random() + 0.1, randY = Math.random() + 0.1
 		Player p = new Player(names[i], randX, randY)
-		if (p.name() == "E") {
-			Object ESet
-			ESet = p
-		}
 		Color newColor = new Color(Math.random(), Math.random(), Math.random())
 		p.setColor(newColor)
 		players.add(p)
@@ -280,7 +298,7 @@ context Game {
 	// Connect each player randomly to two other distinct players
 	Map<String, List<Player>> neighbors = new Map<String, List<Player>>()
 	for (int i = 0; i < NumberOfPlayers; i++) {
-		Player player = players.at(i)
+		Player player = players[i]
 		int otherPlayer1Index = 0, otherPlayer2Index = 0;
 		do {
 			otherPlayer1Index = (Math.random() * NumberOfPlayers).toInteger();
@@ -290,9 +308,7 @@ context Game {
 		} while (otherPlayer1Index == otherPlayer2Index || otherPlayer2Index == i ||
 								otherPlayer1Index >= NumberOfPlayers)
 		List<Player> neighborList = new List<Player>()
-		Player otherPlayer1 = players.at(otherPlayer1Index), otherPlayer2 = players.at(otherPlayer2Index)
-		otherPlayer1.assert (!(otherPlayer1 is null))
-		otherPlayer2.assert (!(otherPlayer2 is null))
+		Player otherPlayer1 = players[otherPlayer1Index], otherPlayer2 = players[otherPlayer2Index]
 		neighborList.add(otherPlayer1)
 		neighborList.add(otherPlayer2)
 		neighbors.atPut(player.name(), neighborList)
@@ -302,4 +318,10 @@ context Game {
 	Game game = new Game(players, neighbors, display);
 	game.play()
 	System.out.println("exit (please close the graphical display)")
+
+System.out.println()
+for (int i = 0; i < NumberOfPlayers; i++) {
+		Player player = players[i]
+System.out.print(player.x()).print(", ").println(player.y())
+}
 }
