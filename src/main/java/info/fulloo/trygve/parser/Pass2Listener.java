@@ -515,8 +515,11 @@ public class Pass2Listener extends Pass1Listener {
 		boolean retval = false;
 		for (int i = 1; i < typeName.length()-2; i++) {
 			if (typeName.substring(i,i).equals("<")) {
-				retval = true;
-				break;
+				// Kinda dumb; gives us options to edit a more general solution
+				if (typeName.startsWith("List<") || typeName.startsWith("Map<")) {
+					retval = true;
+					break;
+				}
 			}
 		}
 		return retval;

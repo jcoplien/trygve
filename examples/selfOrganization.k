@@ -32,8 +32,8 @@ class Player {
 }
 
 class DisplayClass {
-	public DisplayClass(){
-		size_ = new DPoint(640.0, 480.0);
+	public DisplayClass(DPoint size) {
+		size_ = size;
 		offset_ = new DPoint(0.0, 0.0);
 		panel_ = new Panel();
 		frame_ = new Frame("");
@@ -121,7 +121,7 @@ context Game {
 				List<Player> neighborList = Neighbors.of(p)
 				setColor(p.color())
 				Player neighbor1 = neighborList[0]
-				Player neighbor2 = neighborList.at(1)
+				Player neighbor2 = neighborList[1]
 				drawLine(floor(p.x()*400), floor(p.y()*400),
 						floor(neighbor1.x()*400), floor(neighbor1.y()*400))
 				drawLine(floor(p.x()*400), floor(p.y()*400),
@@ -168,8 +168,8 @@ context Game {
 					}
 
 					List<Player> neighborList = Neighbors.of(this)
-					Player player1 = neighborList.at(0)
-					Player player2 = neighborList.at(1)
+					Player player1 = neighborList[0]
+					Player player2 = neighborList[1]
 					double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
 					if (Math.abs(distance1 - distance2) > 0.1) {
 						PlayerMoveCount.incrementCountForPlayer();
@@ -180,9 +180,8 @@ context Game {
 						CurrentPlayer.moved
 						retval = true
 					}
-
-					setIAmMoving(false)
 				}
+				setIAmMoving(false)
 			}
 
 			return retval
@@ -240,7 +239,7 @@ context Game {
 			} while (moved)
 			return center()
 		}
-		private double distanceTo(Player p) { return center().distanceTo(p.center()) }
+		public double distanceTo(Player p) { return center().distanceTo(p.center()) }
 		private void setIAmMoving(boolean tf) { GameData.setIsMoving(this, tf) }
 		private boolean amIMoving() { return GameData.isMoving(this) }
 		public String name();
@@ -255,9 +254,9 @@ context Game {
 	}
 
 	stageprop Neighbors {
-		public Player of(Player p) { return at(p.name()) }
+		public List<Player> of(Player p) { return at(p.name()) }
 	} requires {
-		Player at(String name) const
+		List<Player> at(String name) const
 	}
 
 	public void play() {
@@ -280,7 +279,7 @@ context Game {
 }
 
 {
-	int NumberOfPlayers = 10
+	int NumberOfPlayers = 50
 	String [] names = new String[NumberOfPlayers]
 	for (int i = 0; i < NumberOfPlayers; i++) {
 		names[i] = (i + 65).to1CharString()
@@ -314,14 +313,10 @@ context Game {
 		neighbors.atPut(player.name(), neighborList)
 	}
 
-	DisplayClass display = new DisplayClass()
+	double xsize = if (NumberOfPlayers > 50) 1500.0 else 640.0
+	double ysize = if (NumberOfPlayers > 50)  600.0 else 480.0
+	DisplayClass display = new DisplayClass(new DPoint(xsize, ysize))
 	Game game = new Game(players, neighbors, display);
 	game.play()
 	System.out.println("exit (please close the graphical display)")
-
-System.out.println()
-for (int i = 0; i < NumberOfPlayers; i++) {
-		Player player = players[i]
-System.out.print(player.x()).print(", ").println(player.y())
-}
 }
