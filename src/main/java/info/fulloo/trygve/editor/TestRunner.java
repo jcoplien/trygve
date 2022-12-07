@@ -201,7 +201,8 @@ public class TestRunner {
 		"keypad.k",
 		"simple_list.k",
 		"july_money_transfer.k",
-		"DCIDijkstra1.k"
+		"DCIDijkstra1.k",
+		"selfOrganization.k"
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;

@@ -235,7 +235,11 @@ public abstract class RTMessageDispatcher {
 
 	protected RTStackable pushArgumentLoop(final RTCode start, final int expressionCounterForThisExtraction,
 			final int indexForThisExtraction) {
-		
+		// DEBUG
+		if (actualParameters_.count() == 3) {
+			int k =  0;
+			k++;
+		}
 		RTCode pc = start;
 		startingStackIndex_ = RunTimeEnvironment.runTimeEnvironment_.stackIndex();
 		RTObject self = null;

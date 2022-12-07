@@ -376,7 +376,7 @@ public final class ListClass {
 			RTCode pc = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject theIndex = (RTIntegerObject)activationRecord.getObject("theIndex");
-			final RTObject object = (RTIntegerObject)activationRecord.getObject("theIndex");
+			final RTObject object = (RTObject)activationRecord.getObject("object");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == theIndex) {
 				ErrorLogger.error(ErrorIncidenceType.Runtime, token_,

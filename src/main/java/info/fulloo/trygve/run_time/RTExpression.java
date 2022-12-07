@@ -803,7 +803,11 @@ public abstract class RTExpression extends RTCode {
 			
 			token_ = messageExpr.token();
 			lineNumber_ = messageExpr.lineNumber();
-			final MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
+			MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
+			if (null == methodDecl) {	// DEBUG
+				final StaticScope thisDeclaringScope = messageExpr.type().enclosedScope();
+				methodDecl = thisDeclaringScope.lookupMethodDeclaration(name, actualParameters_, false);
+			}
 			final StaticScope parentScope = methodDecl == null? null: methodDecl.enclosingScope();
 			final String debugName = parentScope == null? "???": parentScope.name();
 			
@@ -882,7 +886,8 @@ public abstract class RTExpression extends RTCode {
 				final String className = objectExpression.name();
 				typeOfReceiver = StaticScope.globalScope().lookupTypeDeclaration(className);
 			} else {
-				typeOfReceiver = null != objectExpression? objectExpression.type(): StaticScope.globalScope().lookupTypeDeclaration("void");
+				typeOfReceiver = null != objectExpression? objectExpression.type():
+					StaticScope.globalScope().lookupTypeDeclaration("void");
 			}
 			
 			if (null == typeOfReceiver) {

@@ -472,9 +472,10 @@ public class Pass2Listener extends Pass1Listener {
 				callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 			} else if (object.enclosingMegaType() instanceof RoleType) {
 				callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-			} else {
-				// cheating...
+			} else if (object.enclosingMegaType() == null) {
 				callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
+			} else {
+				callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
 			}
 			
 			final int l = object.type().name().length();
@@ -536,10 +537,12 @@ public class Pass2Listener extends Pass1Listener {
 		final Type enclosingType = object.enclosingMegaType();
 		if (enclosingType instanceof ContextType) {
 			callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
-		} else if (object.enclosingMegaType() instanceof RoleType) {
+		} else if (enclosingType instanceof RoleType) {
 			callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-		} else if (object.enclosingMegaType() instanceof ClassType) {
+		} else if (enclosingType instanceof ClassType) {
 			callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+		} else if (enclosingType == null) {
+			callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
 		} else {
 			callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
 		}
@@ -1208,7 +1211,7 @@ public class Pass2Listener extends Pass1Listener {
 					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
 					assert null != objectDecl;
 					methodDeclaration = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, message.selectorName(), message.argumentList());
-					
+
 					if (null != methodDeclaration) {
 						// I THINK that the right thing to do at this point is to pull
 						// the context out of the signature. Luckily, we copied the

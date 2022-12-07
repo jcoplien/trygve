@@ -5916,12 +5916,72 @@ public class Pass1Listener extends Pass0Listener {
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(token, (RoleType)lhsType, rhsType);
 			}
-		} else if ((lhs instanceof IdentifierExpression) == false &&
-				   (lhs instanceof QualifiedIdentifierExpression) == false &&
-				   lhs.isntError() && rhs.isntError()) {
-			errorHook5p2(ErrorIncidenceType.Fatal, token,
-					"Can assign only to an identifier, qualified identifier, or vector element.",
-					"", "", "");
+		} else if (lhs instanceof MessageExpression && lhs.name().equals("at")) {
+			// See if LHS has at atPut
+			boolean found = false;
+			Expression retval = null;
+			final MessageExpression atExpr = (MessageExpression)lhs;
+			final MethodDeclaration atPut = atExpr.objectExpression().type().enclosedScope().lookupMethodDeclaration("atPut", null, true);
+			if (atExpr.objectExpression().type().name().startsWith("List<") && null != atPut) {
+				// There IS an atPut
+				final ActualArgumentList paramList = new ActualArgumentList();
+				final Expression self = (Expression)atExpr.message().argumentList().argumentAtPosition(0);
+				final Expression indexExpr = (Expression)atExpr.message().argumentList().argumentAtPosition(1);
+				paramList.addFirstActualParameter(self);
+				//paramList.addActualArgument(self);
+				self.setResultIsConsumed(true);
+				paramList.addActualArgument(indexExpr);
+				indexExpr.setResultIsConsumed(true);
+				paramList.addActualArgument(rhs);
+				rhs.setResultIsConsumed(true);
+				
+				if (indexExpr.type().name().equals("int") == false) {
+					errorHook5p2(ErrorIncidenceType.Fatal, token,
+							"Index must evaluate to an int.", "", "", "");
+					retval = new ErrorExpression(indexExpr);
+					found = true;		// a constructive lie
+				} else {
+					MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+					if (lhs.enclosingMegaType() instanceof ContextType) {
+						callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+					} else if (lhs.enclosingMegaType() instanceof ClassType) {
+						callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+					} else if (lhs.enclosingMegaType() instanceof RoleType) {
+						callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+					} else {
+						// cheating...
+						callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
+					}
+					
+					final Message message = new Message("atPut",
+							paramList,
+							token,
+							lhs.enclosingMegaType());
+					
+					retval = new MessageExpression(
+							self,
+							message,
+							rhs.type(),
+							token,
+							false, /*isStatic*/
+							callerEnvClass,
+							MethodInvocationEnvironmentClass.ClassEnvironment,
+							true /*isPolymorphic*/ );
+					
+					found = true;
+				}
+			}
+			if (found) {
+				return retval;
+			} else {
+				if ((lhs instanceof IdentifierExpression) == false &&
+						   (lhs instanceof QualifiedIdentifierExpression) == false &&
+						   lhs.isntError() && rhs.isntError()) {
+					errorHook5p2(ErrorIncidenceType.Fatal, token,
+							"Can assign only to an identifier, qualified identifier, or vector element.",
+							"", "", "");
+				}
+			}
 		}
 		
 		rhs.setResultIsConsumed(true);

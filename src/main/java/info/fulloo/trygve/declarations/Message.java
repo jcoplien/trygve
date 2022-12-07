@@ -46,7 +46,7 @@ public class Message {
 		token_ = token;
 		lineNumber_ = (null == token_)? 0: token_.getLine();
 		enclosingMegaType_ = enclosingMegaType;
-		
+
 		// Just a default until it gets filled in - avoid null ptr problems
 		returnType_ = StaticScope.globalScope().lookupTypeDeclaration("void");
 	}

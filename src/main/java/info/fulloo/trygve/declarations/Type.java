@@ -874,7 +874,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 			
-			// No static objects in terfaces for now, I think,
+			// No static objects in interfaces for now, I think,
 			// so maybe this code can go.
 			staticObjects_ = new LinkedHashMap<String, RTCode>();
 			for (final Map.Entry<String,RTCode> iter : nominalType.staticObjects_.entrySet()) {

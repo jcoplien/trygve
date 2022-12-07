@@ -62,7 +62,7 @@ class DisplayClass {
 }
 
 context Game {
-	public double DELTA() { return 0.001 }
+	public double DELTA() { return 0.10 }
 	public int moveCount() { return moveCount_++ }
 
 	int moveCount_ = 0
@@ -149,42 +149,61 @@ context Game {
 
 	role CurrentPlayer {
 		public boolean moved() {
-			boolean retval = false
+			boolean somethingMoved = false
 			if (!amIMoving()) {
 				setIAmMoving(true)
-
-				if (PlayerMoveCount.moveCountForPlayer() > 10) {
-					// move it to the center and get out - get it unstuckk
-					PlayerMoveCount.resetMoveCountForPlayer()
-					DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
-					moveTo(nonoverlapping(newCenter))	
-					retval = true
+				if (moveToGetUnstuck()) {
+					somethingMoved = true
 				} else {
-					if (GameData.moveCount() % 5 == 0) {
-						Display.clear
-						Display.draw
-						Display.repaint
-						Thread.sleep(50)
-					}
-
-					List<Player> neighborList = Neighbors.of(this)
-					Player player1 = neighborList[0]
-					Player player2 = neighborList[1]
-					double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
-					if (Math.abs(distance1 - distance2) > 0.1) {
-						PlayerMoveCount.incrementCountForPlayer();
-						moveBetweenNeighbors(player1, player2)
-						CurrentPlayer = player1
-						CurrentPlayer.moved
-						CurrentPlayer = player2
-						CurrentPlayer.moved
-						retval = true
-					}
+					paintDisplay()
+					somethingMoved = letNeighborsMove()
 				}
 				setIAmMoving(false)
 			}
+			return somethingMoved
+		}
 
-			return retval
+		private boolean moveToGetUnstuck() {
+			boolean iMoved
+			if (PlayerMoveCount.moveCountForPlayer > 10) {
+				// move it to the center and get out - get it unstuck
+				PlayerMoveCount.resetMoveCountForPlayer
+				DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
+				moveTo(nonoverlapping(newCenter))
+				iMoved = true
+			} else {
+				iMoved = false
+			}
+			return iMoved
+		}
+
+		private void paintDisplay() {
+			if (GameData.moveCount() % 5 == 0) {
+				Display.clear
+				Display.draw
+				Display.repaint
+				Thread.sleep(50)
+			}
+		}
+
+		private boolean letNeighborsMove() {
+			boolean somethingMoved
+			List<Player> neighborList = Neighbors.of(this)
+			Player player1 = neighborList[0]
+			Player player2 = neighborList[1]
+			double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
+			if (Math.abs(distance1 - distance2) > GameData.DELTA) {
+				PlayerMoveCount.incrementCountForPlayer
+				moveBetweenNeighbors(player1, player2)
+				CurrentPlayer = player1
+				CurrentPlayer.moved
+				CurrentPlayer = player2
+				CurrentPlayer.moved
+				somethingMoved = true
+			} else {
+				somethingMoved = false
+			}
+			return somethingMoved
 		}
 
 		private void moveBetweenNeighbors(Player p1, Player p2) {
@@ -308,6 +327,10 @@ context Game {
 								otherPlayer1Index >= NumberOfPlayers)
 		List<Player> neighborList = new List<Player>()
 		Player otherPlayer1 = players[otherPlayer1Index], otherPlayer2 = players[otherPlayer2Index]
+players.atPut(otherPlayer2Index, otherPlayer2)
+players[otherPlayer2Index] = otherPlayer2
+// players.atPut("abc", 1)
+players.at(1)
 		neighborList.add(otherPlayer1)
 		neighborList.add(otherPlayer2)
 		neighbors.atPut(player.name(), neighborList)
