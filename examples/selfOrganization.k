@@ -83,6 +83,27 @@ context Game {
 			PlayerMoveCount.atPut(p.name(), 0)
 			GameData.setIsMoving(p, false)
 		}
+
+		setUpWatchers()
+	}
+
+	private void setUpWatchers() {
+		watchers_ = new Map<String, List<Player>>()
+		for (Player p : players_) {
+			String playerName = p.name
+			watchers_.atPut(playerName, new List<Player>())
+			for (Player p2 : neighbors_.at(playerName)) {
+				if (p2.name == p.name) {
+					watchers_.at(playerName).add(p2)
+				}
+			}
+		}
+	}
+
+	Map<String, List<Player>> watchers_
+
+	public List<Player> watchersOf(Player p) {
+		return watchers_.at(p.name)
 	}
 
 	role PlayerMoveCount {
@@ -102,12 +123,14 @@ context Game {
 		public int moveCount();
 		public void setIsMoving(Player p, boolean b);
 		public boolean isMoving(Player p);
+		public List<Player> watchersOf(Player p);
 	} requires {
 		double DELTA();
 		List<Player> players();
 		int moveCount();
 		void setIsMoving(Player p, boolean b);
-		public boolean isMoving(Player p)
+		public boolean isMoving(Player p);
+		public List<Player> watchersOf(Player p)
 	}
 
 	public List<Player> players() { return players_ }
@@ -165,7 +188,7 @@ context Game {
 
 		private boolean moveToGetUnstuck() {
 			boolean iMoved
-			if (PlayerMoveCount.moveCountForPlayer > 10) {
+			if (PlayerMoveCount.moveCountForPlayer > 30) {
 				// move it to the center and get out - get it unstuck
 				PlayerMoveCount.resetMoveCountForPlayer
 				DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
@@ -195,14 +218,19 @@ context Game {
 			if (Math.abs(distance1 - distance2) > GameData.DELTA) {
 				PlayerMoveCount.incrementCountForPlayer
 				moveBetweenNeighbors(player1, player2)
-				CurrentPlayer = player1
-				CurrentPlayer.moved
-				CurrentPlayer = player2
-				CurrentPlayer.moved
 				somethingMoved = true
 			} else {
 				somethingMoved = false
 			}
+			
+			if (somethingMoved) {
+				// tail recursive
+				for (Player p : watchers()) {
+					CurrentPlayer = p
+					CurrentPlayer.moved
+				}
+			}
+
 			return somethingMoved
 		}
 
@@ -258,6 +286,10 @@ context Game {
 			} while (moved)
 			return center()
 		}
+		private List<Player> watchers() {
+			return GameData.watchersOf(this)
+		}
+
 		public double distanceTo(Player p) { return center().distanceTo(p.center()) }
 		private void setIAmMoving(boolean tf) { GameData.setIsMoving(this, tf) }
 		private boolean amIMoving() { return GameData.isMoving(this) }
@@ -298,7 +330,7 @@ context Game {
 }
 
 {
-	int NumberOfPlayers = 50
+	int NumberOfPlayers = 20
 	String [] names = new String[NumberOfPlayers]
 	for (int i = 0; i < NumberOfPlayers; i++) {
 		names[i] = (i + 65).to1CharString()
@@ -327,10 +359,6 @@ context Game {
 								otherPlayer1Index >= NumberOfPlayers)
 		List<Player> neighborList = new List<Player>()
 		Player otherPlayer1 = players[otherPlayer1Index], otherPlayer2 = players[otherPlayer2Index]
-players.atPut(otherPlayer2Index, otherPlayer2)
-players[otherPlayer2Index] = otherPlayer2
-// players.atPut("abc", 1)
-players.at(1)
 		neighborList.add(otherPlayer1)
 		neighborList.add(otherPlayer2)
 		neighbors.atPut(player.name(), neighborList)
