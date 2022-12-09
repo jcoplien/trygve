@@ -553,6 +553,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("random")) {
 			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("setSeed")) {
+			mathCode.add(new MathClass.RTSetSeedCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("abs")) {
 			if (firstParameterIsInteger) {
 				mathCode.add(new MathClass.RTIntAbsCode(methodDeclaration.enclosedScope()));

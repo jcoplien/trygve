@@ -1196,6 +1196,7 @@ public class StaticScope {
 				retval = parentScope_.lookupMethodDeclarationRecursive(methodSelector, parameterList, ignoreSignature);
 			}
 		}
+
 		return retval;
 	}
 	
@@ -1237,6 +1238,7 @@ public class StaticScope {
 		} else {
 			;
 		}
+
 		return retval;
 	}
 	public MethodDeclaration lookupMethodDeclarationWithSuperConversionIgnoringParameter(final String methodSelector,
@@ -1318,7 +1320,6 @@ public class StaticScope {
 
 		previousMethodSelector_ = null;
 		previousArgumentList_ = null;
-
 		return retval;
 	}
 	public MethodDeclaration lookupMethodDeclarationIgnoringParameter(final String methodSelector, final ActualOrFormalParameterList parameterList,

@@ -547,9 +547,9 @@ public class Pass2Listener extends Pass1Listener {
 			callerEnvClass = MethodInvocationEnvironmentClass.Unknown;
 		}
 		
-		final int l = object.type().name().length();
+		final int nameLength = object.type().name().length();
 		final String typeName = object.type().name();
-		String keyTypeName = typeName.substring(4,l-1);
+		String keyTypeName = typeName.substring(4, nameLength-1);
 		int index1 = keyTypeName.indexOf(",");
 		keyTypeName = keyTypeName.substring(0,index1);
 		
@@ -566,7 +566,14 @@ public class Pass2Listener extends Pass1Listener {
 					typeName.indexOf(">"): typeName.length() - 2;
 			final int len = index2 - index1 + 1;
 			final String returnTypeName = typeName.substring(index1+1, index1+len);
-			final Type returnType = object.enclosingMegaType().enclosedScope().lookupTypeDeclarationRecursive(returnTypeName);
+			
+			Type returnType = null;
+			if (null == object.enclosingMegaType()) {
+				returnType = StaticScope.globalScope().lookupTypeDeclarationRecursive(returnTypeName);
+			} else {
+				returnType = object.enclosingMegaType().enclosedScope().lookupTypeDeclarationRecursive(returnTypeName);
+			}
+			
 			if (returnType == null) {
 				errorHook5p2(ErrorIncidenceType.Fatal, token, "Expression type ", 
 						returnTypeName, " not declared.", "");
@@ -922,18 +929,15 @@ public class Pass2Listener extends Pass1Listener {
 		return object;
 	}
 	
-	private Expression messageSendGenerateCall(final Token ctxGetStart,
-			final Expression object,
-			final MethodDeclaration methodDeclaration, final Message message,
-			final Type returnType, final MethodSignature methodSignature) {
+	private Expression messageSendGenerateCall(final Token ctxGetStart, final Type returnType) {
 		Expression retval = null;
-		if (null != methodSignature) {
+		if (null != messageSend_methodSignature_) {
 			MethodInvocationEnvironmentClass originMethodClass = MethodInvocationEnvironmentClass.Unknown;
 
 			if (null != currentScope_.associatedDeclaration()) {
 				originMethodClass = currentScope_.methodInvocationEnvironmentClass();
 			} else {
-				final Type anotherType = object.enclosingMegaType();
+				final Type anotherType = messageSend_object_.enclosingMegaType();
 				if (null != anotherType) {
 					final StaticScope anotherScope = anotherType.enclosedScope();
 					originMethodClass = anotherScope.methodInvocationEnvironmentClass();
@@ -943,21 +947,21 @@ public class Pass2Listener extends Pass1Listener {
 			}
 			
 			MethodInvocationEnvironmentClass targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
-			if (null != object && null != object.type()) {
-				if (object.type() instanceof StagePropType) {
+			if (null != messageSend_object_ && null != messageSend_object_.type()) {
+				if (messageSend_object_.type() instanceof StagePropType) {
 					targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-				} else if (object.type() instanceof RoleType) {
+				} else if (messageSend_object_.type() instanceof RoleType) {
 					targetMethodClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-				} else if (object.type() instanceof ContextType) {
+				} else if (messageSend_object_.type() instanceof ContextType) {
 					targetMethodClass = MethodInvocationEnvironmentClass.ContextEnvironment;
-				} else if (object.type() instanceof InterfaceType) {
+				} else if (messageSend_object_.type() instanceof InterfaceType) {
 					// Interfaces wrap classes
 					targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-				} else if (object.type() instanceof ArrayType) {
+				} else if (messageSend_object_.type() instanceof ArrayType) {
 					// Arrays kind of behave like classes, certainly as regards dispatching
 					targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-				} else if (null != methodDeclaration) {
-					targetMethodClass = methodDeclaration.enclosingScope().methodInvocationEnvironmentClass();
+				} else if (null != messageSend_methodDeclaration_) {
+					targetMethodClass = messageSend_methodDeclaration_.enclosingScope().methodInvocationEnvironmentClass();
 				} else  {
 					targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 				}
@@ -965,75 +969,80 @@ public class Pass2Listener extends Pass1Listener {
 				// Double-check to make sure that, if this is going through a Role
 				// interface, whether it is actually a "requires" declaration
 				if (MethodInvocationEnvironmentClass.RoleEnvironment == targetMethodClass) {
-					final RoleType roleType = (RoleType)object.type();
+					final RoleType roleType = (RoleType)messageSend_object_.type();
 					final RoleDeclaration roleDecl = (RoleDeclaration)roleType.associatedDeclaration();
-					final MethodSignature requiredSignatureDecl = roleDecl.lookupRequiredMethodSignatureDeclaration(message.selectorName());
+					final MethodSignature requiredSignatureDecl = roleDecl.lookupRequiredMethodSignatureDeclaration(messageSend_message_.selectorName());
 					if (null != requiredSignatureDecl) {
 						// It could be a context, but we can't tell here. We must wait until
 						// run-time and adjust
 						targetMethodClass = MethodInvocationEnvironmentClass.ClassEnvironment;
 					}
 				}
-			} else if (null != methodDeclaration) {
-				targetMethodClass = methodDeclaration.enclosingScope().methodInvocationEnvironmentClass();
+			} else if (null != messageSend_methodDeclaration_) {
+				targetMethodClass = messageSend_methodDeclaration_.enclosingScope().methodInvocationEnvironmentClass();
 			} else  {
 				targetMethodClass = MethodInvocationEnvironmentClass.Unknown;
 			}
 			
-			checkForMessageSendViolatingConstness(methodSignature, ctxGetStart);
+			checkForMessageSendViolatingConstness(messageSend_methodSignature_, ctxGetStart);
 			
 			boolean isPolymorphic = true;
 			if (amInConstructor()) {
-				if (object instanceof IdentifierExpression) {
-					if (((IdentifierExpression)object).name().equals("this")) {
+				if (messageSend_object_ instanceof IdentifierExpression) {
+					if (((IdentifierExpression)messageSend_object_).name().equals("this")) {
 						isPolymorphic = false;
 					}
 				}
 			}
-			retval = new MessageExpression(object, message, returnType, ctxGetStart, methodSignature.isStatic(),
+			retval = new MessageExpression(messageSend_object_, messageSend_message_, returnType, ctxGetStart, messageSend_methodSignature_.isStatic(),
 					originMethodClass, targetMethodClass, isPolymorphic);
-			if (null == methodDeclaration) {
+			if (null == messageSend_methodDeclaration_) {
 				// Could be a "required" method in a Role. It's O.K.
 				assert true;
 			} else {
-				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(methodDeclaration, methodDeclaration.accessQualifier(), ctxGetStart);
+				final boolean accessOK = currentScope_.canAccessDeclarationWithAccessibility(messageSend_methodDeclaration_, messageSend_methodDeclaration_.accessQualifier(), ctxGetStart);
 				if (accessOK == false) {
 					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
-							"Cannot access method `", methodDeclaration.name(),
-							"' with `", methodDeclaration.accessQualifier().asString(), "' access qualifier.", "");
+							"Cannot access method `", messageSend_methodDeclaration_.name(),
+							"' with `", messageSend_methodDeclaration_.accessQualifier().asString(), "' access qualifier.", "");
 				}
 			}
 		} else {
 			// Stumble elegantly
-			retval = new ErrorExpression(object);
+			retval = new ErrorExpression(messageSend_object_);
 		}
 		
 		return retval;
 	}
+	
+	Message messageSend_message_ = null;
+	MethodDeclaration messageSend_methodDeclaration_ = null;
+	Expression messageSend_object_ = null;
+	Type messageSend_objectType_ = null;
+	MethodSignature messageSend_methodSignature_ = null;
+	boolean messageSend_isOKMethodSignature_ = false;
 	
 	@Override public <ExprType> Expression messageSend(final Token ctxGetStart, final ExprType ctx_abelianAtom,
 			final Builtin_type_nameContext ctx_builtin_typeName) {
 		// | expr '.' message
 		// | message
 		// Certified Pass 2 version.
-		// REFACTOR! TODO
 		
-		MethodDeclaration methodDeclaration = null;
+		messageSend_methodDeclaration_ = null;
 		Expression retval = null;
-		final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
 		final Type nearestEnclosingMegaType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-		Expression object = messageSendGetObject(ctxGetStart, ctx_abelianAtom, ctx_builtin_typeName);
+		messageSend_object_ = messageSendGetObject(ctxGetStart, ctx_abelianAtom, ctx_builtin_typeName);
 									
-		Message message = parsingData_.popMessage();
+		messageSend_message_ = parsingData_.popMessage();
 				
-		if (null == message) {
-			return new ErrorExpression(object);		// yuk. refactor.
+		if (null == messageSend_message_) {
+			return new ErrorExpression(messageSend_object_);
 		}
 		
-		if (null == nearestEnclosingMegaType && object instanceof NullExpression) {
+		if (null == nearestEnclosingMegaType && messageSend_object_ instanceof NullExpression) {
 			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
-					"Invoking method `", message.selectorName(), "' on implied object `this' in a non-object context.", "");;
-		} else if (null != object) {
+					"Invoking method `", messageSend_message_.selectorName(), "' on implied object `this' in a non-object context.", "");;
+		} else if (null != messageSend_object_) {
 			// For future reference, we don't want to do this if the
 			// method is static. Of course, we can't in general know
 			// that until we look it up, and we can't look it up
@@ -1041,334 +1050,378 @@ public class Pass2Listener extends Pass1Listener {
 			// signature until we know whether it takes a "this"
 			// parameter... Maybe the answer is to pass a parameter
 			// even for static functions (the class object)
-			message.addActualThisParameter(object);
+			messageSend_message_.addActualThisParameter(messageSend_object_);
 		}
 		
-		Type objectType = null == object? null: object.type();
-		if (null == objectType) {
-			objectType = parsingData_.globalScope().lookupTypeDeclaration("Object");
+		messageSend_objectType_ = null == messageSend_object_? null: messageSend_object_.type();
+		if (null == messageSend_objectType_) {
+			messageSend_objectType_ = parsingData_.globalScope().lookupTypeDeclaration("Object");
 		}
-		assert null != objectType;
+		assert null != messageSend_objectType_;
 		
-		MethodSignature methodSignature = null;
-		boolean isOKMethodSignature = false;
+		messageSend_methodSignature_ = null;
+		messageSend_isOKMethodSignature_ = false;
 		
 		// Methods aren't filled in for template interfaces until Pass 4,
 		// so don't gripe about problems until then
 		boolean cutItSomeSlack = false;
-		if (objectType instanceof InterfaceType) {
-			final InterfaceType interfaceType = (InterfaceType)objectType;
+		if (messageSend_objectType_ instanceof InterfaceType) {
+			final InterfaceType interfaceType = (InterfaceType)messageSend_objectType_;
 			cutItSomeSlack = interfaceType.isTemplateInstantiation();
 			cutItSomeSlack &= !(this instanceof Pass4Listener);
 		}
 		
-		if (objectType.name().equals("Class")) {
-			// Static method invocation. The "object" is really a class name.
+		if (messageSend_objectType_.name().equals("Class")) {
+			messageSend_methodDeclaration_ = handleStaticMethod(ctxGetStart, messageSend_object_, messageSend_message_);
+			if (null != messageSend_methodDeclaration_) {
+				messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+				messageSend_isOKMethodSignature_ = null != messageSend_methodSignature_;
+			}
+		} else if (messageSend_objectType_ instanceof RoleType || messageSend_objectType_ instanceof StagePropType) {
+			handleRoleOrStageprop(nearestEnclosingMegaType, ctxGetStart);
+		} else if (messageSend_objectType_ instanceof ClassType || messageSend_objectType_ instanceof ContextType) {
+			if (false == handleClassOrContext(nearestEnclosingMegaType, ctxGetStart)) {
+				return new ErrorExpression(null);		// punt
+			}
+		} else if (messageSend_objectType_ instanceof BuiltInType) {
+			if (false == handleBuiltInType(nearestEnclosingMegaType, ctxGetStart)) {
+				return new ErrorExpression(null);		// punt
+			}
+		} else if (messageSend_objectType_ instanceof InterfaceType) {
+			handleInterface(ctxGetStart, cutItSomeSlack);
+		} else if (messageSend_objectType_.name().endsWith("_$array") && messageSend_objectType_ instanceof ArrayType) {
+			handleArrays();
+		}
+		
+		Type returnType = this.processReturnType(ctxGetStart, messageSend_object_, messageSend_objectType_, messageSend_message_);
+		if (null != returnType && returnType instanceof TemplateParameterType) {
+			// Is a template type. Change the return type into a bona fide type here
+			final StaticScope objectScope = messageSend_objectType_.enclosedScope();
+			final TemplateInstantiationInfo newTemplateInstantiationInfo = objectScope.templateInstantiationInfo();
+			returnType = newTemplateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType.name());
+			assert null != returnType;
+		}
+		
+		doFinalErrorChecks(ctxGetStart, returnType, cutItSomeSlack);
+		
+		messageSend_message_.setReturnType(returnType);
+		
+		retval = messageSendGenerateCall(ctxGetStart, returnType);
+		
+		return retval;
+	}
+	
+	private MethodDeclaration handleStaticMethod(final Token ctxGetStart,
+			final Expression object, final Message message) {
+		// Static method invocation. The "object" is really a class name.
+		
+		assert object instanceof IdentifierExpression;
+		final Type type = currentScope_.lookupTypeDeclarationRecursive(object.name());
+		MethodDeclaration methodDeclaration = type.enclosedScope().lookupMethodDeclaration(
+				message.selectorName(), message.argumentList(), false);
+		if (null == methodDeclaration) {
+			methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
+				message.selectorName(), message.argumentList(), false, /*parameterToIgnore*/ null);
+		}
+		if (null == methodDeclaration) {
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
+					"Cannot find declaration of ", object.name() + ".", message.selectorName(),
+					".");
+		}
+		return methodDeclaration;
+	}
+	
+	private void handleRoleOrStageprop(final Type nearestEnclosingMegaType, final Token ctxGetStart) {
+		Type wannabeContextType = nearestEnclosingMegaType;
+		final StaticScope nearestMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+		if (wannabeContextType instanceof RoleType) {
+			final RoleType nearestEnclosingRoleOrStageProp = (RoleType) nearestEnclosingMegaType;
+			wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRoleOrStageProp.enclosingScope());
+			assert wannabeContextType instanceof ContextType;
 			
-			assert object instanceof IdentifierExpression;
-			final Type type = currentScope_.lookupTypeDeclarationRecursive(object.name());
-			methodDeclaration = type.enclosedScope().lookupMethodDeclaration(
-					message.selectorName(), message.argumentList(), false);
-			if (null == methodDeclaration) {
-				methodDeclaration = type.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
-					message.selectorName(), message.argumentList(), false, /*parameterToIgnore*/ null);
-			}
-			if (null == methodDeclaration) {
-				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
-						"Cannot find declaration of ", object.name() + ".", message.selectorName(),
-						".");
-			} else {
-				methodSignature = methodDeclaration.signature();
-				isOKMethodSignature = null != methodSignature;
-			}
-		} else if (objectType instanceof RoleType || objectType instanceof StagePropType) {
-			Type wannabeContextType = nearestEnclosingMegaType;
-			if (wannabeContextType instanceof RoleType) {
-				final RoleType nearestEnclosingRoleOrStageProp = (RoleType) nearestEnclosingMegaType;
-				wannabeContextType = Expression.nearestEnclosingMegaTypeOf(nearestEnclosingRoleOrStageProp.enclosingScope());
-				assert wannabeContextType instanceof ContextType;
+			if (nearestEnclosingMegaType instanceof RoleType || nearestEnclosingMegaType instanceof StagePropType) {
+				// Don't allow Role methods directly to invoke Context methods.
+				contextInvocationCheck(nearestEnclosingMegaType, messageSend_message_, messageSend_objectType_, wannabeContextType, ctxGetStart);
 				
-				if (nearestEnclosingMegaType instanceof RoleType || nearestEnclosingMegaType instanceof StagePropType) {
-					// Don't allow Role methods directly to invoke Context methods.
-					contextInvocationCheck(nearestEnclosingMegaType, message, objectType, wannabeContextType, ctxGetStart);
-					
-					// Don't allow Role methods directly to invoke other Roles' "requires" methods.
-					otherRolesRequiresInvocationCheck(nearestEnclosingMegaType, message, objectType, wannabeContextType, ctxGetStart);
-				
-					if (((RoleType)objectType).isArray()) {
-						if (object instanceof RoleArrayIndexExpression) {
-							// o.k.
-						} else if (object.name().equals("this")) {
-							// then it's not really a Role method, but a requires method
-							// (hope and pray)
-						} else {
-							// Then this is trying to invoke a Role vector method
-							// without specifying the individual vector method
-
-							// This makes sense only if we are calling a method in the same Role
-							// as holds this method
-							final String objectTypePathName = object.type().pathName();
-							if (nearestEnclosingMegaType.pathName().equals(objectTypePathName) == false) {
-								errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
-										"Trying to access method `", message.selectorName(), "' of another Role (`",
-										object.name(), "') with indexing the Role vector to yield a Role-player.", "");
-							} else {
-								final IndexExpression theIndex = new IndexExpression(
-										nearestEnclosingRoleOrStageProp.associatedDeclaration(),
-										currentContext_);
-								object = new RoleArrayIndexExpression(object.name(), object, theIndex);
-							
-								// Woops — message is wrong. Replace its "this"
-								message.replaceActualThisParameter(object);
-							}
-						}
-					}
-				}
-			} else if (wannabeContextType instanceof ContextType) {
-				// We don't want Context methods to be able directly
-				// to call requires methods of Roles
-				final RoleType objectTypeAsRoleType = (RoleType)objectType;
-				
-				if (((RoleType)objectType).isArray()) {
-					if (object instanceof RoleArrayIndexExpression) {
+				// Don't allow Role methods directly to invoke other Roles' "requires" methods.
+				otherRolesRequiresInvocationCheck(nearestEnclosingMegaType, messageSend_message_, messageSend_objectType_, wannabeContextType, ctxGetStart);
+			
+				if (((RoleType)messageSend_objectType_).isArray()) {
+					if (messageSend_object_ instanceof RoleArrayIndexExpression) {
 						// o.k.
+					} else if (messageSend_object_.name().equals("this")) {
+						// then it's not really a Role method, but a requires method
+						// (hope and pray)
 					} else {
 						// Then this is trying to invoke a Role vector method
 						// without specifying the individual vector method
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
-							"Trying to access a Role method `", message.selectorName(), "' on the vector ID `", object.name() + "'.");
-					}
-				}
-				
-				final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
-				final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
-						message, roleDecl);
-				if (null != signatureInRequiresSection) {
-					// Is O.K. if it is also declared in the Role interface
-					final MethodSignature signatureInRoleInterface = roleDecl.lookupPublishedSignatureDeclaration(signatureInRequiresSection);
-					if (null == signatureInRoleInterface) {
-						final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
-						errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
-								"Context script `", currentMethodScope.associatedDeclaration().name(),
-								"' may enact only Role scripts. Script `",
-								message.selectorName() + message.argumentList().selflessGetText(),
-								"' is an instance script from a class and is inaccessible to Context `",
-								wannabeContextType.name() + "'.");
-					}
-				}
-			}
-			
-			// Look this thing up in the "required" interface to see
-			// if it's really a Role method or just a latently bound
-			// instance method in an object bound to this role
-			assert objectType instanceof RoleType;
-			final RoleType roleType = (RoleType)objectType;
-			methodSignature = roleType.lookupMethodSignatureDeclaration(message.selectorName());
-			if (null != methodSignature) {
-				// Then it may be in the "required" declarations and is NOT a role method per se
-				isOKMethodSignature = true;
-				
-				// But this check may be useful...
-				final MethodSignature publishedSignature = roleType.associatedDeclaration().lookupPublishedSignatureDeclaration(methodSignature);
-				if (null != publishedSignature && publishedSignature.isUnusedInThisContext()) {
-					final FormalParameterList formalParameterList = publishedSignature.formalParameterList();
-					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
-							message.selectorName() + formalParameterList.selflessGetText(),
-							"' is declared as unused in `", objectType.name(), "' at line ",
-							Integer.toString(publishedSignature.lineNumber()) + ".");
-				}
-			} else {
-				// If we're calling from a Context script to a script of one of its Roles,
-				// we want to pass "this" in the "current$context" slot. Otherwise, if it's
-				// from another Role, just use "current$context". There should be no other
-				// possibilities
-				final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
-				
-				String nameOfContextIdentifier;
-				if (enclosingType instanceof ContextType) {
-					nameOfContextIdentifier = "this";
-				} else if (enclosingType instanceof RoleType) {
-					nameOfContextIdentifier = "current$context";
-				} else {
-					nameOfContextIdentifier = "current$context";	// arbitrary.
-					assert false;
-				}
 
-				final Expression currentContext = new IdentifierExpression(nameOfContextIdentifier, wannabeContextType, nearestMethodScope, ctxGetStart);
-				final ActualArgumentList saveArgumentList = message.argumentList().copy();
-				message.argumentList().addFirstActualParameter(currentContext);
-				currentContext.setResultIsConsumed(true);
-				
-				// NOTE: Leaves methodSignature null.
-				// We need it for call of checkForMessageSendViolatingConstness below.
-				methodDeclaration = objectType.enclosedScope().lookupMethodDeclaration(message.selectorName(), message.argumentList(), false);
-				if (null != methodDeclaration) {
-					// Null check is related to error stumbling
-					methodSignature = methodDeclaration.signature();
-				} else {
-					// It's a Role. Could be a call to assert or something like that
-					// in the base class
-					final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
-					assert null != objectDecl;
-					methodDeclaration = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, message.selectorName(), message.argumentList());
-
-					if (null != methodDeclaration) {
-						// I THINK that the right thing to do at this point is to pull
-						// the context out of the signature. Luckily, we copied the
-						// parameter list above...
+						// This makes sense only if we are calling a method in the same Role
+						// as holds this method
+						final String objectTypePathName = messageSend_object_.type().pathName();
+						if (nearestEnclosingMegaType.pathName().equals(objectTypePathName) == false) {
+							errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
+									"Trying to access method `", messageSend_message_.selectorName(), "' of another Role (`",
+									messageSend_object_.name(), "') with indexing the Role vector to yield a Role-player.", "");
+						} else {
+							final IndexExpression theIndex = new IndexExpression(
+									nearestEnclosingRoleOrStageProp.associatedDeclaration(),
+									currentContext_);
+							messageSend_object_ = new RoleArrayIndexExpression(messageSend_object_.name(), messageSend_object_, theIndex);
 						
-						message = new Message(message.selectorName(), saveArgumentList,
-								message.token(), message.enclosingMegaType());
-						methodSignature = methodDeclaration.signature();
-					}
-				}
-			}
-		} else if (objectType instanceof ClassType || objectType instanceof ContextType) {
-			final ClassOrContextType classObjectType = (ClassOrContextType) objectType;
-			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
-			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
-			
-			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
-						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
-						null;
-			methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
-						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
-						null;
-			if (null == methodDeclaration) {
-				// Check the base class
-				if  (null != classObjectType && null != classObjectType.enclosedScope()) {
-					ClassType baseClassType = classObjectType.baseClass();
-					while (null != baseClassType) {
-						final StaticScope baseClassScope = baseClassType.enclosedScope();
-						assert null != baseClassScope;
-						methodDeclaration = baseClassScope.lookupMethodDeclarationWithConversionIgnoringParameter(
-								message.selectorName(),
-								argumentList, false, /*parameterToIgnore*/ null);
-						if (null != methodDeclaration) {
-							break;
+							// Woops — message is wrong. Replace its "this"
+							messageSend_message_.replaceActualThisParameter(messageSend_object_);
 						}
-						baseClassType = baseClassType.baseClass();
 					}
 				}
-				if (null == methodDeclaration) {
-					// If we're inside of a template, many argument types won't match.
-					// Try anyhow and see if we can find something.
-	
-					methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
-								classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
-								null;
-					if (null == methodDeclaration) {
-						// Mainly for error recovery (bad argument to method / method not declared)
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
-								message.getText(),
-								"' not declared in class `", classObjectType.name() + "'.");
-						return new ErrorExpression(null);		// punt
-					} else {
-						methodSignature = methodDeclaration.signature();
-					}
-				} else {
-					methodSignature = methodDeclaration.signature();
-				}
-			} else {
-				methodSignature = methodDeclaration.signature();
 			}
-		} else if (objectType instanceof BuiltInType) {
-			final BuiltInType classObjectType = (BuiltInType) objectType;
-			final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
-			final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
-			final ActualOrFormalParameterList argumentList = null != message && null != message.argumentList()?
-						message.argumentList().mapTemplateParameters(templateInstantiationInfo):
-						null;
-			methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
-						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, false):
-						null;
-			if (null == methodDeclaration) {
+		} else if (wannabeContextType instanceof ContextType) {
+			// We don't want Context methods to be able directly
+			// to call requires methods of Roles
+			final RoleType objectTypeAsRoleType = (RoleType)messageSend_objectType_;
+			
+			if (((RoleType)messageSend_objectType_).isArray()) {
+				if (messageSend_object_ instanceof RoleArrayIndexExpression) {
+					// o.k.
+				} else {
+					// Then this is trying to invoke a Role vector method
+					// without specifying the individual vector method
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
+						"Trying to access a Role method `", messageSend_message_.selectorName(), "' on the vector ID `", messageSend_object_.name() + "'.");
+				}
+			}
+			
+			final RoleDeclaration roleDecl = (RoleDeclaration)objectTypeAsRoleType.associatedDeclaration();
+			final MethodSignature signatureInRequiresSection = declarationForMessageFromRequiresSectionOfRole(
+					messageSend_message_, roleDecl);
+			if (null != signatureInRequiresSection) {
+				// Is O.K. if it is also declared in the Role interface
+				final MethodSignature signatureInRoleInterface = roleDecl.lookupPublishedSignatureDeclaration(signatureInRequiresSection);
+				if (null == signatureInRoleInterface) {
+					final StaticScope currentMethodScope = Expression.nearestEnclosingMethodScopeAround(currentScope_);
+					errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart,
+							"Context script `", currentMethodScope.associatedDeclaration().name(),
+							"' may enact only Role scripts. Script `",
+							messageSend_message_.selectorName() + messageSend_message_.argumentList().selflessGetText(),
+							"' is an instance script from a class and is inaccessible to Context `",
+							wannabeContextType.name() + "'.");
+				}
+			}
+		}
+		
+		// Look this thing up in the "required" interface to see
+		// if it's really a Role method or just a latently bound
+		// instance method in an object bound to this role
+		assert messageSend_objectType_ instanceof RoleType;
+		final RoleType roleType = (RoleType)messageSend_objectType_;
+		messageSend_methodSignature_ = roleType.lookupMethodSignatureDeclaration(messageSend_message_.selectorName());
+		if (null != messageSend_methodSignature_) {
+			// Then it may be in the "required" declarations and is NOT a role method per se
+			messageSend_isOKMethodSignature_ = true;
+			
+			// But this check may be useful...
+			final MethodSignature publishedSignature = roleType.associatedDeclaration().lookupPublishedSignatureDeclaration(messageSend_methodSignature_);
+			if (null != publishedSignature && publishedSignature.isUnusedInThisContext()) {
+				final FormalParameterList formalParameterList = publishedSignature.formalParameterList();
+				errorHook6p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
+						messageSend_message_.selectorName() + formalParameterList.selflessGetText(),
+						"' is declared as unused in `", messageSend_objectType_.name(), "' at line ",
+						Integer.toString(publishedSignature.lineNumber()) + ".");
+			}
+		} else {
+			// If we're calling from a Context script to a script of one of its Roles,
+			// we want to pass "this" in the "current$context" slot. Otherwise, if it's
+			// from another Role, just use "current$context". There should be no other
+			// possibilities
+			final Type enclosingType = Expression.nearestEnclosingMegaTypeOf(currentScope_);
+			
+			String nameOfContextIdentifier;
+			if (enclosingType instanceof ContextType) {
+				nameOfContextIdentifier = "this";
+			} else if (enclosingType instanceof RoleType) {
+				nameOfContextIdentifier = "current$context";
+			} else {
+				nameOfContextIdentifier = "current$context";	// arbitrary.
+				assert false;
+			}
+
+			final Expression currentContext = new IdentifierExpression(nameOfContextIdentifier, wannabeContextType, nearestMethodScope, ctxGetStart);
+			final ActualArgumentList saveArgumentList = messageSend_message_.argumentList().copy();
+			messageSend_message_.argumentList().addFirstActualParameter(currentContext);
+			currentContext.setResultIsConsumed(true);
+			
+			// NOTE: Leaves methodSignature null.
+			// We need it for call of checkForMessageSendViolatingConstness below.
+			messageSend_methodDeclaration_ = messageSend_objectType_.enclosedScope().lookupMethodDeclaration(messageSend_message_.selectorName(), messageSend_message_.argumentList(), false);
+			if (null != messageSend_methodDeclaration_) {
+				// Null check is related to error stumbling
+				messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+			} else {
+				// It's a Role. Could be a call to assert or something like that
+				// in the base class
+				final ClassDeclaration objectDecl = currentScope_.lookupClassDeclarationRecursive("Object");
+				assert null != objectDecl;
+				messageSend_methodDeclaration_ = processReturnTypeLookupMethodDeclarationIgnoringRoleStuffIn(objectDecl, messageSend_message_.selectorName(), messageSend_message_.argumentList());
+
+				if (null != messageSend_methodDeclaration_) {
+					// I THINK that the right thing to do at this point is to pull
+					// the context out of the signature. Luckily, we copied the
+					// parameter list above...
+					
+					messageSend_message_ = new Message(messageSend_message_.selectorName(), saveArgumentList,
+							messageSend_message_.token(), messageSend_message_.enclosingMegaType());
+					messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+				}
+			}
+		}
+	}
+	
+	private boolean handleClassOrContext(final Type nearestEnclosingMegaType, final Token ctxGetStart) {
+		final ClassOrContextType classObjectType = (ClassOrContextType) messageSend_objectType_;
+		final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
+		final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
+		
+		final ActualOrFormalParameterList argumentList = null != messageSend_message_ && null != messageSend_message_.argumentList()?
+					messageSend_message_.argumentList().mapTemplateParameters(templateInstantiationInfo):
+					null;
+		messageSend_methodDeclaration_ = null != classObjectType && null != classObjectType.enclosedScope()?
+					classObjectType.enclosedScope().lookupMethodDeclarationRecursive(messageSend_message_.selectorName(), argumentList, false):
+					null;
+		if (null == messageSend_methodDeclaration_) {
+			// Check the base class
+			if  (null != classObjectType && null != classObjectType.enclosedScope()) {
+				ClassType baseClassType = classObjectType.baseClass();
+				while (null != baseClassType) {
+					final StaticScope baseClassScope = baseClassType.enclosedScope();
+					assert null != baseClassScope;
+					messageSend_methodDeclaration_ = baseClassScope.lookupMethodDeclarationWithConversionIgnoringParameter(
+							messageSend_message_.selectorName(),
+							argumentList, false, /*parameterToIgnore*/ null);
+					if (null != messageSend_methodDeclaration_) {
+						break;
+					}
+					baseClassType = baseClassType.baseClass();
+				}
+			}
+			if (null == messageSend_methodDeclaration_) {
 				// If we're inside of a template, many argument types won't match.
 				// Try anyhow and see if we can find something.
-				methodDeclaration = null != classObjectType && null != classObjectType.enclosedScope()?
-							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(message.selectorName(), argumentList, true):
+
+				messageSend_methodDeclaration_ = null != classObjectType && null != classObjectType.enclosedScope()?
+							classObjectType.enclosedScope().lookupMethodDeclarationRecursive(messageSend_message_.selectorName(), argumentList, true):
 							null;
-				if (null == methodDeclaration) {
+				if (null == messageSend_methodDeclaration_) {
 					// Mainly for error recovery (bad argument to method / method not declared)
-					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", message.getText(),
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
+							messageSend_message_.getText(),
 							"' not declared in class `", classObjectType.name() + "'.");
-					return new ErrorExpression(null);		// punt
+					return false;
 				} else {
-					methodSignature = methodDeclaration.signature();
+					messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
 				}
 			} else {
-				methodSignature = methodDeclaration.signature();
+				messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
 			}
-		} else if (objectType instanceof InterfaceType) {
-			final InterfaceType classObjectType = (InterfaceType) objectType;
-			final ActualOrFormalParameterList argumentList = message.argumentList();
-			final String methodSelectorName = message.selectorName();
-			methodSignature = null != classObjectType?
-						classObjectType.lookupMethodSignature(methodSelectorName, argumentList):
+		} else {
+			messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+		}
+		return true;
+	}
+	
+	private boolean handleBuiltInType(final Type nearestEnclosingMegaType, final Token ctxGetStart) {
+		final BuiltInType classObjectType = (BuiltInType) messageSend_objectType_;
+		final StaticScope classScope = null == nearestEnclosingMegaType? null: nearestEnclosingMegaType.enclosedScope();
+		final TemplateInstantiationInfo templateInstantiationInfo = null == classScope? null: classScope.templateInstantiationInfo();
+		final ActualOrFormalParameterList argumentList = null != messageSend_message_ && null != messageSend_message_.argumentList()?
+					messageSend_message_.argumentList().mapTemplateParameters(templateInstantiationInfo):
+					null;
+		messageSend_methodDeclaration_ = null != classObjectType && null != classObjectType.enclosedScope()?
+					classObjectType.enclosedScope().lookupMethodDeclarationRecursive(messageSend_message_.selectorName(), argumentList, false):
+					null;
+		if (null == messageSend_methodDeclaration_) {
+			// If we're inside of a template, many argument types won't match.
+			// Try anyhow and see if we can find something.
+			messageSend_methodDeclaration_ = null != classObjectType && null != classObjectType.enclosedScope()?
+						classObjectType.enclosedScope().lookupMethodDeclarationRecursive(messageSend_message_.selectorName(), argumentList, true):
 						null;
-			if (null == methodSignature) {
-				// Try again, ignoring type of this (e.g., for Interface types)
-				methodSignature = null != classObjectType?
-						classObjectType.lookupMethodSignatureWithConversionIgnoringParameter(methodSelectorName, argumentList, "this"):
-						null;
-				if (null == methodSignature) {
-					// Mainly for error recovery (bad argument to method / method not declared)
-					if (argumentList.isntError() && false == cutItSomeSlack) {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
-								"Script `",
-								methodSelectorName + ((ActualArgumentList)argumentList).selflessGetText(),
-								"' not declared in Interface `",
-								classObjectType.name() + "'.");
-					}
-				} else {
-					isOKMethodSignature = true;
+			if (null == messageSend_methodDeclaration_) {
+				// Mainly for error recovery (bad argument to method / method not declared)
+				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `", messageSend_message_.getText(),
+						"' not declared in class `", classObjectType.name() + "'.");
+				return false;
+			} else {
+				messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+			}
+		} else {
+			messageSend_methodSignature_ = messageSend_methodDeclaration_.signature();
+		}
+		return true;
+	}
+	
+	private void handleInterface(final Token ctxGetStart, final boolean cutItSomeSlack) {
+		final InterfaceType classObjectType = (InterfaceType) messageSend_objectType_;
+		final ActualOrFormalParameterList argumentList = messageSend_message_.argumentList();
+		final String methodSelectorName = messageSend_message_.selectorName();
+		messageSend_methodSignature_ = null != classObjectType?
+					classObjectType.lookupMethodSignature(methodSelectorName, argumentList):
+					null;
+		if (null == messageSend_methodSignature_) {
+			// Try again, ignoring type of this (e.g., for Interface types)
+			messageSend_methodSignature_ = null != classObjectType?
+					classObjectType.lookupMethodSignatureWithConversionIgnoringParameter(methodSelectorName, argumentList, "this"):
+					null;
+			if (null == messageSend_methodSignature_) {
+				// Mainly for error recovery (bad argument to method / method not declared)
+				if (argumentList.isntError() && false == cutItSomeSlack) {
+					errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart,
+							"Script `",
+							methodSelectorName + ((ActualArgumentList)argumentList).selflessGetText(),
+							"' not declared in Interface `",
+							classObjectType.name() + "'.");
 				}
 			} else {
-				isOKMethodSignature = true;
+				messageSend_isOKMethodSignature_ = true;
 			}
-		} else if (objectType.name().endsWith("_$array") && objectType instanceof ArrayType) {
-			// This is part of the endeavor to add method invocations to
-			// naked array object appearances (e.g., size())
-			if (message.selectorName().equals("size")) {
-				methodSignature = new MethodSignature(message.selectorName(), 
-						StaticScope.globalScope().lookupTypeDeclaration("int"),
-						AccessQualifier.PublicAccess, message.token(), false);
-				methodSignature.setHasConstModifier(true);
-			} else if (message.selectorName().equals("at")) {
-				methodSignature = new MethodSignature(message.selectorName(), 
-						message.returnType(),
-						AccessQualifier.PublicAccess, message.token(), false);
-				methodSignature.setHasConstModifier(true);
-			} else if (message.selectorName().equals("atPut")) {
-				methodSignature = new MethodSignature(message.selectorName(), 
-						StaticScope.globalScope().lookupTypeDeclaration("void"),
-						AccessQualifier.PublicAccess, message.token(), false);
-				methodSignature.setHasConstModifier(false);
-			}
-			isOKMethodSignature = true;
+		} else {
+			messageSend_isOKMethodSignature_ = true;
+		}
+	}
+	
+	private void handleArrays() {
+		// This is part of the endeavor to add method invocations to
+		// naked array object appearances (e.g., size())
+		if (messageSend_message_.selectorName().equals("size")) {
+			messageSend_methodSignature_ = new MethodSignature(messageSend_message_.selectorName(), 
+					StaticScope.globalScope().lookupTypeDeclaration("int"),
+					AccessQualifier.PublicAccess, messageSend_message_.token(), false);
+			messageSend_methodSignature_.setHasConstModifier(true);
+		} else if (messageSend_message_.selectorName().equals("at")) {
+			messageSend_methodSignature_ = new MethodSignature(messageSend_message_.selectorName(), 
+					messageSend_message_.returnType(),
+					AccessQualifier.PublicAccess, messageSend_message_.token(), false);
+			messageSend_methodSignature_.setHasConstModifier(true);
+		} else if (messageSend_message_.selectorName().equals("atPut")) {
+			messageSend_methodSignature_ = new MethodSignature(messageSend_message_.selectorName(), 
+					StaticScope.globalScope().lookupTypeDeclaration("void"),
+					AccessQualifier.PublicAccess, messageSend_message_.token(), false);
+			messageSend_methodSignature_.setHasConstModifier(false);
+		}
+		messageSend_isOKMethodSignature_ = true;
+	}
+	
+	private void doFinalErrorChecks(final Token ctxGetStart, final Type returnType, final boolean cutItSomeSlack) {
+		if (messageSend_objectType_.name().equals(messageSend_message_.selectorName())) {
+			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Cannot 'call' constructor of ", messageSend_objectType_.name(), ". Use 'new' instead.", "");
 		}
 		
-		Type returnType = this.processReturnType(ctxGetStart, object, objectType, message);
+		assert (null != messageSend_message_);	// just assuming...
+		final String methodSelectorName = messageSend_message_.selectorName();
 		
-		if (null != returnType && returnType instanceof TemplateParameterType) {
-			// Is a template type. Change the return type into a bona fide type here
-			final StaticScope objectScope = objectType.enclosedScope();
-			final TemplateInstantiationInfo newTemplateInstantiationInfo = objectScope.templateInstantiationInfo();
-			returnType = newTemplateInstantiationInfo.classSubstitionForTemplateTypeNamed(returnType.name());
-		}
-		
-		if (objectType.name().equals(message.selectorName())) {
-			errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Cannot 'call' constructor of ", objectType.name(), ". Use 'new' instead.", "");
-		}
-		
-		assert (null != message);	// just assuming...
-		final String methodSelectorName = message.selectorName();
-		
-		if (null != methodDeclaration) {
-			final List<String> invalidMethodSelectors = message.validInRunningEnviroment(methodDeclaration);
+		if (null != messageSend_methodDeclaration_) {
+			final List<String> invalidMethodSelectors = messageSend_message_.validInRunningEnviroment(messageSend_methodDeclaration_);
 			if (0 < invalidMethodSelectors.size()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "The parameters to script `",
-						methodSelectorName + message.argumentList().selflessGetText(),
+						methodSelectorName + messageSend_message_.argumentList().selflessGetText(),
 						"' have scripts that are unavailable outside this Context, ",
 						"though some formal parameters of " + methodSelectorName +
 						" presume they are available (they are likely Role scripts):");
@@ -1377,24 +1430,21 @@ public class Pass2Listener extends Pass1Listener {
 							"\t", badMethod, "", "");
 				}
 			}
-		} else if (null == methodDeclaration && false == isOKMethodSignature && false == cutItSomeSlack) {
-			if (message.argumentList().isntError()) {
+		} else if (null == messageSend_methodDeclaration_ && false == messageSend_isOKMethodSignature_ && false == cutItSomeSlack) {
+			if (messageSend_message_.argumentList().isntError()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, ctxGetStart, "Script `",
-						methodSelectorName + message.argumentList().selflessGetText(),
+						methodSelectorName + messageSend_message_.argumentList().selflessGetText(),
 						"' not declared in class ", "classname (dubious error — see other messages)");
 			}
 		}
 		
+		if (null == returnType) {
+			assert null != returnType;
+		}
+		
 		assert null != returnType;
-		assert null != object;
-		assert null != message;
-		
-		message.setReturnType(returnType);
-		
-		retval = messageSendGenerateCall(ctxGetStart, object, methodDeclaration,
-				message, returnType, methodSignature);
-		
-		return retval;
+		assert null != messageSend_object_;
+		assert null != messageSend_message_;
 	}
 	
 	@Override protected MethodDeclaration processReturnTypeLookupMethodDeclarationIn(final TypeDeclaration classDecl, final String methodSelectorName, final ActualOrFormalParameterList parameterList) {
@@ -2064,8 +2114,13 @@ public class Pass2Listener extends Pass1Listener {
 			newTemplateInstantiationInfo.setInterfaceType(currentTemplateInstantiationInfo.interfaceType());
 			newTemplateInstantiationInfo.setClassType(currentTemplateInstantiationInfo.classType());
 		
-			for (final String typeName: typeNameList) {
-				final Type templateParameterType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+			for (final String typeName: typeNameList) {	// GNU
+				Type templateParameterType = currentScope_.lookupTypeDeclarationRecursive(typeName);
+				if (null == templateParameterType) {
+					templateParameterType = new ErrorType();
+					errorHook5p2(ErrorIncidenceType.Fatal, type.token(),
+							"Undefined type in template parameter: ", typeName, ".", "");
+				} 
 				newTemplateInstantiationInfo.add(templateParameterType);
 			}
 			

@@ -187,7 +187,8 @@ public class TestRunner {
 		"scopeCheck1.k",
 		"math_round.k",
 		"DijkstraProcedural.k",
-		"DCIDijkstra1.k"
+		"DCIDijkstra1.k",
+		"noGraphicsSelfOrganization.k"
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",

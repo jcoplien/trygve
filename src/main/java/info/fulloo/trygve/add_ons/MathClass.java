@@ -96,6 +96,7 @@ public final class MathClass {
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
 			addSimpleStaticMethodDeclaration("random", null, null, doubleType);
+			addSimpleStaticMethodDeclaration("setSeed", asList("seed"), asList(intType), null);
 			addSimpleStaticMethodDeclaration("sqrt", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(intType), intType);
@@ -173,6 +174,23 @@ public final class MathClass {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", answer);
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTSetSeedCode extends RTMathCommon {
+		public RTSetSeedCode(StaticScope enclosingMethodScope) {
+			super("Math", "setSeed", asList("seed"), asList("int"), enclosingMethodScope, null);
+		}
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawElement = activationRecord.getObject("seed");
+			if (rawElement instanceof RTIntegerObject) {
+				final RTIntegerObject element = (RTIntegerObject)rawElement;
+				random_.setSeed(element.intValue());
+			} else {
+				assert false;
+			}
 			
 			return super.nextCode();
 		}

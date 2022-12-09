@@ -495,6 +495,11 @@ public abstract class Type implements ExpressionStackAPI
 						break;
 					}
 				}
+			} else if (name().equals("Object")) {
+				// Object is a base class of all types - even of BuiltInType, which
+				// for some strange reason do not pass the instanceof ClassType test..
+				// This is safe in just about any case, anyhow.
+				retval = true;
 			}
 			return retval;
 		}

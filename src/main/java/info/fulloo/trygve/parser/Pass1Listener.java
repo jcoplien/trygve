@@ -160,7 +160,6 @@ import info.fulloo.trygve.semantic_analysis.Program;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
 import info.fulloo.trygve.add_ons.SetClass;
-import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 
 
 
@@ -4489,7 +4488,6 @@ public class Pass1Listener extends Pass0Listener {
 			final ObjectDeclaration objDecl = (ObjectDeclaration)variablesToInitialize_.objectAtIndex(j);
 			      Type expressionType = initializationExpression.type();
 			final Type declarationType = objDecl.type();
-	
 
 			// MAP>>KEYS
 			boolean okForNow = false;
@@ -4512,8 +4510,13 @@ public class Pass1Listener extends Pass0Listener {
 				// New initialization association
 				objDecl.setInitialization(initialization);
 			} else if (expressionType == null) {
-				int k=0;
-				k++;
+				// This case represents an error condition. It is probably handled
+				// elsewhere, but some day we should test whether it really is.
+				// It is somehow related to subscripting syntax on at/atPut for List
+				// and Map types, where types match improperly. FIXME.
+				errorHook5p2(ErrorIncidenceType.Warning, objDecl.token(),
+						"Internal error with `",
+						objDecl.name(), "'. See other error messages. This may not be a real problem.", "");
 			} else if (expressionType.isntError() && declarationType.isntError() && initializationExpression.isntError()) {
 				errorHook5p2(ErrorIncidenceType.Fatal, objDecl.token(),
 						"Type mismatch in initialization of `",
@@ -4778,7 +4781,8 @@ public class Pass1Listener extends Pass0Listener {
 			object.setResultIsConsumed(true);
 			final Type objectType = object.type();
 			Declaration odecl = null;
-			if (objectType.isntError()) {
+
+			if (null != objectType && objectType.isntError()) {
 				odecl = objectType.enclosedScope().lookupObjectDeclarationRecursive(javaIdString);
 			}
 		
@@ -5143,6 +5147,16 @@ public class Pass1Listener extends Pass0Listener {
 								"' as though it were a static method of class `", objectType.name(), "'.");
 					}
 				}
+			} else if (null != classdecl && methodSelectorName.equals("assert")) {
+				// This is kind of a kludge. Assert is somehow special. We now need
+				// to call object.assert; we need to look in the base class Object
+				// to find it. Treating it as a special case seems strange and maybe
+				// we should see if there is a deeper problem here. FIXME
+				final ActualArgumentList actualArguments = new ActualArgumentList();
+				final BooleanConstant tf = new BooleanConstant(true);
+				actualArguments.addActualArgument(object);
+				actualArguments.addActualArgument(tf);
+				mdecl = classdecl.enclosedScope().lookupMethodDeclarationRecursive(methodSelectorName, actualArguments, false);
 			}
 											
 			if (null == mdecl) {
@@ -5916,72 +5930,9 @@ public class Pass1Listener extends Pass0Listener {
 						"' cannot be played by object of type `", rhsType.name(), "':", "");
 				this.reportMismatchesWith(token, (RoleType)lhsType, rhsType);
 			}
-		} else if (lhs instanceof MessageExpression && lhs.name().equals("at")) {
+		} else if (lhs instanceof MessageExpression && lhs.name().equals("at") && operator.equals("=")) {
 			// See if LHS has at atPut
-			boolean found = false;
-			Expression retval = null;
-			final MessageExpression atExpr = (MessageExpression)lhs;
-			final MethodDeclaration atPut = atExpr.objectExpression().type().enclosedScope().lookupMethodDeclaration("atPut", null, true);
-			if (atExpr.objectExpression().type().name().startsWith("List<") && null != atPut) {
-				// There IS an atPut
-				final ActualArgumentList paramList = new ActualArgumentList();
-				final Expression self = (Expression)atExpr.message().argumentList().argumentAtPosition(0);
-				final Expression indexExpr = (Expression)atExpr.message().argumentList().argumentAtPosition(1);
-				paramList.addFirstActualParameter(self);
-				//paramList.addActualArgument(self);
-				self.setResultIsConsumed(true);
-				paramList.addActualArgument(indexExpr);
-				indexExpr.setResultIsConsumed(true);
-				paramList.addActualArgument(rhs);
-				rhs.setResultIsConsumed(true);
-				
-				if (indexExpr.type().name().equals("int") == false) {
-					errorHook5p2(ErrorIncidenceType.Fatal, token,
-							"Index must evaluate to an int.", "", "", "");
-					retval = new ErrorExpression(indexExpr);
-					found = true;		// a constructive lie
-				} else {
-					MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-					if (lhs.enclosingMegaType() instanceof ContextType) {
-						callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
-					} else if (lhs.enclosingMegaType() instanceof ClassType) {
-						callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
-					} else if (lhs.enclosingMegaType() instanceof RoleType) {
-						callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
-					} else {
-						// cheating...
-						callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
-					}
-					
-					final Message message = new Message("atPut",
-							paramList,
-							token,
-							lhs.enclosingMegaType());
-					
-					retval = new MessageExpression(
-							self,
-							message,
-							rhs.type(),
-							token,
-							false, /*isStatic*/
-							callerEnvClass,
-							MethodInvocationEnvironmentClass.ClassEnvironment,
-							true /*isPolymorphic*/ );
-					
-					found = true;
-				}
-			}
-			if (found) {
-				return retval;
-			} else {
-				if ((lhs instanceof IdentifierExpression) == false &&
-						   (lhs instanceof QualifiedIdentifierExpression) == false &&
-						   lhs.isntError() && rhs.isntError()) {
-					errorHook5p2(ErrorIncidenceType.Fatal, token,
-							"Can assign only to an identifier, qualified identifier, or vector element.",
-							"", "", "");
-				}
-			}
+			return processTemplateAtPutAssignment(token, lhs, rhs);
 		}
 		
 		rhs.setResultIsConsumed(true);
@@ -5989,6 +5940,127 @@ public class Pass1Listener extends Pass0Listener {
 		final AssignmentExpression retval = new AssignmentExpression(lhs, operator, rhs, token, this);
 		checkForAssignmentViolatingConstness(retval, ctx.getStart());
 		
+		return retval;
+	}
+	
+	private Expression processTemplateAtPutAssignment(final Token token, final Expression lhs, final Expression rhs) {
+		boolean found = false;
+		Expression retval = null;
+		final MessageExpression atExpr = (MessageExpression)lhs;
+		final MethodDeclaration atPut = atExpr.objectExpression().type().enclosedScope().lookupMethodDeclaration("atPut", null, true);
+		if (atExpr.objectExpression().type().name().startsWith("List<") && null != atPut) {
+			// There IS an atPut
+			final ActualArgumentList paramList = new ActualArgumentList();
+			final Expression self = (Expression)atExpr.message().argumentList().argumentAtPosition(0);
+			final Expression indexExpr = (Expression)atExpr.message().argumentList().argumentAtPosition(1);
+			paramList.addFirstActualParameter(self);
+			self.setResultIsConsumed(true);
+			paramList.addActualArgument(indexExpr);
+			indexExpr.setResultIsConsumed(true);
+			paramList.addActualArgument(rhs);
+			rhs.setResultIsConsumed(true);
+			
+			// Checking the assignment for type compatibility is done elsewhere.
+			// Here, we should make sure the index is of the right type. Only
+			// ints are allowed for lists.
+			
+			if (indexExpr.type().name().equals("int") == false) {
+				errorHook5p2(ErrorIncidenceType.Fatal, token,
+						"Index must evaluate to an int.", "", "", "");
+				retval = new ErrorExpression(indexExpr);
+				found = true;		// a constructive lie
+			} else {
+				MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				if (lhs.enclosingMegaType() instanceof ContextType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+				} else if (lhs.enclosingMegaType() instanceof ClassType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				} else if (lhs.enclosingMegaType() instanceof RoleType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+				} else {
+					// cheating...
+					callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
+				}
+				
+				final Message message = new Message("atPut",
+						paramList,
+						token,
+						lhs.enclosingMegaType());
+				
+				retval = new MessageExpression(
+						self,
+						message,
+						rhs.type(),
+						token,
+						false, /*isStatic*/
+						callerEnvClass,
+						MethodInvocationEnvironmentClass.ClassEnvironment,
+						true /*isPolymorphic*/ );
+				
+				found = true;
+			}
+		} else if (atExpr.objectExpression().type().name().startsWith("Map<") && null != atPut) {
+			// There IS an atPut
+			final ActualArgumentList paramList = new ActualArgumentList();
+			final Expression self = (Expression)atExpr.message().argumentList().argumentAtPosition(0);
+			final Expression indexExpr = (Expression)atExpr.message().argumentList().argumentAtPosition(1);
+			paramList.addFirstActualParameter(self);
+			self.setResultIsConsumed(true);
+			paramList.addActualArgument(indexExpr);
+			indexExpr.setResultIsConsumed(true);
+			paramList.addActualArgument(rhs);
+			rhs.setResultIsConsumed(true);
+			
+			// What is the type of the first type parameter to the map?
+			// We already check that in Pass2Listener.makeSubscriptExpression
+			// Here, check the second subscript of atPut (the return value of at)
+			
+			if (atExpr.type().canBeConvertedFrom(rhs.type()) == false) {
+				errorHook5p2(ErrorIncidenceType.Fatal, token,
+						"Right-hand side of assignment to `", lhs.name(),
+						"´ must evaluate to a ", atExpr.type().name());
+				retval = new ErrorExpression(indexExpr);
+				found = true;		// a constructive lie
+			} else {
+				MethodInvocationEnvironmentClass callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				if (lhs.enclosingMegaType() instanceof ContextType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.ContextEnvironment;
+				} else if (lhs.enclosingMegaType() instanceof ClassType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.ClassEnvironment;
+				} else if (lhs.enclosingMegaType() instanceof RoleType) {
+					callerEnvClass = MethodInvocationEnvironmentClass.RoleEnvironment;
+				} else {
+					// cheating...
+					callerEnvClass = MethodInvocationEnvironmentClass.GlobalEnvironment;
+				}
+				
+				final Message message = new Message("atPut",
+						paramList,
+						token,
+						lhs.enclosingMegaType());
+				
+				retval = new MessageExpression(
+						self,
+						message,
+						rhs.type(),
+						token,
+						false, /*isStatic*/
+						callerEnvClass,
+						MethodInvocationEnvironmentClass.ClassEnvironment,
+						true /*isPolymorphic*/ );
+				
+				found = true;
+			}
+		}
+		if (!found) {
+			if ((lhs instanceof IdentifierExpression) == false &&
+					   (lhs instanceof QualifiedIdentifierExpression) == false &&
+					   lhs.isntError() && rhs.isntError()) {
+				errorHook5p2(ErrorIncidenceType.Fatal, token,
+						"Can assign only to an identifier, qualified identifier, or vector element.",
+						"", "", "");
+			}
+		}
 		return retval;
 	}
 	

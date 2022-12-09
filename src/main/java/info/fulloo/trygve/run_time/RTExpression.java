@@ -804,7 +804,10 @@ public abstract class RTExpression extends RTCode {
 			token_ = messageExpr.token();
 			lineNumber_ = messageExpr.lineNumber();
 			MethodDeclaration methodDecl = this.staticLookupMethodDecl(messageExpr);
-			if (null == methodDecl) {	// DEBUG
+			if (null == methodDecl) {
+				// This is probably redundant. If it is null above, it is probably
+				// null here. A null return is a programmer error - and we handle
+				// that below. This redundancy is stupid but doesn't hurt
 				final StaticScope thisDeclaringScope = messageExpr.type().enclosedScope();
 				methodDecl = thisDeclaringScope.lookupMethodDeclaration(name, actualParameters_, false);
 			}
@@ -1512,7 +1515,7 @@ public abstract class RTExpression extends RTCode {
 					if (null == value) {
 						ErrorLogger.error(ErrorIncidenceType.Internal, token_,
 								"RUNTIME: Unknown run-time error around source line ",
-								Integer.toString(token_.getLine()),
+								Integer.toString(null == token_? -1: token_.getLine()),
 								" associated with `", idName_,
 								"'. Check other error messages.", "");
 						return new RTHalt();

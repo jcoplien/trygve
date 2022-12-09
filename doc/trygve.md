@@ -2337,8 +2337,8 @@ trygve 1.0
 | **Modifier&nbsp;and&nbsp;Type** | **Method and Description** |
 | --- | --- |
 | `void` | `add(T element)`<br><br>Append `element` to the end of the list |
-| `T` | `get(int theIndex)`<br><br>Get the List element at the indicated (zero-based) index |
-| `void` | `set(int theIndex, T value)`<br><br>Set the element at the indicated (zero-based) position of the List to `value` |
+| `T` | `get(int theIndex)`<br><br>Get the List element at the indicated (zero-based) index.  Can also be invoked as `object.at(K key)` or syntactically as `object[key]` |
+| `void` | `set(int theIndex, T value)`<br><br>Set the element at the indicated (zero-based) position of the List to `value`.  Can also be invoked as `object.atPut(int theIndex, V value)` (as an R-value) or syntactically as `object[theIndex] = value` (as an L-value). |
 | `int` | `indexOf(T element)`<br><br>Get the (zero-based) index of the first appearance of the indicated element in the List |
 | `boolean` | `contains(T element)`<br><br>Return true or false according to whether the List contains `element`, or not, respectively |
 | `int` | `size()`<br><br>The number of elements in the List |
@@ -2418,8 +2418,8 @@ trygve 1.4.6
 
 | **Modifier&nbsp;and&nbsp;Type** | **Method and Description** |
 | --- | --- |
-| `void` | `put(K key, V value)`<br><br>Associates the specified value with the specified key in this map |
-| `V` | `get(K key)`<br><br>Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key. |
+| `void` | `put(K key, V value)`<br><br>Associates the specified value with the specified key in this map. Can also be invoked as `object.atPut(K key, V value)` (as an R-value) or syntactically as `object[key] = value` (as an L-value). |
+| `V` | `get(K key)`<br><br>Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key. Can also be invoked as `object.at(K key)` or as `object[key]`|
 | `boolean` | `containsKey(K key)`<br><br>Returns true if this map contains a mapping for the specified key. |
 | `boolean` | `containsValue(V value)`<br><br>Returns true if this map maps one or more keys to the specified value. |
 | `int` | `size()`<br><br>Returns the number of key-value mappings in this map. |
@@ -2454,6 +2454,7 @@ trygve 1.0
 | **Modifier&nbsp;and&nbsp;Type&nbsp;&nbsp;&nbsp;&nsbp;&nbsp;&nbsp;** | **Method and Description** |
 | --- | --- |
 | `static double` | `random()`<br><br>Returns a double value with a positive sign, greater than or equal to 0.0 and less than 1.0. |
+| `static void` | `setSeed(int seed)`<br><br>Sets a seed for the randomizer. Useful to get reproducible results across runs that use `random`. |
 | `static double` | `sqrt(double theIndex)`<br><br>Returns the correctly rounded positive square root of a double value. |
 | `static {double\|int}` | `abs({double\|int})`<br><br>Returns the absolute value of the argument, which may be an `int` or a `double`. The return type is the same as that of the argument expression. |
 | `static double` | `max(double a, double b)`<br><br>Returns the maximum (more positive) of the two arguments as a `double`. NOTE: it returns the actual object `a` or `b`, rather than a copy. |
