@@ -2337,8 +2337,8 @@ trygve 1.0
 | **Modifier&nbsp;and&nbsp;Type** | **Method and Description** |
 | --- | --- |
 | `void` | `add(T element)`<br><br>Append `element` to the end of the list |
-| `T` | `get(int theIndex)`<br><br>Get the List element at the indicated (zero-based) index.  Can also be invoked as `object.at(K key)` or syntactically as `object[key]` |
-| `void` | `set(int theIndex, T value)`<br><br>Set the element at the indicated (zero-based) position of the List to `value`.  Can also be invoked as `object.atPut(int theIndex, V value)` (as an R-value) or syntactically as `object[theIndex] = value` (as an L-value). |
+| `T` | `get(int theIndex)`<br><br>Get the List element at the indicated (zero-based) index.  Can also be invoked as `object.at(K key)` or syntactically as `object[key]`, the latter either as an l-value or an r-value. |
+| `void` | `set(int theIndex, T value)`<br><br>Set the element at the indicated (zero-based) position of the List to `value`.  Can also be invoked as `object.atPut(int theIndex, V value)` or syntactically as `object[theIndex] = value` (as an l-value). |
 | `int` | `indexOf(T element)`<br><br>Get the (zero-based) index of the first appearance of the indicated element in the List |
 | `boolean` | `contains(T element)`<br><br>Return true or false according to whether the List contains `element`, or not, respectively |
 | `int` | `size()`<br><br>The number of elements in the List |
@@ -2418,8 +2418,8 @@ trygve 1.4.6
 
 | **Modifier&nbsp;and&nbsp;Type** | **Method and Description** |
 | --- | --- |
-| `void` | `put(K key, V value)`<br><br>Associates the specified value with the specified key in this map. Can also be invoked as `object.atPut(K key, V value)` (as an R-value) or syntactically as `object[key] = value` (as an L-value). |
-| `V` | `get(K key)`<br><br>Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key. Can also be invoked as `object.at(K key)` or as `object[key]`|
+| `void` | `put(K key, V value)`<br><br>Associates the specified value with the specified key in this map. Can also be invoked as `object.atPut(K key, V value)` or syntactically as `object[key] = value` (used as an l-value). |
+| `V` | `get(K key)`<br><br>Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key. Can also be invoked as `object.at(K key)` or as `object[key]`, the latter either as an l-value or an r-value. |
 | `boolean` | `containsKey(K key)`<br><br>Returns true if this map contains a mapping for the specified key. |
 | `boolean` | `containsValue(V value)`<br><br>Returns true if this map maps one or more keys to the specified value. |
 | `int` | `size()`<br><br>Returns the number of key-value mappings in this map. |

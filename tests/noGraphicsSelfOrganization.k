@@ -339,10 +339,12 @@ System.out.println(neighbors["A"][0].name())
 		double d0 = p.center().distanceTo(neighborsi[0].center())
 		double d1 = p.center().distanceTo(neighborsi[1].center())
 		System.out.print(d0).print(", ").print(d1).print(", ").println(Math.abs(d0 - d1))
-		d0.assert(Math.abs(d0 - d1) < 0.1)
+		d0.assert(Math.abs(d0 - d1) < 0.1, "delta assertion")
 	}
 
 	System.out.println("exit")
+
+	display.assert (false, "assertion certain to fail")
 }
 
 /* GOLD
@@ -400,4 +402,7 @@ Joe DiMaggio
 0.11028496951577275, 0.1970454938177117, 0.08676052430193894
 0.32224948708503603, 0.403809425515636, 0.08155993843059994
 exit
+
+Line 347: Assertion failed: assertion certain to fail
+	In script `Object.assert'
 */
