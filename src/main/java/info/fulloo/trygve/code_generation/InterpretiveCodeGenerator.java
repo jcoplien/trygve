@@ -2032,8 +2032,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				rTExpr = this.compileExpressionForMethodOfTypeInScope(returnExpression, methodDeclaration, rtTypeDeclaration, scope);
 				if (null == rTExpr) {
 					assert null != rTExpr;
-				}
-				if (returnExpression.resultIsConsumed()) {
+				} else if (returnExpression.resultIsConsumed()) {
 					if (rTExpr instanceof List) {
 						for (final RTCode enclosedCode : rTExpr) {
 							if (enclosedCode instanceof RTExpression) {

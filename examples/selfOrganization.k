@@ -93,14 +93,14 @@ context Game {
 	}
 
 	role GameData {
-		public double DELTA();
+		public double DELTA() { return 0.10 }		// distance convergeance criterion
+		public int INERTIA() { return 4 }			// how many steps from current to new position
 		public List<Player> players();
 		public int moveCount();
 		public void setIsMoving(Player p, boolean b);
 		public boolean isMoving(Player p);
 		public List<Player> watchersOf(Player p);
 	} requires {
-		double DELTA();
 		List<Player> players();
 		int moveCount();
 		void setIsMoving(Player p, boolean b);
@@ -116,8 +116,7 @@ context Game {
 			for (Player p : GameData.players) {
 				List<Player> neighborList = Neighbors.of(p)
 				setColor(p.color())
-				Player neighbor1 = neighborList[0]
-				Player neighbor2 = neighborList[1]
+				Player neighbor1 = neighborList[0], neighbor2 = neighborList[1]
 				drawLine(floor(p.x()*400), floor(p.y()*400),
 						floor(neighbor1.x()*400), floor(neighbor1.y()*400))
 				drawLine(floor(p.x()*400), floor(p.y()*400),
@@ -127,9 +126,8 @@ context Game {
 		public void draw() {
 			for (Player p : GameData.players) {
 				double x = p.x() * 400, y = p.y() * 400
-				DPoint c = new DPoint(x, y)
 				setColor(p.color())
-				oval(c, PlayerSize())
+				oval(new DPoint(x, y), PlayerSize())
 			}
 			drawConnections()
 		}
@@ -160,21 +158,20 @@ context Game {
 		}
 
 		private boolean moveToGetUnstuck() {
-			boolean iMoved
-			if (PlayerMoveCount.moveCountForPlayer > 30) {
+			boolean iMoved = if (PlayerMoveCount.moveCountForPlayer > 30) {
 				// move it to the center and get out - get it unstuck
 				PlayerMoveCount.resetMoveCountForPlayer
 				DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
 				moveTo(nonoverlapping(newCenter))
-				iMoved = true
+				true
 			} else {
-				iMoved = false
+				false
 			}
 			return iMoved
 		}
 
 		private void paintDisplay() {
-			if (GameData.moveCount() % 5 == 0) {
+			if (GameData.moveCount() % 2 == 0) {
 				Display.clear
 				Display.draw
 				Display.repaint
@@ -203,14 +200,11 @@ context Game {
 		}
 
 		private void moveBetweenNeighbors(Player p1, Player p2) {
-			int INERTIA  =  4
+			int INERTIA  =  GameData.INERTIA()
 			double x = suitableNewXFixingYAt(y(), p1, p2)
-
 			DPoint newXPoint = new DPoint(x, y())
 			double y = suitableNewYFixingXAt(x(), p1, p2)
-
-			DPoint newYPoint = new DPoint(x(), y)
-			DPoint midpoint
+			DPoint newYPoint = new DPoint(x(), y), midpoint
 			if (center().distanceTo(newXPoint) < center().distanceTo(newYPoint)) {
 				midpoint = new DPoint((newXPoint.x() + ((INERTIA-1)*x())) / INERTIA,
 												(newXPoint.y() + ((INERTIA-1)*y()))  / INERTIA)
@@ -238,15 +232,16 @@ context Game {
 		private DPoint nonoverlapping(DPoint xy) {
 			boolean moved = false
 			moveTo(xy)
+			double intersectRadius = Display.PlayerSize()/100
 			do {
 				moved = false
 				for (Player p: GameData.players()) {
 					if (p is not this) {
 						double distanceToPlayer = distanceTo(p)
-						if (distanceToPlayer < Display.PlayerSize()/400) {
+						if (distanceToPlayer < intersectRadius/4) {
 							// Overlap
-							double xdist = Math.max(x() - p.x(), Display.PlayerSize()/100),
-										ydist = Math.max(y() - p.y(), Display.PlayerSize()/100)
+							double xdist = Math.max(x() - p.x(), intersectRadius),
+										ydist = Math.max(y() - p.y(), intersectRadius)
 							double newX = x() + xdist + Math.random()/400
 							double newY = y() + ydist + Math.random()/400
 							moveTo( new DPoint(newX, newY) )
@@ -284,14 +279,11 @@ context Game {
 		watchers_ = new Map<String, List<Player>>()
 		for (Player p : players_) {
 			String playerName = p.name
-			watchers_.atPut(playerName, new List<Player>())
-			for (Player p2 : neighbors_.at(playerName)) {
-				if (p2.name == p.name) watchers_[playerName].add(p2)
-			}
+			watchers_[playerName] = new List<Player>()
+			for (Player p2 : players_) if (p2.name == playerName) watchers_[playerName].add(p2)
 		}
 	}
 
-	public double DELTA() { return 0.10 }
 	public int moveCount() { return moveCount_++ }
 	public boolean isMoving(Player p) { return isMoving_[p.name] }
 	public void setIsMoving(Player p, boolean tf) { isMoving_.atPut(p.name(), tf) }
@@ -345,7 +337,6 @@ context Game {
 	// Test the distances
 	for (Player p: players) {
 		List<Player> neighborsi = neighbors[p.name]
-		Player q = neighborsi[0]
 		double d0 = p.center().distanceTo(neighborsi[0].center())
 		double d1 = p.center().distanceTo(neighborsi[1].center())
 		d0.assert(Math.abs(d0 - d1) < 0.1)
