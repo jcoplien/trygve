@@ -116,11 +116,10 @@ context Game {
 			for (Player p : GameData.players) {
 				List<Player> neighborList = Neighbors.of(p)
 				setColor(p.color())
-				Player neighbor1 = neighborList[0], neighbor2 = neighborList[1]
-				drawLine(floor(p.x()*400), floor(p.y()*400),
-						floor(neighbor1.x()*400), floor(neighbor1.y()*400))
-				drawLine(floor(p.x()*400), floor(p.y()*400),
-						floor(neighbor2.x()*400), floor(neighbor2.y()*400))
+				for(Player neighbor : neighborList) {
+					drawLine(floor(p.x()*400), floor(p.y()*400),
+						floor(neighbor.x()*400), floor(neighbor.y()*400))
+				}
 			}
 		}
 		public void draw() {
@@ -162,7 +161,7 @@ context Game {
 				// move it to the center and get out - get it unstuck
 				PlayerMoveCount.resetMoveCountForPlayer
 				DPoint newCenter = new DPoint(0.7 + (Math.random() - 0.5)/2, 0.5 + (Math.random() - 0.5)/2)
-				moveTo(nonoverlapping(newCenter))
+				moveTo(nonOverlappingPointNear(newCenter))
 				true
 			} else {
 				false
@@ -171,12 +170,9 @@ context Game {
 		}
 
 		private void paintDisplay() {
-			if (GameData.moveCount() % 2 == 0) {
 				Display.clear
 				Display.draw
 				Display.repaint
-				//Thread.sleep(50)
-			}
 		}
 
 		private boolean checkAndAdjustPosition() {
@@ -186,7 +182,7 @@ context Game {
 			double distance1 = distanceTo(player1), distance2 = distanceTo(player2);
 			if (Math.abs(distance1 - distance2) > GameData.DELTA) {
 				PlayerMoveCount.incrementCountForPlayer
-				moveBetweenNeighbors(player1, player2)
+				moveToSameDistanceFromNeighbors(player1, player2)
 				somethingMoved = true
 
 				// tail recursive
@@ -199,7 +195,7 @@ context Game {
 			return somethingMoved
 		}
 
-		private void moveBetweenNeighbors(Player p1, Player p2) {
+		private void moveToSameDistanceFromNeighbors(Player p1, Player p2) {
 			int INERTIA  =  GameData.INERTIA()
 			double x = suitableNewXFixingYAt(y(), p1, p2)
 			DPoint newXPoint = new DPoint(x, y())
@@ -207,12 +203,12 @@ context Game {
 			DPoint newYPoint = new DPoint(x(), y), midpoint
 			if (center().distanceTo(newXPoint) < center().distanceTo(newYPoint)) {
 				midpoint = new DPoint((newXPoint.x() + ((INERTIA-1)*x())) / INERTIA,
-												(newXPoint.y() + ((INERTIA-1)*y()))  / INERTIA)
+												(newXPoint.y() + ((INERTIA-1)*y())) / INERTIA)
 			} else if (center().distanceTo(newYPoint) > 0) {
 				midpoint = new DPoint((newYPoint.x() + ((INERTIA-1)*x())) / INERTIA,
 												(newYPoint.y() + ((INERTIA-1)*y())) / INERTIA)
 			}
-			moveTo(nonoverlapping(midpoint));
+			moveTo(nonOverlappingPointNear(midpoint));
 		}
 
 		private double suitableNewXFixingYAt(double y, Player p1, Player p2) {
@@ -229,7 +225,7 @@ context Game {
 			return retval
 		}
 
-		private DPoint nonoverlapping(DPoint xy) {
+		private DPoint nonOverlappingPointNear(DPoint xy) {
 			boolean moved = false
 			moveTo(xy)
 			double intersectRadius = Display.PlayerSize()/100

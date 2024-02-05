@@ -317,7 +317,7 @@ public abstract class Type implements ExpressionStackAPI
 			boolean retval = false;
 			
 			if (t instanceof BuiltInType) {
-				return t.name().equals(name());
+				return t.name() == "Null" || t.name().equals(name());
 			}
 			
 			if (!(t instanceof ClassType) && !(t instanceof ErrorType) && !(t instanceof BuiltInType) &&

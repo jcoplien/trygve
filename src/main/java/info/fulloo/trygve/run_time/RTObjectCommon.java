@@ -653,7 +653,11 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 		}
 		
 		@Override public void decrementReferenceCount() {
-			super.decrementReferenceCount();
+			// The timing of this decrement is wrong. It has been removed
+			//     and the logic redistributed locally below. See appropriately
+			//     dated comments.
+			// super.decrementReferenceCount();  // removed 5 Feb 2024
+			
 			final RTContextInfo contextInfo = contextInfo();
 			if (0 == referenceCount()) {
 				// I'm outta here. Let all my RolePlayers know
@@ -661,6 +665,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 				unbindAllRolesAndStageProps();
 				cleanedUp_ = true;
 			} else if (1 == referenceCount() && this == RTExpression.lastExpressionResult()) {
+				super.decrementReferenceCount();  // added 5 Feb 2024
 				contextInfo.removeAllRoleAndStagePropPlayers();
 				unbindAllRolesAndStageProps();
 				RTExpression.setLastExpressionResult(new RTNullObject(), 0);
@@ -684,6 +689,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 				// what is going on with reference count for qualified
 				// identifiers that get pushed onto the evaluation stack
 				// FIXME.
+				super.decrementReferenceCount();  // added 5 Feb 2024
 				if (!cleanedUp_) {
 					// this is here as a safety valve to help keep
 					// running, even if the counts do get out of line.
@@ -1271,6 +1277,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 		--referenceCount_;
 	}
 	@Override public long referenceCount() {
+		assert referenceCount_ >= 0;
 		return referenceCount_;
 	}
 	
