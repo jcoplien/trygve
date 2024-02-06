@@ -689,7 +689,6 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInst
 				// what is going on with reference count for qualified
 				// identifiers that get pushed onto the evaluation stack
 				// FIXME.
-				super.decrementReferenceCount();  // added 5 Feb 2024
 				if (!cleanedUp_) {
 					// this is here as a safety valve to help keep
 					// running, even if the counts do get out of line.

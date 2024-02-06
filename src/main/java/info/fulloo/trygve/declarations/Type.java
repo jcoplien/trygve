@@ -337,7 +337,7 @@ public abstract class Type implements ExpressionStackAPI
 				retval = t.pathName().equals(pathName());
 				if (!retval) {
 					if (t.name().equals("Null")) {
-						retval = true;
+						retval = true; // Null can be converted to anything
 					} else if (null != isTemplate(this) && null != isTemplate(t)) {
 						// Messy, messy, messy
 						final String thisParameterName = isTemplate(this);
