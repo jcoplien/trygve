@@ -421,7 +421,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
     public void oslMsg() {
     	System.out.print("Trygve IDE, Version ");
     	System.out.print(Main.TRYGVE_VERSION);
-    	System.out.println(". Copyright (c)2023 James O. Coplien, jcoplien@gmail.com.");
+    	System.out.println(". Copyright (c)2024 James O. Coplien, jcoplien@gmail.com.");
     	System.out.println("Trygve IDE comes with ABSOLUTELY NO WARRANTY; for details click `show w'.");
     	System.out.println("This is free software, and you are welcome to redistribute it" +
     					" under certain conditions; click `show c' for details.");
