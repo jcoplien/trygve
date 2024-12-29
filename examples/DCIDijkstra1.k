@@ -75,14 +75,7 @@ context Dijkstra {
 		Object endNode();
 	}
 
-	role Node {
-		public List<Nameable> unvisitedNeighbors() {
-			List<Nameable> retval = new List<Nameable>()
-			for (Nameable n : Graph.pathsFromNode(this))
-				if (unvisiteds_.contains(n)) retval.add(n)
-			return retval
-		}
-	}
+	role Node {}
 
 	role Current {
 		public List<Nameable> unvisitedNeighbors() {
@@ -96,9 +89,8 @@ context Dijkstra {
 	}
 
 	role EndNode {
-		public List<Nameable> unvisitedNeighbors() {
-			return new List<Nameable>()
-		}
+	} requires {
+		String name()
 	}
 
 	role StartNode {
