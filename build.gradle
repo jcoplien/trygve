@@ -1,30 +1,53 @@
-apply plugin: 'java'
-apply plugin: 'application'
-
-// editor plugin dependencies
-apply plugin: 'idea'
-apply plugin: 'eclipse'
+plugins {
+    id 'antlr'
+    id 'application'
+}
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
-// define the main class to start
-mainClassName = "info.fulloo.trygve.editor.Main"
+dependencies {
+    antlr "org.antlr:antlr4:4.10"
+    implementation "org.antlr:antlr4-runtime:4.10"
+}
+
+// exclude antlr, we only need its runtime in the dist.
+configurations.implementation {
+    exclude group: "org.antlr", module: "antlr4"
+}
+
+generateGrammarSource {
+    outputDirectory = new File("${project.projectDir}/src/main/java/info/fulloo/trygve/parser")
+}
+
+application {
+    mainClass = "info.fulloo.trygve.editor.Main"
+
+    // enable assertions by default
+    applicationDefaultJvmArgs = ["-ea"]
+
+}
+
+build {
+    configure {
+        dependsOn generateGrammarSource
+    }
+}
+
+// make it executable
 jar {
-  manifest {
-    attributes 'Main-Class': 'info.fulloo.trygve.editor.Main'
-  }
+    manifest {
+        attributes(
+            'Main-Class': "info.fulloo.trygve.editor.Main"
+        )
+    }
+
+    // If needed, a fat jar (all dependencies in one file) can be made like this:
+    // from {
+    //    configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    //}
 }
-
-// enable assertions by default
-applicationDefaultJvmArgs = ["-ea"]
-
-// files that need to be compiled
-sourceSets.main.java.srcDirs  = [
-    'src/main/java',
-    'src/main/generated'
-]
 
 // default arguments for "gradlew run"
 run {
@@ -32,13 +55,13 @@ run {
 }
 
 // include files into the final distribution
-
 distZip {
     into(project.name) {
         from '.'
         include 'examples/*'
         include 'tests/*'
         include 'LICENSE'
+        include 'doc/*'
     }
 }
 
@@ -48,35 +71,6 @@ distTar {
         include 'examples/*'
         include 'tests/*'
         include 'LICENSE'
+        include 'doc/*'
     }
-}
-
-// add antlr to the final distribution
-dependencies {
-    compile files('lib/antlr-runtime-4.5.1.jar')
-}
-
-// invokes antlr to generate parser
-task antlr(type: Exec) {
-    workingDir 'src/main/java'
-
-    if (System.getProperty('os.name').toLowerCase().contains('windows') ||
-        System.getProperty('os.name').toLowerCase().contains('Windows') ) {
-        commandLine 'java',
-            '-Dline.separator=\n',
-            '-jar', "$rootProject.projectDir\\lib\\antlr-4.5.1-complete.jar",
-            '-o', "$rootProject.projectDir\\src\\main\\generated",
-            'info\\fulloo\\trygve\\parser\\Kant.g4'
-    } else {
-        commandLine 'java',
-            '-jar', "$rootProject.projectDir/lib/antlr-4.5.1-complete.jar",
-            '-o', "$rootProject.projectDir/src/main/generated",
-            'info/fulloo/trygve/parser/Kant.g4'
-    }
-}
-
-// make compilation faster
-compileJava {
-    options.fork = true
-    options.incremental = true
 }

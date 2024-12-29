@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,15 +25,18 @@ package info.fulloo.trygve.declarations;
 
 import info.fulloo.trygve.declarations.Declaration.ErrorDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
+import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.declarations.Type.VarargsType;
+import info.fulloo.trygve.error.ErrorLogger;
+import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.mylibrary.SimpleList;
 
 
-public class FormalParameterList extends ParameterListCommon implements ActualOrFormalParameterList {
+public class FormalParameterList extends ParameterListCommon {
 	public FormalParameterList() {
 		super(new SimpleList());
 	}
@@ -59,10 +62,10 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(this, pl, null, true, -1);
 	}
 	
-	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList pl1,
-			final ActualOrFormalParameterList pl2, final String paramToIgnore, final boolean conversionAllowed) {
-		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(pl1,
-				pl2, paramToIgnore, conversionAllowed, -1);
+	public static boolean alignsWithParameterListIgnoringParamNamed(final ActualOrFormalParameterList formals,
+			final ActualOrFormalParameterList actuals, final String paramToIgnore, final boolean conversionAllowed) {
+		return FormalParameterList.alignsWithParameterListIgnoringParamCommon(formals,
+				actuals, paramToIgnore, conversionAllowed, -1);
 	}
 	
 	public static boolean alignsWithParameterListIgnoringParamNamedWithRequiresCheck(final ActualOrFormalParameterList formals,
@@ -158,11 +161,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 				retval = false;
 			} else {
 				for (int i = 0; i < actualsCount; i++) {
-					final String pl1Name = formals.nameOfParameterAtPosition(i),
-							     pl2Name = actuals.nameOfParameterAtPosition(i);
-					if (null != pl2Name && null != paramToIgnore && pl2Name.equals(paramToIgnore)) {
-						continue;
-					}
+					final String pl1Name = formals.nameOfParameterAtPosition(i);
 					
 					// We really should be a bit more dutiful about knowing whether it's pl1 or
 					// pl2 we're checking. But it's almost always "this" and since it's a
@@ -293,6 +292,7 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 		return parameterAtPosition(i).name();
 	}
 	
+	/* Old, buggy, probably confused
 	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
 		// templateTypes can be null if we're processing a lookup in an actual template
 		final FormalParameterList retval = new FormalParameterList();
@@ -311,14 +311,69 @@ public class FormalParameterList extends ParameterListCommon implements ActualOr
 					// assert templateTypesSize > i - 1;
 				}
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
-						aParameter.name(), templateTypes.get(i - 1), aParameter.lineNumber());
+						aParameter.name(), templateTypes.get(i - 1), aParameter.token());
 				retval.addFormalParameter(substituteDecl);
 			} else if (null != typeOfParameter && typeOfParameter instanceof TemplateType && null != templateTypes) {
 				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
-						aParameter.name(), templateTypes.classType(), aParameter.lineNumber());
+						aParameter.name(), templateTypes.classType(), aParameter.token());
 				retval.addFormalParameter(substituteDecl);
 			} else {
 				retval.addFormalParameter(aParameter);
+			}
+		}
+		return retval;
+	}
+	*/
+	
+	private int indexOfPrimitiveParameterInFormalTemplateDecl(
+			final String primitiveTypeNameOfFormalParameter,
+			final TemplateInstantiationInfo templateTypes) {
+		final TemplateDeclaration templateDecl = templateTypes.templateDeclaration();
+		int j;
+		if (null != templateDecl) {
+			for (j = 0; j < templateDecl.typeParameters().size(); j++) {
+				if (templateDecl.typeParameters().get(j).name().equals(primitiveTypeNameOfFormalParameter)) {
+					return j;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
+		// templateTypes can be null if we're processing a lookup in an actual template
+		final FormalParameterList retval = new FormalParameterList();
+		final int templateTypesSize = null == templateTypes? 0: templateTypes.size();
+		for (int i = count() - 1; i >= 0; --i) {
+			final Declaration aFormalParameter = parameterAtPosition(i);
+			final Type typeOfFormalParameter = typeOfParameterAtPosition(i);
+			
+			// This method's scope has been been given a templateTypes
+			// list only if that scope corresponds to an instantiated
+			// class. We can get here for the lookup in the initial template,
+			// in which case templateTypes.size() == 0. 
+			if (null != typeOfFormalParameter &&
+					typeOfFormalParameter instanceof TemplateParameterType &&
+					templateTypesSize > 0) {
+				final String primitiveTypeNameOfFormalParameter = typeOfFormalParameter.name();
+				final int j = indexOfPrimitiveParameterInFormalTemplateDecl(primitiveTypeNameOfFormalParameter, templateTypes);
+				if (j < 0) {
+					ErrorLogger.error(ErrorIncidenceType.Fatal, aFormalParameter.token(), typeOfFormalParameter.name(), " ",
+							aFormalParameter.name(),  " has some kind of template instantiation typing issue.");
+					retval.addFormalParameter(new ErrorDeclaration("templatized parameter list item " +
+							typeOfFormalParameter.name() + " " + aFormalParameter.name()));
+				} else {
+					final Type substituteSimpleType = templateTypes.get(j);
+					final ObjectDeclaration substituteDecl = new ObjectDeclaration(
+							aFormalParameter.name(), substituteSimpleType, aFormalParameter.token());
+					retval.addFormalParameter(substituteDecl);
+				}
+			} else if (null != typeOfFormalParameter && typeOfFormalParameter instanceof TemplateType && null != templateTypes) {
+				final ObjectDeclaration substituteDecl = new ObjectDeclaration(
+						aFormalParameter.name(), templateTypes.classType(), aFormalParameter.token());
+				retval.addFormalParameter(substituteDecl);
+			} else {
+				retval.addFormalParameter(aFormalParameter);
 			}
 		}
 		return retval;

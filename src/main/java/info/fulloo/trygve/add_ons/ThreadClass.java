@@ -26,8 +26,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,13 +62,13 @@ public final class ThreadClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
 		final StaticScope methodScope = new StaticScope(threadType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, isStatic);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -86,7 +86,7 @@ public final class ThreadClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("Thread", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("Thread", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			threadType_ = new ClassType("Thread", newScope, null);
 			classDecl.setType(threadType_);

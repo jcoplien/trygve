@@ -29,8 +29,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,15 +64,15 @@ public final class PointClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", pointType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", pointType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(pointType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -90,7 +90,7 @@ public final class PointClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("Point", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("Point", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			pointType_ = new ClassType("Point", newScope, null);
 			classDecl.setType(pointType_);
@@ -105,8 +105,8 @@ public final class PointClass {
 			// These need to be coordinated only with what is in the postSetupInitialization
 			// method below.
 			for (final String attributeName : asList("x", "y")) {
-				final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, 0);
-				attributeDeclaration.setAccess(AccessQualifier.PublicAccess, pointType_.enclosedScope(), 0);
+				final ObjectDeclaration attributeDeclaration = new ObjectDeclaration(attributeName, intType, null);
+				attributeDeclaration.setAccess(AccessQualifier.PublicAccess, pointType_.enclosedScope(), null);
 				pointType_.enclosedScope().declareObject(attributeDeclaration, null);
 			}
 			
@@ -224,7 +224,7 @@ public final class PointClass {
 		}
 	}
 	
-	public static class RTPointObject extends RTObjectCommon implements RTObject {
+	public static class RTPointObject extends RTObjectCommon {
 		public RTPointObject(final Point point) {
 			super(InterpretiveCodeGenerator.scopeToRTTypeDeclaration(
 					StaticScope.globalScope().lookupTypeDeclaration("Point").enclosedScope()));

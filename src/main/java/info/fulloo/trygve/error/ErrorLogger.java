@@ -1,8 +1,10 @@
 package info.fulloo.trygve.error;
 
+import org.antlr.v4.runtime.Token;
+
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,16 +37,16 @@ public class ErrorLogger {
 		System.err.print(s4);
 		System.err.println();
 	}
-	public static void error(final ErrorIncidenceType errorType, final long lineNumber, final String s1, final String s2, final String s3, final String s4) {
+	public static void error(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
 		System.err.print("line ");
-		System.err.print(lineNumber);
+		System.err.print(null == token? 0: token.getLine());
 		System.err.print(": ");
 		ErrorLogger.error(errorType, s1, s2, s3, s4);
 	}
-	public static void error(final ErrorIncidenceType errorType, final long lineNumber, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	public static void error(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		updateCounts(errorType);
 		System.err.print("line ");
-		System.err.print(lineNumber);
+		System.err.print(null == token? 0: token.getLine());
 		System.err.print(": ");
 		System.err.print(s1);
 		System.err.print(s2);

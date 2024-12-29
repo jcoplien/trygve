@@ -52,9 +52,11 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		return back_.g != null;
 	}
 
-	public void setColor(final RTObject colorArg) {
-		assert colorArg instanceof RTColorObject;
-		final Color color = ((RTColorObject)colorArg).color();
+	public void setColor(final RTObject colorObject) {
+		if (!(colorObject instanceof RTColorObject)) {
+			assert colorObject instanceof RTColorObject;
+		}
+		final Color color = ((RTColorObject)colorObject).color();
 
 		if (canDraw()){
 			back_.g.setColor(color);
@@ -172,8 +174,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final TypeDeclaration typeDeclaration = ((RTClass)rTType).typeDeclaration();
 		final Type eventType = StaticScope.globalScope().lookupTypeDeclaration("Event");
 		final FormalParameterList pl = new FormalParameterList();
-		final ObjectDeclaration self = new ObjectDeclaration("this", typeDeclaration.type(), typeDeclaration.lineNumber());
-		final ObjectDeclaration event = new ObjectDeclaration("e", eventType, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", typeDeclaration.type(), typeDeclaration.token());
+		final ObjectDeclaration event = new ObjectDeclaration("e", eventType, null);
 
 		pl.addFormalParameter(event);
 		pl.addFormalParameter(self);
@@ -185,7 +187,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 			final String returnTypePathName = returnType.pathName();
 			if (false == returnTypePathName.equals("boolean.")) {
 				ErrorLogger.error(ErrorIncidenceType.Internal, "Return type of `handleEvent' is not boolean in class `",
-						methodDecl.enclosingScope().name() + "' at line ", Integer.toString(methodDecl.lineNumber()), ".");
+						methodDecl.enclosingScope().name() + "' at line ",
+						Integer.toString(methodDecl.lineNumber()), ".");
 				// not sure what else to do here...
 			}
 			final int preStackDepth = RunTimeEnvironment.runTimeEnvironment_.stackSize();
@@ -255,7 +258,8 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		final MethodDeclaration methodDecl = method.methodDeclaration();
 		final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
 		final String debugName = null == methodParentScope? "???": methodParentScope.name();
-		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
+		final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt,
+				"Interrupt", debugName, method.token());
 		retInst.setResultIsConsumed(true);
 		final RTObject event = RTEventObject.ctor1(e);
 
@@ -264,6 +268,7 @@ public class GraphicsPanel extends Panel implements ActionListener, RTObject {
 		RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
 
 		final RTDynamicScope activationRecord = new RTDynamicScope(
+				null,
 				method.name(),
 				RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
 				true);

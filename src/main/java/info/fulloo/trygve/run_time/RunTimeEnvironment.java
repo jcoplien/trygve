@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,12 @@ package info.fulloo.trygve.run_time;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 import info.fulloo.trygve.add_ons.PanelClass;
 import info.fulloo.trygve.configuration.ConfigurationOptions;
@@ -66,6 +68,7 @@ public class RunTimeEnvironment {
 	public RunTimeEnvironment(final TextEditorGUI gui) {
 		super();
 		gui_ = gui;
+		pauseFlag_ = false;
 		stringToRTContextMap_ = new LinkedHashMap<String, RTContext>();
 		stringToRTClassMap_ = new LinkedHashMap<String, RTClass>();
 		stringToRTInterfaceMap_ = new LinkedHashMap<String, RTInterface>();
@@ -98,7 +101,7 @@ public class RunTimeEnvironment {
 			redirectedInputStream_ = System.in;
 		}
 	}
-	private Stack<RTStackable> theStack() {
+	public final Stack<RTStackable> theStack() {
 		final String threadName = Thread.currentThread().getName();
 		if (threadName.startsWith("AWT-EventQueue")) {
 			return awtEventQueueStack_;
@@ -145,6 +148,10 @@ public class RunTimeEnvironment {
 		} else {
 			return swingWorkerDynamicScopes_;
 		}
+	}
+	public RTDynamicScope swingWorkerDynamicScope() {
+		// dangerous
+		return swingWorkerDynamicScopes_.peek();
 	}
 	private void preDeclareTypes() {
 		final ClassDeclaration intClassDecl = StaticScope.globalScope().lookupClassDeclaration("int");
@@ -208,7 +215,7 @@ public class RunTimeEnvironment {
 		final RTExpression exitNode = new RTHalt();
 		mainExpr.setNextCode(exitNode);
 		
-		final RTDynamicScope firstActivationRecord = new RTDynamicScope("_main", null, true);
+		final RTDynamicScope firstActivationRecord = new RTDynamicScope(null, "_main", null, true);
 		globalDynamicScope = firstActivationRecord;
 		RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(firstActivationRecord);
 		firstActivationRecord.incrementReferenceCount();
@@ -244,10 +251,16 @@ public class RunTimeEnvironment {
 			lastEvaluated.decrementReferenceCount();
 		}
 		RTExpression.setLastExpressionResult(new RTNullObject(), 0);
+		if (null != RunTimeEnvironment.runTimeEnvironment_) {
+			final RTDebuggerWindow debugger = RunTimeEnvironment.runTimeEnvironment_.rTDebuggerWindow();
+			if (null != debugger) {
+				debugger.debuggerWindowMessage("Execution complete\n");
+			}
+		}
 	}
 	public synchronized void setFramePointer() {
 		final int stackSize = theStack().size();
-		framePointerStack().push(new Integer(stackSize));
+		framePointerStack().push(Integer.valueOf(stackSize));
 	}
 	
 	public RTStackable popDownToFramePointer() {
@@ -255,7 +268,7 @@ public class RunTimeEnvironment {
 		final int stackSize = theStack().size();
 		final int framePointer = (framePointerStack().pop()).intValue();
 		if (framePointer > stackSize) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
+			ErrorLogger.error(ErrorIncidenceType.Internal, null, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
@@ -263,7 +276,11 @@ public class RunTimeEnvironment {
 			@SuppressWarnings("unused")
 			final RTStackable popped = theStack().pop();	// save value here for debugging only
 		}
-		retval = theStack().peek();
+		if (theStack().size() > 0) {
+			retval = theStack().peek();
+		} else {
+			retval = null;
+		}
 		return retval;
 	}
 	public RTStackable popDownToFramePointerMinus1() {
@@ -271,7 +288,7 @@ public class RunTimeEnvironment {
 		final int stackSize = theStack().size();
 		int framePointer = (framePointerStack().pop()).intValue() + 1;
 		if (framePointer < stackSize) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0, "Stack corruption: framePointer ", String.valueOf(framePointer), 
+			ErrorLogger.error(ErrorIncidenceType.Internal, null, "Stack corruption: framePointer ", String.valueOf(framePointer), 
 					" > stackSize ", String.valueOf(stackSize));
 			assert false;
 		}
@@ -382,11 +399,21 @@ public class RunTimeEnvironment {
 		}
 		return retval;
 	}
+	
+	private int iCounter_ = 0;
+	
 	private void runnerPrefix(final RTCode code) {
 		if (null == code) {
 			assert null != code;		// put the check up here, out of the
 										// code we will be stepping through...
 		}
+		if (null != rTDebugger_) {
+			// Cut it some slack
+			try {
+                if (0 == iCounter_++ % 100) TimeUnit.MILLISECONDS.sleep(5);
+            } catch (InterruptedException ex) {}
+		}
+		currentExecutingExpression_ = code;
 		final PrintStream stream = System.err;
 		if (ConfigurationOptions.fullExecutionTrace()) {
 			if (null == code.getClass()) {
@@ -451,7 +478,16 @@ public class RunTimeEnvironment {
 	}
 	public RTCode runner(final RTCode code) {
 		runnerPrefix(code);
-		final RTCode retval = isRunning()? code.run(): null;
+		if (code.isBreakpoint()) {
+			rTDebugger_.breakpointFiredAt(code);
+		} else if (pauseFlag_) {
+			pauseFlag_ = false;
+			rTDebugger_.pauseAt(code);
+		}
+		RTCode retval = null;
+		if (isRunning()) {
+			retval = code.run();
+		}
 		// Thread.yield();		// be a good citizen
 		return retval;
 	}
@@ -489,7 +525,7 @@ public class RunTimeEnvironment {
 					System.err.format(" for \"%s\"", ((RTPostReturnProcessing)element).name());
 				}
 			}
-			if (framePointerStack().contains(new Integer(i-1))) {
+			if (framePointerStack().contains(Integer.valueOf(i-1))) {
 				System.err.format(" <== frame pointer (%d)", i+1);
 			}
 			System.err.format("\n");
@@ -499,11 +535,40 @@ public class RunTimeEnvironment {
 		}
 	}
 	
+	public void setDebugger(final RTDebuggerWindow rTDebugger) {
+		rTDebugger_ = rTDebugger;
+	}
+	public RTDebuggerWindow getDebugger() {
+		return rTDebugger_;
+	}
+	public RTDebuggerWindow rTDebuggerWindow() {
+		return rTDebugger_;
+	}
+	public final Collection<RTClass> allRTClasses() {
+		final Collection<RTClass> retval = stringToRTClassMap_.values();
+		return retval;
+	}
+	public final Collection<RTContext> allRTContexts() {
+		final Collection<RTContext> retval = stringToRTContextMap_.values();
+		return retval;
+	}
+	public int currentExecutingLineNumber() {
+		int retval = 0;
+		if (null != currentExecutingExpression_) {
+			retval = currentExecutingExpression_.lineNumber();
+		}
+		return retval;
+	}
+	public void pauseButtonActionPerformed() {
+		pauseFlag_ = true;
+	}
+	
 	
 	private final Map<String, RTContext> stringToRTContextMap_;
 	private final Map<String, RTClass> stringToRTClassMap_;
 	private final Map<String, RTInterface> stringToRTInterfaceMap_;
 	private final Map<String, RTType> pathToTypeMap_;
+	private       RTCode currentExecutingExpression_ = null;
 	
 	private       Stack<RTStackable> swingWorkerThreadStack_;
 	private       Stack<RTStackable> awtEventQueueStack_;
@@ -519,4 +584,6 @@ public class RunTimeEnvironment {
 	public        RTDynamicScope globalDynamicScope;
 	private       InputStream redirectedInputStream_;
 	private final TextEditorGUI gui_;
+	private       RTDebuggerWindow rTDebugger_;
+	private       boolean pauseFlag_ = false;
 }

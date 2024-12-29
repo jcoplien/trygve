@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTSystemClass.RTInputStreamInfo;
 
-public class RTScannerObject extends RTObjectCommon implements RTObject {
+public class RTScannerObject extends RTObjectCommon {
 	public RTScannerObject(final RTType scannerType) {
 		super(scannerType);	// 
 		scannerType_ = scannerType;	// e.g. an instance of RTClass

@@ -1,8 +1,8 @@
 package info.fulloo.trygve.lntextpane;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,7 +50,13 @@ class NumberedParagraphView extends ParagraphView {
     }
 
     public void paintChild(Graphics g, Rectangle r, int n) {
+    	boolean line0 = false;		// kludge
+    	if (r.x == 3) {				// kludge
+    		line0 = true;			// kludge
+    		r.x = 33;				// kludge
+    	}							// kludge
         super.paintChild(g, r, n);
+        if (line0) r.x = 3;			// kludge
         int previousLineCount = getPreviousLineCount();
         String formattedNumber;
         final int numberX = r.x - getLeftInset();

@@ -22,6 +22,7 @@ class Fact {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 1 factorial is 1.
 3 factorial is 6.
 5 factorial is 120.

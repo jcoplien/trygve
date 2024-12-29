@@ -1,8 +1,8 @@
 package info.fulloo.trygve.code_generation;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@ package info.fulloo.trygve.code_generation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+
+import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.add_ons.ColorClass;
 import info.fulloo.trygve.add_ons.PointClass;
@@ -328,8 +330,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		case usingColor:
 		case usingPoint:
 			final IdentifierExpression retval = new IdentifierExpression("ret$val", methodDeclaration.returnType(),
-					methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
-			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.lineNumber(),
+					methodDeclaration.enclosedScope(), methodDeclaration.token());
+			returnExpression = new ReturnExpression(methodDeclaration.name(), retval, methodDeclaration.token(),
 					retval.type(), StaticScope.globalScope());
 			returnStatement = new RTReturn(methodDeclaration.name(), returnExpression.returnExpression(),
 					rTEnclosingMegaType,
@@ -387,11 +389,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("get") || methodDeclaration.name().equals("at")) {
 			listCode.add(new ListClass.RTGetCode(methodDeclaration.enclosedScope(),
-					methodDeclaration.lineNumber()));
+					methodDeclaration.token()));
 			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("set") || methodDeclaration.name().equals("atPut")) {
 			listCode.add(new ListClass.RTSetCode(methodDeclaration.enclosedScope(),
-					methodDeclaration.lineNumber()));
+					methodDeclaration.token()));
 			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("indexOf")) {
 			listCode.add(new ListClass.RTIndexOfCode(methodDeclaration.enclosedScope()));
@@ -405,6 +407,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("sort")) {
 			listCode.add(new ListClass.RTSortCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.none;
+		} else if (methodDeclaration.name().equals("reverse")) {
+			final RTClass classDecl = (RTClass)rtListTypeDeclaration;
+			final TypeDeclaration returnTypeDecl = classDecl.typeDeclaration();
+			final Type returnType = returnTypeDecl.type();
+			listCode.add(new ListClass.RTReverseCode(methodDeclaration.enclosedScope(), returnType));
+			retvalType = RetvalTypes.usingTemplate;
 		} else if (methodDeclaration.name().equals("remove")) {
 			if (methodDeclaration.returnType().name().equals("boolean")) {
 				listCode.add(new ListClass.RTRemoveTCode(methodDeclaration.enclosedScope()));
@@ -488,6 +496,30 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("containsValue")) {
 			mapCode.add(new MapClass.RTContainsValueCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingBool;
+		} else if (methodDeclaration.name().equals("keys")) {
+			// MAP>>KEYS
+			final String mapName = typeDeclaration.name();
+			assert(mapName.startsWith("Map<"));
+			String keyName = mapName.substring(4);
+			final int indexOfComma = keyName.indexOf(',');
+			keyName = keyName.substring(0, indexOfComma);
+			final String returnTypeName = "Set<" + keyName + ">";
+
+			// We want the type Declaration for the Set<int>
+			Type type = StaticScope.globalScope().lookupTypeDeclaration(returnTypeName);
+			if (null == type) {
+				type = SetClass.addSetOfXTypeNamedY(null, returnTypeName);
+			}
+			final StaticScope returnTypeScope = type.enclosedScope();
+			final Declaration returnTypeDeclaration = returnTypeScope.associatedDeclaration();
+			ClassDeclaration returnTypeClassDeclaration = null;
+			if (returnTypeDeclaration instanceof ClassDeclaration) {
+				returnTypeClassDeclaration = (ClassDeclaration) returnTypeDeclaration;
+				// ... else it is a reportable error?
+			}
+
+			mapCode.add(new MapClass.RTMapKeysCode(methodDeclaration.enclosedScope(), returnTypeClassDeclaration));
+			retvalType = RetvalTypes.usingTemplate;
 		} else {
 			retvalType = RetvalTypes.undefined;
 			assert false;	// error message instead? Should be caught earlier
@@ -521,6 +553,9 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		} else if (methodDeclaration.name().equals("random")) {
 			mathCode.add(new MathClass.RTRandomCode(methodDeclaration.enclosedScope()));
 			retvalType = RetvalTypes.usingDouble;
+		} else if (methodDeclaration.name().equals("setSeed")) {
+			mathCode.add(new MathClass.RTSetSeedCode(methodDeclaration.enclosedScope()));
+			retvalType = RetvalTypes.none;
 		} else if (methodDeclaration.name().equals("abs")) {
 			if (firstParameterIsInteger) {
 				mathCode.add(new MathClass.RTIntAbsCode(methodDeclaration.enclosedScope()));
@@ -653,10 +688,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		assert (sizeOfCodeArray > 0);
 		RTCode last = printlnCode.get(sizeOfCodeArray - 1);
 		final IdentifierExpression self = new IdentifierExpression("this", methodDeclaration.returnType(),
-				methodDeclaration.enclosedScope(), methodDeclaration.lineNumber());
+				methodDeclaration.enclosedScope(), methodDeclaration.token());
 		final ReturnExpression returnExpression = new ReturnExpression(
 				methodDeclaration.name(),
-				self, methodDeclaration.lineNumber(),
+				self, methodDeclaration.token(),
 				self.type(), StaticScope.globalScope());
 		final StaticScope myScope = methodDeclaration.enclosedScope();
 		final Type enclosingMegaType = Expression.nearestEnclosingMegaTypeOf(myScope);
@@ -1207,7 +1242,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				} else if (elementsParamType instanceof ArrayType) {
 					code.add(new RTStringClass.RTJoinArrayCode(methodDeclaration.enclosedScope()));
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
+					ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.token(),
 							"Invalid parameter type `",
 							elementsParamType.name(),
 							"' to String.join.", "", "", "");
@@ -1309,7 +1344,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				final Expression expressionToReturn = new TopOfStackExpression();
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingString;
@@ -1317,15 +1352,15 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				final Expression expressionToReturn = new TopOfStackExpression();
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						intType,
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingInt;
 			} else if (methodDeclaration.name().equals("to1CharString")) {
-				final Expression expressionToReturn = new IdentifierExpression("ret$val", intType, methodDeclaration.enclosedScope(), 0);
+				final Expression expressionToReturn = new IdentifierExpression("ret$val", intType, methodDeclaration.enclosedScope(), null);
 				returnExpr = new ReturnExpression(
 						methodDeclaration.name(),
-						expressionToReturn, 0,
+						expressionToReturn, null,
 						StaticScope.globalScope().lookupTypeDeclaration("String"),
 						methodDeclaration.enclosedScope());
 				retvalType = RetvalTypes.usingString;
@@ -1488,10 +1523,10 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				Expression newLhs;
 				if (lhs instanceof IdentifierExpression) {
 					final IdentifierExpression self = new IdentifierExpression("this", classType,
-							methodScope, lhs.lineNumber());
+							methodScope, lhs.token());
 					newLhs = new QualifiedIdentifierExpression(self, lhs.name(), lhs.type());
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, lhs.token(), "Improperly formed initialization of `",
 							lhs.name(), "'.", "");
 					newLhs = new ErrorExpression(lhs);
 				}
@@ -1499,6 +1534,8 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				boolean isWellFormedInitialization = false;
 				if (rhs instanceof Constant || rhs instanceof NullExpression) {
 					isWellFormedInitialization = true;	// O.K.
+				} else if (rhs instanceof NullExpression) {
+					isWellFormedInitialization = true;	// O.K. — special kind of constant.
 				} else if (rhs instanceof UnaryAbelianopExpression) {
 					// Negative numbers. Generalize this later to constant expressions?
 					final UnaryAbelianopExpression abelianRhs = (UnaryAbelianopExpression)rhs;
@@ -1506,12 +1543,12 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 					isWellFormedInitialization = innerExpr instanceof Constant;
 				}
 				if (false == isWellFormedInitialization) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, rhs.lineNumber(), "Improperly formed initialization of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, rhs.token(), "Improperly formed initialization of `",
 							lhs.name() + "': non-constant right-hand side `", rhs.getText(), "'.");
 					rhs = new ErrorExpression(rhs);
 				}
 				final AssignmentExpression newAssignmentExpression =
-						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.lineNumber(), null);
+						new InternalAssignmentExpression(newLhs, "=", rhs, lhs.token(), null);
 				retval.add(newAssignmentExpression);
 			} else {
 				retval.add(initializer);
@@ -1529,6 +1566,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		// are the regularBodyParts which is just the ordinary method body.
 		// They come together in odd orders during parsing; here, during code
 		// generation, we just pick all of them off and put them back together.
+		currentMethodBeingCompiled_ = methodDeclaration;
 		final Declaration associatedMegaTypeDeclaration = scope.associatedDeclaration();
 		List<BodyPart> initializationBodyParts = null;
 		final boolean isCtor = methodDeclaration.name().equals(associatedMegaTypeDeclaration.name());
@@ -1564,7 +1602,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				if (megaTypeOfPotentialCtor.name().equals(methodDeclaration.name()) &&
 						false == (baseClassDeclaration.type().pathName().equals("Object."))) {
 					if (false == methodDeclaration.hasManualBaseClassConstructorInvocations()) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, methodDeclaration.token(),
 							"Constructor `", methodDeclaration.signature().getText(),
 							"' has no valid means to ensure that the base class part of the object is initialized.", "");
 					}
@@ -1594,72 +1632,95 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			typeDeclaration = (ClassDeclaration)roleOrContextOrClass;
 			if (typeDeclaration.name().equals("System")) {
 				processSystemMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("PrintStream")) {
 				processPrintStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("InputStream")) {
 				processInputStreamMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Color")) {
 				processColorMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Thread")) {
 				processThreadMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Panel")) {
 				processPanelMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Frame")) {
 				processFrameMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Event")) {
 				processEventMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Scanner")) {
 				processScannerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("MouseInfo")) {
 				processMouseInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("PointerInfo")) {
 				processPointerInfoMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Point")) {
 				processPointDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("List<")) {
 				processListMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("Set<")) {
 				processSetMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().startsWith("Map<")) {
 				processMapMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Math")) {
 				processMathMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Date")) {
 				processDateMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("String")) {
 				processStringMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("double")) {
 				processDoubleMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("int")) {
 				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Integer")) {
 				processIntegerMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("boolean")) {
 				processBooleanMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			} else if (typeDeclaration.name().equals("Object")) {
 				processObjectMethodDefinition(methodDeclaration, typeDeclaration);
+				// currentMethodBeingCompiled_ = null;
 				return;
 			}
 		} else if (roleOrContextOrClass instanceof ContextDeclaration) {
@@ -1684,7 +1745,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 			final Expression returnExpression = new ReturnExpression(
 					methodDeclaration.name(),
 					expressionToReturn,	/* Dummy? */
-					methodDeclaration.lineNumber(),
+					methodDeclaration.token(),
 					nearestEnclosingMegaType, methodDeclaration.enclosedScope());
 			rtMethod = new RTMethod(methodDeclaration.name(), methodDeclaration, returnExpression);
 		} else {
@@ -1693,6 +1754,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 		
 		rtTypeDeclaration.addMethod(methodDeclaration.name(), rtMethod);
 		this.compileBodyPartsForMethodOfTypeInScope(bodyParts, rtMethod, rtTypeDeclaration, scope);
+		currentMethodBeingCompiled_ = null;
 	}
 	
 	private List<RTCode> compileDeclarationForMethodOfTypeInScope(final Declaration declaration, final MethodDeclaration methodDeclaration,
@@ -1970,8 +2032,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				rTExpr = this.compileExpressionForMethodOfTypeInScope(returnExpression, methodDeclaration, rtTypeDeclaration, scope);
 				if (null == rTExpr) {
 					assert null != rTExpr;
-				}
-				if (returnExpression.resultIsConsumed()) {
+				} else if (returnExpression.resultIsConsumed()) {
 					if (rTExpr instanceof List) {
 						for (final RTCode enclosedCode : rTExpr) {
 							if (enclosedCode instanceof RTExpression) {
@@ -2185,11 +2246,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				retval = InterpretiveCodeGenerator.lookInGlobalScopeForRTTypeDeclaration(enclosedScope);
 				RunTimeEnvironment.runTimeEnvironment_.registerTypeByPath(scopePathName, retval);
 				if (null == retval) {
-					final int lineNumber = null == enclosedScope? 0:
-						(null == enclosedScope.associatedDeclaration()? 0:
-							enclosedScope.associatedDeclaration().lineNumber()
+					final Token token = null == enclosedScope? null:
+						(null == enclosedScope.associatedDeclaration()? null:
+							enclosedScope.associatedDeclaration().token()
 						);
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token,
 							"FATAL: Internal Error: Scope stack corrupted; likely termination cleanup problem. Just proceed.",
 							"", "", "");
 				}
@@ -2206,7 +2267,11 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 	public ParsingData parsingData() {
 		return parsingData_;
 	}
+	public static MethodDeclaration currentMethodBeingCompiled() {
+		return currentMethodBeingCompiled_;
+	}
 	
+	private static MethodDeclaration currentMethodBeingCompiled_= null;
 	private Program program_;
 	private RunTimeEnvironment virtualMachine_;
 	private RTExpression rTMainExpr_;

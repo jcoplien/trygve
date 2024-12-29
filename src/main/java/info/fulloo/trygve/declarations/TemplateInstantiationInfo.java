@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import java.util.List;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TypeParameter;
 import info.fulloo.trygve.declarations.Type.ClassType;
+import info.fulloo.trygve.declarations.Type.InterfaceType;
 
 public class TemplateInstantiationInfo {
 	public TemplateInstantiationInfo(final TemplateDeclaration templateDecl, final String typeName) {
@@ -44,7 +45,17 @@ public class TemplateInstantiationInfo {
 		this.addTypeParameter(typeParameter);
 	}
 	public void setClassType(final ClassType classType) {
+		if (null != interfaceType_ && null != classType) {
+			assert (null == interfaceType_);
+		}
 		classType_ = classType;
+	}
+	public void setInterfaceType(final InterfaceType interfaceType) {
+		assert (true);	// executed!
+		if (null != interfaceType && null != classType_) {
+			assert (null == interfaceType);
+		}
+		interfaceType_ = interfaceType;
 	}
 	public Type parameterAtIndex(final int i) {
 		final int size = actualParameters_.size();
@@ -55,13 +66,21 @@ public class TemplateInstantiationInfo {
 		return parameterAtIndex(i);
 	}
 	public ClassType classType() {
+		assert (null == classType_ ^ null == interfaceType_);
 		return classType_;
+	}
+	public InterfaceType interfaceType() {
+		assert (null == classType_ ^ null == interfaceType_);
+		return interfaceType_;
 	}
 	public int size() {
 		return actualParameters_.size();
 	}
 	public Type classSubstitionForTemplateTypeNamed(final String templateTypeName) {
 		final TypeParameter formalTypeParam = templateDeclaration_.typeParameterNamed(templateTypeName);
+		if (null == formalTypeParam) {
+			return null;
+		}
 		final int parameterPositionOfFormalParam = formalTypeParam.argumentPosition();
 		final int numberOfParameters = this.actualParameters_.size();
 		return this.parameterAtIndex(numberOfParameters - parameterPositionOfFormalParam - 1);
@@ -88,7 +107,10 @@ public class TemplateInstantiationInfo {
 	}
 	
 	private final List<Type> actualParameters_;
-	private ClassType classType_;
 	private final TemplateDeclaration templateDeclaration_;
 	private final String typeName_;
+	
+	// One of these two will be set
+	private ClassType classType_;
+	private InterfaceType interfaceType_;
 }

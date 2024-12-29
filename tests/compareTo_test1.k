@@ -24,6 +24,7 @@ class Number {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 5
 false
 true

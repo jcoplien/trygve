@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.Iterator;
+
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 
 public abstract class RTIterator extends RTCommonRunTimeCrap {
@@ -41,6 +42,11 @@ public abstract class RTIterator extends RTCommonRunTimeCrap {
 	
 	@Override public String getText() {
 		return "<iterator>";
+	}
+	
+	
+	public RTType rTType() {
+		return null;	// a lie, but looks reasonable in debugging
 	}
 	
 	public static class RTArrayIterator extends RTIterator {

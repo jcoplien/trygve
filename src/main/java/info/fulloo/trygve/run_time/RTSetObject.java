@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTSetIterator;
 
-public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTSetObject extends RTObjectCommon implements RTIterable {
 	public RTSetObject(final RTType setType) {
 		super(setType);	// 
 		setType_ = setType;	// e.g. an instance of RTClass
@@ -183,7 +183,14 @@ public class RTSetObject extends RTObjectCommon implements RTObject, RTIterable 
 		return theSet_.iterator();
 	}
 	
-	private final Set<RTObject> theSet_;
+	// This is used in the logic for Map's key method
+	// (RTMapKeysCode.runDetails, in MapClass.java)
+	// to set up a return type
+	public void setSet(final Set<RTObject> set) {
+		theSet_ = set;
+	}
+	
+	private       Set<RTObject> theSet_;
 	private final Type baseType_;
 	private final Map<RTContextObject, List<String>> rolesIAmPlayingInContext_;
 	private final RTType setType_;

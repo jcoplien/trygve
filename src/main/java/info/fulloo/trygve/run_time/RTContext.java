@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -320,16 +322,16 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 				// The map at roleArrayPlayers_[roleName] would never have been set
 				// up if the vector / array size were zero. Treat as an out-of-range
 				// error
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range at index ", String.valueOf(iIndex), ".", "");
 				RTMessage.printMiniStackStatus(); 
 				retval = null;
 			} else {
 				if (iIndex >= intToObjectMap.size()) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range (too large) at index ", String.valueOf(iIndex), ".", "");
 					RTMessage.printMiniStackStatus();
 					retval = (RTStackable) new RTHalt();
 				} else if (iIndex < 0) {
-						ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
+						ErrorLogger.error(ErrorIncidenceType.Runtime, null, "Role vector `", roleName, "' indexed out-of-range (negative) at index ", String.valueOf(iIndex), ".", "");
 						RTMessage.printMiniStackStatus();
 						retval = (RTStackable) new RTHalt();
 				} else {
@@ -385,12 +387,35 @@ public class RTContext extends RTClassAndContextCommon implements RTType, RTCont
 			
 			return retval;
 		}
+		public String toString() {
+			// TODO: Maybe we should eventually just print
+			// no annotations for these hidden data
+			return "<Internal-Context-Info>";  // for the trygve debugger
+		}
+		
+		// For debugger only
+		public final Map<String, RTObject> rolePlayers() {
+			return rolePlayers_;
+		}
+		public final Map<String, RTObject> stagePropPlayers() {
+			return stagePropPlayers_;
+		}
 		
 		private       Map<String, RTObject> rolePlayers_, stagePropPlayers_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
 		private       Map<String, Map<Integer,RTObject>> roleArrayPlayers_;
 		private       Map<String, Map<Integer,RTObject>> stagePropArrayPlayers_;
 		private final RTContextObject rTContext_;
+	}
+	
+	public final Collection<RTClassAndContextCommon> allRTRoles() {
+		Collection<RTClassAndContextCommon> retval = new ArrayList<RTClassAndContextCommon>();
+		retval.addAll(nameToStagePropObjectMap_.values());
+		retval.addAll(nameToRoleObjectMap_.values());
+		return retval;
+	}
+	public StaticScope staticScope() {
+		return typeDeclaration_.enclosedScope();
 	}
 	
 	private Map<String, RTContext> stringToContextDeclMap_;

@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 
-public class RTClass extends RTClassAndContextCommon implements RTType {
+public class RTClass extends RTClassAndContextCommon {
 	public RTClass(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof ClassDeclaration;
@@ -804,7 +804,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 					final RTDoubleObject otherObject = RTClass.makeDouble((RTObject)rhs);
 					if (null == otherObject) {
 						final RTDynamicScope parentScope = ((RTDynamicScope)myEnclosedScope).parentScope();
-						ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
+						ErrorLogger.error(ErrorIncidenceType.Runtime, null,
 								"Attempt to access uninitialized double in argument to `",
 								"compareTo'; calling context may be `",
 								parentScope.name(), "'.");
@@ -905,11 +905,16 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				final RTObject from = dynamicScope.getObject("start");
 				final RTObject to = dynamicScope.getObject("end");
 				final RTStringObject retval = stringObject.substring(from, to);
-
-				addRetvalTo(dynamicScope);
-				dynamicScope.setObject("ret$val", retval);
 				
-				return super.nextCode();
+				if (null == retval) {
+					// something went wrong
+					return null;
+				} else {
+					addRetvalTo(dynamicScope);
+					dynamicScope.setObject("ret$val", retval);
+					
+					return super.nextCode();
+				}
 			}
 		}
 		public static class RTReplaceFirstCode extends RTStringCommon {
@@ -931,7 +936,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					retval = stringObject.replaceFirst(regex, replacement);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad pattern to replaceFirst: `", regex.getText(), "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}
@@ -1048,7 +1053,7 @@ public class RTClass extends RTClassAndContextCommon implements RTType {
 				try {
 					sRetval = thisString.split(rxstring);
 				} catch (final PatternSyntaxException e) {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
+					ErrorLogger.error(ErrorIncidenceType.Runtime, null, "FATAL: Bad pattern to regex: `", rxstring, "'.", "");
 					RTMessage.printMiniStackStatus();
 					return null;
 				}

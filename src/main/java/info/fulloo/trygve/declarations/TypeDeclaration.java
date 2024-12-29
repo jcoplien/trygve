@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,11 +23,14 @@ package info.fulloo.trygve.declarations;
  *
  */
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 public interface TypeDeclaration {
 	public int lineNumber();
+	public Token token();
 	public String name();
 	public StaticScope enclosingScope();
 	public StaticScope enclosedScope();

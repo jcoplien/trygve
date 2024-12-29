@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class RTFrameObject extends RTObjectCommon implements RTObject {
+public class RTFrameObject extends RTObjectCommon {
 	public RTFrameObject(final RTType frameType) {
 		super(frameType);
 		frameType_ = frameType;	// e.g. an instance of RTClass
@@ -163,8 +163,8 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			final info.fulloo.trygve.declarations.Type type = StaticScope.globalScope().lookupTypeDeclaration(rTType.name());
 			final info.fulloo.trygve.declarations.Type eventType = StaticScope.globalScope().lookupTypeDeclaration("Event");
 			final FormalParameterList pl = new FormalParameterList();
-			final ObjectDeclaration self = new ObjectDeclaration("this", type, type.lineNumber());
-			final ObjectDeclaration event = new ObjectDeclaration("e", eventType, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", type, type.token());
+			final ObjectDeclaration event = new ObjectDeclaration("e", eventType, null);
 
 			pl.addFormalParameter(event);
 			pl.addFormalParameter(self);
@@ -208,7 +208,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			final MethodDeclaration methodDecl = method.methodDeclaration();
 			final StaticScope methodParentScope = null == methodDecl? null: methodDecl.enclosingScope();
 			final String debugName = null == methodParentScope? "???": methodParentScope.name();
-			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName);
+			final RTPostReturnProcessing retInst = new RTPostReturnProcessing(halt, "Interrupt", debugName, method.token());
 			retInst.setResultIsConsumed(true);
 			final RTObject event = RTEventObject.ctor1(e);
 
@@ -217,6 +217,7 @@ public class RTFrameObject extends RTObjectCommon implements RTObject {
 			RunTimeEnvironment.runTimeEnvironment_.setFramePointer();
 			
 			final RTDynamicScope activationRecord = new RTDynamicScope(
+					null,
 					method.name(),
 					RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(),
 					true);

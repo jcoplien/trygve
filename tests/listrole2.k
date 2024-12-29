@@ -1,24 +1,28 @@
-context Account {
-    private List<Amount> test_;
-
-    public void increaseBalance(Amount amount) {
-        test_.add(amount);
-    }
- 
-    stageprop Amount {
+context C1 {
+    role R {
+        public void foo() {
+            System.out.println("foo");
+        }
     }
 
-    public Account() {
-       test_ = new List<Amount>()
+    public C1(Object o) {
+        R = o
+        test(R);
     }
+
+    public void test(R x) {
+        x.foo();
+    }
+
 }
 
 {
-    Account src = new Account();
-    src.increaseBalance(30);
+    new C1(new Object());
 }
 
 /* GOLD:
-0 warnings, 0 errors.
+line 13: WARNING: Declaring a Role parameter `x' for Context script `test' is unorthodox. The script should directly access the Role `R' instead.
+1 warning, 0 errors.
 ___________________________________________________________
+foo
 */

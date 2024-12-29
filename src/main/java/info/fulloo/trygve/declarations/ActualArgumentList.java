@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import info.fulloo.trygve.expressions.MethodInvocationEnvironmentClass;
 import info.fulloo.trygve.mylibrary.SimpleList;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
-public class ActualArgumentList extends ParameterListCommon implements ActualOrFormalParameterList {
+public class ActualArgumentList extends ParameterListCommon {
 	public ActualArgumentList() {
 		super(new SimpleList());
 	}
@@ -147,11 +147,11 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					final ArrayIndexExpression aParam = (ArrayIndexExpression)aParameter;
 					final ArrayExpression aParamBase = aParam.arrayExpr();
 					final ArrayExpression newArrayExpr = new ArrayExpression(aParamBase.originalExpression(), newType);
-					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr(), aParam.lineNumber());
+					final ArrayIndexExpression newParameter = new ArrayIndexExpression(newArrayExpr, aParam.indexExpr(), aParam.token());
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof IdentifierExpression) {
 					final IdentifierExpression aParam = (IdentifierExpression)aParameter;
-					final IdentifierExpression newParameter = new IdentifierExpression(aParam.name(), newType, aParam.scopeWhereDeclared(), 0);
+					final IdentifierExpression newParameter = new IdentifierExpression(aParam.name(), newType, aParam.scopeWhereDeclared(), null);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof QualifiedIdentifierExpression) {
 					final QualifiedIdentifierExpression aParam = (QualifiedIdentifierExpression)aParameter;
@@ -166,7 +166,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 					
 					final MessageExpression newParameter = new MessageExpression(
 							aParam.objectExpression(), aParam.message(), newType,
-							aParam.lineNumber(), false, originMessageClass, targetMessageClass,
+							aParam.token(), false, originMessageClass, targetMessageClass,
 							true);
 					retval.addActualArgument(newParameter);
 				} else if (aParameter instanceof NullExpression) {
@@ -176,7 +176,7 @@ public class ActualArgumentList extends ParameterListCommon implements ActualOrF
 				} else {
 					// Can always treat like an identifier and get by.
 					// It's really the type that matters.
-					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope(), 0);
+					final IdentifierExpression newParameter = new IdentifierExpression(aParameter.name(), newType, StaticScope.globalScope(), null);
 					retval.addActualArgument(newParameter);
 				}
 				

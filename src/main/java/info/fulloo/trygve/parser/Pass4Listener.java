@@ -1,8 +1,8 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,14 @@ package info.fulloo.trygve.parser;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.configuration.ConfigurationOptions;
+import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
+import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
@@ -53,10 +57,10 @@ public class Pass4Listener extends Pass3Listener {
 			// for that production:
 			
 			final ArrayList<String> typeNameList = parsingData_.popTypeNameList();
-			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart().getLine(),
+			final Type type = commonTemplateInstantiationHandling(ctx.JAVA_ID().toString(), ctx.getStart(),
 					typeNameList);
 			if (null == type) {
-				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart().getLine(),
+				errorHook5p2(ErrorIncidenceType.Internal, ctx.getStart(),
 						"No Type returned from commonTemplateInstantiationHandling: ",
 						"instantiating a type in an expression: `",
 						ctx.getText(),
@@ -73,7 +77,7 @@ public class Pass4Listener extends Pass3Listener {
 	}
 	
 	@Override protected Type lookupOrCreateTemplateInstantiation(final String templateName,
-			final List<String> parameterTypeNames, final int lineNumber) {
+			final List<String> parameterTypeNames, final Token token) {
 		// This varies by pass. Here we first remove the instantiation, so that the
 		// new one picks up the body created in Pass 3.
 		final TemplateDeclaration templateDeclaration = currentScope_.lookupTemplateDeclarationRecursive(templateName);
@@ -96,25 +100,46 @@ public class Pass4Listener extends Pass3Listener {
 			
 			final StaticScope templateScope = templateDeclaration.enclosingScope();
 			ClassDeclaration classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
-			if (null == classDeclaration) {
+			InterfaceDeclaration interfaceDeclaration = currentScope_.lookupInterfaceDeclarationRecursive(typeName);
+			if (null == classDeclaration && null == interfaceDeclaration) {
 				assert false;
 			}
-			if (classDeclaration.methodsHaveBodyParts() == false) {
-				templateScope.undeclareType(classDeclaration.type());
-				templateScope.undeclareClass(classDeclaration);
-				parsingData_.currentTemplateInstantiationList().removeDeclaration(classDeclaration);
+			if (null != classDeclaration) {
+				if (classDeclaration.methodsHaveBodyParts() == false) {
+					templateScope.undeclareType(classDeclaration.type());
+					templateScope.undeclareClass(classDeclaration);
+					parsingData_.currentTemplateInstantiationList().removeDeclaration(classDeclaration);
 				
-				retval = super.lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, lineNumber);
+					retval = super.lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, token);
 				
-				classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
-				classDeclaration.setMethodsHaveBodyParts(true);
+					classDeclaration = currentScope_.lookupClassDeclarationRecursive(typeName);
+					classDeclaration.setMethodsHaveBodyParts(true);
+				} else {
+					retval = classDeclaration.type();
+				}
+			} else if (null != interfaceDeclaration) {
+				if (interfaceDeclaration.methodsHaveBodyParts() == false) {
+					templateScope.undeclareType(interfaceDeclaration.type());
+					templateScope.undeclareInterface(interfaceDeclaration);
+					parsingData_.currentTemplateInstantiationList().removeDeclaration(interfaceDeclaration);
+				
+					retval = super.lookupOrCreateTemplateInstantiationCommon(templateName, parameterTypeNames, token);
+				
+					interfaceDeclaration = currentScope_.lookupInterfaceDeclarationRecursive(typeName);
+					interfaceDeclaration.setMethodsHaveBodyParts(true);
+				} else {
+					retval = interfaceDeclaration.type();
+				}
 			} else {
-				retval = classDeclaration.type();
+				assert false;	// ???  logic error
 			}
 		}
 		return retval;
 	}
-	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	@Override public void errorHook5p2SpecialHook(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
+		ErrorLogger.error(errorType, token, s1, s2, s3, s4);
+	}
+	@Override public void errorHook5p3(final ErrorIncidenceType errorType, final Token t, final String s1, final String s2, final String s3, final String s4) {
 		;		// p3 only
 	}
 }

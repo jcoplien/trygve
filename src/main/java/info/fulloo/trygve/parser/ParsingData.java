@@ -1,8 +1,8 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ public class ParsingData {
 		breakableRTExpressions_ = new LinkedHashMap<String, RTBreakableExpression>();
 		doWhileExpressionStack_ = new Stack<DoWhileExpression>();
 		typeDeclarationListStack_ = new Stack<TypeDeclarationList>();
-		templateInstantationList_ = new TypeDeclarationList(0);	// argument is lineNumber
+		templateInstantationList_ = new TypeDeclarationList(null);	// argument is lineNumber Token
 		classOrContextDeclarations_ = new Stack<ClassOrContextDeclaration>();
 		
 		variableGeneratorCounter_ = 101;
@@ -193,7 +193,7 @@ public class ParsingData {
 	public WhileExpression 		 currentWhileExpression() { return whileExpressionStack_.peek(); }
 	public Expression            nearestContinuableLoop() {
 		                             Expression retval = null;
-		                             final int loopExpressionsStackSize = loopExpressionStack_.size();
+		                             final int loopExpressionsStackSize = loopExpressionStack_.size() - 1;
 		                             for (int i = loopExpressionsStackSize; i >= 0; --i) {
 		                            	 final Expression expr = loopExpressionStack_.get(i);
 		                            	 if (expr instanceof ForExpression || expr instanceof WhileExpression ||

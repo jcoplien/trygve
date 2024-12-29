@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import info.fulloo.trygve.declarations.Declaration.RoleArrayDeclaration;
 import info.fulloo.trygve.declarations.Declaration.RoleDeclaration;
 
 
-public class RTRole extends RTClassAndContextCommon implements RTType {
+public class RTRole extends RTClassAndContextCommon {
 	public RTRole(final RoleDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		associatedDeclaration_ = associatedDeclaration;

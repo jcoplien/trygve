@@ -44,6 +44,7 @@ context AContext {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 line 33: FATAL: TERMINATED: Attempting to invoke method `bar' on a null object
 popping stack: type is RTStringObject
 popping stack: type is RTNullObject

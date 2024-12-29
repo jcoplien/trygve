@@ -16,6 +16,7 @@ class Derived extends Base {
 /* GOLD:
 0 warnings, 0 errors.
 ___________________________________________________________
+
 Base::Base
 Derived::Derived(789)
 hello world

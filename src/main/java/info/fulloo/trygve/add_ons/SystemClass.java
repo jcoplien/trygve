@@ -1,8 +1,8 @@
 package info.fulloo.trygve.add_ons;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -70,13 +70,13 @@ public final class SystemClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
 		final StaticScope methodScope = new StaticScope(systemType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, isStatic);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -103,13 +103,13 @@ public final class SystemClass {
 		ObjectDeclaration formalParameter = null;
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != argumentType) {
-			 formalParameter = new ObjectDeclaration("toprint", argumentType, 0);
+			 formalParameter = new ObjectDeclaration("toprint", argumentType, null);
 			 formals.addFormalParameter(formalParameter);
 		}
-		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
+		formalParameter = new ObjectDeclaration("this", printStreamType_, null);
 		formals.addFormalParameter(formalParameter);
 		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		printStreamType_.enclosedScope().declareMethod(methodDecl, null);
@@ -123,13 +123,13 @@ public final class SystemClass {
 		for (int i = 0; i < parameterNames.size(); i++) {
 			final Type argumentType = argumentTypes.get(i);
 			final String argumentName = parameterNames.get(i);
-			formalParameter = new ObjectDeclaration(argumentName, argumentType, 0);
+			formalParameter = new ObjectDeclaration(argumentName, argumentType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		formalParameter = new ObjectDeclaration("this", printStreamType_, 0);
+		formalParameter = new ObjectDeclaration("this", printStreamType_, null);
 		formals.addFormalParameter(formalParameter);
 		final StaticScope methodScope = new StaticScope(printStreamType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodName, methodScope, printStreamType_, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setHasConstModifier(true);
 		printStreamType_.enclosedScope().declareMethod(methodDecl, null);
@@ -151,7 +151,7 @@ public final class SystemClass {
 			
 
 			StaticScope newScope = new StaticScope(globalScope);
-			ClassDeclaration classDecl = new ClassDeclaration("PrintStream", newScope, objectBaseClass, 0);
+			ClassDeclaration classDecl = new ClassDeclaration("PrintStream", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			printStreamType_ = new ClassType("PrintStream", newScope, null);
 			classDecl.setType(printStreamType_);
@@ -201,7 +201,7 @@ public final class SystemClass {
 			globalScope.declareClass(classDecl);
 			
 			newScope = new StaticScope(globalScope);
-			classDecl = new ClassDeclaration("System", newScope, objectBaseClass, 0);
+			classDecl = new ClassDeclaration("System", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			systemType_ = new ClassType("System", newScope, null);
 			classDecl.setType(systemType_);
@@ -209,12 +209,12 @@ public final class SystemClass {
 			
 			declareSystemMethod("exit", null, asList("status"), asList(integerType), true, true);
 			
-			final ObjectDeclaration outDeclaration = new ObjectDeclaration("out", printStreamType_, 0);
+			final ObjectDeclaration outDeclaration = new ObjectDeclaration("out", printStreamType_, null);
 			systemType_.enclosedScope().declareStaticObject(outDeclaration);
 			systemType_.declareStaticObject(outDeclaration);
 			
 			assert null != printStreamType_;
-			final ObjectDeclaration errDeclaration = new ObjectDeclaration("err", printStreamType_, 0);
+			final ObjectDeclaration errDeclaration = new ObjectDeclaration("err", printStreamType_, null);
 			systemType_.enclosedScope().declareStaticObject(errDeclaration);
 			systemType_.declareStaticObject(errDeclaration);
 			
@@ -263,7 +263,7 @@ public final class SystemClass {
 			final RTObject theStream = myEnclosedScope.getObject("this");
 			final RTObject printStreamInfo = theStream.getObject("printStreamInfo");
 			if (false == printStreamInfo instanceof RTPrintStreamInfo) {
-				ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "Print empire (", this.methodSelectorName(),
+				ErrorLogger.error(ErrorIncidenceType.Internal, token(), "Print empire (", this.methodSelectorName(),
 						"): Internal Error with stack corruption so PrintStreamInfo is missing.", "");
 				return new RTHalt();
 			}

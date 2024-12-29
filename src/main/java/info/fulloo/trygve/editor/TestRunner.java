@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ public class TestRunner {
 	private final static String urlTestPrefix_ = "file:" + testPrefix_;
 	private final static String localTestDir_ = "file:" + testPrefix_;
 	private final static String urlExamplePrefix_ = "file:" + examplePrefix_;
+	public final static String htmlBase_ = "https://fulloo.info/Examples/TrygveExamples-raw/";
 	private final static String fileNames_[] = {
 		"ctor1.k",
 		"exprtest.k",
@@ -138,6 +139,7 @@ public class TestRunner {
 		"money_transfer3.k",
 		"matt_money_xfer.k",
 		"date_test.k",
+		"datetest2.k",
 		"number_test0.k",
 		"number_test1.k",
 		"role_and_double_test.k",
@@ -179,6 +181,14 @@ public class TestRunner {
 		"role_interface_compatibility.k",
 		"twelve_days_of_christmas.k",
 		"twelve_days_of_christmas2.k",
+		"issue65.k",
+		"templatetest1.k",
+		"templatetest2.k",
+		"scopeCheck1.k",
+		"math_round.k",
+		"DijkstraProcedural.k",
+		"DCIDijkstra1.k",
+		"noGraphicsSelfOrganization.k"
 	};
 	private final static String exampleNames_[] = {
 		"borrow_library_items.k",
@@ -192,6 +202,8 @@ public class TestRunner {
 		"keypad.k",
 		"simple_list.k",
 		"july_money_transfer.k",
+		"DCIDijkstra1.k",
+		"selfOrganization.k"
 	};
 	public static int numberOfTestCases() {
 		return fileNames_.length;
@@ -217,6 +229,7 @@ public class TestRunner {
 		passCounter_ = failCounter_ = 0;
 		testSource_ = TestSource.UseLocalFile;
 		failures_ = new ArrayList<String>();
+		testInProgress_ = "*none*";
 	}
 	public void runTests() {
 		final String saveFileNameField = gui_.getFileNameField();
@@ -226,6 +239,7 @@ public class TestRunner {
 		String lastTestResults = testResults;
 		passCounter_ = failCounter_ = 0;
 		for (final String filename : fileNames_) {
+			testInProgress_ = filename;
 			runATest(filename);
 			if (false == gui_.compiledWithoutError()) {
 				// break;
@@ -240,6 +254,8 @@ public class TestRunner {
 			
 			lastTestResults = gui_.errorPanelContents();
 		}
+		
+		testInProgress_ = "*none*";
 		
 		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 		gui_.printBreak();
@@ -269,6 +285,30 @@ public class TestRunner {
 			loadTestFile(firstFailure);
 			gui_.setFileNameField(testPrefix_ + firstFailure);
 		}
+	}
+	private int testsPassed() {
+		return passCounter_;
+	}
+	private int testsFailed() {
+		return failCounter_;
+	}
+	private int totalTestCount() {
+		return fileNames_.length;
+	}
+	public void printTestSummary() {
+		gui_.console().redirectErr(java.awt.Color.RED, null);
+		System.err.println();
+		System.err.print("At test termination, ");
+		System.err.print(testsPassed());
+		System.err.print(" tests passed; ");
+		System.err.print(testsFailed());
+		System.err.print(" tests failed, with ");
+		System.err.print(totalTestCount());
+		System.err.println(" total in the test suite.");
+		System.err.print("Test in progress at termination was: \"");
+		System.err.print(testInProgress_);
+		System.err.println("\".");
+		gui_.console().redirectErr(java.awt.Color.BLUE, null);
 	}
 	private void loadTestFile(final String filename) {
 		gui_.setFileNameField(localTestDir_ + filename);	// just in case user edits / saves - goes to the right place
@@ -319,12 +359,12 @@ public class TestRunner {
 	/**/
 	
 	private void analyzeFailure(final String s1, final String s2) {
-		/**/
 		if (s1.equals(s2)) {
 			return;
 		} else {
 			final int s1Length = s1.length(), s2Length = s2.length();
 			final int shortest = Math.min(s1Length, s2Length);
+			
 			for (int i = 0; i < shortest; i++) {
 				if (s1.charAt(i) == s2.charAt(i)) {
 					continue;
@@ -342,12 +382,24 @@ public class TestRunner {
 				}
 			}
 		}
-		/**/
 	}
-
+	
+	private String trimBoudingNewlinesFrom(final String sArg) {
+		String s = sArg;
+		while (s.length() > 0 && (s.startsWith("\n") || s.startsWith(" "))) s = s.substring(1);
+		while (s.length() > 0 && (s.endsWith("\n") || s.endsWith(" "))) s = s.substring(0, s.length() - 1);
+		return s;
+	}
 	private void checkTestResults(final String lastTestResults, final String rawTestResults) {
-		final String testResults = thisTestResults(lastTestResults, rawTestResults);
-		final String goldContents = thisRunGoldContents();
+		String testResults = thisTestResults(lastTestResults, rawTestResults);
+		String goldContents = thisRunGoldContents();
+
+		testResults = trimBoudingNewlinesFrom(testResults);
+		goldContents = trimBoudingNewlinesFrom(goldContents);
+		
+		// de-Microsoft everything
+		goldContents = testResults. replaceAll("\r\n", "\n");
+		goldContents = goldContents.replaceAll("\r\n", "\n");
 
 		if (testResults.equals(goldContents)) {
 			gui_.console().redirectErr(new java.awt.Color(20, 210, 20), null);
@@ -376,10 +428,14 @@ public class TestRunner {
 			testResults = testResults.substring(plusses_.length());
 			final int indexOfDelimitingSpace = testResults.indexOf(' ');
 			final String fileName = testResults.substring(0, indexOfDelimitingSpace);
+			
 			testResults = testResults.substring(fileName.length());
-			if (testResults.length() > 10 && testResults.substring(0,plusses_.length()).equals(plusses_)) {
+			if (testResults.length() > 10 && testResults.startsWith(plusses_)) {
 				// +1 for newline after plusses, +1 for newline after underscores
 				testResults = testResults.substring(plusses_.length() + 1);
+				if (testResults.startsWith("\n")) {
+					testResults = testResults.substring(1);
+				}
 			}
 		} else {
 			;
@@ -405,4 +461,5 @@ public class TestRunner {
 	private int passCounter_, failCounter_;
 	private String currentTestName_;
 	private List<String> failures_;
+	private String testInProgress_ = "*none*";
 }

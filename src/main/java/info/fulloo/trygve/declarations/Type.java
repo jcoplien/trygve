@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodSignature;
@@ -54,10 +56,10 @@ public abstract class Type implements ExpressionStackAPI
 		enclosedScope_ = enclosedScope;
 		staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
 		staticObjects_ = new LinkedHashMap<String, RTCode>();
-		lineNumber_ = null != enclosedScope?
+		token_ = null != enclosedScope?
 					(null != enclosedScope.associatedDeclaration()?
-							enclosedScope.associatedDeclaration().lineNumber(): 0):
-					0;
+							enclosedScope.associatedDeclaration().token(): null):
+									null;
 	}
 	public StaticScope enclosedScope() {
 		return enclosedScope_;
@@ -68,7 +70,7 @@ public abstract class Type implements ExpressionStackAPI
 	public void declareStaticObject(final ObjectDeclaration declaration) {
 		final String objectName = declaration.name();
 		if (staticObjectDeclarationDictionary_.containsKey(objectName)) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, declaration.lineNumber(), "Multiple definitions of static member ",
+			ErrorLogger.error(ErrorIncidenceType.Internal, declaration.token(), "Multiple definitions of static member ",
 					objectName, "", "");
 		} else {
 			staticObjectDeclarationDictionary_.put(objectName, declaration);
@@ -105,16 +107,16 @@ public abstract class Type implements ExpressionStackAPI
 				operator.equals(">") || operator.equals("<=") || operator.equals(">=")) {
 			// Valid if compareTo(X) is defined on us. Probably needs some loosening up
 			final FormalParameterList parameterList = new FormalParameterList();
-			ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+			ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 			parameterList.addFormalParameter(self);
-			ObjectDeclaration other = new ObjectDeclaration("other", this, 0);
+			ObjectDeclaration other = new ObjectDeclaration("other", this, null);
 			parameterList.addFormalParameter(other);
 			MethodDeclaration compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 					"compareTo", parameterList, false, /*parameterToIgnore*/ null);
 			if (null == compareTo) {
-				self = new ObjectDeclaration("this", type, 0);
+				self = new ObjectDeclaration("this", type, null);
 				parameterList.addFormalParameter(self);
-				other = new ObjectDeclaration("other", type, 0);
+				other = new ObjectDeclaration("other", type, null);
 				parameterList.addFormalParameter(other);
 				compareTo = this.enclosedScope().lookupMethodDeclarationWithConversionIgnoringParameter(
 						"compareTo", parameterList, false, /*parameterToIgnore*/ null);
@@ -154,6 +156,7 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		return retval;
 	}
+	public void pass2Instantiations() { /* NOP */ }
 	public static class ClassOrContextType extends Type {
 		public ClassOrContextType(final String name, final StaticScope enclosedScope,
 				final ClassType baseType) {
@@ -172,9 +175,10 @@ public abstract class Type implements ExpressionStackAPI
 			assert false;
 			return false;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
+		@Override public void pass2Instantiations() { /* NOP */ }
 		public ClassType baseClass() {
 			return baseClass_;
 		}
@@ -311,6 +315,19 @@ public abstract class Type implements ExpressionStackAPI
 		
 		@Override public boolean canBeConvertedFrom(final Type t) {
 			boolean retval = false;
+			
+			if (t instanceof BuiltInType) {
+				return t.name() == "Null" || t.name().equals(name());
+			}
+			
+			if (!(t instanceof ClassType) && !(t instanceof ErrorType) && !(t instanceof BuiltInType) &&
+					!(t instanceof ArrayType) && !(t instanceof ContextType) &&
+					!(t instanceof RoleType) &&!(t instanceof InterfaceType)) {
+				assert (t instanceof ClassType || t instanceof ErrorType || t instanceof BuiltInType ||
+						t instanceof ArrayType || t instanceof ContextType ||
+						t instanceof RoleType  || t instanceof InterfaceType);
+			}
+			
 			if (null == t || null == t.pathName() || null == pathName()) {
 				assert false;
 			} else if (name().equals("Object")) {
@@ -320,17 +337,24 @@ public abstract class Type implements ExpressionStackAPI
 				retval = t.pathName().equals(pathName());
 				if (!retval) {
 					if (t.name().equals("Null")) {
-						retval = true;
+						retval = true; // Null can be converted to anything
 					} else if (null != isTemplate(this) && null != isTemplate(t)) {
 						// Messy, messy, messy
 						final String thisParameterName = isTemplate(this);
 						final String tParameterName = isTemplate(t);
 						Type thisType = enclosedScope().lookupTypeDeclarationRecursive(thisParameterName);
+						boolean thisTypeIsList = false, thisTypeIsSet = false, tTypeIsSet = false, tTypeIsList = false;
 						if (null == thisType) {
 							if (this.name().startsWith("List<")) {
 								final StaticScope enclosedScope = this.enclosedScope();
 								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
 								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+								thisTypeIsList = true;
+							} else if (this.name().startsWith("Set<")) {
+								final StaticScope enclosedScope = this.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								thisType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(thisParameterName);
+								thisTypeIsSet = true;
 							}
 						}
 						Type tType = enclosedScope().lookupTypeDeclarationRecursive(tParameterName);
@@ -339,11 +363,29 @@ public abstract class Type implements ExpressionStackAPI
 								final StaticScope enclosedScope = t.enclosedScope();
 								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
 								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
+							} else if (t.name().startsWith("Set<")) {
+								final StaticScope enclosedScope = t.enclosedScope();
+								final TemplateInstantiationInfo templateInstantiationInfo = enclosedScope.templateInstantiationInfo();
+								tType = templateInstantiationInfo.classSubstitionForFormalParameterNamed(tParameterName);
 							}
 						}
 						assert null != tType;
 						assert null != thisType;
-						retval = thisType.canBeConvertedFrom(tType);
+						retval = thisTypeIsList == tTypeIsList && thisTypeIsSet == tTypeIsSet &&
+								thisType.canBeConvertedFrom(tType);
+					} else if (t instanceof RoleType && this instanceof ClassType) {
+						// Does class have all the methods needed by the role?
+						retval = true;
+						final RoleDeclaration roleDecl = (RoleDeclaration)t.enclosedScope().associatedDeclaration();
+						for (final String a : roleDecl.requiredSignatures().keySet()) {
+							final List<MethodSignature> roleExpectations = roleDecl.requiredSelfSignatures().get(a);
+							for (final MethodSignature a2: roleExpectations) {
+								if (null == this.enclosedScope().lookupMethodDeclaration(a2.name(), null, true)) {
+									retval = false;
+									break;
+								}
+							}
+						}
 					} else if (t instanceof ClassType || t instanceof ContextType) {
 						// Base class check
 						final ClassOrContextType classyT = (ClassOrContextType)t;
@@ -353,6 +395,28 @@ public abstract class Type implements ExpressionStackAPI
 								break;
 							}
 						}
+					} else if (this instanceof ClassType && t instanceof BuiltInType) {
+						retval = false;
+						for (MethodDeclaration methodDecl : enclosedScope().methodDeclarations()) {
+							if (methodDecl.name().equals(name())) {
+								// Is a constructor
+								final MethodSignature methodSignature = methodDecl.signature();
+								final FormalParameterList parameterList = methodSignature.formalParameterList();
+								if (1 == parameterList.userParameterCount()) {
+									final Declaration parameter = parameterList.parameterAtPosition(1);
+									if (parameter.type().pathName().equals(t.pathName())) {
+										retval = true;
+										break;
+									}
+								}
+							}
+						}
+					} else if (t instanceof ErrorType) {
+						retval = false;
+					} else if (t instanceof ArrayType) {
+						retval = false;
+					} else {
+						assert (false);	// missing case?
 					}
 				}
 			}
@@ -406,6 +470,20 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
+		@Override public void pass2Instantiations() {
+			// For List template instantiations, we need to repair
+			// the return type in the method declaration for "reverse."
+			// In a way it's a kludge, but it kind of makes sense.
+			if (name().startsWith("List<")) {
+				final StaticScope scope = enclosedScope();
+				final ActualOrFormalParameterList paramList = new FormalParameterList();
+				final MethodDeclaration reverse = scope.lookupMethodDeclaration(
+						"reverse", paramList, true
+				);
+				assert(null != reverse);
+				reverse.setReturnType(this);
+			}
+		}
 		@Override public boolean isBaseClassOf(final Type aDerived) {
 			// IMPROPER base class!!
 			boolean retval = false;
@@ -417,11 +495,17 @@ public abstract class Type implements ExpressionStackAPI
 						break;
 					}
 				}
+			} else if (name().equals("Object")) {
+				// Object is a base class of all types - even of BuiltInType, which
+				// for some strange reason do not pass the instanceof ClassType test..
+				// This is safe in just about any case, anyhow.
+				retval = true;
 			}
 			return retval;
 		}
 		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final ClassType baseClass,
-				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration) {
+				final StaticScope newEnclosedScope, final Declaration newAssociatedDeclaration,
+				final Token token) {
 			super.updateBaseType(baseClass);
 			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
 			assert null != newEnclosedScope.parentScope();
@@ -478,6 +562,12 @@ public abstract class Type implements ExpressionStackAPI
 					final int l = typeName.length();
 					retval = typeName.substring(indexOfDelimeter + 1, l - 1);
 				}
+			} else if (typeName.startsWith("Set<")) {
+				if (typeName.matches("[a-zA-Z]<.*>") || typeName.matches("[A-Z][a-zA-Z0-9_]*<.*>")) {
+					final int indexOfDelimeter = typeName.indexOf('<');
+					final int l = typeName.length();
+					retval = typeName.substring(indexOfDelimeter + 1, l - 1);
+				}
 			}
 			
 			return retval;
@@ -498,7 +588,7 @@ public abstract class Type implements ExpressionStackAPI
 		public void updateBaseType(final ClassType baseType) {
 			baseClass_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -514,6 +604,27 @@ public abstract class Type implements ExpressionStackAPI
 		private final String name_;
 		private ClassType baseClass_;
 	}
+	public static class TemplateTypeForAnInterface extends TemplateType {
+		public TemplateTypeForAnInterface(final String name, final StaticScope scope, final ClassType baseClass) {
+			super(name, scope, baseClass);
+			selectorSignatureMap_ = new LinkedHashMap<String, List<MethodSignature>>();
+		}
+		public void addSignature(final MethodSignature signature) {
+			List<MethodSignature> signatures = null;
+			if (selectorSignatureMap_.containsKey(signature.name())) {
+				signatures = selectorSignatureMap_.get(signature.name());
+			} else {
+				signatures = new ArrayList<MethodSignature>();
+				selectorSignatureMap_.put(signature.name(), signatures);
+			}
+			signatures.add(signature);
+		}
+		public Map<String, List<MethodSignature>> selectorSignatureMap() {
+			return selectorSignatureMap_;
+		}
+		
+		private Map<String, List<MethodSignature>> selectorSignatureMap_;
+	}
 	public static class ContextType extends ClassOrContextType {
 		public ContextType(final String name, final StaticScope scope, final ClassType baseClass) {
 			super(name, scope, baseClass);
@@ -527,15 +638,16 @@ public abstract class Type implements ExpressionStackAPI
 		}
 	}
 	public static class InterfaceType extends Type {
-		public InterfaceType(final String name, final StaticScope enclosedScope) {
+		public InterfaceType(final String name, final StaticScope enclosedScope, final boolean isTemplateInstantiation) {
 			super(enclosedScope);
 			name_ = name;
+			isTemplateInstantiation_ = isTemplateInstantiation;
 			selectorSignatureMap_ = new LinkedHashMap<String, List<MethodSignature>>();
 		}
 		@Override public String name() {
 			return name_;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return this.canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -661,7 +773,7 @@ public abstract class Type implements ExpressionStackAPI
 				final String parameterToIgnore) {
 			if (recurDepth > 5) {
 				if (false == recurRecovery) {
-						ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(),
+						ErrorLogger.error(ErrorIncidenceType.Fatal, token(),
 								"Type reference recursion involving argument of `", selectorName, "'.", "");
 				}
 				recurRecovery = true;
@@ -684,6 +796,7 @@ public abstract class Type implements ExpressionStackAPI
 						retval = signature;
 						break;
 					}
+					assert (argumentList != null);
 				}
 			} else {
 				final Declaration potentialInterfaceDecl = null == enclosedScope()? null:
@@ -712,9 +825,83 @@ public abstract class Type implements ExpressionStackAPI
 		public final Map<String, List<MethodSignature>> selectorSignatureMap() {
 			return selectorSignatureMap_;
 		}
+		
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final ClassType baseClass,
+				final StaticScope newEnclosedScope,
+				final Declaration newAssociatedDeclaration,
+				final Token token) {
+			final TemplateType nominalType = (TemplateType)templateDeclaration.type();
+			assert null != newEnclosedScope.parentScope();
+			enclosedScope_ = newEnclosedScope;
+			staticObjectDeclarationDictionary_ = new LinkedHashMap<String, ObjectDeclaration>();
+			for (Map.Entry<String,ObjectDeclaration> iter : nominalType.staticObjectDeclarationDictionary_.entrySet()) {
+				final String name = iter.getKey();
+				final ObjectDeclaration decl = iter.getValue();
+				final ObjectDeclaration declCopy = decl.copy();
+				staticObjectDeclarationDictionary_.put(new String(name), declCopy);
+			}
+			
+			// The Meat
+			final TemplateTypeForAnInterface interfaceType = (TemplateTypeForAnInterface)templateDeclaration.type();
+			final Map<String, List<MethodSignature>> signatureMap = interfaceType.selectorSignatureMap();
+			
+			final TemplateInstantiationInfo instantiationInfo = enclosedScope().templateInstantiationInfo();
+			for (final String signatureName : signatureMap.keySet()) {
+				final List<MethodSignature> signatureList = signatureMap.get(signatureName);
+				if (null == signatureList) {
+					assert null != signatureList;
+				}
+				for (final MethodSignature aSignature : signatureList) {
+					final String returnTypeName = aSignature.type().name();
+					Type returnType = instantiationInfo.classSubstitionForTemplateTypeNamed(returnTypeName);
+					returnType = null != returnType? returnType: aSignature.type();
+
+					final MethodSignature newSignature = new MethodSignature(aSignature.name(), returnType,
+							aSignature.accessQualifier(), token, aSignature.isStatic());
+					final FormalParameterList formalParameterList = new FormalParameterList();
+					newSignature.addParameterList(formalParameterList);
+					
+					// Add a formal "this" parameter
+					if (false == aSignature.isStatic()) {
+						final ObjectDeclaration self = new ObjectDeclaration("this", this, token);
+						formalParameterList.addFormalParameter(self);
+					}
+					
+					// Update the types (return types and parameters) in the signature
+					newSignature.setReturnType(returnType);	// redundant...
+					
+					final FormalParameterList formalParams = newSignature.formalParameterList();
+					formalParams.mapTemplateParameters(instantiationInfo);
+					
+					// Add the signature to selectorSignatureMap_
+					this.addSignature(newSignature);
+				}
+			}
+			
+			// No static objects in interfaces for now, I think,
+			// so maybe this code can go.
+			staticObjects_ = new LinkedHashMap<String, RTCode>();
+			for (final Map.Entry<String,RTCode> iter : nominalType.staticObjects_.entrySet()) {
+				final String name = iter.getKey();
+				final RTCode programElement = iter.getValue();
+				
+				// We really should do a copy here of program element, but
+				// we'll presume that code isn't modified and cross our
+				// fingers. Adding a dup() function to that class hierarchy
+				// would be quite a chore...
+				final String stringCopy = name.substring(0, name.length() - 1);
+				staticObjects_.put(stringCopy, programElement);
+			}
+		}
+		
+		public boolean isTemplateInstantiation() {
+			return isTemplateInstantiation_;
+		}
 
 		
 		private final String name_;
+		private final boolean isTemplateInstantiation_;
 		private final Map<String, List<MethodSignature>> selectorSignatureMap_;
 	}
 	public static class BuiltInType extends Type {
@@ -848,7 +1035,7 @@ public abstract class Type implements ExpressionStackAPI
 			}
 			return retval;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -941,7 +1128,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(scope);
 			name_ = name;
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type type) {
+		public void reportMismatchesWith(final Token token, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -957,19 +1144,19 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Role `", name(),
 									"' is declared as private in interface of `", type.name() +
 									"' and is therefore inaccessible to the Role.");
 						} else if (rolesSignature.hasConstModifier()) {
 							if (false == signatureForMethodSelector.hasConstModifier()) {
-								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.token(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Role `", name(),
 										"' is missing a const modifier.", "");
@@ -979,7 +1166,7 @@ public abstract class Type implements ExpressionStackAPI
 				}
 			}
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1011,10 +1198,19 @@ public abstract class Type implements ExpressionStackAPI
 							if (null != t && (t instanceof RoleType || t instanceof StagePropType)) {
 								final RoleType otherAsRole = (RoleType)t;
 								final Map<String, List<MethodSignature>> otherSignatures = otherAsRole.associatedDeclaration().requiredSelfSignatures();
+								assert (otherSignatures != null);
 								
 								// Any one of the "otherSignatures" will do if it matches
 								boolean found = false;
 								final List<MethodSignature> appearancesOfThisSignatureInOther = otherSignatures.get(methodName);
+								
+								if (null == appearancesOfThisSignatureInOther || appearancesOfThisSignatureInOther.size() == 0) {
+									// Nothing there to satisfy the signature, so no dice
+									// (delicious find)
+									retval = false;
+									break;
+								}
+								
 								for (final MethodSignature possibleMatchinSignature : appearancesOfThisSignatureInOther) {
 									final FormalParameterList myParameterList = rolesSignature.formalParameterList();
 									final FormalParameterList otherArgumentList = possibleMatchinSignature.formalParameterList();
@@ -1136,7 +1332,7 @@ public abstract class Type implements ExpressionStackAPI
 		public StagePropType(final String name, final StaticScope scope) {
 			super(name, scope);
 		}
-		public void reportMismatchesWith(final int lineNumber, final Type type) {
+		public void reportMismatchesWith(final Token token, final Type type) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 			
@@ -1152,12 +1348,12 @@ public abstract class Type implements ExpressionStackAPI
 						final MethodSignature signatureForMethodSelector =
 							type.signatureForMethodSelectorIgnoringThisWithPromotionAndConversion(methodName, rolesSignature);
 						if (null == signatureForMethodSelector) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' does not appear in interface of `", type.name() + "'.");
 						} else if (signatureForMethodSelector.accessQualifier() != AccessQualifier.PublicAccess) {
-							ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "\t`",
+							ErrorLogger.error(ErrorIncidenceType.Fatal, token, "\t`",
 									rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 									"' needed by Stage Prop `", name(),
 									"' is declared as private in interface of `", type.name() +
@@ -1165,7 +1361,7 @@ public abstract class Type implements ExpressionStackAPI
 						} else if (rolesSignature.hasConstModifier()) {
 							if (false == signatureForMethodSelector.hasConstModifier() &&
 									false == signatureForMethodSelector.isUnusedInThisContext()) {
-								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.lineNumber(), "\t`",
+								ErrorLogger.error(ErrorIncidenceType.Fatal, signatureForMethodSelector.token(), "\t`",
 										rolesSignature.name() + rolesSignature.formalParameterList().selflessGetText(),
 										"' needed by Stage Prop `", name(),
 										"' is missing a const modifier.", "");
@@ -1178,7 +1374,7 @@ public abstract class Type implements ExpressionStackAPI
 		public Map<String, List<MethodSignature>> requiredSelfSignatures() {
 			return associatedDeclaration_.requiredSelfSignatures();
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			// Make sure that each method in my "requires" signature
 			// is satisfied in the signature of t
 
@@ -1239,7 +1435,7 @@ public abstract class Type implements ExpressionStackAPI
 								final String roleSignatureLineNumber = Integer.toString(signatureForMethodSelector.lineNumber()) +
 										" does not match the contract at line " +
 										Integer.toString(rolesSignature.lineNumber());
-								parserPass.errorHook5p2(ErrorIncidenceType.Warning, lineNumber,
+								parserPass.errorHook5p2(ErrorIncidenceType.Warning, token,
 										"WARNING: Required methods for stage props should be const. The declaration of method `",
 										signatureForMethodSelector.name(), "' at line ",
 										roleSignatureLineNumber);
@@ -1363,7 +1559,7 @@ public abstract class Type implements ExpressionStackAPI
 			atPutMethodDeclaration_ = null;
 			baseType_ = baseType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return canBeConvertedFrom(t);
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1417,15 +1613,15 @@ public abstract class Type implements ExpressionStackAPI
 		// their own scope where we can declare things like this.
 		public MethodDeclaration sizeMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == sizeMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				formalParameterList.addFormalParameter(self);
 				final MethodSignature signature = new MethodSignature("size",
 						StaticScope.globalScope().lookupTypeDeclaration("int"),
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				sizeMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				sizeMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(sizeMethodDeclaration_, null);
 			}
@@ -1433,20 +1629,20 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public MethodDeclaration atMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == atMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
-				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, null);
 				
 				formalParameterList.addFormalParameter(theIndex);
 				formalParameterList.addFormalParameter(self);
 				
 				final MethodSignature signature = new MethodSignature("at",
 						baseType_,
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				atMethodDeclaration_.setHasConstModifier(true);
 				dummyScope_.declareMethod(atMethodDeclaration_, null);
 			}
@@ -1454,12 +1650,12 @@ public abstract class Type implements ExpressionStackAPI
 		}
 		public MethodDeclaration atPutMethodDeclaration(final StaticScope enclosingScope) {
 			if (null == atPutMethodDeclaration_) {
-				final ObjectDeclaration self = new ObjectDeclaration("this", this, 0);
+				final ObjectDeclaration self = new ObjectDeclaration("this", this, null);
 				final FormalParameterList formalParameterList = new FormalParameterList();
 				final Type intType = StaticScope.globalScope().lookupTypeDeclaration("int");
 				final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
-				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, 0);
-				final ObjectDeclaration object = new ObjectDeclaration("object", baseType_, 0);
+				final ObjectDeclaration theIndex = new ObjectDeclaration("theIndex", intType, null);
+				final ObjectDeclaration object = new ObjectDeclaration("object", baseType_, null);
 				
 				formalParameterList.addFormalParameter(object);
 				formalParameterList.addFormalParameter(theIndex);
@@ -1467,10 +1663,10 @@ public abstract class Type implements ExpressionStackAPI
 				
 				final MethodSignature signature = new MethodSignature("atPut",
 						voidType,
-						AccessQualifier.PublicAccess, 0, false);
+						AccessQualifier.PublicAccess, null, false);
 				signature.addParameterList(formalParameterList);
 				dummyScope_ = new StaticScope(enclosingScope);
-				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, 0);
+				atPutMethodDeclaration_ = new MethodDeclaration(signature, dummyScope_, null);
 				atPutMethodDeclaration_.setHasConstModifier(false);
 				dummyScope_.declareMethod(atPutMethodDeclaration_, null);
 			}
@@ -1491,7 +1687,7 @@ public abstract class Type implements ExpressionStackAPI
 			name_ = name;
 			baseClassType_ = baseClassType;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1516,7 +1712,7 @@ public abstract class Type implements ExpressionStackAPI
 			super(null);
 			name_ = name;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1542,7 +1738,7 @@ public abstract class Type implements ExpressionStackAPI
 		@Override public boolean isBaseClassOf(final Type t) {
 			return true;
 		}
-		@Override public boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass) {
+		@Override public boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass) {
 			return true;
 		}
 		@Override public boolean canBeConvertedFrom(final Type t) {
@@ -1564,7 +1760,7 @@ public abstract class Type implements ExpressionStackAPI
 	
 	
 	public abstract boolean canBeConvertedFrom(final Type t);
-	public abstract boolean canBeConvertedFrom(final Type t, final int lineNumber, final Pass1Listener parserPass);
+	public abstract boolean canBeConvertedFrom(final Type t, final Token token, final Pass1Listener parserPass);
 
 	public boolean isError() {
 		return false;
@@ -1681,11 +1877,14 @@ public abstract class Type implements ExpressionStackAPI
 				HierarchySelector.ThisClassOnly);
 	}
 	public int lineNumber() {
-		return lineNumber_;
+		return null == token_? 0: token_.getLine();
+	}
+	public Token token() {
+		return token_;
 	}
 	
 	protected StaticScope enclosedScope_;
 	protected Map<String, ObjectDeclaration> staticObjectDeclarationDictionary_;
 	protected Map<String, RTCode> staticObjects_;
-	private final int lineNumber_;
+	private final Token token_;
 }

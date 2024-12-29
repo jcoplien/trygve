@@ -63,6 +63,7 @@ line 22: WARNING: Both class `AnObject' and Role `C2R1' contain the same script 
 ___________________________________________________________
 Context1 ctor called:
 I am C1R1
+
 Object of type AnObject playing too many roles, including C2R1
 	In Context `Context1': C1R1, C1R2.
 	In Context `Context2': C2R1.

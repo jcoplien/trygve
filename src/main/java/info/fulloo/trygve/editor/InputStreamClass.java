@@ -41,8 +41,8 @@ import java.util.logging.Logger;
 import javax.swing.text.JTextComponent;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,13 +72,13 @@ public class InputStreamClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", inputStreamType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", inputStreamType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(inputStreamType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -93,7 +93,7 @@ public class InputStreamClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("InputStream", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("InputStream", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			inputStreamType_ = new ClassType("InputStream", newScope, null);
 			classDecl.setType(inputStreamType_);
@@ -118,7 +118,7 @@ public class InputStreamClass {
 			// depends on System. So we moved this here into the InputStream initialization.
 			assert null != inputStreamType_;
 			final Type systemClassType = StaticScope.globalScope().lookupTypeDeclaration("System");
-			final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, 0);
+			final ObjectDeclaration inputDeclaration = new ObjectDeclaration("in", inputStreamType_, null);
 			systemClassType.enclosedScope().declareStaticObject(inputDeclaration);
 			systemClassType.declareStaticObject(inputDeclaration);
 		}
@@ -286,7 +286,7 @@ public class InputStreamClass {
 	        } else if (len == 0) {
 	            return 0;
 	        }
-	        
+	       
 	        int c = read();
 	        int i = 0;
 	        
@@ -387,7 +387,7 @@ public class InputStreamClass {
 	    @Override public void checkIOIntegration(final Event e) { }
 	}
 	
-	public static class PanelInputStream extends DocInputStream implements KeyListener, GraphicsEventHandler {
+	public static class PanelInputStream extends DocInputStream {
 	    protected PanelInputStream(final RTObject rTPanel) {
 	    	super();
 			

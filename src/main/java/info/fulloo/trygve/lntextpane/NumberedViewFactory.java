@@ -1,8 +1,8 @@
 package info.fulloo.trygve.lntextpane;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ package info.fulloo.trygve.lntextpane;
 
 import javax.swing.text.*;
 import javax.swing.text.Element;
-
-import info.fulloo.trygve.lntextpane.NumberedParagraphView;
 
 class NumberedViewFactory implements ViewFactory {
     public View create(Element elem) {

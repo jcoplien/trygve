@@ -1,9 +1,12 @@
 package info.fulloo.trygve.add_ons;
 
 import java.util.ArrayList;
+
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
+import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
@@ -19,6 +22,7 @@ import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.run_time.RTClass;
+import info.fulloo.trygve.run_time.RTType;
 import info.fulloo.trygve.run_time.RTCode;
 import info.fulloo.trygve.run_time.RTDynamicScope;
 import info.fulloo.trygve.run_time.RTMapObject;
@@ -27,11 +31,13 @@ import info.fulloo.trygve.run_time.RTStackable;
 import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.run_time.RTSetObject;
 import static java.util.Arrays.asList;
 
+
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,15 +71,15 @@ public final class MapClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -84,12 +90,12 @@ public final class MapClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		final Type voidType = StaticScope.globalScope().lookupTypeDeclaration("void");
-		final ObjectDeclaration m = new ObjectDeclaration("m", mapType_, 0);
+		final ObjectDeclaration m = new ObjectDeclaration("m", mapType_, null);
 		formals.addFormalParameter(m);
-		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", mapType_, null);
 		formals.addFormalParameter(self);
 		final StaticScope methodScope = new StaticScope(mapType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration("putAll", methodScope, voidType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration("putAll", methodScope, voidType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(voidType);
 		methodDecl.setHasConstModifier(false);
@@ -109,12 +115,12 @@ public final class MapClass {
 			final StaticScope newScope = new StaticScope(globalScope);
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, objectBaseClass, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Map", newScope, objectBaseClass, null);
 			newScope.setDeclaration(templateDecl);
 			final Type K = new TemplateParameterType("K", null);
 			final Type V = new TemplateParameterType("V", null);
-			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope, 0);
-			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope, 0);
+			final IdentifierExpression keyTypeParamID = new IdentifierExpression("K", K, newScope, null);
+			final IdentifierExpression valueTypeParamID = new IdentifierExpression("V", V, newScope, null);
 			templateDecl.addTypeParameter(keyTypeParamID, 2);
 			templateDecl.addTypeParameter(valueTypeParamID, 2);
 			mapType_ = new TemplateType("Map", newScope, null);
@@ -122,6 +128,7 @@ public final class MapClass {
 			typeDeclarationList_.add(templateDecl);
 			
 			final Type intType = globalScope.lookupTypeDeclaration("int");
+			final Type setType = globalScope.lookupTypeDeclaration("Set");
 			
 			// these arguments are backwards
 			declareMapMethod("Map", mapType_, null, null, false);
@@ -143,6 +150,9 @@ public final class MapClass {
 			declareMapMethod("remove", V, asList("key"), asList(K), false);
 			
 			declareMapMethod("size", intType, null, null, true);
+			
+			// MAP>>KEYS
+			declareMapMethod("keys", setType, null, null, true);
 			
 			// Declare the type
 			globalScope.declareType(mapType_);
@@ -204,6 +214,7 @@ public final class MapClass {
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final RTObject rawKey = activationRecord.getObject("key");
 			final RTObject rawValue = activationRecord.getObject("value");
+			assert (rawValue != null);
 			theMapObject.put(rawKey, rawValue);
 			return super.nextCode();
 		}
@@ -261,7 +272,7 @@ public final class MapClass {
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			final RTObject value = activationRecord.getObject("key");
+			final RTObject value = activationRecord.getObject("value");
 			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
 			final RTStackable answer = (RTStackable)theMapObject.containsValue(value);
 			assert answer instanceof RTObject;
@@ -305,6 +316,30 @@ public final class MapClass {
 
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", (RTObject)answer);
+			
+			return super.nextCode();
+		}
+	}
+	// MAP>>KEYS
+	public static class RTMapKeysCode extends RTMapCommon {
+		public RTMapKeysCode(final StaticScope enclosingMethodScope, final ClassDeclaration returnTypeDeclaration) {
+			super("Map", "keys", null, null, enclosingMethodScope, returnTypeDeclaration.type());
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTMapObject theMapObject = (RTMapObject)activationRecord.getObject("this");
+			final Type K = theMapObject.keyType();
+			final String setTypeName = "Set<" + K.name() + ">";
+			final Type type = StaticScope.globalScope().lookupTypeDeclaration(setTypeName);
+			final RTType RTreturnType = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(type.enclosedScope());
+			final RTSetObject retval = new RTSetObject(RTreturnType);
+			retval.ctor();
+				
+			final Set<RTObject> keySet = theMapObject.keys();
+			retval.setSet(keySet);
+			
+			this.addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", (RTObject)retval);
 			
 			return super.nextCode();
 		}

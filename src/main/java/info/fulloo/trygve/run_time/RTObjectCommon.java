@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.ActualArgumentList;
+import info.fulloo.trygve.declarations.Declaration.ContextDeclaration;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -37,15 +38,17 @@ import info.fulloo.trygve.expressions.Expression.IdentifierExpression;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTClass.RTObjectClass.RTHalt;
 import info.fulloo.trygve.run_time.RTContext.RTContextInfo;
+import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleArrayIndexExpression;
 import info.fulloo.trygve.run_time.RTExpression.RTRoleIdentifier;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 // For future reference:
 // Integer.toHexString(System.identityHashCode(object))
 // http://www.nomachetejuggling.com/2008/06/04/getting-a-java-objects-reference-id/
 
 // Doubles for classes and contexts
-public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTContextInstance {
+public class RTObjectCommon extends RTCommonRunTimeCrap implements RTContextInstance {
 	public RTObjectCommon(final RTType classs) {
 		super();
 		classOrContext_ = classs;
@@ -77,7 +80,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert myType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
 		final Type myTypeAsType = myClass.typeDeclaration().type();
-		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, null);
 		pl.addFirstActualParameter(self);
 		
 		assert other instanceof RTObject;
@@ -86,15 +89,18 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert otherType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon otherClass = (RTClassAndContextCommon)otherType;
 		final Type otherTypeAsType = otherClass.typeDeclaration().type();
-		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, 0);
+		IdentifierExpression otherVar = new IdentifierExpression("other", otherTypeAsType, null, null);
 		pl.addActualArgument(otherVar);
 		
-		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo", pl, null);
+		List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		final RTMethod compareTo = myType.lookupMethodIgnoringParameterInSignatureWithConversionNamed("compareTo",
+				actualParameterStaticTypes, pl, null);
 		if (null != compareTo) {
 			// The user has provided a compareTo function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("compareTo", currentDynamicScope, true);
+			final StaticScope staticScope = null;
+			RTDynamicScope activationRecord = new RTDynamicScope(staticScope, "compareTo", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
@@ -137,15 +143,16 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		assert myType instanceof RTClassAndContextCommon;
 		final RTClassAndContextCommon myClass = (RTClassAndContextCommon)myType;
 		final Type myTypeAsType = myClass.typeDeclaration().type();
-		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, 0);
+		IdentifierExpression self = new IdentifierExpression("this", myTypeAsType, null, null);
 		pl.addFirstActualParameter(self);
 		
 		final RTMethod toString = myType.lookupMethod("toString", pl);
 		if (null != toString) {
 			// The user has provided a toString function. Call it.
 			final int startingStackSize = RunTimeEnvironment.runTimeEnvironment_.stackSize();
+			final StaticScope staticScope = null;
 			RTDynamicScope currentDynamicScope = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
-			RTDynamicScope activationRecord = new RTDynamicScope("toString", currentDynamicScope, true);
+			RTDynamicScope activationRecord = new RTDynamicScope(staticScope,"toString", currentDynamicScope, true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			activationRecord.addObjectDeclaration("this", myType);
@@ -181,7 +188,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 	}
 	@Override public void setObject(final String name, final RTObject object) {
 		if (null == object) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, 0,
+			ErrorLogger.error(ErrorIncidenceType.Internal, null,
 					"Internal error: attempt to set ",
 					name,
 					" to a Java NULL.", "");
@@ -197,7 +204,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			classOrContext_.setObject(name, object);
 		}
 	}
+	// dead code.  FIXME.
+	// private RTType classOrContext() {
+	// 	return classOrContext_;
+	// }
 	@Override public Map<String, RTType> objectDeclarations() { return rTTypeMap_; }
+	          public Map<String,RTObject> objectMembers() { return objectMembers_; }
 	@Override public void addObjectDeclaration(final String name, final RTType type) {
 		rTTypeMap_.put(name, type);
 		final RTObject oldValue = objectMembers_.get(name);
@@ -313,7 +325,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 	}
 
-	public static class RTContextObject extends RTObjectCommon implements RTObject {
+	public static class RTContextObject extends RTObjectCommon {
 		public RTContextObject(final RTType classs) {
 			super(classs);
 			nameToRoleMap_ = new LinkedHashMap<String, RTRole>();
@@ -322,6 +334,8 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
 			isRoleArrayMap_ = new LinkedHashMap<String, String>();
 			isStagePropArrayMap_ = new LinkedHashMap<String, String>();
+			
+			uniqueID_ = ++idGenerator_;
 			
 			// context$info is used to track things like
 			// who our role-players are. It kind of seemed like this
@@ -639,18 +653,58 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		}
 		
 		@Override public void decrementReferenceCount() {
-			super.decrementReferenceCount();
+			// The timing of this decrement is wrong. It has been removed
+			//     and the logic redistributed locally below. See appropriately
+			//     dated comments.
+			// super.decrementReferenceCount();  // removed 5 Feb 2024
+			
 			final RTContextInfo contextInfo = contextInfo();
 			if (0 == referenceCount()) {
 				// I'm outta here. Let all my RolePlayers know
 				contextInfo.removeAllRoleAndStagePropPlayers();
 				unbindAllRolesAndStageProps();
+				cleanedUp_ = true;
 			} else if (1 == referenceCount() && this == RTExpression.lastExpressionResult()) {
+				super.decrementReferenceCount();  // added 5 Feb 2024
 				contextInfo.removeAllRoleAndStagePropPlayers();
 				unbindAllRolesAndStageProps();
 				RTExpression.setLastExpressionResult(new RTNullObject(), 0);
 			} else if (0 > referenceCount()) {
-				assert false;
+				// REF_COUNT_TAG_BUG_1 / Issue 133:
+				//
+				// Something was formally very badly wrong here, because
+				// we DO get to this code with test example
+				// examples/keypad.k
+				//
+				// This was formerly a stop-the-train assertion, but
+				// on looking into it, it should never happen
+				//
+				// This may be related to a reference count issue
+				// in RTQualifiedIdentifierPart2.run. See tag REF_COUNT_TAG_BUG_1
+				// in RTExpression.java. If we remove a reference count decrement
+				// there, then testing seems to have a hard time getting us to
+				// the former assertion here.
+				//
+				// I'm keeping the code here until we really figure out
+				// what is going on with reference count for qualified
+				// identifiers that get pushed onto the evaluation stack
+				// FIXME.
+				if (!cleanedUp_) {
+					// this is here as a safety valve to help keep
+					// running, even if the counts do get out of line.
+					// testing so far does not reach this code
+					//
+					// This of course should never happen, and with the
+					// fix to Issue 133, we cannot reproduce execution at
+					// this code block.
+					contextInfo.removeAllRoleAndStagePropPlayers();
+					unbindAllRolesAndStageProps();
+					cleanedUp_ = true;
+				} else {
+					// however, this seems to be where we ended up sometimes
+					// (before we made the change in RTQualifiedIdentifierPart2.run)
+					;
+				}
 			}
 		}
 		@Override public String getText() {
@@ -674,14 +728,29 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			}
 			return retval;
 		}
+		public StaticScope staticScope() {
+			RTType a = this.rTType();
+			ContextDeclaration b = (ContextDeclaration)((RTContext)a).typeDeclaration_;
+			return b.enclosedScope();
+		}
+		
+		public int uniqueID() {
+			// Used in debugging
+			return uniqueID_;
+		}
+
+		// These used mainly for debugging
+		final private int uniqueID_;
+		private static int idGenerator_ = 0;
 		
 		private final Map<String, RTRole> nameToRoleMap_;
 		private final Map<String, RTStageProp> nameToStagePropMap_;
 		private       Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 		private final Map<String, String> isRoleArrayMap_, isStagePropArrayMap_;
+		private boolean cleanedUp_ = false;
 	}
 	
-	public static class RTIntegerObject extends RTObjectCommon implements RTObject {
+	public static class RTIntegerObject extends RTObjectCommon {
 		public RTIntegerObject(final long foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("int"));
 			foobar_ = foobar;
@@ -830,12 +899,12 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		
 		private long foobar_;
 	}
-	public static class RTBigIntegerObject extends RTIntegerObject implements RTObject {
+	public static class RTBigIntegerObject extends RTIntegerObject {
 		public RTBigIntegerObject(final int foobar) {
 			super(foobar, "Integer");
 		}
 	}
-	public static class RTDoubleObject extends RTObjectCommon implements RTObject {
+	public static class RTDoubleObject extends RTObjectCommon {
 		public RTDoubleObject(final double foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("double"));
 			foobar_ = foobar;
@@ -965,11 +1034,14 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		@Override public String getText() {
 			return Double.toString((double)foobar_);
 		}
+		@Override public String toString() {
+			return getText();
+		}
 		
 		final double EPSILON = 0.00001;
 		private double foobar_;
 	}
-	public static class RTStringObject extends RTObjectCommon implements RTObject {
+	public static class RTStringObject extends RTObjectCommon {
 		public RTStringObject(final String foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelClassNamed("String"));
 			foobar_ = foobar;
@@ -1015,8 +1087,16 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 			final RTIntegerObject end = (RTIntegerObject)rTEnd;
 			final long iStart = start.intValue();
 			final long iEnd = end.intValue();
-			final String sRetval = foobar_.substring((int)iStart, (int)iEnd);
-			retval = new RTStringObject(sRetval);
+			if (0 > iStart || foobar_.length() < iEnd) {
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null, "substring index out-of-range: (",
+						Integer.toString((int)iStart) + ", " + Integer.toString((int)iEnd),
+						") on String of length ", Integer.toString(foobar_.length()));
+				RTMessage.printMiniStackStatus();
+				retval = null;
+			} else {
+				final String sRetval = foobar_.substring((int)iStart, (int)iEnd);
+				retval = new RTStringObject(sRetval);
+			}
 			return retval;
 		}
 		public RTStringObject replaceFirst(final RTObject regexArg, final RTObject replacementArg) {
@@ -1072,7 +1152,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		private final String foobar_;
 	}
 	
-	public static class RTBooleanObject extends RTObjectCommon implements RTObject {
+	public static class RTBooleanObject extends RTObjectCommon {
 		public RTBooleanObject(final boolean foobar) {
 			super(RunTimeEnvironment.runTimeEnvironment_.topLevelTypeNamed("boolean"));
 			foobar_ = foobar;
@@ -1133,7 +1213,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		
 		private boolean foobar_;
 	}
-	public static class RTNullObject extends RTObjectCommon implements RTObject {
+	public static class RTNullObject extends RTObjectCommon {
 		public RTNullObject() {
 			super((RTClass)null);
 		}
@@ -1196,6 +1276,7 @@ public class RTObjectCommon extends RTCommonRunTimeCrap implements RTObject, RTC
 		--referenceCount_;
 	}
 	@Override public long referenceCount() {
+		assert referenceCount_ >= 0;
 		return referenceCount_;
 	}
 	

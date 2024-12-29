@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,12 +24,15 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.LinkedHashMap;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
 import java.util.Map;
 
 
 public final class RTDynamicScope extends RTObjectCommon {
-	public RTDynamicScope(final String methodSelector, final RTObject object, final RTDynamicScope parentScope) {
+	public RTDynamicScope(final StaticScope staticScope, final String methodSelector,
+			final RTObject object, final RTDynamicScope parentScope) {
 		super(object);
+		staticScope_ = staticScope;
 		// An object IS a scope
 		
 		isARealMethodScope_ = false;
@@ -42,8 +45,9 @@ public final class RTDynamicScope extends RTObjectCommon {
 		parentScope_ = parentScope;
 		name_ =  null != methodSelector? methodSelector: "unknown";
 	}
-	public RTDynamicScope(final String methodSelector, final RTDynamicScope parentScope, final boolean isReallyAMethodScope) {
+	public RTDynamicScope(final StaticScope staticScope, final String methodSelector, final RTDynamicScope parentScope, final boolean isReallyAMethodScope) {
 		super((RTType)null);
+		staticScope_= staticScope;
 		isARealMethodScope_ = isReallyAMethodScope;
 		nameToRoleBindingMap_ = new LinkedHashMap<String, RTObject>();
 		nameToStagePropBindingMap_ = new LinkedHashMap<String, RTObject>();
@@ -66,8 +70,15 @@ public final class RTDynamicScope extends RTObjectCommon {
 			if (null != oldValue) {
 				oldValue.decrementReferenceCount();
 			}
+		} else if (null != staticScope() && null != staticScope().lookupRoleOrStagePropDeclaration(name)) {
+			final RTObject oldBinding = nameToRoleBindingMap_.get(name);
+			if (null != oldBinding) {
+				oldBinding.decrementReferenceCount();
+			}
+			this.setRoleBinding(name, value);
 		} else {
-			assert false;		// maybe need additional logic for roles
+			assert false;		// maybe need additional logic if
+								//   it can't find the object/role
 		}
 	}
 	
@@ -111,6 +122,10 @@ public final class RTDynamicScope extends RTObjectCommon {
 		RTDynamicScope retval = this;
 		do {
 			if (retval.objectMembers_.containsKey(name)) {
+				break;
+			} else if (null != retval.nameToRoleBindingMap_.get(name)) {
+				break;
+			} else if (null != retval.staticScope() && null != retval.staticScope().lookupRoleOrStagePropDeclaration(name)) {
 				break;
 			} else {
 				retval = retval.parentScope();
@@ -189,11 +204,15 @@ public final class RTDynamicScope extends RTObjectCommon {
 	public boolean isARealMethodScope() {
 		return isARealMethodScope_;
 	}
+	public StaticScope staticScope() {
+		return staticScope_;
+	}
 		
 	private       Map<String, RTObject> nameToRoleBindingMap_, nameToStagePropBindingMap_;
 	private final RTDynamicScope parentScope_;
 	private final String name_;
 	private       String debuggingTypeName_;
+	private final StaticScope staticScope_;
 	
 	// This is used when walking up the scope stack, as a delimiter
 	// to demarcate when we've gone outside of a script scope. It

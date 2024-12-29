@@ -30,8 +30,8 @@ import info.fulloo.trygve.run_time.RunTimeEnvironment;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,13 +66,13 @@ public final class MouseInfoClass {
 			for (final String paramName : paramNames) {
 				if (null != paramName) {
 					final Type paramType = typeIterator.next();
-					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+					final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 					formals.addFormalParameter(formalParameter);
 				}
 			}
 		}
 		final StaticScope methodScope = new StaticScope(mouseInfoType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, isStatic);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, isStatic);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -89,7 +89,7 @@ public final class MouseInfoClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("MouseInfo", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("MouseInfo", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			mouseInfoType_ = new ClassType("MouseInfo", newScope, null);
 			classDecl.setType(mouseInfoType_);
@@ -181,15 +181,15 @@ public final class MouseInfoClass {
 				for (final String paramName : paramNames) {
 					if (null != paramName) {
 						final Type paramType = typeIterator.next();
-						final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+						final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 						formals.addFormalParameter(formalParameter);
 					}
 				}
 			}
-			final ObjectDeclaration self = new ObjectDeclaration("this", pointerInfoType_, 0);
+			final ObjectDeclaration self = new ObjectDeclaration("this", pointerInfoType_, null);
 			formals.addFormalParameter(self);
 			final StaticScope methodScope = new StaticScope(pointerInfoType_.enclosedScope());
-			final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+			final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 			methodDecl.addParameterList(formals);
 			methodDecl.setReturnType(returnType);
 			methodDecl.setHasConstModifier(isConst);
@@ -207,7 +207,7 @@ public final class MouseInfoClass {
 				assert null != objectBaseClass;
 
 				final StaticScope newScope = new StaticScope(globalScope);
-				final ClassDeclaration classDecl = new ClassDeclaration("PointerInfo", newScope, objectBaseClass, 0);
+				final ClassDeclaration classDecl = new ClassDeclaration("PointerInfo", newScope, objectBaseClass, null);
 				newScope.setDeclaration(classDecl);
 				pointerInfoType_ = new ClassType("PointerInfo", newScope, null);
 				classDecl.setType(pointerInfoType_);

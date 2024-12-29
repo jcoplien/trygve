@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,6 +29,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Hashtable;
 
+import org.antlr.v4.runtime.Token;
+
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
+import info.fulloo.trygve.add_ons.ListClass;
 import info.fulloo.trygve.declarations.Type.ArrayType;
 import info.fulloo.trygve.declarations.Type.BuiltInType;
 import info.fulloo.trygve.declarations.Type.ClassOrContextType;
@@ -79,14 +83,15 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class ObjectDeclaration extends Declaration
 	{
-		public ObjectDeclaration(final String name, final Type type, final int lineNumber) {
+		public ObjectDeclaration(final String name, final Type type, final Token token) {
 			super(name);
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			type_ = type;
 			accessQualifier_ = AccessQualifier.DefaultAccess;
 		}
 		public ObjectDeclaration copy() {
-			final ObjectDeclaration retval = new ObjectDeclaration(name(), type_, lineNumber_);
+			final ObjectDeclaration retval = new ObjectDeclaration(name(), type_, token_);
 			retval.setEnclosingScope(enclosingScope());
 			return retval;
 		}
@@ -105,7 +110,7 @@ public abstract class Declaration implements BodyPart {
 		@Override public String getText() {
 			return name();
 		}
-		public void setAccess(final AccessQualifier accessLevel, final StaticScope currentScope, final int lineNumber) {
+		public void setAccess(final AccessQualifier accessLevel, final StaticScope currentScope, final Token token) {
 			// This method sets the corresponding access level for this declaration, yes,
 			// makes sense at all
 			if (accessLevel != AccessQualifier.DefaultAccess) {
@@ -114,7 +119,7 @@ public abstract class Declaration implements BodyPart {
 					final ErrorIncidenceType errorType = accessLevel == AccessQualifier.PrivateAccess?
 															ErrorIncidenceType.Warning:
 															ErrorIncidenceType.Fatal;
-					ErrorLogger.error(errorType, lineNumber,
+					ErrorLogger.error(errorType, token,
 							errorType.toString(),
 							": Identifier `", name(),
 							"' has a gratuitous access qualifier."
@@ -130,6 +135,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		public void setEnclosingScope(final StaticScope scope) {
 			containingScope_ = scope;
@@ -147,6 +155,7 @@ public abstract class Declaration implements BodyPart {
 
 		private       Type type_;
 		private final int lineNumber_;
+		private final Token token_;
 		private       StaticScope containingScope_;
 		public        AccessQualifier accessQualifier_;
 		private       Expression initialization_;
@@ -154,14 +163,18 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class TypeDeclarationCommon extends Declaration implements TypeDeclaration
 	{
-		public TypeDeclarationCommon(final String name, final int lineNumber, final StaticScope myEnclosedScope) {
+		public TypeDeclarationCommon(final String name, final Token token, final StaticScope myEnclosedScope) {
 			super(name);
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			myEnclosedScope_ = myEnclosedScope;
 			stringToStaticObjectMap_ = new LinkedHashMap<String, ObjectDeclaration>();
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public StaticScope enclosedScope() {
 			return myEnclosedScope_;
@@ -174,7 +187,7 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public void declareStaticObject(final ObjectDeclaration declaration) {
 			if (stringToStaticObjectMap_.containsKey(declaration.name())) {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber_, "Duplicate declaration of static object ", declaration.name(), "", "");
+				ErrorLogger.error(ErrorIncidenceType.Fatal, token_, "Duplicate declaration of static object ", declaration.name(), "", "");
 			} else {
 				stringToStaticObjectMap_.put(declaration.name(), declaration);
 			}
@@ -184,23 +197,25 @@ public abstract class Declaration implements BodyPart {
 			if (stringToStaticObjectMap_.containsKey(name)) {
 				retval = stringToStaticObjectMap_.get(name);
 			} else {
-				ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber_, "Static object ", name, " not found in type ", name());
+				ErrorLogger.error(ErrorIncidenceType.Fatal, token_, "Static object ", name, " not found in type ", name());
 			}
 			return retval;
 		}
 		@Override public String getText() {
 			return name();
 		}
+		public void pass2Instantiations() { /* NOP */ }
 
 		private final int lineNumber_;
+		private final Token token_;
 		protected     StaticScope myEnclosedScope_;
 		protected     Type type_;
 		private final Map<String, ObjectDeclaration> stringToStaticObjectMap_;
 	}
 	
 	public static class ObjectSubclassDeclaration extends TypeDeclarationCommon {
-		public ObjectSubclassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, int lineNumber) {
-			super(name, lineNumber, myEnclosedScope);
+		public ObjectSubclassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, Token token) {
+			super(name, token, myEnclosedScope);
 			baseClass_ = baseClass;
 			inSituInitializations_ = new ArrayList<BodyPart>();
 		}
@@ -218,12 +233,12 @@ public abstract class Declaration implements BodyPart {
 		protected final List<BodyPart> inSituInitializations_;
 	}
 	
-	public static class ClassOrContextDeclaration extends ObjectSubclassDeclaration implements TypeDeclaration {
+	public static class ClassOrContextDeclaration extends ObjectSubclassDeclaration {
 		public ClassOrContextDeclaration(final String name, final StaticScope myEnclosedScope,
-				final ClassDeclaration baseClass, int lineNumber) {
-			super(name, myEnclosedScope, baseClass, lineNumber);
+				final ClassDeclaration baseClass, Token token) {
+			super(name, myEnclosedScope, baseClass, token);
 		}
-		public void doIImplementImplementsList(final Pass1Listener parser, final int lineNumber) {
+		public void doIImplementImplementsList(final Pass1Listener parser, final Token token) {
 			assert null != type_;
 			final List<InterfaceType> theInterfaceTypes = ((ClassOrContextType)type_).interfaceTypes();
 			final int listSize = theInterfaceTypes.size();
@@ -233,7 +248,7 @@ public abstract class Declaration implements BodyPart {
 			for (int i = 0; i < listSize; i++) {
 				anInterfaceType = theInterfaceTypes.get(i);
 				if (null == anInterfaceType) {
-					parser.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
+					parser.errorHook5p2(ErrorIncidenceType.Fatal, token,
 							"Class `", name(), "' is using an undeclared interface: see other error messages", "");
 				} else {
 					final Map<String, List<MethodSignature>> selectorSignatureMap = anInterfaceType.selectorSignatureMap();
@@ -248,7 +263,7 @@ public abstract class Declaration implements BodyPart {
 									signatureMethodSelector, parameterList, "this",
 									/* conversionAllowed = */ false);
 							if (null == methodDecl) {
-								parser.errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+								parser.errorHook6p2(ErrorIncidenceType.Fatal, token,
 										"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
 										"' because definition of `" + anInterfaceSignature.getText(), "' is missing in the class.");
 							} else {
@@ -260,7 +275,7 @@ public abstract class Declaration implements BodyPart {
 								} else if (signatureReturnType.canBeConvertedFrom(methodReturnType)) {
 									continue; // is also cool
 								} else {
-									parser.errorHook6p2(ErrorIncidenceType.Fatal, lineNumber,
+									parser.errorHook6p2(ErrorIncidenceType.Fatal, token,
 											"Class `", name(), "' does not implement interface `", anInterfaceType.name(),
 											"' because of a mismatch in the return type of `" + anInterfaceSignature.getText(), "'.");
 								}
@@ -272,10 +287,10 @@ public abstract class Declaration implements BodyPart {
 		}
 	}
 	
-	public static class ContextDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
+	public static class ContextDeclaration extends ClassOrContextDeclaration
 	{
-		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, int lineNumber) {
-			super(name, myEnclosedScope, StaticScope.globalScope().lookupClassDeclaration("Object"), lineNumber);
+		public ContextDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration currentContext, Token token) {
+			super(name, myEnclosedScope, StaticScope.globalScope().lookupClassDeclaration("Object"), token);
 			parentContext_ = currentContext;
 		}
 		public void setType(final ContextType type) {
@@ -291,10 +306,10 @@ public abstract class Declaration implements BodyPart {
 		private ContextDeclaration parentContext_;
 	}
 	
-	public static class ClassDeclaration extends ClassOrContextDeclaration implements TypeDeclaration
+	public static class ClassDeclaration extends ClassOrContextDeclaration
 	{
-		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final int lineNumber) {
-			super(name, myEnclosedScope, baseClass, lineNumber);
+		public ClassDeclaration(final String name, final StaticScope myEnclosedScope, final ClassDeclaration baseClass, final Token token) {
+			super(name, myEnclosedScope, baseClass, token);
 			templateDeclaration_ = null;
 			methodsHaveBodyParts_ = false;
 		}
@@ -309,7 +324,9 @@ public abstract class Declaration implements BodyPart {
 			assert t instanceof ClassType || t instanceof BuiltInType;
 			type_ = t;
 		}
-		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration, final TemplateInstantiationInfo newTypes) {
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final TemplateInstantiationInfo newTypes,
+				Token token) {
 			templateDeclaration_ = templateDeclaration;
 			
 			// This turns a TemplateDeclaration into a class
@@ -319,7 +336,7 @@ public abstract class Declaration implements BodyPart {
 			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
 					this, newTypes);
 			final ClassType newClassType = new ClassType(name(), myEnclosedScope_, baseClassType);
-			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, myEnclosedScope_, this);
+			newClassType.elaborateFromTemplate(templateDeclaration, baseClassType, myEnclosedScope_, this, token);
 			this.setType(newClassType);
 		}
 		public TemplateDeclaration generatingTemplate() {
@@ -359,10 +376,10 @@ public abstract class Declaration implements BodyPart {
 		      private int argumentPosition_;
 	}
 	
-	public static class TemplateDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class TemplateDeclaration extends TypeDeclarationCommon
 	{
-		public TemplateDeclaration(final String name, final StaticScope myEnclosedScope, final TypeDeclaration baseClass, final int lineNumber) {
-			super(name, lineNumber, myEnclosedScope);
+		public TemplateDeclaration(final String name, final StaticScope myEnclosedScope, final TypeDeclaration baseClass, final Token token) {
+			super(name, token, myEnclosedScope);
 			baseClass_ = baseClass;
 			argumentPositionCounter_ = 0;
 			typeParameters_ = new ArrayList<TypeParameter>();
@@ -406,15 +423,16 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 		
-		private final TypeDeclaration baseClass_;
-		private final List<TypeParameter> typeParameters_;
-		private       int argumentPositionCounter_;
+		protected final TypeDeclaration baseClass_;
+		private   final List<TypeParameter> typeParameters_;
+		private         int argumentPositionCounter_;
 	}
 	
-	public static class InterfaceDeclaration extends TypeDeclarationCommon implements TypeDeclaration {
-		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final int lineNumber) {
-			super(name, lineNumber, enclosedScope);
+	public static class InterfaceDeclaration extends TypeDeclarationCommon{
+		public InterfaceDeclaration(final String name, final StaticScope enclosedScope, final Token token) {
+			super(name, token, enclosedScope);
 			signatures_ = new LinkedHashMap<String, MethodSignature>();
+			methodsHaveBodyParts_ = false;
 		}
 		public void setType(final Type t) {
 			assert t instanceof InterfaceType;
@@ -442,14 +460,34 @@ public abstract class Declaration implements BodyPart {
 		public Map<String, MethodSignature> signatureMap() {
 			return signatures_;
 		}
+		public void elaborateFromTemplate(final TemplateDeclaration templateDeclaration,
+				final TemplateInstantiationInfo newTypes,
+				Token token) {
+			// This turns a TemplateDeclaration into a class
+			myEnclosedScope_ = new StaticScope(enclosedScope(), "copy", templateDeclaration.enclosingScope(),
+					this, newTypes);
+			
+			// We don't yet allow base types for template interfaces — just use Object
+			final ClassType objectType = (ClassType)StaticScope.globalScope().lookupTypeDeclaration("Object").type();
+			final InterfaceType newInterfaceType = new InterfaceType(name(), myEnclosedScope_, true);
+			newInterfaceType.elaborateFromTemplate(templateDeclaration, objectType, myEnclosedScope_, this, token);
+			this.setType(newInterfaceType);
+		}
+		public boolean methodsHaveBodyParts() {
+			return methodsHaveBodyParts_;
+		}
+		public void setMethodsHaveBodyParts(final boolean tf) {
+			methodsHaveBodyParts_ = tf;
+		}
 		
 		protected final Map<String, MethodSignature> signatures_;
+		private boolean methodsHaveBodyParts_;
 	}
 	
-	public static class RoleDeclaration extends TypeDeclarationCommon implements TypeDeclaration
+	public static class RoleDeclaration extends TypeDeclarationCommon
 	{
-		public RoleDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
-			super(name, lineNumber, myEnclosedScope);
+		public RoleDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
+			super(name, token, myEnclosedScope);
 			context_ = context;
 			requiredSelfSignatures_ = new Hashtable<String, MethodSignature>();
 			publishedSignatures_ = new Hashtable<String, MethodSignature>();
@@ -498,6 +536,9 @@ public abstract class Declaration implements BodyPart {
 		public void addPublishedSignature(final MethodSignature signature) {
 			publishedSignatures_.put(signature.name(), signature);
 		}
+		public Map<String,MethodSignature> requiredSignatures() {
+			return requiredSelfSignatures_;
+		}
 		public MethodSignature lookupPublishedSignatureDeclaration(final String name) {
 			return publishedSignatures_.get(name);
 		}
@@ -512,7 +553,7 @@ public abstract class Declaration implements BodyPart {
 			return publishedSignature;
 		}
 		private boolean checkParameterConcretenessOf(final FormalParameterList pl,
-				final Pass0Listener parserPass, final int lineNumber) {
+				final Pass0Listener parserPass, final Token token) {
 			boolean retval = true;
 			final int numberOfParameters = pl.count();
 			for (int i = 0; i < numberOfParameters; i++) {
@@ -522,7 +563,7 @@ public abstract class Declaration implements BodyPart {
 					// Role methods quack out the type of the object
 					continue;
 				} else if (paramType instanceof RoleType) {
-					parserPass.errorHook5p2(ErrorIncidenceType.Fatal, lineNumber,
+					parserPass.errorHook5p2(ErrorIncidenceType.Fatal, token,
 							"You cannot require that a Role-player have a script that takes a Role argument such as `",
 							paramType.name(), "'.", "");
 					retval = false;
@@ -534,7 +575,7 @@ public abstract class Declaration implements BodyPart {
 				final Pass0Listener parserPass) {
 			// Make sure none of the parameters are role types
 			checkParameterConcretenessOf(signature.formalParameterList(),
-					parserPass, signature.lineNumber());
+					parserPass, signature.token());
 			requiredSelfSignatures_.put(signature.name(), signature);
 		}
 		public Map<String, List<MethodSignature>> requiredSelfSignatures() {
@@ -546,7 +587,7 @@ public abstract class Declaration implements BodyPart {
 			}
 			return retval;
 		}
-		public void processRequiredDeclarations(final int lineno) {
+		public void processRequiredDeclarations(final Token token) {
 			// Declare requiredSelfSignatures_ in my scope
 			assert enclosedScope() instanceof StaticRoleScope;
 			final StaticRoleScope myEnclosedScope = (StaticRoleScope)this.enclosedScope();
@@ -554,7 +595,7 @@ public abstract class Declaration implements BodyPart {
 			for (final Map.Entry<String, MethodSignature> signature : requiredSelfSignatures_.entrySet()) {
 				final MethodSignature methodSignature = signature.getValue();
 				final StaticScope pseudoScope = new StaticScope(myEnclosedScope);
-				final MethodDeclaration methodDecl = new MethodDeclaration(methodSignature, pseudoScope, lineno);
+				final MethodDeclaration methodDecl = new MethodDeclaration(methodSignature, pseudoScope, token);
 				myEnclosedScope.declareRequiredMethod(methodDecl);
 			}
 		}
@@ -567,28 +608,28 @@ public abstract class Declaration implements BodyPart {
 		protected final Map<String, MethodSignature> publishedSignatures_;
 	}
 	
-	public static class RoleArrayDeclaration extends RoleDeclaration implements TypeDeclaration {
-		public RoleArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
-			super(name, myEnclosedScope, context, lineNumber);
+	public static class RoleArrayDeclaration extends RoleDeclaration {
+		public RoleArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
+			super(name, myEnclosedScope, context, token);
 		}
 		public boolean isArray() {
 			return true;
 		}
 	}
 	
-	public static class StagePropDeclaration extends RoleDeclaration implements TypeDeclaration
+	public static class StagePropDeclaration extends RoleDeclaration
 	{
-		public StagePropDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
-			super(name, myEnclosedScope, context, lineNumber);
+		public StagePropDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
+			super(name, myEnclosedScope, context, token);
 		}
 		@Override public boolean requiresConstMethods() {
 			return true;
 		}
 	}
 	
-	public static class StagePropArrayDeclaration extends StagePropDeclaration implements TypeDeclaration {
-		public StagePropArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final int lineNumber) {
-			super(name, myEnclosedScope, context, lineNumber);
+	public static class StagePropArrayDeclaration extends StagePropDeclaration {
+		public StagePropArrayDeclaration(final String name, final StaticScope myEnclosedScope, final ContextDeclaration context, final Token token) {
+			super(name, myEnclosedScope, context, token);
 		}
 		public boolean isArray() {
 			return true;
@@ -598,28 +639,28 @@ public abstract class Declaration implements BodyPart {
 	public static class MethodDeclaration extends Declaration
 	{
 		public MethodDeclaration(final String name, final StaticScope myEnclosedScope,
-				final Type returnType, final AccessQualifier accessQualifier, final int lineNumber,
+				final Type returnType, final AccessQualifier accessQualifier, final Token token,
 				final boolean isStatic) {
 			super(name);
-			signature_ = new MethodSignature(name(), returnType, accessQualifier, lineNumber, isStatic);
+			signature_ = new MethodSignature(name(), returnType, accessQualifier, token, isStatic);
 			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
-			this.commonInit(myEnclosedScope, returnType, accessQualifier, lineNumber);
+			this.commonInit(myEnclosedScope, returnType, accessQualifier, token);
 		}
 		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
-				final int lineNumber, final boolean manuallyInvokesConstructor) {
+				final Token token, final boolean manuallyInvokesConstructor) {
 			super(signature.name());
 			signature_ = signature;
 			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
 			this.commonInit(myEnclosedScope, signature.returnType(),
-					signature.accessQualifier(), lineNumber);
+					signature.accessQualifier(), token);
 		}
 		public MethodDeclaration(final MethodSignature signature, final StaticScope myEnclosedScope, 
-				final int lineNumber) {
+				final Token token) {
 			super(signature.name());
 			signature_ = signature;
 			isAConstructor_ = calculateConstructorStatus(myEnclosedScope);
 			this.commonInit(myEnclosedScope, signature.returnType(),
-					signature.accessQualifier(), lineNumber);
+					signature.accessQualifier(), token);
 		}
 		private boolean calculateConstructorStatus(final StaticScope myEnclosedScope) {
 			// Am I a constructor?
@@ -650,14 +691,14 @@ public abstract class Declaration implements BodyPart {
 			signature_.setHasConstModifier(tf);
 		}
 		private void commonInit(final StaticScope myEnclosedScope, final Type returnType,
-				final AccessQualifier accessQualifier, final int lineNumber) {
+				final AccessQualifier accessQualifier, final Token token) {
 			if (null== myEnclosedScope) {
 				assert null != myEnclosedScope;
 			}
 			final StaticScope parentScope = myEnclosedScope.parentScope();
 			final Declaration associatedDeclaration = parentScope.associatedDeclaration();
 			
-			bodyPrefix_ = new ExprAndDeclList(lineNumber);	// for implicit constructor
+			bodyPrefix_ = new ExprAndDeclList(token);	// for implicit constructor
 			hasManualBaseClassConstructorInvocations_ = false;
 			
 			if (associatedDeclaration instanceof ContextDeclaration ||
@@ -685,7 +726,7 @@ public abstract class Declaration implements BodyPart {
 					// sure returnType isn't null. We do stumbling handling below.
 					;
 				}
-				ctorCheck(myEnclosedScope, parentScope, lineNumber);
+				ctorCheck(myEnclosedScope, parentScope, token);
 			} else {
 				// In the best of circumstances just check to make
 				// sure returnType isn't null. We do stumbling handling below.
@@ -695,14 +736,15 @@ public abstract class Declaration implements BodyPart {
 			returnType_ = null == returnType? StaticScope.globalScope().lookupTypeDeclaration("void") : returnType;
 			myEnclosedScope_ = myEnclosedScope;
 			accessQualifier_ = accessQualifier;
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 		}
 		
-		private void callBaseCtor(final StaticScope methodScope, final ClassType baseClass, final int lineNumber) {
+		private void callBaseCtor(final StaticScope methodScope, final ClassType baseClass, final Token token) {
 			// Look up constructor in that base class
 			final String baseClassName = baseClass.name();
 			final ActualArgumentList actualArgumentList = new ActualArgumentList();
-			final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope, lineNumber);
+			final IdentifierExpression self = new IdentifierExpression("this", baseClass, methodScope, token);
 			actualArgumentList.addActualArgument(self);
 			final StaticScope baseClassScope = baseClass.enclosedScope();
 			if (null != baseClassScope) {
@@ -720,8 +762,8 @@ public abstract class Declaration implements BodyPart {
 						targetMessageClass = methodScope.methodInvocationEnvironmentClass();
 						assert MethodInvocationEnvironmentClass.ClassEnvironment == targetMessageClass;
 						
-						final Message message = new Message(baseClassName, actualArgumentList, lineNumber, baseClass);
-						final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, lineNumber, false,
+						final Message message = new Message(baseClassName, actualArgumentList, token, baseClass);
+						final MessageExpression messageExpr = new MessageExpression(self, message, baseClass, token, false,
 								originMessageClass, targetMessageClass, true);
 						bodyPrefix_.addBodyPart(messageExpr);
 					} else {
@@ -732,7 +774,7 @@ public abstract class Declaration implements BodyPart {
 			}
 		}
 	
-		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final int lineNumber) {
+		private void ctorCheck(final StaticScope methodScope, final StaticScope parentScope, final Token token) {
 			if (isAConstructor_) {
 				// Special things constructors need to do:
 				// base class processing and initializations
@@ -744,7 +786,7 @@ public abstract class Declaration implements BodyPart {
 					// It's a class. Does the class have a base class?
 					final ClassType baseClass = theClass.baseClass();
 					if (null != baseClass) {
-						callBaseCtor(methodScope, baseClass, lineNumber);
+						callBaseCtor(methodScope, baseClass, token);
 					}
 				}
 			}
@@ -789,6 +831,9 @@ public abstract class Declaration implements BodyPart {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		@Override public String getText() {
 			return name();
 		}
@@ -823,7 +868,7 @@ public abstract class Declaration implements BodyPart {
 			if (tf) {
 				// Don¨t use the implicit base class ctor call
 				// if the programmer is doing his or her own
-				bodyPrefix_ = new ExprAndDeclList(lineNumber_);
+				bodyPrefix_ = new ExprAndDeclList(token_);
 			}
 
 			hasManualBaseClassConstructorInvocations_ = tf;
@@ -843,7 +888,7 @@ public abstract class Declaration implements BodyPart {
 			
 			final MethodDeclaration retval = new MethodDeclaration(
 					name(), enclosedScope, returnType,
-					accessQualifier_, lineNumber_, signature_.isStatic());
+					accessQualifier_, token_, signature_.isStatic());
 			
 			retval.signature_ = signature_;
 			retval.body_ = body_;
@@ -866,6 +911,7 @@ public abstract class Declaration implements BodyPart {
 		private StaticScope myEnclosedScope_;
 		private AccessQualifier accessQualifier_;
 		private int lineNumber_;
+		private Token token_;
 		private ExprAndDeclList body_;
 		private MethodSignature signature_;
 		private ExprAndDeclList bodyPrefix_;
@@ -876,13 +922,14 @@ public abstract class Declaration implements BodyPart {
 	public static class MethodSignature extends Declaration
 	{
 		public MethodSignature(final String name, final Type returnType,
-				final AccessQualifier accessQualifier, final int lineNumber,
+				final AccessQualifier accessQualifier, final Token token,
 				final boolean isStatic) {
 			super(name);
 			
 			returnType_ = returnType;
 			accessQualifier_ = accessQualifier;
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			hasConstModifier_ = false;
 			isStatic_ = isStatic;
 			isUnused_ = false;
@@ -908,6 +955,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public String getText() {
 			final StringBuffer stringBuffer = new StringBuffer();
@@ -950,6 +1000,7 @@ public abstract class Declaration implements BodyPart {
 		private       boolean hasConstModifier_;
 		private       FormalParameterList formalParameterList_;
 		private final AccessQualifier accessQualifier_;
+		private final Token token_;
 		private final int lineNumber_;
 		private final boolean isStatic_;
 		private       boolean isUnused_;
@@ -957,9 +1008,10 @@ public abstract class Declaration implements BodyPart {
 	
 	public static class ExprAndDeclList extends Declaration
 	{
-		public ExprAndDeclList(final int lineNumber) {
+		public ExprAndDeclList(final Token token) {
 			super("");
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			bodyParts_ = new ArrayList<BodyPart>();
 		}
 		public void addAssociatedDeclaration(final MethodDeclaration associatedDeclaration) {
@@ -981,6 +1033,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		private boolean ignoreBodyPartForReturnValue(final BodyPart bodyPart) {
 			return  bodyPart instanceof BreakExpression ||
@@ -1013,14 +1068,16 @@ public abstract class Declaration implements BodyPart {
 		
 		private       MethodDeclaration associatedDeclaration_;
 		private final int lineNumber_;
+		private final Token token_;
 		private final List<BodyPart> bodyParts_;
 	}
 	
 	public static class DeclarationList extends Declaration
 	{
-		public DeclarationList(final int lineNumber) {
+		public DeclarationList(final Token token) {
 			super("");
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			declarations_ = new ArrayList<Declaration>();
 		}
 		public void addDeclaration(final Declaration d) {
@@ -1028,6 +1085,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public Type type() {
 			return StaticScope.globalScope().lookupTypeDeclaration("void");
@@ -1042,14 +1102,16 @@ public abstract class Declaration implements BodyPart {
 		}
 		
 		private final int lineNumber_;
+		private final Token token_;
 		private final List<Declaration> declarations_;
 	}
 	
 	public static class TypeDeclarationList extends Declaration
 	{
-		public TypeDeclarationList(final int lineNumber) {
+		public TypeDeclarationList(final Token token) {
 			super("");
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 			declarations_ = new ArrayList<TypeDeclaration>();
 		}
 		public void addDeclaration(final TypeDeclaration d) {
@@ -1060,6 +1122,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return lineNumber_;
+		}
+		@Override public Token token() {
+			return token_;
 		}
 		@Override public Type type() {
 			return StaticScope.globalScope().lookupTypeDeclaration("void");
@@ -1072,20 +1137,22 @@ public abstract class Declaration implements BodyPart {
 		}
 		
 		private final int lineNumber_;
+		private final Token token_;
 		private final List<TypeDeclaration> declarations_;
 	}
 	
 	public static class ArrayDecl extends Declaration
 	{
 		// type_name '[' ']' JAVA_ID
-		public ArrayDecl(final String name, final Type baseType, final int lineNumber) {
+		public ArrayDecl(final String name, final Type baseType, final Token token) {
 			super(baseType.getText() + " [" + "]");
 			baseType_ = baseType;
 			
 			// name is kind of silly here, but it may help with
 			// debugging things
 			type_ = new ArrayType(name, baseType);
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 		}
 		
 		public Type baseType() {
@@ -1097,24 +1164,29 @@ public abstract class Declaration implements BodyPart {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		@Override public Type type() {
 			return type_;
 		}
 		
 		private final int lineNumber_;
+		private final Token token_;
 		private final Type baseType_;
 		private final Type type_;
 	}
 	
 	public static class VarargsDecl extends Declaration
 	{
-		public VarargsDecl(final String name, final int lineNumber) {
+		public VarargsDecl(final String name, final Token token) {
 			super(name + " varargs");
 			
 			// name is kind of silly here, but it may help with
 			// debugging things
 			type_ = new VarargsType(name);
-			lineNumber_ = lineNumber;
+			token_ = token;
+			lineNumber_ = (null == token_)? 0: token_.getLine();
 		}
 		@Override public String getText() {
 			return name();
@@ -1122,12 +1194,16 @@ public abstract class Declaration implements BodyPart {
 		@Override public int lineNumber() {
 			return lineNumber_;
 		}
+		@Override public Token token() {
+			return token_;
+		}
 		@Override public Type type() {
 			return type_;
 		}
 		
 		private final Type type_;
 		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class ErrorDeclaration extends Declaration {
@@ -1139,6 +1215,9 @@ public abstract class Declaration implements BodyPart {
 		}
 		@Override public int lineNumber() {
 			return 0;
+		}
+		@Override public Token token() {
+			return null;
 		}
 		@Override public Type type() {
 			return null;

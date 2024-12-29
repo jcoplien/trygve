@@ -79,9 +79,10 @@ class Button {
    public void draw() {
       Color saveColor = panel_.getColor();
       panel_.setColor(Color.black);
-      panel_.drawOval(x_, y_, radius_, radius_);
-      panel_.drawString(x_ + radius_ - ((label_.length() * 6) / 2),
-                        y_+ radius_ + 6 , label_)
+      
+      panel_.drawString(x_ + radius_ + radius_ - ((label_.length() * 14) / 2),
+                        y_ + radius_ / 2 + 7, label_)
+		panel_.drawOval(x_, y_, radius_, radius_);
 
       if (state_ == "down") {
          panel_.setColor(Color.blue);

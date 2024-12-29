@@ -1,8 +1,8 @@
 package info.fulloo.trygve.parser;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,14 +44,15 @@ import info.fulloo.trygve.declarations.Type.ContextType;
 import info.fulloo.trygve.declarations.Type.InterfaceType;
 import info.fulloo.trygve.declarations.Type.RoleType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
+import info.fulloo.trygve.declarations.Type.TemplateTypeForAnInterface;
 import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression;
 import info.fulloo.trygve.semantic_analysis.StaticScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticRoleScope;
 import info.fulloo.trygve.semantic_analysis.StaticScope.StaticInterfaceScope;
-
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.Token;
 
 public class Pass0Listener extends KantBaseListener {
 	public Pass0Listener(final ParsingData parsingData) {
@@ -72,7 +73,7 @@ public class Pass0Listener extends KantBaseListener {
 		// : type_declaration_list main
 		// : type_declaration_list
 		
-		final TypeDeclarationList currentList = new TypeDeclarationList(ctx.getStart().getLine());
+		final TypeDeclarationList currentList = new TypeDeclarationList(ctx.getStart());
 		parsingData_.pushTypeDeclarationList(currentList);
 	}
 	
@@ -83,7 +84,7 @@ public class Pass0Listener extends KantBaseListener {
 		
 		if (null != ctx.context_body()) {
 			final ContextDeclaration oldContext = currentContext_;
-			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart().getLine());
+			currentContext_ = this.lookupOrCreateContextDeclaration(name, ctx.getStart());
 			currentContext_.setParentContext(oldContext);
 			parsingData_.pushContextDeclaration(currentContext_);
 		} else {
@@ -115,7 +116,7 @@ public class Pass0Listener extends KantBaseListener {
 				rawBaseClass = currentScope_.lookupClassDeclarationRecursive(baseTypeName);
 				if (false == (rawBaseType instanceof ClassType)) {
 					// Leave to pass 2
-					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Base type `", baseTypeName,
+					errorHook6p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Base type `", baseTypeName,
 							"' is not a declared class type as base of `", name, "'.", "");
 					
 					// Stumbling measures
@@ -124,7 +125,7 @@ public class Pass0Listener extends KantBaseListener {
 				} else {
 					baseType = (ClassType)rawBaseType;
 					if (baseType.name().equals(name)) {
-						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Er, no.", "", "", "");
+						errorHook5p2(ErrorIncidenceType.Fatal, ctx.getStart(), "Er, no.", "", "", "");
 					}
 				}
 			} else {
@@ -133,11 +134,12 @@ public class Pass0Listener extends KantBaseListener {
 			}
 			
 			if (null != ctx.type_parameters()) {
-				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(name, rawBaseClass, baseType, false, ctx.getStart());
+				currentScope_.declareTemplate(newTemplate);
 				currentScope_ = newTemplate.enclosedScope();
 				parsingData_.pushTemplateDeclaration(newTemplate);
 			} else {
-				final ClassDeclaration newClass = this.lookupOrCreateClassDeclaration(name, rawBaseClass, baseType, ctx.getStart().getLine());
+				final ClassDeclaration newClass = this.lookupOrCreateClassDeclaration(name, rawBaseClass, baseType, ctx.getStart());
 				currentScope_ = newClass.enclosedScope();
 				parsingData_.pushClassDeclaration(newClass);
 			}
@@ -149,11 +151,18 @@ public class Pass0Listener extends KantBaseListener {
 	@Override public void enterInterface_declaration(KantParser.Interface_declarationContext ctx)
 	{
 		// interface_declaration : 'interface' JAVA_ID '{' interface_body '}'
-		final String name = ctx.JAVA_ID().getText();
-	
+		//                       | 'interface' JAVA_ID type_parameters '{' interface_body '}'
+
 		if (null != ctx.interface_body()) {
-			currentInterface_ = this.lookupOrCreateInterfaceDeclaration(name, ctx.getStart().getLine());
-			currentScope_ = currentInterface_.enclosedScope();
+			String typeName = ctx.JAVA_ID().getText();
+			if (null != ctx.type_parameters() && 0 < ctx.type_parameters().getText().length()) {
+				final TemplateDeclaration newTemplate = this.lookupOrCreateTemplateDeclaration(typeName, null, null, true, ctx.getStart());
+				currentScope_ = newTemplate.enclosedScope();
+				parsingData_.pushTemplateDeclaration(newTemplate);
+			} else {
+				currentInterface_ = this.lookupOrCreateInterfaceDeclaration(typeName, ctx.getStart());
+				currentScope_ = currentInterface_.enclosedScope();
+			}
 		} else {
 			assert false;
 		}
@@ -187,7 +196,7 @@ public class Pass0Listener extends KantBaseListener {
 		final TypeDeclaration newDeclaration = (TypeDeclaration)rawNewDeclaration;
 		if (newDeclaration instanceof ClassDeclaration || newDeclaration instanceof ContextDeclaration) {
 			// (Could be a template, in which case we skip it)
-			this.implementsCheck((ClassOrContextDeclaration)newDeclaration, ctx.getStart().getLine());
+			this.implementsCheck((ClassOrContextDeclaration)newDeclaration, ctx.getStart());
 		}
 		
 		exitType_declarationCommon();
@@ -277,7 +286,7 @@ public class Pass0Listener extends KantBaseListener {
 		}
 	}
 	
-	protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, int lineNumber) {
+	protected void implementsCheck(final ClassOrContextDeclaration newDeclaration, final Token token) {
 		// nothing on Pass 0
 	}
 	
@@ -298,7 +307,7 @@ public class Pass0Listener extends KantBaseListener {
 		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart(), "WARNING: Gratuitous access qualifier `",
 					ctx.access_qualifier().getText(), "' ignored", ".");
 		}
 		
@@ -312,13 +321,13 @@ public class Pass0Listener extends KantBaseListener {
 			final String roleName = JAVA_ID.getText();
 		
 			// Return value is through currentRole_
-			lookupOrCreateRoleDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
+			lookupOrCreateRoleDeclaration(roleName, ctx.getStart(), isRoleArray);
 		
 			assert null != currentRoleOrStageProp_;
 		
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
+				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRoleOrStageProp_.enclosedScope();
 		} else {
@@ -373,7 +382,7 @@ public class Pass0Listener extends KantBaseListener {
 		final boolean isRoleArray = vecText.length() > 0;	// "[]"
 		
 		if (null != ctx.access_qualifier()) {
-			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart().getLine(), "WARNING: Gratuitous access qualifier `",
+			errorHook5p1(ErrorIncidenceType.Warning, ctx.getStart(), "WARNING: Gratuitous access qualifier `",
 					ctx.access_qualifier().getText(), "' ignored", ".");
 		}
 		
@@ -387,13 +396,13 @@ public class Pass0Listener extends KantBaseListener {
 			final String roleName = JAVA_ID.getText();
 		
 			// Return value is through currentRole_
-			lookupOrCreateStagePropDeclaration(roleName, ctx.getStart().getLine(), isRoleArray);
+			lookupOrCreateStagePropDeclaration(roleName, ctx.getStart(), isRoleArray);
 		
 			assert null != currentRoleOrStageProp_;
 		
 			final Declaration currentScopesDecl = currentScope_.associatedDeclaration();
 			if (!(currentScopesDecl instanceof ContextDeclaration)) {
-				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart().getLine(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
+				errorHook5p1(ErrorIncidenceType.Fatal, ctx.getStart(), "Role ", roleName, " can be declared only in a Context scope - not ", currentScope_.name());
 			}
 			currentScope_ = currentRoleOrStageProp_.enclosedScope();
 		} else {
@@ -439,10 +448,10 @@ public class Pass0Listener extends KantBaseListener {
 	// -------------------------------------------------------------------------------
 	
 	protected ClassDeclaration lookupOrCreateClassDeclaration(final String name, final ClassDeclaration rawBaseClass,
-			final ClassType baseType, final int lineNumber) {
+			final ClassType baseType, final Token token) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
-		final ClassDeclaration newClass = this.lookupOrCreateNewClassDeclaration(name, newScope, rawBaseClass, lineNumber);
+		final ClassDeclaration newClass = this.lookupOrCreateNewClassDeclaration(name, newScope, rawBaseClass, token);
 		currentScope_.declareClass(newClass);
 		this.createNewClassTypeSuitableToPass(newClass, name, newScope, baseType);
 		currentScope_ = newScope;
@@ -458,14 +467,14 @@ public class Pass0Listener extends KantBaseListener {
 	}
 
     protected ClassDeclaration lookupOrCreateNewClassDeclaration(final String name, final StaticScope newScope,
-    		final ClassDeclaration rawBaseClass, final int lineNumber) {
+    		final ClassDeclaration rawBaseClass, final Token token) {
 		if (null == rawBaseClass) {
 			assert null != rawBaseClass;
 		}
-    	return new ClassDeclaration(name, newScope, rawBaseClass, lineNumber);
+    	return new ClassDeclaration(name, newScope, rawBaseClass, token);
 	}
 	
-	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final int lineNumber) {
+	protected InterfaceDeclaration lookupOrCreateInterfaceDeclaration(final String name, final Token token) {
 		assert null == currentInterface_;
 		assert null != currentScope_;
 		
@@ -473,7 +482,7 @@ public class Pass0Listener extends KantBaseListener {
 		// will fail if using the usual Scope method lookup — an interface
 		// has not methods — only interfaces
 		final StaticScope newScope = new StaticInterfaceScope(currentScope_);
-		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, lineNumber);
+		currentInterface_ = this.lookupOrCreateNewInterfaceDeclaration(name, newScope, token);
 		currentScope_.declareInterface(currentInterface_);
 		this.createNewInterfaceTypeSuitableToPass(currentInterface_, name, newScope);
 		
@@ -483,36 +492,36 @@ public class Pass0Listener extends KantBaseListener {
 	
 	protected void createNewInterfaceTypeSuitableToPass(final InterfaceDeclaration newInterface, final String name, final StaticScope newScope) {
 		// Pass1 only
-		final InterfaceType newInterfaceType = new InterfaceType(name, newScope);
+		final InterfaceType newInterfaceType = new InterfaceType(name, newScope, false);
 		currentScope_.declareType(newInterfaceType);
 		newScope.setDeclaration(newInterface);
 		newInterface.setType(newInterfaceType);
 	}
 	
-	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, final StaticScope scope, final int lineNumber) {
-		return new InterfaceDeclaration(name, scope, lineNumber);
+	private InterfaceDeclaration lookupOrCreateNewInterfaceDeclaration(final String name, final StaticScope scope, final Token token) {
+		return new InterfaceDeclaration(name, scope, token);
 	}
 	
-	protected void lookupOrCreateRoleDeclaration(final String roleName, final int lineNumber, final boolean isRoleArray) {
+	protected void lookupOrCreateRoleDeclaration(final String roleName, final Token token, final boolean isRoleArray) {
 		final RoleDeclaration requestedRole = currentScope_.lookupRoleOrStagePropDeclaration(roleName);
 		if (null != requestedRole) {
 			currentRoleOrStageProp_ = requestedRole;
 			
 			// Something wrong
-			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber,
+			ErrorLogger.error(ErrorIncidenceType.Fatal, token,
 					"Duplicate declaration of Role `",  roleName, "´ (original at line ",
 					requestedRole.lineNumber() + ").");
 		} else {
 			final StaticScope rolesScope = new StaticRoleScope(currentScope_);
 			final RoleDeclaration roleDecl =
 					isRoleArray
-					   ? new RoleArrayDeclaration(roleName, rolesScope, currentContext_, lineNumber)
-					   : new RoleDeclaration(roleName, rolesScope, currentContext_, lineNumber);
+					   ? new RoleArrayDeclaration(roleName, rolesScope, currentContext_, token)
+					   : new RoleDeclaration(roleName, rolesScope, currentContext_, token);
 			rolesScope.setDeclaration(roleDecl);
 			
 			// declareRoleOrStageProp will also declare the name as an array handle
 			// if isRoleArray was set (in pass 2)
-			declareRoleOrStageProp(currentScope_, roleDecl, lineNumber);
+			declareRoleOrStageProp(currentScope_, roleDecl, token);
 			
 			final RoleType roleType = new RoleType(roleName, rolesScope);
 			currentScope_.declareType(roleType);
@@ -524,26 +533,26 @@ public class Pass0Listener extends KantBaseListener {
 		// caller may reset currentScope - NOT us
 	}
 	
-	protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final int lineNumber, final boolean isStagePropArray) {
+	protected void lookupOrCreateStagePropDeclaration(final String stagePropName, final Token token, final boolean isStagePropArray) {
 		final RoleDeclaration requestedStageProp = currentScope_.lookupRoleOrStagePropDeclaration(stagePropName);
 		if (null != requestedStageProp) {
 			currentRoleOrStageProp_ = requestedStageProp;
 			
 			// Something wrong
-			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber,
+			ErrorLogger.error(ErrorIncidenceType.Fatal, token,
 					"Duplicate declaration of Stage Prop `",  stagePropName, "´ (original at line ",
 					requestedStageProp.lineNumber() + ").");
 		} else {
 			final StaticScope stagePropsScope = new StaticRoleScope(currentScope_);
 			final StagePropDeclaration stagePropDecl =
 					isStagePropArray
-					   ? new StagePropArrayDeclaration(stagePropName, stagePropsScope, currentContext_, lineNumber)
-					   : new StagePropDeclaration(stagePropName, stagePropsScope, currentContext_, lineNumber);
+					   ? new StagePropArrayDeclaration(stagePropName, stagePropsScope, currentContext_, token)
+					   : new StagePropDeclaration(stagePropName, stagePropsScope, currentContext_, token);
 			stagePropsScope.setDeclaration(stagePropDecl);
 			
 			// declareRoleOrStageProp will also declare the name as an array handle
 			// if isRoleArray was set (in pass 2)
-			declareRoleOrStageProp(currentScope_, stagePropDecl, lineNumber);
+			declareRoleOrStageProp(currentScope_, stagePropDecl, token);
 			
 			final RoleType roleType = new StagePropType(stagePropName, stagePropsScope);
 			currentScope_.declareType(roleType);
@@ -555,14 +564,14 @@ public class Pass0Listener extends KantBaseListener {
 		// caller may reset currentScope - NOT us
 	}
 	
-	public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final int lineNumber) {
+	public void declareRoleOrStageProp(final StaticScope s, final RoleDeclaration roledecl, final Token token) {
 		s.declareRoleOrStageProp(roledecl);
 	}
 	
-	protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final int lineNumber) {
+	protected ContextDeclaration lookupOrCreateContextDeclaration(final String name, final Token token) {
 		// Create it here in Pass 0
 		final StaticScope newScope = new StaticScope(currentScope_);
-		final ContextDeclaration contextDecl = new ContextDeclaration(name, newScope, currentContext_, lineNumber);
+		final ContextDeclaration contextDecl = new ContextDeclaration(name, newScope, currentContext_, token);
 		newScope.setDeclaration(contextDecl);
 		final Type rawObjectType = StaticScope.globalScope().lookupTypeDeclaration("Object");
 		assert rawObjectType instanceof ClassType;
@@ -575,27 +584,38 @@ public class Pass0Listener extends KantBaseListener {
 		return contextDecl;
 	}
 	
-	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType, final int lineNumber) {
+	protected TemplateDeclaration lookupOrCreateTemplateDeclaration(final String name, final TypeDeclaration rawBaseType, final Type baseType,
+			final boolean isInterface, final Token token) {
 		assert null != currentScope_;
 		final StaticScope newScope = new StaticScope(currentScope_);
-		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, lineNumber);
+		final TemplateDeclaration newTemplate = this.lookupOrCreateNewTemplateDeclaration(name, newScope, rawBaseType, token, isInterface);
 		newScope.setDeclaration(newTemplate);
 		currentScope_.declareTemplate(newTemplate);
-		this.createNewTemplateTypeSuitableToPass(newTemplate, name, newScope, (ClassType)baseType);
+		this.createNewTemplateTypeSuitableToPass(newTemplate, name, newScope, (ClassType)baseType, isInterface);
 		currentScope_ = newScope;
 		return newTemplate;
 	}
 	
-	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name, final StaticScope newScope, final ClassType baseType) {
+	protected void createNewTemplateTypeSuitableToPass(final TemplateDeclaration newTemplate, final String name,
+			final StaticScope newScope, final ClassType baseType, boolean isInterface) {
 		// Pass1 only
-		final TemplateType newTemplateType = new TemplateType(name, newScope, baseType);
+		final TemplateType newTemplateType = isInterface?
+				new TemplateTypeForAnInterface(name, newScope, baseType):
+					new TemplateType(name, newScope, baseType);
 		currentScope_.declareType(newTemplateType);
 		newScope.setDeclaration(newTemplate);
 		newTemplate.setType(newTemplateType);
 	}
 	
-    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope, final TypeDeclaration rawBaseClass, final int lineNumber) {
-    	return new TemplateDeclaration(name, newScope, rawBaseClass, lineNumber);
+    protected TemplateDeclaration lookupOrCreateNewTemplateDeclaration(final String name, final StaticScope newScope,
+    		final TypeDeclaration rawBaseClass, final Token token, final boolean isInterface) {
+    	TemplateDeclaration retval = null;
+    	if (isInterface) {
+    		retval = new TemplateDeclaration(name, newScope, rawBaseClass, token);
+    	} else {
+    		retval = new TemplateDeclaration(name, newScope, rawBaseClass, token);
+    	}
+    	return retval;
 	}
 	
 	protected void declareTypeSuitableToPass(final StaticScope scope, final Type decl) {
@@ -606,23 +626,26 @@ public class Pass0Listener extends KantBaseListener {
 		final String objectIdentifier = objDecl.name();
 		final Declaration existingDecl = scope.lookupObjectDeclaration(objectIdentifier);
 		if (null != existingDecl) {
-			errorHook5p1(ErrorIncidenceType.Fatal, objDecl.lineNumber(), "Multiple declarations of `",
+			errorHook5p1(ErrorIncidenceType.Fatal, objDecl.token(), "Multiple declarations of `",
 					objectIdentifier, "'", "");
 		} else {
 			scope.declareObject(objDecl, this);
 		}
 	}
 	
-	protected void errorHook5p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	protected void errorHook5p1(final ErrorIncidenceType errorType, final Token ct, final String s1, final String s2, final String s3, final String s4) {
 		/* Nothing */
 	}
-	public void errorHook5p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4) {
+	public void errorHook5p2(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
 		/* nothing */
 	}
-	protected void errorHook6p1(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
-		ErrorLogger.error(errorType, i, s1, s2, s3, s4, s5, s6);
+	public void errorHook5p2SpecialHook(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4) {
+		/* nothing */
 	}
-	public void errorHook6p2(final ErrorIncidenceType errorType, final int i, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+	protected void errorHook6p1(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
+		ErrorLogger.error(errorType, token, s1, s2, s3, s4, s5, s6);
+	}
+	public void errorHook6p2(final ErrorIncidenceType errorType, final Token token, final String s1, final String s2, final String s3, final String s4, final String s5, final String s6) {
 		/* nothing */
 	}
 

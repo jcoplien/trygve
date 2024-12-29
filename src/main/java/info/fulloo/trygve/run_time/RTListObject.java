@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import info.fulloo.trygve.declarations.Type;
@@ -37,7 +38,7 @@ import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTIterator.RTListIterator;
 
-public class RTListObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTListObject extends RTObjectCommon implements RTIterable {
 	public RTListObject(final RTType listType) {
 		super(listType);	// 
 		listType_ = listType;	// e.g. an instance of RTClass
@@ -135,8 +136,8 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 		theList_ = new ArrayList<RTObject>();
 		baseType_ = baseType;
 		listType_ = listType;
-		for (int j = 0; j < theList_.size(); j++) {
-			theList_.set(j, theList_.get(j));
+		for (int j = 0; j < theList.size(); j++) {
+			theList_.add(theList.get(j));
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
@@ -161,7 +162,7 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
 	public RTObject get(final int i) {
 		RTObject retval;
 		if (i >= theList_.size()) {
-			ErrorLogger.error(ErrorIncidenceType.Runtime, 0, "List index out-of-range: ",
+			ErrorLogger.error(ErrorIncidenceType.Runtime, null, "List index out-of-range: ",
 					Integer.toString(i), " on list of size ", Integer.toString(theList_.size()));
 			RTMessage.printMiniStackStatus();
 			retval = null;
@@ -221,6 +222,16 @@ public class RTListObject extends RTObjectCommon implements RTObject, RTIterable
     }
 	public void sort() {
 		Collections.sort(theList_, new RTObjectComparator());
+	}
+	public RTListObject reverse() {
+		final List<RTObject> newList = new ArrayList<RTObject>();
+		final ListIterator<RTObject> iter = theList_.listIterator(theList_.size());
+		while (iter.hasPrevious()) {
+			final RTObject element = iter.previous();
+			newList.add(element);
+		}
+		final RTListObject retval = new RTListObject(newList, baseType_, listType_);
+		return retval;
 	}
 	
 	private final List<RTObject> theList_;

@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.Declaration.StagePropDeclaration;
 import info.fulloo.trygve.declarations.Declaration.StagePropArrayDeclaration;
 
-public class RTStageProp extends RTClassAndContextCommon implements RTType {
+public class RTStageProp extends RTClassAndContextCommon {
 	public RTStageProp(final StagePropDeclaration associatedDeclaration) {
 		super(associatedDeclaration);
 		associatedDeclaration_ = associatedDeclaration;

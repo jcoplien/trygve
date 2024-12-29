@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,13 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualOrFormalParameterList;
@@ -148,11 +152,11 @@ public abstract class RTClassAndContextCommon implements RTType {
 				if (methodDecl.formalParameters().alignsWith(loggedSignature)) {
 					String toPrint = methodName;
 					final MethodDeclaration originalMethodDecl = methodDecl.methodDeclaration();
-					final int lineNumber = originalMethodDecl == null? 0: originalMethodDecl.lineNumber();
+					final Token token = originalMethodDecl == null? null: originalMethodDecl.token();
 					if (null != originalMethodDecl) {
 						toPrint = originalMethodDecl.signature().getText();
 					}
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber, "Multiple declarations of `",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, token, "Multiple declarations of `",
 							toPrint + "' in scope `", name(), "'.");
 				}
 			}
@@ -166,11 +170,22 @@ public abstract class RTClassAndContextCommon implements RTType {
 			stringToMethodDeclMap_.put(methodName, newVector);
 		}
 	}
-	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
-		return this.lookupMethodIgnoringParameterInSignatureNamed(methodName, pl, null);
+	public final Collection<RTMethod> allRTMethods() {
+		Collection<Map<FormalParameterList, RTMethod>> allSignatures = stringToMethodDeclMap_.values();
+		Collection<RTMethod> retval = new ArrayList<RTMethod>();
+		for (Map<FormalParameterList, RTMethod> signatureSlice: allSignatures) {
+			retval.addAll(signatureSlice.values());
+		}
+		return retval;
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, true, -1);
+	@Override public RTMethod lookupMethod(final String methodName, final ActualOrFormalParameterList pl) {
+		List<RTType> actualStaticParameterDeclarations = new ArrayList<RTType>();
+		return this.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodName, actualStaticParameterDeclarations, pl, null);
+	}
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionNamed(final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, actualParameterStaticTypes, suppliedParameters, ignoreName, true, -1);
 	}
 	@Override public RTMethod lookupBaseClassMethodLiskovCompliantTo(final String methodName,
 			final ActualOrFormalParameterList pl) {
@@ -206,37 +221,78 @@ public abstract class RTClassAndContextCommon implements RTType {
 		return retval;
 	}
 	
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName, final ActualOrFormalParameterList suppliedParameters, final int ignoreName) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, null, true, ignoreName);
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList suppliedParameters,
+			final int ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, actualParameterStaticTypes,
+				suppliedParameters, null, true, ignoreName);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(final String methodName, final ActualOrFormalParameterList suppliedParameters, final int ignoredParameterPosition) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, null, true, ignoredParameterPosition);
+	@Override public RTMethod lookupMethodIgnoringParameterAtPosition(
+			final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList suppliedParameters,
+			final int ignoredParameterPosition) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(
+				methodName,
+				actualParameterStaticTypes,
+				suppliedParameters, null, true, ignoredParameterPosition);
 	}
-	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(final String methodName, final ActualOrFormalParameterList suppliedParameters, final String ignoreName) {
-		return this.lookupMethodIgnoringParameterInSignatureCommon(methodName, suppliedParameters, ignoreName, false, -1);
+	@Override public RTMethod lookupMethodIgnoringParameterInSignatureNamed(
+			final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList suppliedParameters,
+			final String ignoreName) {
+		return this.lookupMethodIgnoringParameterInSignatureCommon(
+				methodName,
+				actualParameterStaticTypes,
+				suppliedParameters, ignoreName, false, -1);
 	}
-	private RTMethod lookupMethodIgnoringParameterInSignatureCommon(final String methodName, final ActualOrFormalParameterList suppliedParameters,
+	private RTMethod lookupMethodIgnoringParameterInSignatureCommon(final String methodName,
+			final List<RTType> actualParameterStaticTypes,
+			final ActualOrFormalParameterList actualParameters,
 			final String ignoreName, final boolean allowPromotion, final int ignoredParameterPosition) {
 		RTMethod retval = null;
 		if (stringToMethodDeclMap_.containsKey(methodName)) {
 			final Map<FormalParameterList, RTMethod> possibilities = stringToMethodDeclMap_.get(methodName);
+			
 			for (final Map.Entry<FormalParameterList, RTMethod> aPair : possibilities.entrySet()) {
 				final FormalParameterList declaredMethodSignature = aPair.getKey();
 				
 				ActualOrFormalParameterList mappedDeclaredMethodSignature = declaredMethodSignature,
-				                            mappedSuppliedParameters = suppliedParameters;
+				                            mappedActualParameters = actualParameters;
 				if (null != templateInstantiationInfo_) {
-					mappedDeclaredMethodSignature = declaredMethodSignature.mapTemplateParameters(templateInstantiationInfo_);
-					mappedSuppliedParameters = suppliedParameters.mapTemplateParameters(templateInstantiationInfo_);
+					// Here, each of formal and actual parameters should be mapped
+					// according to their respective instantiation infos. The field
+					// this.templateInstantiationInfo_ is for the class of the call,
+					// i.e., the actual parameters. Instantiation info for the formal
+					// parameters is in the RTClassOrContext object for the class of
+					// the method's "this" parameter is 
+					TemplateInstantiationInfo formalsTemplateInstantionInfo = null;
+					final Type typeOfThis = actualParameters.typeOfParameterAtPosition(0);
+					final RTType rTTypeOfThis = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThis.enclosedScope());
+					if (rTTypeOfThis instanceof RTClass) {
+						formalsTemplateInstantionInfo = ((RTClass)rTTypeOfThis).templateInstantiationInfo();
+					} else if (rTTypeOfThis instanceof RTContext) {
+						assert (false);	// no template contexts
+					} else if (rTTypeOfThis instanceof RTRole) {
+						// ??? just punt for now. This is wrong but sometimes works
+						formalsTemplateInstantionInfo = templateInstantiationInfo_;
+					}
+					
+					// Now, map
+					mappedDeclaredMethodSignature = declaredMethodSignature.mapTemplateParameters(formalsTemplateInstantionInfo);
+					mappedActualParameters = actualParameters.mapTemplateParameters(templateInstantiationInfo_);
 				}
 				
 				if (-1 == ignoredParameterPosition) {
-					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoreName, allowPromotion)) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamNamed(mappedDeclaredMethodSignature,
+							mappedActualParameters, ignoreName, allowPromotion)) {
 						retval = aPair.getValue();
 						break;
 					}
 				} else {
-					if (FormalParameterList.alignsWithParameterListIgnoringParamAtPosition(mappedDeclaredMethodSignature, mappedSuppliedParameters, ignoredParameterPosition, allowPromotion)) {
+					if (FormalParameterList.alignsWithParameterListIgnoringParamAtPosition(mappedDeclaredMethodSignature, mappedActualParameters, ignoredParameterPosition, allowPromotion)) {
 						retval = aPair.getValue();
 						break;
 					}
@@ -246,11 +302,15 @@ public abstract class RTClassAndContextCommon implements RTType {
 			// We inherit base class methods. Recur.
 			final RTType runTimeBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(this.baseClassDeclaration());
 			if (false == runTimeBaseClassType instanceof RTClass) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, 0,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, null,
 						"FATAL: Internal Run-time error: Class lookup error", "", "", "");
 				retval = null;
 			} else {
-				retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignatureNamed(methodName, suppliedParameters, ignoreName);
+				retval = runTimeBaseClassType.lookupMethodIgnoringParameterInSignatureNamed(
+						methodName,
+						actualParameterStaticTypes,
+						actualParameters,
+						ignoreName);
 			}
 		} else {
 			retval = null;

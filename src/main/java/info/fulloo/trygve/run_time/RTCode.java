@@ -1,8 +1,13 @@
 package info.fulloo.trygve.run_time;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.antlr.v4.runtime.Token;
+
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +32,7 @@ public abstract class RTCode implements RTStackable {
 	public RTCode() {
 		super();
 		referenceCount_ = 1;
+		isBreakpoint_ = false;
 	}
 	public void setNextCode(RTCode next) {
 		if (null != next) {
@@ -52,7 +58,28 @@ public abstract class RTCode implements RTStackable {
 	public long referenceCount() {
 		return referenceCount_;
 	}
+	
+	public void setBreakpoint(boolean tf) {
+		isBreakpoint_ = tf;
+	}
+	
+	public final boolean isBreakpoint() {
+		return isBreakpoint_;
+	}
+	
+	public int lineNumber() {
+		return 0;
+	}
+	
+	public Token token() {
+		return null;
+	}
+	
+	public List<RTCode> connectedExpressions() {
+		return new ArrayList<RTCode>();
+	}
 
 	protected long referenceCount_;
 	protected RTCode nextCode_;
+	protected boolean isBreakpoint_;
 }

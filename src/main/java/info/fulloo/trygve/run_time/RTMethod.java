@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,9 +23,12 @@ package info.fulloo.trygve.run_time;
  * 
  */
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.FormalParameterList;
@@ -61,6 +64,7 @@ public class RTMethod extends RTCode {
 		nextCodeIndex_ = 0; 
 		code_ = new RTCode[codeSize_];
 		returnType_ = methodDeclaration.returnType();
+		token_ = methodDeclaration.token();
 		lineNumber_ = methodDeclaration.lineNumber();
 		
 		// Put in a default return statement at the end of the function.
@@ -281,8 +285,24 @@ public class RTMethod extends RTCode {
 		return retval;
 	}
 	
-	public int lineNumber() {
+	@Override public int lineNumber() {
 		return lineNumber_;
+	}
+	
+	@Override public Token token() {
+		return token_;
+	}
+	
+	@Override public List<RTCode> connectedExpressions() {
+		final ArrayList<RTCode> retval = new ArrayList<RTCode>();
+		for (final RTCode aStatement: code_) {
+			retval.add(aStatement);
+		}
+		for (final RTCode anInitializer: initializationList_.values()) {
+			retval.add(anInitializer);
+		}
+		retval.add(returnInstruction_);
+		return retval;
 	}
 
 
@@ -294,4 +314,5 @@ public class RTMethod extends RTCode {
 	protected RTCode returnInstruction_;
 	private Type returnType_;
 	private final int lineNumber_;
+	private final Token token_;
 }

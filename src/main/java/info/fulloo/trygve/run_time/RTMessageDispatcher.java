@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,6 +22,10 @@ package info.fulloo.trygve.run_time;
  *  Jim Coplien at jcoplien@gmail.com
  *
  */
+
+import java.util.List;
+import java.util.ArrayList;
+import org.antlr.v4.runtime.Token;
 
 import info.fulloo.trygve.code_generation.InterpretiveCodeGenerator;
 import info.fulloo.trygve.declarations.ActualArgumentList;
@@ -49,7 +53,6 @@ import info.fulloo.trygve.run_time.RTExpression.RTAssignment.RTInternalAssignmen
 import info.fulloo.trygve.run_time.RTExpression.RTInternalAssignment;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage;
 import info.fulloo.trygve.run_time.RTExpression.RTMessage.RTPostReturnProcessing;
-import info.fulloo.trygve.run_time.RTListObject; 
 import info.fulloo.trygve.run_time.RTObjectCommon.RTContextObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTIntegerObject;
 import info.fulloo.trygve.run_time.RTObjectCommon.RTNullObject;
@@ -69,7 +72,9 @@ public abstract class RTMessageDispatcher {
 			final MethodInvocationEnvironmentClass targetMessageClass
 			) {
 		RTMessageDispatcher retval = null;
+		
 		switch (originMessageClass) {
+		case GlobalEnvironment:
 		case ClassEnvironment:
 			switch(targetMessageClass) {
 			case ClassEnvironment:
@@ -183,7 +188,7 @@ public abstract class RTMessageDispatcher {
 								final boolean isStatic,
 								final RTType nearestEnclosingType) {
 		messageExpr_ = messageExpr;
-		lineNumber_ = messageExpr_.lineNumber();
+		token_ = messageExpr_.token();
 		methodSelectorName_ = methodSelectorName;
 		argPush_ = argPush;
 		postReturnProcessing_ = postReturnProcessing;
@@ -217,7 +222,11 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	public int lineNumber() {
-		return lineNumber_;
+		return token_.getLine();
+	}
+	
+	public Token token() {
+		return token_;
 	}
 	
 	public RTCode hasError() {
@@ -333,7 +342,7 @@ public abstract class RTMessageDispatcher {
 		}
 		if (this.isBuiltInAssert_) {
 			// Put the line number in the activation record
-			final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+			final RTIntegerObject lineNumberToPush = new RTIntegerObject(token_.getLine());
 			activationRecord.addObjectDeclaration("lineNumber", null);
 			activationRecord.setObject("lineNumber", lineNumberToPush);
 		}
@@ -363,7 +372,7 @@ public abstract class RTMessageDispatcher {
 		}
 		if (this.isBuiltInAssert_) {
 			// Put the line number in the activation record
-			final RTIntegerObject lineNumberToPush = new RTIntegerObject(lineNumber_);
+			final RTIntegerObject lineNumberToPush = new RTIntegerObject(token_.getLine());
 			activationRecord.addObjectDeclaration("lineNumber", null);
 			activationRecord.setObject("lineNumber", lineNumberToPush);
 		}
@@ -429,7 +438,8 @@ public abstract class RTMessageDispatcher {
 			// Push the activation record onto the activation record stack
 			// (I think this is the only place in the code where activation
 			// records are pushed)
-			final RTDynamicScope activationRecord = new RTDynamicScope(methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
+			final StaticScope declarationsStaticScope = typeOfThisParameterToCalledMethod.enclosedScope();
+			final RTDynamicScope activationRecord = new RTDynamicScope(declarationsStaticScope, methodDecl_.name(), RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope(), true);
 			RunTimeEnvironment.runTimeEnvironment_.pushDynamicScope(activationRecord);
 			activationRecord.incrementReferenceCount();
 			this.populateActivationRecord(methodDecl_, activationRecord);
@@ -465,7 +475,7 @@ public abstract class RTMessageDispatcher {
 					// 	is instantiated (around line 155). Trying to call
 					// 	SpellCheck.Text.isFinished.
 					//
-					// See cotnext_role_bug1.k
+					// See context_role_bug1.k
 					//
 					// Role Text is of type TextFile, which is also a Context
 					assert null != theStageProp;
@@ -475,7 +485,9 @@ public abstract class RTMessageDispatcher {
 				assert null != theRole;
 				methodDecl = theRole.lookupMethod(methodSelectorName_, actualParameters_);
 			}
-			assert null != methodDecl;
+			if (null == methodDecl) {
+				assert null != methodDecl;
+			}
 		} else if (contextOfRoleOfInvokingMethod instanceof RTObjectCommon) {
 			// The "this" parameter is a pointer to the Role Player, typed
 			// in terms of the Role Player's type.
@@ -590,18 +602,33 @@ public abstract class RTMessageDispatcher {
 		}
 		return methodDecl;
 	}
-	
+
 	private RTMethod genericPolymorphicMethodLookup(final RTType rTTypeOfSelf, final Type typeOfThisParameterToMethod,
 			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
+		final List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		actualParameterStaticTypes.add(rTTypeOfSelf);	// NEW
+		
 		// Give a direct match the first chance
-		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		RTMethod methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(
+				methodSelectorName,
+				actualParameterStaticTypes,
+				actualParameters, "this");
+		
 		if (null == methodDecl) {
-			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(
+					methodSelectorName,
+					actualParameterStaticTypes,
+					actualParameters,
+					"this");
 			if (null == methodDecl) {
 				if (typeOfThisParameterToMethod instanceof RoleType) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterAtPosition(
+							methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, 0);
 					if (null == methodDecl) {
-						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+						methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName,
+								actualParameterStaticTypes, actualParameters, 0);
 					}
 				}
 				
@@ -616,7 +643,8 @@ public abstract class RTMessageDispatcher {
 						if (null != baseClassDecl) {
 							final RTType rTBaseClassType = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(baseClassDecl);
 							assert rTBaseClassType instanceof RTClass;
-							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+							methodDecl = rTBaseClassType.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+									actualParameterStaticTypes, actualParameters, "this");
 							// No. methodDecl = rTBaseClassType.lookupBaseClassMethodLiskovCompliantTo(methodSelectorName, actualParameters);
 							if (null == methodDecl) {
 								selfType = rTBaseClassType;
@@ -630,11 +658,15 @@ public abstract class RTMessageDispatcher {
 					methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
 					if (null == methodDecl) {
 						methodDecl = rTTypeOfSelf.lookupMethod(methodSelectorName, actualParameters);
-						assert null != methodDecl;
+						if (null != methodDecl) {
+							assert null != methodDecl;
+						}
 					}
 				}
 			}
-			assert null != methodDecl;
+			if (null == methodDecl) {
+				assert null != methodDecl;
+			}
 		}
 		return methodDecl;
 	}
@@ -643,14 +675,25 @@ public abstract class RTMessageDispatcher {
 			final String methodSelectorName, final ActualOrFormalParameterList actualParameters) {
 		// Give a direct match the only chance
 		final RTType rTTypeOfLocalSelf = InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
-;		RTMethod methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+		final List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+		actualParameterStaticTypes.add(rTTypeOfLocalSelf);
+		RTMethod methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureNamed(
+			methodSelectorName,
+			actualParameterStaticTypes,
+			actualParameters,
+			"this");
 		if (null == methodDecl) {
-			methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+			methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+					actualParameterStaticTypes, actualParameters, "this");
 			if (null == methodDecl) {
 				if (typeOfThisParameterToMethod instanceof RoleType) {
-					methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterAtPosition(methodSelectorName, actualParameters, 0);
+					methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterAtPosition(
+							methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, 0);
 					if (null == methodDecl) {
-						methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName, actualParameters, 0);
+						methodDecl = rTTypeOfLocalSelf.lookupMethodIgnoringParameterInSignatureWithConversionAtPosition(methodSelectorName,
+								actualParameterStaticTypes, actualParameters, 0);
 					}
 				}
 				if (null == methodDecl) {
@@ -671,7 +714,7 @@ public abstract class RTMessageDispatcher {
 				InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 
 		if (self instanceof RTNullObject) {
-			ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method `",
+			ErrorLogger.error(ErrorIncidenceType.Fatal, token(), "FATAL: TERMINATED: Attempting to invoke method `",
 					methodSelectorName_, "' on a null object", "");
 			RTMessage.printMiniStackStatus();
 			
@@ -679,7 +722,7 @@ public abstract class RTMessageDispatcher {
 			hasError_ = new RTHalt();
 			return null;
 		} else if (null == rTTypeOfSelf) {
-			ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+			ErrorLogger.error(ErrorIncidenceType.Internal, token(), "INTERNAL: Attempting to invoke method `",
 					methodSelectorName_, "' on a null Java object", "");
 			hasError_ = new RTHalt();
 			return null;
@@ -744,7 +787,9 @@ public abstract class RTMessageDispatcher {
 		assert rawTargetContext instanceof ContextDeclaration;
 		final ContextDeclaration targetContext = (ContextDeclaration) rawTargetContext;
 		final RTType rawrTTypeOfTargetContext = InterpretiveCodeGenerator.convertTypeDeclarationToRTTypeDeclaration(targetContext);
-		assert rawrTTypeOfTargetContext instanceof RTContext;
+		if (!(rawrTTypeOfTargetContext instanceof RTContext)) {
+			assert rawrTTypeOfTargetContext instanceof RTContext;
+		}
 		final RTContext rTTypeOfTargetContext = (RTContext)rawrTTypeOfTargetContext;
 		
 		RTRole theRole = rTTypeOfTargetContext.getRole(typeOfThisParameterToMethod.name());
@@ -951,14 +996,14 @@ public abstract class RTMessageDispatcher {
 				final RTType rTTypeOfSelf = null != self? self.rTType():
 					InterpretiveCodeGenerator.scopeToRTTypeDeclaration(typeOfThisParameterToMethod.enclosedScope());
 				if (self instanceof RTNullObject) {
-					ErrorLogger.error(ErrorIncidenceType.Fatal, lineNumber(), "FATAL: TERMINATED: Attempting to invoke method ",
+					ErrorLogger.error(ErrorIncidenceType.Fatal, token(), "FATAL: TERMINATED: Attempting to invoke method ",
 							methodSelectorName_, " on a null object", "");
 					RTMessage.printMiniStackStatus();
 					
 					// Halt the machine
 					return null;
 				} else if (null == rTTypeOfSelf) {
-					ErrorLogger.error(ErrorIncidenceType.Internal, lineNumber(), "INTERNAL: Attempting to invoke method `",
+					ErrorLogger.error(ErrorIncidenceType.Internal, token(), "INTERNAL: Attempting to invoke method `",
 							methodSelectorName_, "' on a null Java object", "");
 					return null;
 					// assert null != rTTypeOfSelf;
@@ -987,10 +1032,18 @@ public abstract class RTMessageDispatcher {
 					}
 				}
 				
+				List<RTType> actualParameterStaticTypes = new ArrayList<RTType>();
+				actualParameterStaticTypes.add(rTTypeOfSelf);
 				// Give a direct match the first chance
-				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(methodSelectorName, actualParameters, "this");
+				methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureNamed(
+						methodSelectorName,
+						actualParameterStaticTypes,
+						actualParameters,
+						"this");
 				if (null == methodDecl) {
-					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName, actualParameters, "this");
+					methodDecl = rTTypeOfSelf.lookupMethodIgnoringParameterInSignatureWithConversionNamed(methodSelectorName,
+							actualParameterStaticTypes,
+							actualParameters, "this");
 					if (null == methodDecl) {
 						if (typeOfThisParameterToMethod instanceof RoleType) {
 							assert false;
@@ -1028,7 +1081,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-
+						
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 			
@@ -1086,7 +1139,6 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 
@@ -1103,7 +1155,6 @@ public abstract class RTMessageDispatcher {
 			} else {
 				if (tempSelf instanceof RTObject) {
 					self = (RTObject)tempSelf;
-					assert self instanceof RTContextObject == false;
 					assert self instanceof RTRole == false;
 				}
 				commonWrapup(typeOfThisParameterToCalledMethod, 0, self, messageExpr.isPolymorphic());
@@ -1176,7 +1227,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-			
+
 			final int indexForThisExtraction = 1;	// seems very temperamental about being generalised...
 			// final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
@@ -1288,7 +1339,7 @@ public abstract class RTMessageDispatcher {
 					actualParameters,
 					isStatic,
 					nearestEnclosingType);
-			
+
 			final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
 
@@ -1362,7 +1413,6 @@ public abstract class RTMessageDispatcher {
 					nearestEnclosingType);
 			final int indexForThisExtraction = 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 
@@ -1429,7 +1479,6 @@ public abstract class RTMessageDispatcher {
 			
 			final int indexForThisExtraction = ((Expression)actualParameters_.argumentAtPosition(0)).name().equals("current$context")? 1: 0;
 			final int expressionCounterForThisExtraction = expressionsCountInArguments[indexForThisExtraction];
-			
 			RTObject self = null;
 			RTCode start = argPush_;
 
@@ -1478,7 +1527,7 @@ public abstract class RTMessageDispatcher {
 	}
 	
 	protected       RTMethod methodDecl_;
-	protected final int lineNumber_;
+	protected final Token token_;
 	protected final MessageExpression messageExpr_;
 	protected final String methodSelectorName_;
 	protected final RTCode argPush_;

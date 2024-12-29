@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.antlr.v4.runtime.Token;
+
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
 import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
@@ -34,8 +36,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,21 +68,21 @@ public final class ListClass {
 			final Iterator<Type> paramTypeIter = paramTypeList.iterator();
 			for (final String paramName : paramNameList) {
 				final Type paramType = paramTypeIter.next();
-				final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+				final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 				formals.addFormalParameter(formalParameter);
 			}
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
 		listType_.enclosedScope().declareMethod(methodDecl, null);
 	}
 	
-	private static Type addListOfXTypeNamedY(final Type type, final String typeName) {
+	public static Type addListOfXTypeNamedY(final Type type, final String typeName) {
 		Type retval = null;
 		final TemplateDeclaration listDecl = (TemplateDeclaration)listType_.enclosedScope().associatedDeclaration();
 			
@@ -100,8 +102,8 @@ public final class ListClass {
 			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
 			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
 			classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
-					baseClassDecl, 0);
-			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo);
+					baseClassDecl, null);
+			classDeclaration.elaborateFromTemplate(listDecl, templateInstantiationInfo, null);
 			final Type rawNewType = classDeclaration.type();
 			assert rawNewType instanceof ClassType;
 			final ClassType newType = (ClassType)rawNewType;
@@ -137,10 +139,10 @@ public final class ListClass {
 		
 		if (null == globalScope.lookupTypeDeclaration("List")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("List", newScope, /*Base Class*/ null, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("List", newScope, /*Base Class*/ null, null);
 			newScope.setDeclaration(templateDecl);
 			final Type T = new TemplateParameterType("T", null);
-			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, 0);
+			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, null);
 			templateDecl.addTypeParameter(typeParamId, 1);
 			listType_ = new TemplateType("List", newScope, null);
 			templateDecl.setType(listType_);
@@ -173,6 +175,8 @@ public final class ListClass {
 			declareListMethod("isEmpty", booleanType, null, null, true);
 			
 			declareListMethod("sort", voidType, null, null, false);
+
+			declareListMethod("reverse", listType_, null, null, true);
 			
 			// kludge.
 			assert null != stringType;
@@ -327,9 +331,9 @@ public final class ListClass {
 		}
 	}
 	public static class RTGetCode extends RTListCommon {
-		public RTGetCode(final StaticScope enclosingMethodScope, final int lineNumber) {
+		public RTGetCode(final StaticScope enclosingMethodScope, final Token token) {
 			super("List", "get", asList("theIndex"), asList("int"), enclosingMethodScope, new TemplateParameterType("T", null));
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode pc = null;
@@ -337,7 +341,7 @@ public final class ListClass {
 			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == argument) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 						"Use of uninitialized list value, or index out of range.", "", "", "");
 				pc = new RTHalt();	// halt instruction
 			} else {
@@ -350,7 +354,7 @@ public final class ListClass {
 					
 					pc = super.nextCode();
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 							"List.get(): List index out-of-range: ",
 							Integer.toString((int)argument.intValue()),
 							" on list of size ", Integer.toString(theListObject.size()));
@@ -360,22 +364,22 @@ public final class ListClass {
 			return pc;
 		}
 		
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class RTSetCode extends RTListCommon {
-		public RTSetCode(final StaticScope enclosingMethodScope, final int lineNumber) {
+		public RTSetCode(final StaticScope enclosingMethodScope, final Token token) {
 			super("List", "set", asList("object", "theIndex"), asList("T", "int"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("void"));
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode pc = null;
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTIntegerObject theIndex = (RTIntegerObject)activationRecord.getObject("theIndex");
-			final RTObject object = (RTIntegerObject)activationRecord.getObject("theIndex");
+			final RTObject object = (RTObject)activationRecord.getObject("object");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == theIndex) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 						"Use of uninitialized list value, or index out of range.", "", "", "");
 				pc = new RTHalt();	// halt instruction
 			} else {
@@ -383,7 +387,7 @@ public final class ListClass {
 					theListObject.setObject(theIndex, object);
 					pc = super.nextCode();
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 							"List.get(): List index out-of-range: ",
 							Integer.toString((int)theIndex.intValue()),
 							" on list of size ", Integer.toString(theListObject.size()));
@@ -393,13 +397,13 @@ public final class ListClass {
 			return pc;
 		}
 		
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	
 	public static class RTAtCode extends RTListCommon {
-		public RTAtCode(final StaticScope enclosingMethodScope, final int lineNumber) {
+		public RTAtCode(final StaticScope enclosingMethodScope, final Token token) {
 			super("List", "at", asList("theIndex"), asList("int"), enclosingMethodScope, new TemplateParameterType("T", null));
-			lineNumber_ = lineNumber;
+			token_ = token;
 		}
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			RTCode pc = null;
@@ -407,7 +411,7 @@ public final class ListClass {
 			final RTIntegerObject argument = (RTIntegerObject)activationRecord.getObject("theIndex");
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			if (null == argument) {
-				ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+				ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 						"Use of uninitialized list value, or index out of range.", "", "", "");
 				pc = new RTHalt();	// halt instruction
 			} else {
@@ -420,7 +424,7 @@ public final class ListClass {
 					
 					pc = super.nextCode();
 				} else {
-					ErrorLogger.error(ErrorIncidenceType.Runtime, lineNumber_,
+					ErrorLogger.error(ErrorIncidenceType.Runtime, token_,
 							"List.at(): List index out-of-range: ",
 							Integer.toString((int)argument.intValue()),
 							" on list of size ", Integer.toString(theListObject.size()));
@@ -430,7 +434,7 @@ public final class ListClass {
 			return pc;
 		}
 		
-		private final int lineNumber_;
+		private final Token token_;
 	}
 	public static class RTIndexOfCode extends RTListCommon {
 		public RTIndexOfCode(final StaticScope enclosingMethodScope) {
@@ -490,6 +494,22 @@ public final class ListClass {
 			final RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
 			
 			theListObject.sort();
+	
+			return super.nextCode();
+		}
+	}
+	public static class RTReverseCode extends RTListCommon {
+		public RTReverseCode(final StaticScope enclosingMethodScope, Type returnTypeDecl) {
+			super("List", "reverse", null, null, enclosingMethodScope, returnTypeDecl);
+		}
+		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			      RTListObject theListObject = (RTListObject)activationRecord.getObject("this");
+			
+			theListObject = theListObject.reverse();
+			
+			addRetvalTo(activationRecord);
+			activationRecord.setObject("ret$val", theListObject);
 	
 			return super.nextCode();
 		}

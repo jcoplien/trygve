@@ -23,12 +23,14 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Date;
 
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +60,7 @@ public final class MathClass {
 		if (null != argumentNames) {
 			for (int i = 0; i < argumentNames.size(); i++) {
 				final ObjectDeclaration formalParameter = 
-						new ObjectDeclaration(argumentNames.get(i), argumentTypes.get(i), 0);
+						new ObjectDeclaration(argumentNames.get(i), argumentTypes.get(i), null);
 				formals.addFormalParameter(formalParameter);
 			}
 		} else {
@@ -68,7 +70,7 @@ public final class MathClass {
 		final StaticScope methodScope = new StaticScope(
 				mathType_.enclosedScope());
 		final MethodDeclaration methodDecl = new MethodDeclaration(methodName,
-				methodScope, mathType_, Public, 0, true);
+				methodScope, mathType_, Public, null, true);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(true);
@@ -84,7 +86,7 @@ public final class MathClass {
 			final ClassDeclaration objectBaseClass = globalScope.lookupClassDeclaration("Object");
 			assert null != objectBaseClass;
 			final ClassDeclaration mathDecl = new ClassDeclaration("Math",
-					newScope, objectBaseClass, 0);
+					newScope, objectBaseClass, null);
 			newScope.setDeclaration(mathDecl);
 			mathType_ = new ClassType("Math", newScope, null);
 			mathDecl.setType(mathType_);
@@ -94,10 +96,11 @@ public final class MathClass {
 			final Type intType = globalScope.lookupTypeDeclaration("int");
 			
 			addSimpleStaticMethodDeclaration("random", null, null, doubleType);
+			addSimpleStaticMethodDeclaration("setSeed", asList("seed"), asList(intType), null);
 			addSimpleStaticMethodDeclaration("sqrt", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("abs", asList("x"), asList(intType), intType);
-			addSimpleStaticMethodDeclaration("round", asList("x"), asList(intType), intType);
+			addSimpleStaticMethodDeclaration("round", asList("x"), asList(doubleType), intType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(doubleType, doubleType), doubleType);
 			addSimpleStaticMethodDeclaration("max", asList("x", "y"), asList(intType, intType), intType);
 			addSimpleStaticMethodDeclaration("min", asList("x", "y"), asList(doubleType, doubleType), doubleType);
@@ -109,7 +112,19 @@ public final class MathClass {
 			// Declare the type
 			globalScope.declareType(mathType_);
 			globalScope.declareClass(mathDecl);
+			
+			random_ = new Random();
+			
+			
+			reseed();
 		}
+	}
+	public static void reseed() {
+		// Tweak this code for reproducible debugging of
+		// user code that uses Math.random
+		// long s = 24;
+        // random_.setSeed(s);
+		random_.setSeed((new Date()).getTime());
 	}
 	public static class RTMathCommon extends RTClass.RTObjectClass.RTSimpleObjectMethodsCommon {
 		public RTMathCommon(final String className, final String methodName,
@@ -154,11 +169,28 @@ public final class MathClass {
 			super("Math", "random", asList("x"), asList("double"), enclosingMethodScope, StaticScope.globalScope().lookupTypeDeclaration("double"));
 		}
 		@Override public RTCode runDetails(RTObject myEnclosedScope) {
-			final RTDoubleObject answer = new RTDoubleObject(Math.random());
+			final RTDoubleObject answer = new RTDoubleObject(random_.nextDouble());
 			
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			this.addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", answer);
+			
+			return super.nextCode();
+		}
+	}
+	public static class RTSetSeedCode extends RTMathCommon {
+		public RTSetSeedCode(StaticScope enclosingMethodScope) {
+			super("Math", "setSeed", asList("seed"), asList("int"), enclosingMethodScope, null);
+		}
+		@Override public RTCode runDetails(RTObject myEnclosedScope) {
+			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
+			final RTObject rawElement = activationRecord.getObject("seed");
+			if (rawElement instanceof RTIntegerObject) {
+				final RTIntegerObject element = (RTIntegerObject)rawElement;
+				random_.setSeed(element.intValue());
+			} else {
+				assert false;
+			}
 			
 			return super.nextCode();
 		}
@@ -484,4 +516,5 @@ public final class MathClass {
 
 	private static List<TypeDeclaration> typeDeclarationList_;
 	private static Type mathType_;
+	private static Random random_;
 }

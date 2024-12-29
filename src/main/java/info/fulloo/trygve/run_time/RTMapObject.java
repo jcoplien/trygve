@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@ package info.fulloo.trygve.run_time;
  */
 
 import java.util.ArrayList;
-import java.util.HashMap;
+
+
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -36,18 +37,36 @@ import info.fulloo.trygve.error.ErrorLogger;
 import info.fulloo.trygve.error.ErrorLogger.ErrorIncidenceType;
 import info.fulloo.trygve.expressions.Expression.UnaryopExpressionWithSideEffect.PreOrPost;
 import info.fulloo.trygve.run_time.RTIterator.RTMapIterator;
+import info.fulloo.trygve.semantic_analysis.StaticScope;
+import info.fulloo.trygve.declarations.TypeDeclaration;
 
-public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable {
+public class RTMapObject extends RTObjectCommon implements RTIterable {
 	@Override public RTObject getObject(final RTObject theIndexObject) {
 		final RTObject retval = theMap_.get(theIndexObject);
 		return retval;
 	}
 	public RTMapObject(final RTType mapType) {
 		super(mapType);
+		
+		// MAP>>KEYS
+		RTClass classMapType = null;
+		TypeDeclaration declaration = null;
+		
+		if (mapType instanceof RTClass) {
+			classMapType = (RTClass)mapType;
+			declaration = classMapType.typeDeclaration();
+		}
+		final String mapTypeName = declaration.name();
+		String keyTypeName = mapTypeName.substring(4);
+		final int commaIndex = keyTypeName.indexOf(',');
+		keyTypeName = keyTypeName.substring(0, commaIndex);
+		keyType_ = StaticScope.globalScope().lookupTypeDeclaration(keyTypeName);	
 		mapType_ = mapType;	// e.g. an instance of RTClass
-		keyType_ = null;
+		
+		// need to do Value Type eventually, too, like keyTyoe_ above
 		valueType_ = null;
-		theMap_ = new HashMap<RTObject,RTObject>();
+		
+		theMap_ = new LinkedHashMap<RTObject,RTObject>();
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
 	
@@ -114,12 +133,12 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 	}
 	private RTMapObject(final Map<RTObject, RTObject> theMap, final Type keyType, final Type valueType, final RTType mapType) {
 		super(mapType);
-		theMap_ = new HashMap<RTObject, RTObject>();
+		theMap_ = new LinkedHashMap<RTObject, RTObject>();
 		keyType_ = keyType;
 		valueType_ = valueType;
 		mapType_ = mapType;
 		for (final RTObject k : theMap_.keySet()) {
-			theMap_.put(k, theMap_.get(k));
+			theMap_.put(k, theMap.get(k));
 		}
 		rolesIAmPlayingInContext_ = new LinkedHashMap<RTContextObject, List<String>>();
 	}
@@ -145,7 +164,7 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		RTObject retval = theMap_.get(element);
 		if (null == retval) {
 			ErrorLogger.error(ErrorIncidenceType.Runtime,
-					0,
+					null,
 					"ERROR: Map object <",
 					null == keyType_? "null": keyType_.toString(), " -> " + element.getText(),
 					",",
@@ -168,6 +187,7 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 		}
 	}
 	public void put(final RTObject key, final RTObject value) {
+		assert (null != value);
 		theMap_.put(key, value);
 		key.incrementReferenceCount();
 		value.incrementReferenceCount();
@@ -192,6 +212,12 @@ public class RTMapObject extends RTObjectCommon implements RTObject, RTIterable 
 	public Iterator<RTObject> RTIterator() {
 		final Set<RTObject> keySet = theMap_.keySet();
 		return keySet.iterator();
+	}
+	
+	// MAP>>KEYS
+	public Set<RTObject> keys() {
+		final Set<RTObject> keySet = theMap_.keySet();
+		return keySet;
 	}
 	
 	private final Map<RTObject, RTObject> theMap_;

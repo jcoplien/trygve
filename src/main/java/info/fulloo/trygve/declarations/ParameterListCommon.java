@@ -1,8 +1,8 @@
 package info.fulloo.trygve.declarations;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ public abstract class ParameterListCommon implements ActualOrFormalParameterList
 	// implementing the ActualOrFormalParameterList interface
 	@Override public abstract Type typeOfParameterAtPosition(int i);
 	@Override public abstract String nameOfParameterAtPosition(int i);
-	@Override public ActualOrFormalParameterList mapTemplateParameters(TemplateInstantiationInfo templateTypes) {
+	@Override public ActualOrFormalParameterList mapTemplateParameters(final TemplateInstantiationInfo templateTypes) {
 		return this;
 	}
 	@Override public boolean containsVarargs() {

@@ -26,8 +26,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,13 +55,13 @@ public final class ScannerClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", scannerType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", scannerType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(scannerType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -77,7 +77,7 @@ public final class ScannerClass {
 			assert null != objectBaseClass;
 
 			final StaticScope newScope = new StaticScope(globalScope);
-			final ClassDeclaration classDecl = new ClassDeclaration("Scanner", newScope, objectBaseClass, 0);
+			final ClassDeclaration classDecl = new ClassDeclaration("Scanner", newScope, objectBaseClass, null);
 			newScope.setDeclaration(classDecl);
 			scannerType_ = new ClassType("Scanner", newScope, null);
 			classDecl.setType(scannerType_);

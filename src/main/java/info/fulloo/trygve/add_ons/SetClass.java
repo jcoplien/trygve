@@ -5,11 +5,14 @@ import java.util.List;
 
 import info.fulloo.trygve.declarations.AccessQualifier;
 import info.fulloo.trygve.declarations.FormalParameterList;
+import info.fulloo.trygve.declarations.TemplateInstantiationInfo;
 import info.fulloo.trygve.declarations.Type;
 import info.fulloo.trygve.declarations.TypeDeclaration;
+import info.fulloo.trygve.declarations.Declaration.ClassDeclaration;
 import info.fulloo.trygve.declarations.Declaration.MethodDeclaration;
 import info.fulloo.trygve.declarations.Declaration.ObjectDeclaration;
 import info.fulloo.trygve.declarations.Declaration.TemplateDeclaration;
+import info.fulloo.trygve.declarations.Type.ClassType;
 import info.fulloo.trygve.declarations.Type.TemplateParameterType;
 import info.fulloo.trygve.declarations.Type.TemplateType;
 import info.fulloo.trygve.error.ErrorLogger;
@@ -28,8 +31,8 @@ import info.fulloo.trygve.semantic_analysis.StaticScope;
 import static java.util.Arrays.asList;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -57,13 +60,13 @@ public final class SetClass {
 		
 		final FormalParameterList formals = new FormalParameterList();
 		if (null != paramName) {
-			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, 0);
+			final ObjectDeclaration formalParameter = new ObjectDeclaration(paramName, paramType, null);
 			formals.addFormalParameter(formalParameter);
 		}
-		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, 0);
+		final ObjectDeclaration self = new ObjectDeclaration("this", listType_, null);
 		formals.addFormalParameter(self);
 		StaticScope methodScope = new StaticScope(listType_.enclosedScope());
-		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, 0, false);
+		final MethodDeclaration methodDecl = new MethodDeclaration(methodSelector, methodScope, returnType, Public, null, false);
 		methodDecl.addParameterList(formals);
 		methodDecl.setReturnType(returnType);
 		methodDecl.setHasConstModifier(isConst);
@@ -81,10 +84,10 @@ public final class SetClass {
 		
 		if (null == globalScope.lookupTypeDeclaration("Set")) {
 			final StaticScope newScope = new StaticScope(globalScope);
-			final TemplateDeclaration templateDecl = new TemplateDeclaration("Set", newScope, /*Base Class*/ null, 0);
+			final TemplateDeclaration templateDecl = new TemplateDeclaration("Set", newScope, /*Base Class*/ null, null);
 			newScope.setDeclaration(templateDecl);
 			final Type T = new TemplateParameterType("T", null);
-			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, 0);
+			final IdentifierExpression typeParamId = new IdentifierExpression("T", T, newScope, null);
 			templateDecl.addTypeParameter(typeParamId, 1);
 			listType_ = new TemplateType("Set", newScope, null);
 			templateDecl.setType(listType_);
@@ -216,8 +219,8 @@ public final class SetClass {
 		@Override public RTCode runDetails(final RTObject myEnclosedScope) {
 			final RTDynamicScope activationRecord = RunTimeEnvironment.runTimeEnvironment_.currentDynamicScope();
 			final RTObject argument = activationRecord.getObject("element");
-			final RTSetObject theListObject = (RTSetObject)activationRecord.getObject("this");
-			final RTObject result = (RTObject)theListObject.contains(argument);
+			final RTSetObject theSetObject = (RTSetObject)activationRecord.getObject("this");
+			final RTObject result = (RTObject)theSetObject.contains(argument);
 			
 			addRetvalTo(activationRecord);
 			activationRecord.setObject("ret$val", result);
@@ -240,6 +243,47 @@ public final class SetClass {
 			
 			return super.nextCode();
 		}
+	}
+	
+	public static Type addSetOfXTypeNamedY(final Type type, final String typeName) {
+		Type retval = null;
+		final TemplateDeclaration setDecl = (TemplateDeclaration)listType_.enclosedScope().associatedDeclaration();
+			
+		final StaticScope templateScope = setDecl.enclosingScope();
+		final StaticScope templateEnclosedScope = setDecl.enclosedScope();
+		final TypeDeclaration baseClass = setDecl.baseClass();
+		final String baseClassName = null == baseClass? "void": baseClass.name();
+		final ClassDeclaration baseClassDecl = null == baseClass? null:
+							templateScope.lookupClassDeclarationRecursive(baseClassName);
+		
+		ClassDeclaration classDeclaration = StaticScope.globalScope().lookupClassDeclarationRecursive(typeName);
+		if (null == classDeclaration) {
+			// Create a new type vector from the type parameters
+			final TemplateInstantiationInfo templateInstantiationInfo = new TemplateInstantiationInfo(setDecl, typeName);
+			templateInstantiationInfo.add(type);
+			
+			// templateEnclosedScope isn't really used, because a new enclosedScope_ object
+			// is created by ClassDeclaration.elaborateFromTemplate(templateDeclaration)
+			classDeclaration = new ClassDeclaration(typeName, templateEnclosedScope,
+					baseClassDecl, null);
+			classDeclaration.elaborateFromTemplate(setDecl, templateInstantiationInfo, null);
+			final Type rawNewType = classDeclaration.type();
+			assert rawNewType instanceof ClassType;
+			final ClassType newType = (ClassType)rawNewType;
+			templateInstantiationInfo.setClassType(newType);
+
+			templateScope.declareType(newType);
+			templateScope.declareClass(classDeclaration);
+
+			// Here's where we queue template instantiations for code generation
+			// Dangerous to leave it out, but I think we can get by for now, because
+			// it will be covered by some other use within the user program
+			// parsingData_.currentTemplateInstantiationList().addDeclaration(classDeclaration);
+			retval = newType;
+		} else {
+			retval = classDeclaration.type();
+		}
+		return retval;
 	}
 	
 

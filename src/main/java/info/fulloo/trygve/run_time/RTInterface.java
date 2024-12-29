@@ -1,8 +1,8 @@
 package info.fulloo.trygve.run_time;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import info.fulloo.trygve.declarations.Declaration.InterfaceDeclaration;
 import info.fulloo.trygve.declarations.TypeDeclaration;
 
 
-public class RTInterface extends RTClassAndContextCommon implements RTType {
+public class RTInterface extends RTClassAndContextCommon {
 	public RTInterface(final TypeDeclaration decl) {
 		super(decl);
 		assert decl instanceof InterfaceDeclaration;

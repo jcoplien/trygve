@@ -1,8 +1,8 @@
 package info.fulloo.trygve.lntextpane;
 
 /*
- * Trygve IDE 2.0
- *   Copyright (c)2016 James O. Coplien, jcoplien@gmail.com
+ * Trygve IDE 4.3
+ *   Copyright (c)2023 James O. Coplien, jcoplien@gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -56,6 +56,8 @@ public class LNTextPane extends JFrame {
 	
 	public static class MyJEditorPane extends JEditorPane {
 		// For potential later hooks (esp. those that need protected methods)
+		// This is a JEditorPane. No need to change it to JTextPane to get DefaultStyledDocument as
+		// the document type — we have that
 		public MyJEditorPane() { }
 		private static final long serialVersionUID = -923489314;
 	}

@@ -27,5 +27,6 @@ ___________________________________________________________
 returnConstant: 1
 returnSum:      2
 returnRef:      3
+
 line 6: Likely access of uninitialized array. Machine halted.
 */
