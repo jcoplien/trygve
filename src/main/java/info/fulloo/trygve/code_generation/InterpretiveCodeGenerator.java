@@ -1532,7 +1532,7 @@ public class InterpretiveCodeGenerator implements CodeGenerator {
 				}
 				
 				boolean isWellFormedInitialization = false;
-				if (rhs instanceof Constant || rhs instanceof NullExpression) {
+				if (rhs instanceof Constant) {
 					isWellFormedInitialization = true;	// O.K.
 				} else if (rhs instanceof NullExpression) {
 					isWellFormedInitialization = true;	// O.K. — special kind of constant.
