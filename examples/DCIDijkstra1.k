@@ -75,7 +75,10 @@ context Dijkstra {
 		Object endNode();
 	}
 
-	role Node {}
+	role Node {
+	} requires {
+		String name()
+	}
 
 	role Current {
 		public List<Nameable> unvisitedNeighbors() {
