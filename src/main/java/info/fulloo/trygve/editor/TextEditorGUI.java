@@ -40,6 +40,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.io.*;
@@ -664,7 +665,9 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 						if (nextLocationDelta >= 0) {
 							currentOffset = nextLocation;
 							try {
-								final Rectangle viewArea = editPane.modelToView(nextLocation);
+								final Rectangle2D viewArea2D = editPane.modelToView2D(nextLocation);
+								final Rectangle viewArea = new Rectangle((int)viewArea2D.getMinX(), (int)viewArea2D.getMinY(),
+										(int)viewArea2D.getWidth(), (int)viewArea2D.getHeight());
 								editPane.scrollRectToVisible(viewArea);
 								editPane.setCaretPosition(nextLocation);
 								editPane.moveCaretPosition(nextLocation + searchText.length());
@@ -718,7 +721,10 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 			}
 			
 			try {
-				final Rectangle viewArea = editPane.modelToView(nextLocation);
+				final Rectangle2D viewArea2D = editPane.modelToView2D(nextLocation);
+				final Rectangle viewArea = new Rectangle((int)viewArea2D.getMinX(), (int)viewArea2D.getMinY(),
+						(int)viewArea2D.getWidth(), (int)viewArea2D.getHeight());
+				
 				editPane.scrollRectToVisible(viewArea);
 				editPane.setCaretPosition(nextLocation);
 			} catch (final BadLocationException ble) {
@@ -728,6 +734,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 		@Override public void keyTyped(final KeyEvent keyEvent) { keyEvent.consume(); }
 	}
 	
+	/*
 	private class EnterCommandProcessor implements KeyListener {
 		public EnterCommandProcessor() { }
 		@Override public void keyPressed(final KeyEvent keyEvent) {
@@ -751,6 +758,7 @@ public class TextEditorGUI extends LNTextPane { //javax.swing.JFrame {
 			keyEvent.consume();
 		}
 	}
+	*/
 	
     private void initComponents() {
     	worker_ = null;

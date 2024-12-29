@@ -971,7 +971,12 @@ public abstract class Declaration implements BodyPart {
 											(isStatic_? 0: 1);
 			
 			for (int i = startingIndex; i < numberOfParameters; i++) {
-				stringBuffer.append(formalParameterList().parameterAtPosition(i).type().getText());
+				String errorTypeText = "Error";
+				final Type errorType = formalParameterList().parameterAtPosition(i).type();
+				if (null != errorType) {
+					errorTypeText = errorType.getText();
+				}
+				stringBuffer.append(errorTypeText);
 				if (i != numberOfParameters - 1) {
 					stringBuffer.append(",");
 				}
