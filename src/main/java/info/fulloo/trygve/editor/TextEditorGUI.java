@@ -1868,7 +1868,12 @@ private void saveFileButtonActionPerformed(final java.awt.event.ActionEvent evt)
 	this.fileName = new File(pathName);
 	
     try {
-        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(this.fileName), "UTF-8"));
+    	String fileNameCanonical = this.fileName.getName();
+    	if (fileNameCanonical.startsWith("file:")) {
+    		fileNameCanonical = fileNameCanonical.substring(5);
+    	}
+    	
+        final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileNameCanonical), "UTF-8"));
         final String fileText = this.editPane.getText();
         writer.write(fileText);
         writer.close();
