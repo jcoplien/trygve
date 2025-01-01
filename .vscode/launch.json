@@ -6,11 +6,20 @@
   "configurations": [
     {
       "type": "java",
-      "name": "Debug trygve",
+      "name": "Debug trygve GUI",
       "request": "launch",
       "mainClass": "info.fulloo.trygve.editor.Main",
       "projectName": "trygve",
-      "args": "-gui",
+      "args": ["-gui"],
+      "vmArgs": "-ea"
+    },
+    {
+      "type": "java",
+      "name": "Debug trygve file",
+      "request": "launch",
+      "mainClass": "info.fulloo.trygve.editor.Main",
+      "projectName": "trygve",
+      "args": ["-c", "examples/twelvedays.k", "-r"],
       "vmArgs": "-ea"
     }
   ]
